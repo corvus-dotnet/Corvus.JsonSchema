@@ -69,6 +69,8 @@ assert!(validator.validate_instance(document.root()).unwrap());
 | `entry_point` | A subschema to validate against, such as `#/$defs/item`. |
 | `max_depth` | The deepest the evaluator recurses in place (default 128). |
 | `pattern_match_limit` | The time one match of a regular expression may take (default `Some(Duration::from_secs(1))`). `None` or zero turns the limit off. See [Regular expressions](#regular-expressions). |
+| `regex_edition` | The edition of ECMA-262 whose grammar patterns are read with. `None` (the default) takes the dialect's: `RegexEdition::Es2020` for 2019-09 and 2020-12, `RegexEdition::Current` for the drafts before them. See [Regular expressions](#regular-expressions). |
+| `regex_unicode_version` | The version of Unicode patterns are read with (default `RegexUnicodeVersion::Default`, the version of the V8 the answers are held to, 17 today). |
 
 ## Results and annotations
 
@@ -104,17 +106,22 @@ schemas hold (`\&`, `\-`, a lone brace), and is then matched as ECMA-262 says fo
 unit, so a character beyond the Basic Multilingual Plane is two, and `^\-?.$` does not match one. The `regex`
 format accepts only the grammar of the flag.
 
-The crate matches the common shapes itself and gives what the [`regex`](https://crates.io/crates/regex) crate can run
-to it. The rest (lookarounds, backreferences, `\B`, modifier groups) is matched by the crate's own ECMA-262 engine, a
-port of the engine of the Go module. No third-party backtracking engine is involved.
+The crate matches the common shapes itself (a literal, a run of classes, `^.*$` and the like) and gives every other
+pattern to [`corvus-regex-ecma262`](https://crates.io/crates/corvus-regex-ecma262), an ECMA-262 engine whose answers
+are V8's for the whole of the
+[ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data). No third-party
+backtracking engine is involved.
 
-- **Exact.** A pattern is matched as it is written, and none is refused for what an engine cannot do. The answers
-  are V8's for every pattern and text of the
-  [ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data) that a Rust
-  string can hold: 98,839 patterns and 4,268,313 texts. That covers lookaheads and lookbehinds, backreferences into
-  and out of repetitions and lookarounds, named groups, modifier groups, repetitions inside repetitions with any
-  count (`^(?!-)(?:(?:(a)|){1,300}\1-)+$` compiles, and the backreference reads the last iteration that ran), and
-  case-insensitive matching in both grammars.
+- **Exact.** A pattern is matched as it is written, and none is refused for what an engine cannot do: lookaheads and
+  lookbehinds, backreferences into and out of repetitions and lookarounds, named groups, modifier groups,
+  repetitions inside repetitions with any count, and case-insensitive matching in both grammars.
+- **The grammar of the dialect.** JSON Schema 2019-09 and 2020-12 name the grammar of ECMAScript 2020, so under them a
+  pattern is read with `RegexEdition::Es2020`: what later editions added (modifier groups such as `(?i:...)`, a group
+  name used by two groups) is not valid, and a schema that uses it is refused. A property escape that is not in the
+  tables of 2020 is not valid with the `u` flag, so the pattern is read without it, where `\p` is the letter `p`. The
+  drafts before them read today's grammar. `CompileOptions::regex_edition` chooses another, and
+  `CompileOptions::regex_unicode_version` the version of Unicode, for `pattern`, `patternProperties` and the `regex`
+  format alike.
 - **A match has a limit of one second.** A schema and an instance may both come from outside, and a backtracking
   match can take time that doubles with each character. `CompileOptions::pattern_match_limit` bounds one match
   against one string. A match that reaches it is abandoned, and the validation has no answer. `None` or zero turns
@@ -122,17 +129,6 @@ port of the engine of the Go module. No third-party backtracking engine is invol
 - **A pattern has limits of size.** A pattern longer than 1,048,576 bytes, nested more than 1,000 groups deep, or
   with more than about 16,000 terms is refused when the schema is compiled, with a message that says it is too
   large and not that it is not valid.
-- **Where V8 departs from ECMA-262,** the crate follows ECMA-262. With the `u` flag V8 starts a match between the two
-  halves of a surrogate pair (`/\B/u` matches inside the one character of `"a\u{10428}a"`), compares a
-  case-insensitive backreference to a group of several characters by full case folding, and answers some
-  case-insensitive modifier groups differently from the same pattern with the `i` flag. V8 13.6 also takes three
-  things that are not patterns in ECMA-262, and the crate refuses them: `\p{WSpace}`, a count whose first number is
-  the greater when the numbers are large (`a{2147483648,2147483647}`), and a name of two groups that can both take
-  part in one match (`(|((?<m>))(?<m>|))`). It refuses the Script value `Hrkt` (`Katakana_Or_Hiragana`), which
-  ECMA-262 has, and the crate takes it: no character has it, so `\p{sc=Hrkt}` matches nothing.
-- **Unicode versions.** Properties and case-insensitive matching use the crate's own tables for Unicode 17, the same
-  tables as the Go module. They agree with V8 13.6 on every character of Unicode 16. The four scripts Unicode 17
-  adds (`Sidetic`, `Tolong_Siki`, `Beria_Erfe`, `Tai_Yo`) are scripts here, where V8 13.6 does not know them.
 - **Lone surrogates.** A JSON string with the escape of half of a surrogate pair is not a Rust string.
   `validate_json` and `serde_json` both refuse such a document as not valid JSON.
 
@@ -172,9 +168,9 @@ assert_eq!(error.kind(), &SchemaCompilationErrorKind::InvalidPattern);
 | The functions that were there | `is_valid` fails closed: it returns `false`, never `true`. `validate`, `validate_instance`, `evaluate` and `evaluate_instance` return `Err(SchemaEvaluationDepthError)`, and `validate_json` and `evaluate_json` return `JsonValidationError::DepthExceeded`. That error has one value, for the maximum depth and for the limit of a match, and its message says the validation was abandoned at a limit and that the `try_` functions say which. The `false` of `is_valid` at a limit does not mean the instance is not valid. |
 | The limits of size | 1,048,576 bytes of pattern (`length`), 1,000 levels of groups (`nesting`), and 1,048,576 counted as the pattern is read (`size`: 64 for a term, 32 for an alternative, 8 for a range of a class). |
 | Over one | `compile` returns a `SchemaCompilationError` whose `kind()` is `PatternTooLarge`, with the pattern, the keyword, the name of the limit and its value. A pattern that is not valid is `InvalidPattern`. The `regex` format answers `false`. |
-| What the process keeps | The cache of compiled patterns holds 1,024 patterns and 64 MiB at most. The `regex` crate compiles no program over 2 MiB. |
+| What the process keeps | The cache of compiled patterns holds 1,024 patterns and 64 MiB at most. |
 | The format checks | They read strings of the instance, are not under the limit of a match, and take time proportional to the string: scanners that pass over it once, and regular expressions on the `regex` crate. `regex` reads the string as a pattern, with the limits of size. `idn-hostname` and the domain of an `idn-email` read nothing of a string over 1,012 bytes. |
-| What is not bounded | The limit is for each match, so a validation takes the sum of its matches. The matchers that read a string once are not stopped, and `regex` is given a string only when it can answer within the limit. With the limit turned off nothing bounds a match. |
+| What is not bounded | The limit is for each match, so a validation takes the sum of its matches. The matchers that read a string once are not stopped; every other pattern is matched by the engine, under the limit. With the limit turned off nothing bounds a match. |
 
 ## Performance
 

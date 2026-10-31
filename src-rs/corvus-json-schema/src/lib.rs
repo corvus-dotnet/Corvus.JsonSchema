@@ -63,7 +63,6 @@
 mod compiler;
 mod dialect;
 mod document;
-mod ecmaregex;
 mod eval;
 mod formats;
 mod instance;
@@ -86,8 +85,8 @@ pub use document::{JsonDocument, JsonDocumentArray, JsonDocumentObject, JsonDocu
 pub use instance::{ArrayView, Instance, Kind, ObjectView, View};
 pub use options::{
     CompileOptions, DEFAULT_PATTERN_MATCH_LIMIT, DocumentResolver, FormatValidator, PatternMatchLimitError,
-    PatternTooLargeError, SchemaCompilationError, SchemaCompilationErrorKind, SchemaEvaluationDepthError,
-    SchemaEvaluationError,
+    PatternTooLargeError, RegexEdition, RegexUnicodeVersion, SchemaCompilationError, SchemaCompilationErrorKind,
+    SchemaEvaluationDepthError, SchemaEvaluationError,
 };
 pub use results::{
     Annotation, JsonSchemaResultsCollector, ResultsLevel, SchemaResult, collect_annotations, encode_pointer_segment,
@@ -106,7 +105,8 @@ pub enum JsonValidationError {
     InvalidJson(JsonParseError),
     /// The validation was abandoned at a limit: it recursed in place beyond the maximum depth, or a match of a
     /// regular expression reached its limit. The name is from when the depth was the one limit, and the message
-    /// names both (see [`without_the_limit`] for why the two are one here).
+    /// names both. [`SchemaEvaluationDepthError`] has one value for the two, and the `try_` functions, which return
+    /// [`SchemaEvaluationError`], say which it was.
     DepthExceeded(SchemaEvaluationDepthError),
 }
 

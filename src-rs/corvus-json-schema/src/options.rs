@@ -8,6 +8,7 @@ use std::time::Duration;
 use serde_json::Value;
 
 use crate::dialect::Dialect;
+pub use corvus_regex_ecma262::{Edition as RegexEdition, UnicodeVersion as RegexUnicodeVersion};
 
 /// Resolves a schema document by absolute URI; returns `None` if it is unknown.
 pub type DocumentResolver = Arc<dyn Fn(&str) -> Option<Value> + Send + Sync>;
@@ -48,6 +49,13 @@ pub struct CompileOptions {
     /// matchers that take time proportional to the string are not stopped: a string is given to one only when it
     /// can answer within the limit.
     pub pattern_match_limit: Option<Duration>,
+    /// The edition of ECMA-262 whose grammar every `pattern`, `patternProperties` name and `regex` format value is read
+    /// with, or `None` (the default) for each dialect's: ECMAScript 2020 for draft 2019-09 and draft 2020-12, which
+    /// cite it, and today's for the earlier drafts. A pattern that is not valid in it is refused when the schema is
+    /// compiled.
+    pub regex_edition: Option<RegexEdition>,
+    /// The version of Unicode the patterns are read with: by default the version of the V8 the answers are held to.
+    pub regex_unicode_version: RegexUnicodeVersion,
 }
 
 /// The time one match of a `pattern` or `patternProperties` regular expression against one string may take, unless
@@ -67,6 +75,8 @@ impl Default for CompileOptions {
             entry_point: None,
             max_depth: 128,
             pattern_match_limit: Some(DEFAULT_PATTERN_MATCH_LIMIT),
+            regex_edition: None,
+            regex_unicode_version: RegexUnicodeVersion::Default,
         }
     }
 }
@@ -84,6 +94,8 @@ impl fmt::Debug for CompileOptions {
             .field("entry_point", &self.entry_point)
             .field("max_depth", &self.max_depth)
             .field("pattern_match_limit", &self.pattern_match_limit)
+            .field("regex_edition", &self.regex_edition)
+            .field("regex_unicode_version", &self.regex_unicode_version)
             .finish()
     }
 }

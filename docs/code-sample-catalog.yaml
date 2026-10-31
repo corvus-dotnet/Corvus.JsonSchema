@@ -1222,8 +1222,8 @@ main-docs:
       - {index: 0, language: sh, lines: [21, 23]}
       - {index: 1, language: rust, lines: [27, 38]}
       - {index: 2, language: rust, lines: [47, 54]}
-      - {index: 3, language: rust, lines: [75, 87]}
-      - {index: 4, language: rust, lines: [141, 166]}
+      - {index: 3, language: rust, lines: [77, 89]}
+      - {index: 4, language: rust, lines: [137, 162]}
   - path: "docs/JsonSchemaForSwift.md"
     blocks:
       - {index: 0, language: swift, lines: [19, 26]}

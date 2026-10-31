@@ -2,6 +2,25 @@
 
 The version history of the `corvus-json-schema` Rust crate. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md).
 
+## V0.2.0
+
+V0.2.0 matches patterns with the [`corvus-regex-ecma262`](https://crates.io/crates/corvus-regex-ecma262) crate, reads them in the grammar of the dialect, and adds options for the edition and the version of Unicode. It is a minor version because two things that were there change: `CompileOptions` has two new fields, so a struct literal without `..CompileOptions::default()` no longer compiles, and under 2019-09 and 2020-12 a pattern that uses what ECMAScript added after 2020 is no longer valid. The minimum Rust version is 1.89 as before.
+
+### The engine
+
+The crate's own ECMA-262 engine, in `src/ecmaregex`, is gone, and so is the translation of patterns to the [`regex`](https://crates.io/crates/regex) crate. Every pattern that no dedicated matcher takes is matched by `corvus-regex-ecma262` 0.2.5, whose answers are V8's for the whole of the [ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data). The dedicated matchers (literals, class sequences, `^.*$` and the like) are unchanged. `regex` is still a dependency, for the checks of the `format` keyword.
+
+- **The limits are the engine's.** A match has the limit of time it had (`CompileOptions::pattern_match_limit`), and a pattern the limits of size it had: 1,048,576 bytes, 1,000 levels of groups, and 1,048,576 counted as it is read. `PatternTooLargeError::limit` names the limit as before.
+- **The Unicode tables** are the engine's, so the crate no longer carries tables of its own, nor the notice of the Unicode data that went with them.
+
+### The grammar of the dialect
+
+JSON Schema 2019-09 and 2020-12 name the grammar of ECMAScript 2020 (ECMA-262, 11th edition). Under them a `pattern`, a `patternProperties` name and a string checked by the `regex` format are now read with that edition: modifier groups such as `(?i:...)`, a group name used by two groups, and a property or value that is not in the tables of 2020 (such as `\p{Script=Yezidi}`) are not valid with the `u` flag. A modifier group or a shared name is not valid without it either, so a schema with one in a `pattern` is refused. A property escape is valid without the flag, where `\p` is the letter `p`, so such a pattern is read as one with no flag, as a pattern with `\&` is: under 2020-12 `^\p{Script=Yezidi}$` matches the text `p{Script=Yezidi}`. The `regex` format reads only the grammar of the flag, so it refuses all three. Drafts 4 to 7 read today's grammar, as before. A pattern valid in both grammars has the same answers in both.
+
+- **`CompileOptions::regex_edition`** (`Option<RegexEdition>`) chooses the edition for every dialect. `None`, the default, takes the dialect's.
+- **`CompileOptions::regex_unicode_version`** (`RegexUnicodeVersion`) chooses the version of Unicode: `V13`, `V17`, `V18`, `Latest`, or `Default` (the default), the version of the V8 the engine's answers are held to, 17 today. It decides the members of each `\p{...}`, the characters of a group name and the case folding of the `i` flag.
+- `RegexEdition` and `RegexUnicodeVersion` are the engine's `Edition` and `UnicodeVersion`, re-exported.
+
 ## V0.1.7
 
 V0.1.7 replaces the regular expression engine, gives every match of a pattern a limit of time, and bounds what a pattern can cost to compile and to keep. It fixes wrong results for several forms of pattern, a validation that did not end, and a form of pattern that is not valid and was accepted. The functions and types that were there are unchanged. There are new ones for the limits. The minimum Rust version is 1.89 as before. Versions 0.1.0 to 0.1.6 are affected by the bugs.

@@ -10,31 +10,73 @@
 //! - alternatives of such sequences once groups are multiplied out (`^([a|A]uto)|([n|N]one)$`,
 //!   `^[Ee][Ss]2015(\.([Cc]ore|[Pp]roxy))?$`), sets of literals, and separated lists (`^([a-z]+)(\.[a-z]+)*$`),
 //!   as the C# evaluator's pattern matchers do;
-//! - patterns within the common subset of ECMA-262 and the `regex` crate's syntax, translated with ECMA semantics
-//!   (`\d`/`\w` ASCII-only, ECMA's `\s` and `.`) and run by `regex`, which searches in linear time without
-//!   allocating per match;
-//! - anything else (lookarounds, backreferences, `\B`, modifier groups, and every pattern `regex` is not given) by
-//!   the crate's own ECMA-262 engine (`ecmaregex`), a port of the engine of the Go module. It answers every pattern
-//!   as ECMA-262 does, as the pattern is written.
+//! - anything else by [Corvus.Regex.Ecma262](https://docs.rs/corvus-regex-ecma262), an ECMA-262 engine that answers
+//!   every pattern as V8 does, as the pattern is written, and matches a pattern with no backreference in time
+//!   proportional to the pattern's size times the string.
 //!
-//! Whether a pattern is valid is the engine's parser's answer, whichever matcher runs it, and so are the limits of
-//! size: a pattern over one is refused before any matcher reads it.
+//! Whether a pattern is valid is the engine's answer, whichever matcher runs it, in the grammar of the edition the
+//! dialect reads patterns with (ECMAScript 2020 for draft 2019-09 and draft 2020-12, today's for the others; see
+//! [`Grammar`]), and so are the limits of size: a pattern over one is refused before any matcher reads it.
 //!
-//! Patterns compile once per process (a pattern is immutable, so identical patterns share one matcher).
+//! Patterns compile once per process for each grammar (a pattern is immutable, so identical patterns share one
+//! matcher).
 
 use std::collections::{HashMap, VecDeque};
 use std::fmt;
-use std::sync::{Arc, LazyLock, Mutex, OnceLock};
+use std::sync::{Arc, LazyLock, Mutex};
 use std::time::Duration;
 
-use crate::ecmaregex;
+use corvus_regex_ecma262::{Edition, Flags, MatchError, Regex, RegexBuilder, UnicodeVersion};
+
+use crate::dialect::Dialect;
 use crate::options::{
-    PatternMatchLimitError, PatternTooLargeError, SchemaCompilationError, SchemaCompilationErrorKind,
+    CompileOptions, PatternMatchLimitError, PatternTooLargeError, SchemaCompilationError, SchemaCompilationErrorKind,
 };
+
+/// The grammar a pattern is read in: the edition of ECMA-262 and the version of Unicode.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub(crate) struct Grammar {
+    pub edition: Edition,
+    pub unicode_version: UnicodeVersion,
+}
+
+impl Grammar {
+    /// The grammar of a dialect's patterns: the edition the options give, or by default ECMAScript 2020 for draft
+    /// 2019-09 and draft 2020-12, which cite it, and today's for the earlier drafts; and the options' version of
+    /// Unicode.
+    pub(crate) fn of(dialect: Dialect, options: &CompileOptions) -> Grammar {
+        let edition = options.regex_edition.unwrap_or(if dialect >= Dialect::Draft201909 {
+            Edition::Es2020
+        } else {
+            Edition::Current
+        });
+        Grammar { edition, unicode_version: options.regex_unicode_version }
+    }
+
+    /// The flags of the grammar of the `u` flag, or of no flag.
+    fn flags(unicode: bool) -> Flags {
+        Flags { unicode, ..Flags::default() }
+    }
+
+    /// The pattern compiled in this grammar, with the `u` flag or with none.
+    fn build(self, pattern: &str, unicode: bool) -> Result<Regex, corvus_regex_ecma262::Error> {
+        RegexBuilder::new(pattern)
+            .with_flags(Grammar::flags(unicode))
+            .edition(self.edition)
+            .unicode_version(self.unicode_version)
+            .build()
+    }
+
+    /// Whether the pattern is valid in this grammar with the `u` flag.
+    fn is_valid_unicode(self, pattern: &str) -> bool {
+        Regex::is_valid_with(pattern, Grammar::flags(true), self.edition, self.unicode_version)
+    }
+}
 
 /// A compiled `pattern`.
 pub(crate) struct Pattern {
     pub source: String,
+    grammar: Grammar,
     matcher: Matcher,
     /// What the pattern is counted as in the cache of compiled patterns, in bytes (see [`Cache`]).
     retained: usize,
@@ -69,14 +111,9 @@ enum Matcher {
         set: CharSet,
         bangs: bool,
     },
-    Regex(Linear),
-    /// A pattern that is valid only without the `u` flag (an identity escape such as `\&`), so matching UTF-16 code
-    /// units: translated for `regex`, which decides it exactly on strings with no character beyond the Basic
-    /// Multilingual Plane (where code units are characters). The engine decides the rest, by code unit.
-    RegexBmp(Linear),
-    /// The crate's ECMA-262 engine: by character for a pattern with the `u` flag, and by UTF-16 code unit for one
-    /// that is valid only without it.
-    Engine(ecmaregex::Regexp),
+    /// The `corvus-regex-ecma262` engine: by character for a pattern with the `u` flag, and by UTF-16 code unit for one that is
+    /// valid only without it.
+    Engine(Box<Regex>),
 }
 
 impl fmt::Debug for Pattern {
@@ -85,55 +122,17 @@ impl fmt::Debug for Pattern {
     }
 }
 
-/// A pattern compiled by the `regex` crate, which matches in time proportional to its program times the string and
-/// cannot be stopped, with the engine for the strings it is not given.
-struct Linear {
-    re: regex::Regex,
-    /// The number of instructions estimated for the program (`ecmaregex::Facts::linear_cost`), and one at least.
-    cost: u64,
-    /// The engine for the pattern: compiled with the pattern when it is valid only without the `u` flag, and
-    /// otherwise for the first string that is too long for `regex` to answer within the limit of a match.
-    engine: OnceLock<Option<ecmaregex::Regexp>>,
-}
-
-impl Linear {
-    /// Whether `regex` answers the string within the limit of a match: its program times the string, at
-    /// [`LINEAR_STEP`] for each, is within the limit. With no limit every string is.
-    #[inline(always)]
-    fn fits(&self, s: &str, budget: &PatternBudget) -> bool {
-        (s.len() as u64).saturating_mul(self.cost) <= budget.limit.linear
-    }
-
-    #[cold]
-    fn engine(&self, source: &str) -> Option<&ecmaregex::Regexp> {
-        self.engine.get_or_init(|| ecmaregex::compile(source).ok()).as_ref()
-    }
-}
-
-/// The time the `regex` crate can take for one instruction of its program and one byte of the string, when every
-/// instruction has a thread on it (it then runs its simulation of the automaton, which is its slowest matcher). A
-/// match on `regex` cannot be stopped, so a match with a limit goes there only when the size of the program times
-/// the length of the string times this is within the limit. Any other goes to the engine, which reads the clock.
-/// The figure is the Go module's for the regexp package of Go. For the `regex` crate the most that was measured,
-/// with patterns that defeat its lazy automaton on a text of 100,000 bytes, was 3.6 ns.
-const LINEAR_STEP: Duration = Duration::from_nanos(16);
-
 /// The limit of a match, as a validator holds it.
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct PatternLimit {
     /// The time one match may take, or `None` for no limit.
     limit: Option<Duration>,
-    /// The program of a `regex` matcher times the bytes of a string that the limit allows (see [`LINEAR_STEP`]).
-    linear: u64,
 }
 
 impl PatternLimit {
     /// A limit of `limit` for each match. `None` and zero are no limit.
     pub(crate) fn new(limit: Option<Duration>) -> PatternLimit {
-        let limit = limit.filter(|l| !l.is_zero());
-        let linear =
-            limit.map_or(u64::MAX, |l| u64::try_from(l.as_nanos() / LINEAR_STEP.as_nanos()).unwrap_or(u64::MAX));
-        PatternLimit { limit, linear }
+        PatternLimit { limit: limit.filter(|l| !l.is_zero()) }
     }
 }
 
@@ -164,20 +163,19 @@ impl PatternBudget {
 
     /// Matches the string on the engine within the budget. When a limit is reached the answer is false, and it is
     /// not an answer: the caller of the evaluation gets the error.
-    fn engine_match(&mut self, engine: Option<&ecmaregex::Regexp>, source: &str, s: &str) -> bool {
+    fn engine_match(&mut self, engine: &Regex, source: &str, s: &str) -> bool {
         if self.failure.is_some() {
             return false;
         }
-        let result = match engine {
-            Some(engine) => engine.match_limit(s, self.limit.limit),
-            // No engine could be made for the pattern (see `ecmaregex::compile`), so there is no answer.
-            None => Err(ecmaregex::MatchError::Memory),
+        let result = match self.limit.limit {
+            Some(limit) => engine.is_match_within(s, limit),
+            None => engine.is_match(s),
         };
         result.unwrap_or_else(|e| {
             self.failure = Some(Box::new(PatternMatchLimitError::new(
                 source,
                 self.limit.limit.unwrap_or_default(),
-                e == ecmaregex::MatchError::Memory,
+                e == MatchError::Memory,
             )));
             false
         })
@@ -232,22 +230,7 @@ impl Pattern {
                 }
                 word
             }
-            Matcher::Regex(linear) => {
-                if linear.fits(s, budget) {
-                    linear.re.is_match(s)
-                } else {
-                    budget.engine_match(linear.engine(&self.source), &self.source, s)
-                }
-            }
-            // A UTF-8 lead byte of 0xF0 or above starts a character beyond the BMP.
-            Matcher::RegexBmp(linear) => {
-                if linear.fits(s, budget) && !ecmaregex::has_supplementary(s.as_bytes()) {
-                    linear.re.is_match(s)
-                } else {
-                    budget.engine_match(linear.engine(&self.source), &self.source, s)
-                }
-            }
-            Matcher::Engine(engine) => budget.engine_match(Some(engine), &self.source, s),
+            Matcher::Engine(engine) => budget.engine_match(engine, &self.source, s),
         }
     }
 }
@@ -256,9 +239,7 @@ impl Pattern {
 #[cfg(test)]
 pub(crate) fn kind(p: &Pattern) -> &'static str {
     match &p.matcher {
-        Matcher::Regex(_) => "regex",
-        Matcher::RegexBmp(..) => "regex-bmp",
-        Matcher::Engine(engine) if engine.unicode() => "engine",
+        Matcher::Engine(engine) if engine.flags().unicode => "engine",
         Matcher::Engine(_) => "engine-units",
         Matcher::Everything => "everything",
         Matcher::Literal { .. } => "literal",
@@ -384,21 +365,11 @@ impl Alternative {
 const MAX_CACHED_PATTERNS: usize = 1024;
 
 /// The most the patterns of the cache come to, in the bytes counted for each: 64 MiB. A pattern is counted as its
-/// source, the size the engine's parser counted for it four times over (its program is proportional to that), and
-/// for a pattern on the `regex` crate the memory estimated for that crate's program (`ecmaregex::Facts::linear_size`,
-/// which is an estimate: the crate does not say what it holds), up to three times [`REGEX_SIZE_LIMIT`].
+/// source and an estimate of what its matcher holds (see [`compile`]).
 const MAX_CACHED_BYTES: usize = 64 << 20;
 
 /// A pattern counted as more than this is compiled for the schema that has it and not kept in the cache.
 const MAX_CACHED_PATTERN_BYTES: usize = MAX_CACHED_BYTES / 32;
-
-/// The largest program the `regex` crate compiles for a pattern, in bytes: 2 MiB. (Its own default is 10 MiB.) A
-/// pattern that needs more is the engine's, which holds a class once however often the pattern repeats it.
-const REGEX_SIZE_LIMIT: usize = 2 << 20;
-
-/// The most the `regex` crate's lazy automaton caches for one pattern and one thread, in bytes: 2 MiB, which is
-/// that crate's default, said here so that it stays so.
-const REGEX_DFA_SIZE_LIMIT: usize = 2 << 20;
 
 /// The compiled patterns of the process, so that identical patterns share one matcher. It is bounded in number and
 /// in size, since the patterns of a schema may come from outside: when it is over either bound the patterns that
@@ -407,16 +378,16 @@ const REGEX_DFA_SIZE_LIMIT: usize = 2 << 20;
 /// later.
 #[derive(Default)]
 struct Cache {
-    patterns: HashMap<Arc<str>, Arc<Pattern>>,
-    /// The sources in the order they were compiled.
-    order: VecDeque<Arc<str>>,
+    patterns: HashMap<(Arc<str>, Grammar), Arc<Pattern>>,
+    /// The sources and their grammars in the order they were compiled.
+    order: VecDeque<(Arc<str>, Grammar)>,
     /// The sum of what the patterns are counted as.
     bytes: usize,
 }
 
 impl Cache {
-    fn get(&self, source: &str) -> Option<Arc<Pattern>> {
-        self.patterns.get(source).cloned()
+    fn get(&self, source: &str, grammar: Grammar) -> Option<Arc<Pattern>> {
+        self.patterns.get(&(Arc::from(source), grammar)).cloned()
     }
 
     /// Keeps a pattern, and returns the one to use: the pattern itself, or the one another thread kept for the same
@@ -425,13 +396,13 @@ impl Cache {
         if pattern.retained > MAX_CACHED_PATTERN_BYTES {
             return pattern;
         }
-        if let Some(kept) = self.patterns.get(pattern.source.as_str()) {
+        let key: (Arc<str>, Grammar) = (Arc::from(pattern.source.as_str()), pattern.grammar);
+        if let Some(kept) = self.patterns.get(&key) {
             return kept.clone();
         }
-        let source: Arc<str> = Arc::from(pattern.source.as_str());
         self.bytes += pattern.retained;
-        self.patterns.insert(source.clone(), pattern.clone());
-        self.order.push_back(source);
+        self.patterns.insert(key.clone(), pattern.clone());
+        self.order.push_back(key);
         while self.patterns.len() > MAX_CACHED_PATTERNS || self.bytes > MAX_CACHED_BYTES {
             let Some(oldest) = self.order.pop_front() else { break };
             if let Some(evicted) = self.patterns.remove(&oldest) {
@@ -454,7 +425,7 @@ pub(crate) enum PatternError {
     /// It is not a valid ECMA-262 regular expression.
     Invalid,
     /// It is over a limit of size. It was not read to its end, so nothing is known of whether it is valid.
-    TooLarge(ecmaregex::TooLargeError),
+    TooLarge(corvus_regex_ecma262::TooLargeError),
 }
 
 impl PatternError {
@@ -474,11 +445,12 @@ impl PatternError {
     }
 }
 
-impl From<ecmaregex::Error> for PatternError {
-    fn from(e: ecmaregex::Error) -> PatternError {
+impl From<corvus_regex_ecma262::Error> for PatternError {
+    fn from(e: corvus_regex_ecma262::Error) -> PatternError {
         match e {
-            ecmaregex::Error::TooLarge(large) => PatternError::TooLarge(large),
-            ecmaregex::Error::Invalid(_) => PatternError::Invalid,
+            corvus_regex_ecma262::Error::TooLarge(large) => PatternError::TooLarge(large),
+            // Not valid in the grammar, or (not given here) flags that are not.
+            _ => PatternError::Invalid,
         }
     }
 }
@@ -496,79 +468,37 @@ pub(crate) fn shown_pattern(pattern: &str) -> String {
     format!("'{}...' ({} bytes)", &pattern[..cut], pattern.len())
 }
 
-/// Compiles (or fetches from the process-wide cache) a pattern.
-pub(crate) fn compile(pattern: &str) -> Result<Arc<Pattern>, PatternError> {
-    if let Some(p) = cache().get(pattern) {
+/// Compiles (or fetches from the process-wide cache) a pattern, in the grammar of its dialect.
+pub(crate) fn compile(pattern: &str, grammar: Grammar) -> Result<Arc<Pattern>, PatternError> {
+    if let Some(p) = cache().get(pattern, grammar) {
         return Ok(p);
     }
     // The limits of size come first: nothing below reads a pattern that is over one. Validity is ECMA-262's: a
-    // pattern the engine's parser rejects is an error, whichever matcher would run it.
-    let facts = ecmaregex::check(pattern)?;
-    let matcher = match choose(pattern, &facts) {
-        Some(m) => m,
-        // Without the flag the pattern matches UTF-16 code units. `regex` matches characters, which is the same
-        // thing on a string with no character beyond the Basic Multilingual Plane.
-        None => match (!facts.unicode).then(|| linear(pattern, &facts)).flatten() {
-            Some(linear) => Matcher::RegexBmp(linear),
-            None => Matcher::Engine(ecmaregex::compile(pattern)?),
-        },
+    // pattern the engine refuses is an error, whichever matcher would run it. A pattern is read with the u flag, and
+    // failing that with no flag, whose grammar (Annex B) many schemas need.
+    let (engine, unicode) = match grammar.build(pattern, true) {
+        Ok(engine) => (engine, true),
+        Err(corvus_regex_ecma262::Error::TooLarge(large)) => return Err(PatternError::TooLarge(large)),
+        Err(_) => (grammar.build(pattern, false)?, false),
     };
-    // What the cache counts for the pattern (see `MAX_CACHED_BYTES`).
+    let matcher = choose(pattern, unicode, grammar).unwrap_or_else(|| Matcher::Engine(Box::new(engine)));
+    // What the cache counts for the pattern (see `MAX_CACHED_BYTES`): its source, and for the engine an estimate of
+    // its program and automata, which grow with the pattern.
     let mut retained = pattern.len() + 256;
-    if matches!(matcher, Matcher::Regex(_) | Matcher::RegexBmp(_) | Matcher::Engine(_)) {
-        retained += 4 * facts.size;
+    if matches!(matcher, Matcher::Engine(_)) {
+        retained += 16 * pattern.len();
     }
-    if matches!(matcher, Matcher::Regex(_) | Matcher::RegexBmp(_)) {
-        retained += (facts.linear_size as usize).min(3 * REGEX_SIZE_LIMIT);
-    }
-    Ok(cache().insert(Arc::new(Pattern { source: pattern.to_string(), matcher, retained })))
+    Ok(cache().insert(Arc::new(Pattern { source: pattern.to_string(), grammar, matcher, retained })))
 }
 
-/// The pattern translated for the `regex` crate and compiled by it, when it is in the syntax both have and its
-/// program is not large (see `ecmaregex::MAX_RE2_COST`: `regex` writes a counted repetition out, and takes time
-/// proportional to its program to compile and, for every character of a text, to match).
-fn linear(pattern: &str, facts: &ecmaregex::Facts) -> Option<Linear> {
-    if facts.re2_cost > ecmaregex::MAX_RE2_COST {
-        return None;
-    }
-    let translation = translate(pattern, facts.unicode)?;
-    let re = if ecmaregex::shallow(pattern) {
-        regex::RegexBuilder::new(&translation)
-            .size_limit(REGEX_SIZE_LIMIT)
-            .dfa_size_limit(REGEX_DFA_SIZE_LIMIT)
-            .build()
-            .ok()?
-    } else {
-        // `regex` reads 250 levels of nesting unless it is told otherwise, because what it does with a pattern goes
-        // a level deeper for each. A pattern that opens many groups is compiled on a thread with a stack for the
-        // 1,000 levels the engine's own limit allows (a group, its quantifier and a class inside it are three
-        // levels to `regex`), so that it is not the engine's for its nesting alone.
-        ecmaregex::deep(|| {
-            regex::RegexBuilder::new(&translation)
-                .size_limit(REGEX_SIZE_LIMIT)
-                .dfa_size_limit(REGEX_DFA_SIZE_LIMIT)
-                .nest_limit(4 * ecmaregex::MAX_NESTING as u32)
-                .build()
-                .ok()
-        })??
-    };
-    let engine = OnceLock::new();
-    if !facts.unicode || !ecmaregex::shallow(pattern) {
-        // The engine has the strings with a character beyond the Basic Multilingual Plane, so it is compiled now.
-        // So is that of a pattern that nests deeply, which is compiled on a stack of its own.
-        let _ = engine.set(Some(ecmaregex::compile(pattern).ok()?));
-    }
-    Some(Linear { re, cost: facts.linear_cost.max(1) as u64, engine })
-}
-
-fn choose(pattern: &str, facts: &ecmaregex::Facts) -> Option<Matcher> {
+fn choose(pattern: &str, unicode: bool, grammar: Grammar) -> Option<Matcher> {
     // Unanchored (or start-anchored) `.*` finds an empty match in any string; `^.*$` does not (`.` stops at a line
     // terminator), so it is not listed.
     if matches!(pattern, "" | ".*" | "^.*" | ".*$" | "(.*)" | "^(.*)" | "[\\s\\S]*" | "^[\\s\\S]*" | "^[\\s\\S]*$") {
         return Some(Matcher::Everything);
     }
     // Without the `u` flag, a pattern matches UTF-16 code units rather than characters: only the engine has that.
-    if !facts.unicode {
+    if !unicode {
         return None;
     }
     match pattern {
@@ -582,9 +512,8 @@ fn choose(pattern: &str, facts: &ecmaregex::Facts) -> Option<Matcher> {
         && rest.len() > 1
         && !ends_with_escape(rest)
         && !rest.ends_with(['*', '+', '?', '}', '|', '(', '^'])
-        && let Ok(rest_facts) = ecmaregex::check(rest)
-        && rest_facts.unicode
-        && let Some(m) = choose(rest, &rest_facts)
+        && grammar.is_valid_unicode(rest)
+        && let Some(m) = choose(rest, true, grammar)
     {
         return Some(m);
     }
@@ -609,7 +538,7 @@ fn choose(pattern: &str, facts: &ecmaregex::Facts) -> Option<Matcher> {
             None => Matcher::Sequence(seq),
         });
     }
-    linear(pattern, facts).map(Matcher::Regex)
+    None
 }
 
 /// `^.{m,n}$` (and `^.*$`, `^.+$`, `^.{m}$`, `^.{m,}$`, each also as `^(.…)$`): the bounds on the length of a line.
@@ -867,10 +796,12 @@ fn excluded_class_with_word(p: &str) -> Option<(CharSet, bool)> {
         .then_some((excluded, bangs))
 }
 
-/// The `regex` format: a valid ECMA-262 regular expression (with the `u` flag). A string over a limit of size is
-/// not read to its end and is not valid.
-pub(crate) fn is_valid_ecma_regex(s: &str) -> bool {
-    ecmaregex::valid(s)
+/// The `regex` format: a valid ECMA-262 regular expression in the grammar of the `u` flag, of the edition and version
+/// of Unicode the dialect reads patterns with. A string over one of the engine's limits of size
+/// ([`corvus_regex_ecma262::MAX_PATTERN_LENGTH`], [`corvus_regex_ecma262::MAX_NESTING`],
+/// [`corvus_regex_ecma262::MAX_SIZE`]) is not read to its end, so it is not reported as valid.
+pub(crate) fn is_valid_ecma_regex(s: &str, grammar: Grammar) -> bool {
+    grammar.is_valid_unicode(s)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1427,335 +1358,16 @@ fn parse_quantifier(b: &[u8], mut i: usize) -> Option<(u32, u32, usize)> {
     Some((min, max, i))
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
-// Translation to the regex crate
-
-/// ECMA-262 `\s`: WhiteSpace and LineTerminator.
-const ECMA_SPACE: &str =
-    r"\t\n\x{B}\x{C}\r \x{A0}\x{1680}\x{2000}-\x{200A}\x{2028}\x{2029}\x{202F}\x{205F}\x{3000}\x{FEFF}";
-
-/// Translates an ECMA-262 pattern to the `regex` crate's syntax with the same meaning, or `None` when it uses
-/// something outside the common subset. With `unicode` false, the pattern is read without the `u` flag (identity
-/// escapes of any non-alphanumeric character), and the translation has its meaning on strings within the BMP.
-fn translate(p: &str, unicode: bool) -> Option<String> {
-    let c: Vec<char> = p.chars().collect();
-    // Without the flag a character beyond the BMP is two code units, and what is around it (a quantifier, the ends
-    // of a range) applies to one of them. That has no translation.
-    if !unicode && c.iter().any(|&ch| ch as u32 > 0xFFFF) {
-        return None;
-    }
-    let mut out = String::with_capacity(p.len() * 2);
-    let mut i = 0;
-    while i < c.len() {
-        match c[i] {
-            '\\' => {
-                let (text, next) = escape(&c, i + 1, false, unicode)?;
-                out.push_str(&text);
-                i = next;
-            }
-            '[' => {
-                let (text, next) = class(&c, i + 1, unicode)?;
-                out.push_str(&text);
-                i = next;
-            }
-            '(' => {
-                if c.get(i + 1) == Some(&'?') {
-                    match (c.get(i + 2), c.get(i + 3)) {
-                        (Some(':'), _) => i += 3,
-                        // A named group; lookbehinds (`(?<=`, `(?<!`) are not supported.
-                        (Some('<'), Some(n)) if *n != '=' && *n != '!' => {
-                            i += 3 + c[i + 3..].iter().position(|&x| x == '>')? + 1;
-                        }
-                        _ => return None,
-                    }
-                } else {
-                    i += 1;
-                }
-                out.push_str("(?:");
-            }
-            '{' => {
-                let end = i + c[i..].iter().position(|&x| x == '}')?;
-                let body: String = c[i + 1..end].iter().collect();
-                if body.is_empty() || !body.chars().all(|x| x.is_ascii_digit() || x == ',') {
-                    return None;
-                }
-                out.push('{');
-                out.push_str(&body);
-                out.push('}');
-                i = end + 1;
-            }
-            '.' => {
-                out.push_str(r"[^\n\r\x{2028}\x{2029}]");
-                i += 1;
-            }
-            ch @ (')' | '|' | '^' | '$' | '*' | '+' | '?') => {
-                out.push(ch);
-                i += 1;
-            }
-            ch => {
-                push_literal(&mut out, ch);
-                i += 1;
-            }
-        }
-    }
-    Some(out)
-}
-
-fn push_literal(out: &mut String, ch: char) {
-    use std::fmt::Write;
-    let _ = write!(out, "\\x{{{:X}}}", ch as u32);
-}
-
-/// An escape after `\` at `i`: its translation and the index after it.
-fn escape(c: &[char], i: usize, in_class: bool, unicode: bool) -> Option<(String, usize)> {
-    let e = *c.get(i)?;
-    let mut out = String::new();
-    let next = match e {
-        'd' => {
-            out.push_str(if in_class { "0-9" } else { "[0-9]" });
-            i + 1
-        }
-        'D' => {
-            out.push_str("[^0-9]");
-            i + 1
-        }
-        'w' => {
-            out.push_str(if in_class { "0-9A-Za-z_" } else { "[0-9A-Za-z_]" });
-            i + 1
-        }
-        'W' => {
-            out.push_str("[^0-9A-Za-z_]");
-            i + 1
-        }
-        's' => {
-            if in_class {
-                out.push_str(ECMA_SPACE);
-            } else {
-                out.push('[');
-                out.push_str(ECMA_SPACE);
-                out.push(']');
-            }
-            i + 1
-        }
-        'S' => {
-            out.push_str("[^");
-            out.push_str(ECMA_SPACE);
-            out.push(']');
-            i + 1
-        }
-        'n' | 'r' | 't' | 'f' | 'v' => {
-            let ch = match e {
-                'n' => '\n',
-                'r' => '\r',
-                't' => '\t',
-                'f' => '\x0C',
-                _ => '\x0B',
-            };
-            push_literal(&mut out, ch);
-            i + 1
-        }
-        '0' if !c.get(i + 1).is_some_and(char::is_ascii_digit) => {
-            push_literal(&mut out, '\0');
-            i + 1
-        }
-        'b' if in_class => {
-            push_literal(&mut out, '\x08');
-            i + 1
-        }
-        // ECMA's word boundaries are between ASCII word characters and the rest.
-        'b' => {
-            out.push_str("(?-u:\\b)");
-            i + 1
-        }
-        // `\B` has no translation. `(?-u:\B)` also holds between the bytes of a character that takes several, where
-        // no match may start or end, and `regex` 1.13.1 then says there is no match where it finds one: for
-        // `s*?(?-u:\B)|..$` on `k\u{17f}k`, `is_match` is false and `find` is not. The engine has it.
-        'B' => return None,
-        // A Unicode property is written as the ranges of the engine's own tables, and never by its name: the
-        // `regex` crate has tables of its own, of the version of Unicode its release carries, and a name would
-        // match what that version says. Without the `u` flag `\p` is the letter.
-        'p' | 'P' if unicode && c.get(i + 1) == Some(&'{') => {
-            let end = i + 1 + c[i + 1..].iter().position(|&x| x == '}')?;
-            let body: String = c[i + 2..end].iter().collect();
-            let set = ecmaregex::property_set(&body)?;
-            let negated = e == 'P';
-            if set.ranges.is_empty() {
-                // No character has the property: nothing, or with `\P` everything.
-                out.push_str(if negated { r"[\x{0}-\x{10FFFF}]" } else { r"[^\x{0}-\x{10FFFF}]" });
-            } else if in_class && !negated {
-                push_ranges(&mut out, &set);
-            } else {
-                // A class of its own, which is also how a class holds the complement of a property.
-                out.push_str(if negated { "[^" } else { "[" });
-                push_ranges(&mut out, &set);
-                out.push(']');
-            }
-            end + 1
-        }
-        'x' => {
-            let hex: String = c.get(i + 1..i + 3)?.iter().collect();
-            push_literal(&mut out, char::from_u32(u32::from_str_radix(&hex, 16).ok()?)?);
-            i + 3
-        }
-        // Without the `u` flag, `\u{...}` is not a code point escape.
-        'u' if unicode || c.get(i + 1) != Some(&'{') => {
-            let (code, next) = unicode_escape(c, i + 1)?;
-            // Without the flag, two escapes that are a surrogate pair are two code units.
-            if !unicode && code > 0xFFFF {
-                return None;
-            }
-            push_literal(&mut out, char::from_u32(code)?);
-            next
-        }
-        // Identity escapes of syntax characters and `/` (and `-` in a class).
-        '^' | '$' | '\\' | '.' | '*' | '+' | '?' | '(' | ')' | '[' | ']' | '{' | '}' | '|' | '/' | '-' => {
-            push_literal(&mut out, e);
-            i + 1
-        }
-        // Without the `u` flag, any other non-alphanumeric character escapes to itself.
-        e if !unicode && !e.is_ascii_alphanumeric() => {
-            push_literal(&mut out, e);
-            i + 1
-        }
-        // Backreferences, \c, \k and the rest.
-        _ => return None,
-    };
-    Some((out, next))
-}
-
-/// The ranges of a set, each end spelled as an escape. A surrogate is no character to the `regex` crate, and no
-/// string holds one, so a range is written without the surrogates it spans. Two ranges that then touch, one ending
-/// at U+D7FF and the next starting at U+E000, are written as one: see [`class`] for what `regex` makes of the two.
-fn push_ranges(out: &mut String, set: &ecmaregex::CharSet) {
-    // The range that has been read and not yet written.
-    let mut pending: Option<(u32, u32)> = None;
-    let write = |out: &mut String, (lo, hi): (u32, u32)| {
-        if let (Some(lo), Some(hi)) = (char::from_u32(lo), char::from_u32(hi)) {
-            push_literal(out, lo);
-            if lo != hi {
-                out.push('-');
-                push_literal(out, hi);
-            }
-        }
-    };
-    for &[lo, hi] in set.ranges.as_chunks::<2>().0 {
-        // The ends that are surrogates move out of the surrogates. A range of surrogates alone is nothing.
-        let lo = if (0xD800..=0xDFFF).contains(&lo) { 0xE000 } else { lo as u32 };
-        let hi = if (0xD800..=0xDFFF).contains(&hi) { 0xD7FF } else { hi as u32 };
-        if lo > hi {
-            continue;
-        }
-        match pending {
-            Some((first, 0xD7FF)) if lo == 0xE000 => pending = Some((first, hi)),
-            Some(range) => {
-                write(out, range);
-                pending = Some((lo, hi));
-            }
-            None => pending = Some((lo, hi)),
-        }
-    }
-    if let Some(range) = pending {
-        write(out, range);
-    }
-}
-
-/// `\u` escapes after the `u`: `XXXX` (joining a surrogate pair) or `{X...}`.
-fn unicode_escape(c: &[char], i: usize) -> Option<(u32, usize)> {
-    if c.get(i) == Some(&'{') {
-        let end = i + c[i..].iter().position(|&x| x == '}')?;
-        let hex: String = c[i + 1..end].iter().collect();
-        return Some((u32::from_str_radix(&hex, 16).ok()?, end + 1));
-    }
-    let four = |at: usize| -> Option<u32> {
-        let hex: String = c.get(at..at + 4)?.iter().collect();
-        if hex.len() != 4 {
-            return None;
-        }
-        u32::from_str_radix(&hex, 16).ok()
-    };
-    let hi = four(i)?;
-    if (0xD800..0xDC00).contains(&hi) {
-        if c.get(i + 4) == Some(&'\\') && c.get(i + 5) == Some(&'u') {
-            let lo = four(i + 6)?;
-            if (0xDC00..0xE000).contains(&lo) {
-                return Some((0x10000 + ((hi - 0xD800) << 10) + (lo - 0xDC00), i + 10));
-            }
-        }
-        return None;
-    }
-    Some((hi, i + 4))
-}
-
-/// A class after `[` at `i`: its translation (every member spelled as an escape, so nothing in it is special to the
-/// `regex` crate) and the index after `]`.
-fn class(c: &[char], mut i: usize, unicode: bool) -> Option<(String, usize)> {
-    let mut out = String::from("[");
-    if c.get(i) == Some(&'^') {
-        out.push('^');
-        i += 1;
-    }
-    let mut members = 0;
-    loop {
-        let ch = *c.get(i)?;
-        if ch == ']' {
-            i += 1;
-            break;
-        }
-        // One atom: a character (which can start a range) or a class escape.
-        let (atom, single, next) = if ch == '\\' {
-            let e = *c.get(i + 1)?;
-            let (text, next) = escape(c, i + 1, true, unicode)?;
-            let single = match e {
-                'd' | 'D' | 'w' | 'W' | 's' | 'S' | 'p' | 'P' => None,
-                _ => Some(text.clone()),
-            };
-            (text, single, next)
-        } else {
-            let mut t = String::new();
-            push_literal(&mut t, ch);
-            (t.clone(), Some(t), i + 1)
-        };
-        i = next;
-        members += 1;
-        if c.get(i) == Some(&'-') && c.get(i + 1).is_some_and(|&n| n != ']') {
-            // A range: both ends single characters.
-            let lo = single?;
-            let (hi, next) = if c[i + 1] == '\\' {
-                let e = *c.get(i + 2)?;
-                if matches!(e, 'd' | 'D' | 'w' | 'W' | 's' | 'S' | 'p' | 'P') {
-                    return None;
-                }
-                escape(c, i + 2, true, unicode)?
-            } else {
-                let mut t = String::new();
-                push_literal(&mut t, c[i + 1]);
-                (t, i + 2)
-            };
-            out.push_str(&lo);
-            out.push('-');
-            out.push_str(&hi);
-            i = next;
-        } else {
-            out.push_str(&atom);
-        }
-    }
-    if members == 0 {
-        return None; // `[]` and `[^]` have no counterpart.
-    }
-    // `regex` 1.13.1 (regex-syntax 0.8.11) negates wrongly a class with a range that ends at U+D7FF and another
-    // that starts at U+E000, the characters on either side of the surrogates: the complement takes both in, so
-    // `[^\x{D7FF}\x{E000}]` matches every character. A negated class that names both (every literal here is
-    // spelled `\x{...}`, so a `^` is a negation) is left to the engine.
-    if out.contains('^') && out.contains(r"\x{D7FF}") && out.contains(r"\x{E000}") {
-        return None;
-    }
-    out.push(']');
-    Some((out, i))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const G: Grammar = Grammar { edition: Edition::Current, unicode_version: UnicodeVersion::Default };
+
+    /// A pattern compiled in today's grammar.
+    fn compile(p: &str) -> Result<Arc<Pattern>, PatternError> {
+        super::compile(p, G)
+    }
 
     const PATTERNS: &[&str] = &[
         "",
@@ -1919,18 +1531,17 @@ mod tests {
             seed
         };
         for &p in PATTERNS {
-            let reference = ecmaregex::compile(p).unwrap();
+            let reference = G.build(p, true).or_else(|_| G.build(p, false)).unwrap();
             let compiled = compile(p).unwrap();
             for _ in 0..4000 {
                 let len = next() % 9;
                 let s: String = (0..len).map(|_| alphabet[(next() % alphabet.len() as u64) as usize]).collect();
                 // Without the `u` flag the engine matches the UTF-16 code units of the string.
-                let found = reference.match_backtrack(&s, None).unwrap();
+                let found = reference.is_match(&s).unwrap();
                 for limit in [None, Some(Duration::from_secs(60)), Some(Duration::from_nanos(1))] {
                     let mut budget = PatternBudget::new(PatternLimit::new(limit));
                     let got = compiled.is_match(&s, &mut budget);
-                    // A limit of a nanosecond gives `regex` no string, so this is the engine for every pattern on
-                    // it. A match that reached its first check has no answer.
+                    // A match on the engine that reached its first check of the clock has no answer.
                     assert!(got == found || budget.failed(), "{p:?} on {s:?} with a limit of {limit:?}");
                     assert!(limit.is_some_and(|l| l.as_nanos() == 1) || !budget.failed(), "{p:?} on {s:?}");
                 }
@@ -1947,7 +1558,7 @@ mod tests {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::Literal { .. }), "{p}");
         }
         for p in ["^[a-z]*a$", "(base64key|awskms)://(.*)"] {
-            assert!(matches!(compile(p).unwrap().matcher, Matcher::Regex(_)), "{p}");
+            assert!(matches!(compile(p).unwrap().matcher, Matcher::Engine(_)), "{p}");
         }
         for p in [".+", "^.+", "(.+)"] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::HasContent { .. }), "{p}");
@@ -2000,17 +1611,17 @@ mod tests {
             "^x(,a(?=,|$))*$",
             "^x(?=,)(,a)*$",
         ] {
-            assert!(matches!(compile(p).unwrap().matcher, Matcher::Regex(_) | Matcher::Engine(_)), "{p}");
+            assert!(matches!(compile(p).unwrap().matcher, Matcher::Engine(_)), "{p}");
         }
         assert!(matches!(
             compile("^(?=[^!*,;{}[\\]~\\n]+$)(?=(.*\\w)).+$").unwrap().matcher,
             Matcher::ExcludedClassWithWord { .. }
         ));
         for p in ["\\bfoo", "^\\p{L}+$"] {
-            assert!(matches!(compile(p).unwrap().matcher, Matcher::Regex(_)), "{p}");
+            assert!(matches!(compile(p).unwrap().matcher, Matcher::Engine(_)), "{p}");
         }
         for p in ["^\\/[^\\*\\?\\&\\%]*(\\/\\*)?$", "a\\&.b", "^\\-a"] {
-            assert!(matches!(compile(p).unwrap().matcher, Matcher::RegexBmp(..)), "{p}");
+            assert!(matches!(&compile(p).unwrap().matcher, Matcher::Engine(engine) if !engine.flags().unicode), "{p}");
         }
         for p in ["^((\\.(?!\\.)\\/)?\\w+\\/?)+$", "^\\1(a)", "\\Bs", "(?i:a)", "^[]", "\\cA"] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::Engine(_)), "{p}");
@@ -2018,7 +1629,7 @@ mod tests {
         // Valid only without the `u` flag, and not in the syntax `regex` takes: the engine, by code unit.
         for p in ["^\\p{L}\\&", "^\\-?\u{10400}*$", "^\\-(?=a)"] {
             let compiled = compile(p).unwrap();
-            assert!(matches!(&compiled.matcher, Matcher::Engine(engine) if !engine.unicode()), "{p}");
+            assert!(matches!(&compiled.matcher, Matcher::Engine(engine) if !engine.flags().unicode), "{p}");
         }
     }
 }
@@ -2026,6 +1637,13 @@ mod tests {
 #[cfg(test)]
 mod limits {
     use super::*;
+
+    const G: Grammar = Grammar { edition: Edition::Current, unicode_version: UnicodeVersion::Default };
+
+    /// A pattern compiled in today's grammar.
+    fn compile(p: &str) -> Result<Arc<Pattern>, PatternError> {
+        super::compile(p, G)
+    }
 
     /// Which matcher a pattern gets (the Go module's `TestAWideSearchIsLeftToTheEngine`). A sequence or a literal
     /// that would be searched for at every position of the text keeps its matcher up to 64 characters, and beyond
@@ -2047,7 +1665,7 @@ mod limits {
         ] {
             let found = kind(&compile(&pattern).unwrap());
             assert_eq!(found == "alternatives", alternatives, "{pattern:.30} has the matcher {found}");
-            assert!(alternatives || matches!(found, "regex" | "engine"), "{pattern:.30} has the matcher {found}");
+            assert!(alternatives || found == "engine", "{pattern:.30} has the matcher {found}");
         }
         // The final sequence of a list must stop at the separator.
         for (pattern, list) in [
@@ -2058,42 +1676,6 @@ mod limits {
             let found = kind(&compile(pattern).unwrap());
             assert_eq!(found == "list", list, "{pattern} has the matcher {found}");
         }
-    }
-
-    /// The `regex` crate is given no large program (the Go module's `TestTheRegexpPackageIsGivenNoLargeProgram`):
-    /// it writes a counted repetition out, so the pattern goes to the engine when the copies are many.
-    #[test]
-    fn regex_is_given_no_large_program() {
-        for (pattern, want) in [
-            (r"a{1000}".to_string(), "regex"),
-            (r"(?:a|b|ab)*c".to_string(), "regex"),
-            (r"\p{L}{1000}".repeat(90), "engine"),
-            (r"(?:[ab]{1000}){50}c".to_string(), "engine"),
-            (r"(?:a{100}){101}".to_string(), "engine"),
-            (r"(?:(?:a?){100}){100}b".to_string(), "engine"),
-        ] {
-            assert_eq!(kind(&compile(&pattern).unwrap()), want, "{pattern:.40}");
-        }
-    }
-
-    /// A string too long for `regex` to answer within the limit of a match goes to the engine, which can be
-    /// stopped (the Go module's `TestALongTextIsNotGivenToTheRegexpPackage`).
-    #[test]
-    fn a_long_string_is_not_given_to_regex() {
-        let compiled = compile(r"^(?:[a-c\u00e9]{0,500}x)*$").unwrap();
-        let Matcher::Regex(linear) = &compiled.matcher else { panic!("the pattern is on {}", kind(&compiled)) };
-        assert!(linear.cost >= 500, "a program of {} instructions", linear.cost);
-        let short = "\u{e9}abcx".to_string();
-        let long = "\u{e9}abcx".repeat(100000);
-        let second = PatternLimit::new(Some(Duration::from_secs(1)));
-        let mut budget = PatternBudget::new(second);
-        assert!(linear.fits(&short, &budget) && !linear.fits(&long, &budget), "the strings are not on each side");
-        assert!(compiled.is_match(&short, &mut budget) && linear.engine.get().is_none(), "a short string");
-        assert!(compiled.is_match(&long, &mut budget) && !budget.failed(), "a long string");
-        assert!(matches!(linear.engine.get(), Some(Some(_))), "the engine was not made for the long string");
-        // With no limit every string is `regex`'s.
-        let mut unlimited = PatternBudget::new(PatternLimit::new(None));
-        assert!(linear.fits(&long, &unlimited) && !compiled.is_match(&format!("{long}y"), &mut unlimited));
     }
 
     /// The cache of compiled patterns is bounded in number and in size, and a pattern that has left it is still
@@ -2109,7 +1691,7 @@ mod limits {
             assert!(cache.patterns.len() <= MAX_CACHED_PATTERNS && cache.bytes <= MAX_CACHED_BYTES);
             assert_eq!(cache.patterns.len(), cache.order.len());
             assert_eq!(cache.bytes, cache.patterns.values().map(|p| p.retained).sum::<usize>());
-            assert!(cache.get("^cache-bound-0+$").is_none(), "the oldest pattern is still in the cache");
+            assert!(cache.get("^cache-bound-0+$", G).is_none(), "the oldest pattern is still in the cache");
         }
         assert!(first.is_match("cache-bound-000", &mut budget));
         assert!(held[0].is_match("cache-bound-0x", &mut budget) && !held[7].is_match("cache-bound-0x", &mut budget));
@@ -2122,154 +1704,35 @@ mod limits {
         assert!(large[0].retained > 256 << 10, "a large pattern is counted as {} bytes", large[0].retained);
         assert!(cache().bytes <= MAX_CACHED_BYTES);
         // A pattern too large for the cache is not kept at all.
-        let huge = compile(&format!("^(?=huge){}$", "a".repeat(15000))).unwrap();
-        assert!(huge.retained > MAX_CACHED_PATTERN_BYTES && cache().get(&huge.source).is_none());
-    }
-
-    /// The `regex` crate compiles no program over its limit of size: a class of a Unicode property repeated often
-    /// is the engine's, which holds the class once.
-    #[test]
-    fn regex_compiles_no_program_over_its_limit() {
-        for (pattern, want) in [
-            (r"^\p{L}+$", "regex"),
-            (r"^[\p{L}\p{N}_-]{1,8}$", "regex"),
-            (r"^[\p{L}\p{N}_-]{1,64}$", "engine"),
-            (r"^[\p{Alphabetic}\p{Nd}]{1,255}$", "engine"),
-        ] {
-            let compiled = compile(pattern).unwrap();
-            assert_eq!(kind(&compiled), want, "{pattern}");
-            let mut budget = PatternBudget::new(PatternLimit::new(Some(Duration::from_secs(1))));
-            assert!(compiled.is_match("caf\u{e9}", &mut budget) && !compiled.is_match("caf\u{e9}!", &mut budget));
-        }
-    }
-
-    /// Alternatives of one character each are one class to a linear matcher, so a long alternation is a small
-    /// program, and `regex` keeps a long string for it. And a pattern that nests more deeply than `regex` reads by
-    /// default is still compiled by it, on a thread with a stack for the nesting.
-    #[test]
-    fn regex_keeps_a_long_alternation_and_a_deep_nest() {
-        let alternatives: Vec<String> = (0..495u32).map(|k| char::from_u32(0x4E00 + k).unwrap().to_string()).collect();
-        let compiled = compile(&format!("(?:{})*z", alternatives.join("|"))).unwrap();
-        let Matcher::Regex(linear) = &compiled.matcher else { panic!("the alternation is on {}", kind(&compiled)) };
-        assert!(linear.cost <= 4, "a program of {} instructions", linear.cost);
-        let text = alternatives.concat().repeat(70);
-        assert!(text.len() >= 100_000);
-        let mut budget = PatternBudget::new(PatternLimit::new(Some(Duration::from_secs(1))));
-        assert!(linear.fits(&text, &budget) && !compiled.is_match(&text, &mut budget) && !budget.failed());
-        assert!(compiled.is_match(&format!("{text}z"), &mut budget) && linear.engine.get().is_none());
-
-        for depth in [300, 999] {
-            let nested = format!("^{}a{}b$", "(".repeat(depth), "*)".repeat(depth));
-            let compiled = compile(&nested).unwrap();
-            assert_eq!(kind(&compiled), "regex", "{depth} nested groups");
-            let start = std::time::Instant::now();
-            assert!(
-                compiled.is_match("aaaab", &mut budget)
-                    && !compiled.is_match("\u{e9}aaaaaaaaaaaaaaaaaaaaaaaaa", &mut budget)
-            );
-            assert!(!budget.failed() && start.elapsed() < Duration::from_secs(20), "{depth} nested groups");
-        }
-    }
-
-    /// The translation for `regex` names no Unicode class: every property is written as the ranges of the engine's
-    /// own tables, so the answer does not depend on the tables of the `regex` crate.
-    #[test]
-    fn the_translation_carries_no_unicode_class() {
-        for p in [
-            r"^\p{L}+$",
-            r"\P{Lu}",
-            r"[\p{Script=Greek}\p{Nd}]",
-            r"[^\p{scx=Hira}]",
-            r"\d\w\s.",
-            r"\p{Any}\p{Assigned}\p{ASCII}",
-        ] {
-            let compiled = compile(p).unwrap();
-            assert_eq!(kind(&compiled), "regex", "{p}");
-            let translated = translate(p, true).unwrap();
-            for bad in [r"\p", r"\P", "(?i", "[[:", r"\d", r"\w", r"\s"] {
-                assert!(!translated.contains(bad), "the translation of {p} contains {bad}");
-            }
-        }
-        // The four scripts Unicode 17 added are in the tables, whatever the `regex` crate's own tables hold.
-        let mut budget = PatternBudget::new(PatternLimit::new(None));
-        for (p, text) in [
-            (r"^\p{sc=Sidt}$", "\u{10940}"),
-            (r"^\p{sc=Tols}$", "\u{11DB0}"),
-            (r"^\p{sc=Berf}$", "\u{16EA0}"),
-            (r"^\p{sc=Tayo}$", "\u{1E6C0}"),
-            (r"^[\p{sc=Sidt}a]$", "\u{10940}"),
-            (r"^[^\P{sc=Sidt}]$", "\u{10940}"),
-        ] {
-            let compiled = compile(p).unwrap();
-            assert_eq!(kind(&compiled), "regex", "{p}");
-            assert!(compiled.is_match(text, &mut budget) && !compiled.is_match("a!", &mut budget), "{p}");
-        }
-        // The complement of a set whose ranges meet at the surrogates, which `regex` gets wrong when it is given
-        // the two ranges: Unknown holds U+D7FC to U+D7FF and U+E000 to U+F8FF. And the same written by hand, which
-        // is the engine's.
-        for (p, want) in [
-            (r"^\P{sc=Unknown}$", "regex"),
-            (r"^[^\p{scx=Unknown}]$", "regex"),
-            (r"^[^\p{Script=Unknown}a]$", "regex"),
-            (r"^[^\ud7ff\ue000]$", "engine"),
-            (r"^[^\ud7fc-\ud7ff\ue000-\uf8ff]$", "engine"),
-            (r"^[^\p{Co}\ud7ff]$", "engine"),
-            (r"^[^\p{Cn}\ue000]$", "engine"),
-        ] {
-            let compiled = compile(p).unwrap();
-            assert_eq!(kind(&compiled), want, "{p}");
-            let engine = ecmaregex::compile(p).unwrap();
-            for text in ["\u{D7FB}", "\u{D7FC}", "\u{D7FF}", "\u{E000}", "\u{E001}", "\u{F8FF}", "\u{F900}", "a", "b"] {
-                assert_eq!(
-                    compiled.is_match(text, &mut budget),
-                    engine.match_backtrack(text, None).unwrap(),
-                    "{p} on {text:?}"
-                );
-            }
-            assert!(!compiled.is_match("\u{E000}", &mut budget), "{p} matches U+E000");
-        }
-        // A set with a range on each side of the surrogates and none of them is written as one range, and a range
-        // of surrogates alone as nothing.
-        let mut written = String::new();
-        push_ranges(&mut written, &ecmaregex::CharSet::new(&[0x61, 0x7A, 0xD700, 0xD7FF, 0xE000, 0xE0FF], false));
-        assert_eq!(written, r"\x{61}-\x{7A}\x{D700}-\x{E0FF}");
-        written.clear();
-        push_ranges(&mut written, &ecmaregex::CharSet::new(&[0xD7FF, 0xDBFF, 0xDC00, 0xDFFF, 0xDFFF, 0xE000], false));
-        assert_eq!(written, r"\x{D7FF}-\x{E000}");
-        written.clear();
-        push_ranges(&mut written, &ecmaregex::CharSet::new(&[0xD800, 0xDFFF], false));
-        assert_eq!(written, "");
-        // A property no character has, and its complement.
-        for (p, yes, no) in
-            [(r"^\P{sc=Hrkt}$", "a", "aa"), (r"^[\p{sc=Hrkt}a]$", "a", "b"), (r"^[^\P{sc=Hrkt}]?$", "", "a")]
-        {
-            let compiled = compile(p).unwrap();
-            assert_eq!(kind(&compiled), "regex", "{p}");
-            assert!(compiled.is_match(yes, &mut budget) && !compiled.is_match(no, &mut budget), "{p}");
-        }
+        let huge = compile(&format!("^(?=huge){}$", class.repeat(4))).unwrap();
+        assert!(huge.retained > MAX_CACHED_PATTERN_BYTES && cache().get(&huge.source, G).is_none());
     }
 }
 
 #[cfg(test)]
 mod corpus_patterns {
-    /// Lists which matcher each pattern in `CORVUS_PATTERNS` (corpus<TAB>pattern lines) gets.
+    use std::sync::Arc;
+
+    use super::{Edition, Grammar, Pattern, PatternError, UnicodeVersion};
+
+    const G: Grammar = Grammar { edition: Edition::Current, unicode_version: UnicodeVersion::Default };
+
+    /// A pattern compiled in today's grammar.
+    fn compile(p: &str) -> Result<Arc<Pattern>, PatternError> {
+        super::compile(p, G)
+    }
+
+    /// Lists which matcher each pattern in `CORVUS_PATTERNS` (corpus<TAB>pattern lines) gets, and what the cache
+    /// counts for it.
     #[test]
     #[ignore]
     fn classify_corpus_patterns() {
         let Ok(path) = std::env::var("CORVUS_PATTERNS") else { return };
         for line in std::fs::read_to_string(path).unwrap().lines() {
             let (corpus, p) = line.split_once('\t').unwrap();
-            let kind = super::compile(p).map(|c| super::kind(&c)).unwrap_or("invalid");
-            // What the `regex` crate is given: the translation.
-            let unicode = crate::ecmaregex::valid(p);
-            let given = match kind {
-                "regex" | "regex-bmp" => super::translate(p, unicode).unwrap_or_default(),
-                _ => String::new(),
-            };
-            // And what the cache counts for the pattern, which for a pattern on `regex` holds the estimate of
-            // that crate's program.
-            let retained = super::compile(p).map_or(0, |c| c.retained);
-            println!("{kind}\t{corpus}\t{p}\t{given}\t{retained}");
+            let kind = compile(p).map(|c| super::kind(&c)).unwrap_or("invalid");
+            let retained = compile(p).map_or(0, |c| c.retained);
+            println!("{kind}\t{corpus}\t{p}\t{retained}");
         }
     }
 }

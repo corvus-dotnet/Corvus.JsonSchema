@@ -271,6 +271,7 @@ impl<'l, 'o> SchemaCompiler<'l, 'o> {
             (r.dialect, r.vocabularies)
         };
         let legacy = dialect.is_legacy();
+        let grammar = crate::pattern::Grammar::of(dialect, self.options);
 
         if legacy && let Some(Value::String(r)) = e.get("$ref") {
             // In draft 7 and earlier, $ref replaces every sibling keyword.
@@ -344,7 +345,8 @@ impl<'l, 'o> SchemaCompiler<'l, 'o> {
             if let Some(Value::Object(pp)) = e.get("patternProperties") {
                 let mut list = Vec::with_capacity(pp.len());
                 for (pattern, v) in pp {
-                    let compiled = crate::pattern::compile(pattern).map_err(|e| e.of(pattern, "patternProperties"))?;
+                    let compiled =
+                        crate::pattern::compile(pattern, grammar).map_err(|e| e.of(pattern, "patternProperties"))?;
                     let c = self.child(target, v, &format!("/patternProperties/{}", escape_pointer_token(pattern)));
                     list.push(PatternProperty { pattern: compiled, node: c });
                 }
@@ -467,7 +469,7 @@ impl<'l, 'o> SchemaCompiler<'l, 'o> {
             n.min_length = get_uint(e.get("minLength"));
             n.max_length = get_uint(e.get("maxLength"));
             if let Some(Value::String(p)) = e.get("pattern") {
-                n.pattern = Some(crate::pattern::compile(p).map_err(|e| e.of(p, "pattern"))?);
+                n.pattern = Some(crate::pattern::compile(p, grammar).map_err(|e| e.of(p, "pattern"))?);
             }
             if let Some(Value::Number(m)) = e.get("multipleOf") {
                 n.multiple_of = Some(m.clone());
@@ -510,7 +512,7 @@ impl<'l, 'o> SchemaCompiler<'l, 'o> {
 
         if let Some(Value::String(f)) = e.get("format") {
             n.format = Some(f.clone());
-            n.format_kind = FormatKind::of(f, dialect);
+            n.format_kind = FormatKind::of(f, dialect, grammar);
             n.assert_format = format_assert;
         }
 

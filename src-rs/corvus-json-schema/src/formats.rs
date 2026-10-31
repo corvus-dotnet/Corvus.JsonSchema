@@ -30,7 +30,8 @@ pub(crate) enum FormatKind {
     UriTemplate,
     JsonPointer,
     RelativeJsonPointer,
-    Regex,
+    /// The regex format, read in the grammar the dialect reads patterns with.
+    Regex(crate::pattern::Grammar),
     // Numeric formats (a Corvus extension).
     Byte,
     UInt16,
@@ -49,7 +50,7 @@ pub(crate) enum FormatKind {
 }
 
 impl FormatKind {
-    pub fn of(format: &str, dialect: Dialect) -> FormatKind {
+    pub fn of(format: &str, dialect: Dialect, grammar: crate::pattern::Grammar) -> FormatKind {
         use FormatKind::*;
         let at_least = |d: Dialect, k: FormatKind| if dialect >= d { k } else { Unknown };
         match format {
@@ -78,7 +79,7 @@ impl FormatKind {
             "json-pointer" => at_least(Dialect::Draft6, JsonPointer),
             "date" => at_least(Dialect::Draft7, Date),
             "time" => at_least(Dialect::Draft7, Time),
-            "regex" => at_least(Dialect::Draft7, Regex),
+            "regex" => at_least(Dialect::Draft7, Regex(grammar)),
             "relative-json-pointer" => at_least(Dialect::Draft7, RelativeJsonPointer),
             "idn-email" => at_least(Dialect::Draft7, IdnEmail),
             "idn-hostname" => at_least(Dialect::Draft7, IdnHostname),
@@ -133,7 +134,7 @@ impl FormatKind {
             UriTemplate => "uri-template",
             JsonPointer => "json-pointer",
             RelativeJsonPointer => "relative-json-pointer",
-            Regex => "regex",
+            Regex(_) => "regex",
             Byte => "byte",
             UInt16 => "uint16",
             UInt32 => "uint32",
@@ -175,7 +176,7 @@ impl FormatKind {
             RelativeJsonPointer => {
                 "Expected a Relative JSON Pointer. (https://json-schema.org/draft/2020-12/relative-json-pointer)."
             }
-            Regex => "Expected a regular expression specification.",
+            Regex(_) => "Expected a regular expression specification.",
             _ => return None,
         })
     }
@@ -208,7 +209,7 @@ impl FormatKind {
             UriTemplate => URI_TEMPLATE_RE.is_match(s),
             JsonPointer => JSON_POINTER_RE.is_match(s),
             RelativeJsonPointer => RELATIVE_JSON_POINTER_RE.is_match(s),
-            Regex => crate::pattern::is_valid_ecma_regex(s),
+            Regex(grammar) => crate::pattern::is_valid_ecma_regex(s, grammar),
             _ => true,
         }
     }

@@ -78,8 +78,8 @@ and `writeRE2` in `internal/ecmaregex` do.
 `internal/ucd/tables_gen.go` holds Unicode 17, the version V8 answered with in `internal/ecmaregex/testdata/v8_oracle.json`.
 `internal/ucd/gen_tables.ps1` writes it from `unicodetables.rs` of the `regress` crate, a file that crate generates
 from the Unicode Character Database, already formatted as gofmt formats it. The crate is only where the data is
-read from. No port depends on it: the Rust crate carries a port of this module's engine, and its tables are written
-from `tables_gen.go` (`src-rs/corvus-json-schema/tools/gen-ucd-tables.ps1`), which its tests compare with this file.
+read from. No port depends on it. The Rust crate no longer shares these tables: it matches with the
+`corvus-regex-ecma262` crate, which carries its own.
 
 ```powershell
 pwsh src-go/corvus-json-schema/internal/ucd/gen_tables.ps1 -RegressTables ~/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regress-0.12.0/src/unicodetables.rs

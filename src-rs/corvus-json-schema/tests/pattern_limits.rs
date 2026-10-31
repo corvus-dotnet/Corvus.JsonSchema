@@ -395,6 +395,8 @@ fn a_pattern_that_is_not_valid_is_not_too_large() {
     assert_eq!(e.kind(), &SchemaCompilationErrorKind::Other);
 }
 
+/// The `regex` format reads a pattern up to the engine's limits of size: one over a limit is not read to its end, so
+/// it is not valid, and the answer comes in good time however large it is.
 #[test]
 fn the_regex_format_refuses_a_pattern_over_a_limit() {
     let options = CompileOptions { assert_format: Some(true), ..CompileOptions::default() };
