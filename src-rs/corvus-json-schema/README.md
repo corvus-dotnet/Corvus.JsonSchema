@@ -73,8 +73,9 @@ this way, through CPython's C API.
 - **Patterns:** use ECMA-262 semantics. A pattern is compiled with the `u` flag. One that is not valid with it (it has
   `\&` or `\-`, say) is compiled without it, as many validators accept such patterns, and is then matched as
   ECMA-262 says for it: by UTF-16 code unit, so a character beyond the Basic Multilingual Plane is two. The `regex`
-  format accepts only the grammar of the flag. Common shapes (class sequences, literals and their alternatives,
-  separated lists, line lengths) get dedicated matchers, as in the C# evaluator. Every other pattern is matched by
+  format accepts only the grammar of the flag. Common shapes (class sequences, a few literals and alternatives, line
+  lengths) get dedicated matchers, as in the C# evaluator, where each was measured faster than the engine over the
+  strings of the jsonschema-benchmark corpora. Every other pattern is matched by
   [`corvus-regex-ecma262`](https://crates.io/crates/corvus-regex-ecma262), an ECMA-262 engine. The crate depends
   on it, `regex` (for the format checks) and `serde_json`.
 

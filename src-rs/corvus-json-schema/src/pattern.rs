@@ -8,8 +8,8 @@
 //! - anchored sequences of quantified ASCII character classes and literals (`^[a-z][a-z0-9_]{0,29}$`, `^x-`,
 //!   `^[@$_#]`), matched in one pass over the string (the TypeScript evaluator's class-sequence fast path);
 //! - alternatives of such sequences once groups are multiplied out (`^([a|A]uto)|([n|N]one)$`,
-//!   `^[Ee][Ss]2015(\.([Cc]ore|[Pp]roxy))?$`), sets of literals, and separated lists (`^([a-z]+)(\.[a-z]+)*$`),
-//!   as the C# evaluator's pattern matchers do;
+//!   `^[Ee][Ss]2015(\.([Cc]ore|[Pp]roxy))?$`) and sets of literals, as the C# evaluator's pattern matchers do,
+//!   where they were measured faster than the engine (see [`MOST_LITERALS`]);
 //! - anything else by [Corvus.Regex.Ecma262](https://docs.rs/corvus-regex-ecma262), an ECMA-262 engine that answers
 //!   every pattern as V8 does, as the pattern is written, and matches a pattern with no backreference in time
 //!   proportional to the pattern's size times the string.
@@ -91,7 +91,6 @@ enum Matcher {
         whole: bool,
     },
     Sequence(Sequence),
-    SeparatedList(SeparatedList),
     /// `.+` (`^.+` with `start`): some (the first) character is not a line terminator.
     HasContent {
         start: bool,
@@ -111,8 +110,8 @@ enum Matcher {
         set: CharSet,
         bangs: bool,
     },
-    /// The `corvus-regex-ecma262` engine: by character for a pattern with the `u` flag, and by UTF-16 code unit for one that is
-    /// valid only without it.
+    /// The `corvus-regex-ecma262` engine: by character for a pattern with the `u` flag, and by UTF-16 code unit for
+    /// one that is valid only without it.
     Engine(Box<Regex>),
 }
 
@@ -197,7 +196,6 @@ impl Pattern {
                 }
             }
             Matcher::Sequence(seq) => seq.is_match(s),
-            Matcher::SeparatedList(list) => list.is_match(s),
             Matcher::HasContent { start } => {
                 if *start {
                     s.chars().next().is_some_and(|c| !is_line_terminator(c))
@@ -244,7 +242,6 @@ pub(crate) fn kind(p: &Pattern) -> &'static str {
         Matcher::Everything => "everything",
         Matcher::Literal { .. } => "literal",
         Matcher::Sequence(_) => "sequence",
-        Matcher::SeparatedList(_) => "list",
         Matcher::HasContent { .. } => "has-content",
         Matcher::Line { .. } => "line",
         Matcher::Literals(_) => "literals",
@@ -275,29 +272,33 @@ fn line_length(s: &str) -> Option<usize> {
     Some(n)
 }
 
-/// A set of strings: compared in turn when there are few, hashed otherwise.
-enum Literals {
-    Few(Box<[Box<str>]>),
-    Many(std::collections::HashSet<Box<str>>),
-}
+/// A set of at most [`MOST_LITERALS`] strings, compared in turn.
+struct Literals(Box<[Box<str>]>);
 
 impl Literals {
     fn new(texts: Vec<String>) -> Literals {
-        if texts.len() <= 8 {
-            Literals::Few(texts.into_iter().map(String::into_boxed_str).collect())
-        } else {
-            Literals::Many(texts.into_iter().map(String::into_boxed_str).collect())
-        }
+        Literals(texts.into_iter().map(String::into_boxed_str).collect())
     }
 
     #[inline]
     fn contains(&self, s: &str) -> bool {
-        match self {
-            Literals::Few(texts) => texts.iter().any(|t| **t == *s),
-            Literals::Many(set) => set.contains(s),
-        }
+        self.0.iter().any(|t| **t == *s)
     }
 }
+
+// What the dedicated matchers are kept for: each was timed against the engine, pattern by pattern, over the strings of
+// the jsonschema-benchmark corpora (`corpus_patterns::time_corpus_patterns`), and a form is kept only where its matcher
+// was the faster. Four literals compared in turn took 0.78 of the engine's time, and ten 3.2 times it. Two alternatives
+// of which neither is anchored at both ends (`^([a|A]uto)|([n|N]one)$`) took 0.21 of it, since the engine searches for
+// the unanchored one; three such took 1.4 to 1.6 times it, and every alternative anchored at both ends was faster on
+// the engine (by 1.1 to 2.7 times), which reads the whole string once whatever the alternatives. A separated list was
+// no faster than the engine (the same total time over the seven in the corpora), so it has no matcher of its own.
+
+/// The most literals of [`Matcher::Literals`].
+const MOST_LITERALS: usize = 4;
+
+/// The most alternatives of [`Matcher::Alternatives`].
+const MOST_ALTERNATIVES: usize = 2;
 
 /// One alternative of [`Matcher::Alternatives`]: a literal anchored at either end (or neither), a class sequence
 /// anchored at the start, or a fixed-width class sequence anchored at the end.
@@ -521,19 +522,23 @@ fn choose(pattern: &str, unicode: bool, grammar: Grammar) -> Option<Matcher> {
         return Some(Matcher::Line { min, max });
     }
     if let Some(texts) = whole_alternatives(pattern) {
-        return Some(Matcher::Literals(Literals::new(texts)));
+        return (texts.len() <= MOST_LITERALS).then(|| Matcher::Literals(Literals::new(texts)));
     }
     if let Some(alts) = alternatives(pattern) {
-        return Some(Matcher::Alternatives(alts));
-    }
-    if let Some(list) = SeparatedList::parse(pattern) {
-        return Some(Matcher::SeparatedList(list));
+        let whole = |a: &Alternative| match a {
+            Alternative::Literal { start, end, .. } => *start && *end,
+            Alternative::Start(seq) => seq.to_end,
+            Alternative::End { .. } | Alternative::Anywhere { .. } => false,
+        };
+        return (alts.len() <= MOST_ALTERNATIVES && !alts.iter().any(whole)).then_some(Matcher::Alternatives(alts));
     }
     if let Some((set, bangs)) = excluded_class_with_word(pattern) {
         return Some(Matcher::ExcludedClassWithWord { set, bangs });
     }
     if let Some(seq) = Sequence::parse(pattern) {
         return Some(match seq.literal() {
+            // `^[a-z]*` with nothing it requires: every string.
+            Some(text) if text.is_empty() && !seq.to_end => Matcher::Everything,
             Some(text) => Matcher::Literal { text: text.into(), whole: seq.to_end },
             None => Matcher::Sequence(seq),
         });
@@ -959,6 +964,16 @@ impl Sequence {
                 }
             }
         }
+        if !to_end {
+            // Without `$` a match needs only the start of the string: items at the end that can match nothing are
+            // dropped, and the last of the rest needs only its least count (`^[a-z]+` is `^[a-z]`).
+            while items.last().is_some_and(|item| item.min == 0) {
+                items.pop();
+            }
+            if let Some(last) = items.last_mut() {
+                last.max = last.min;
+            }
+        }
         Some(Sequence { items: items.into_boxed_slice(), to_end })
     }
 
@@ -1014,231 +1029,6 @@ impl Sequence {
         }
         !self.to_end || at == b.len()
     }
-
-    /// Greedily matches the items at the start of `s` (ignoring `to_end`): the bytes taken.
-    fn consume(&self, s: &str) -> Option<usize> {
-        let b = s.as_bytes();
-        let mut at = 0;
-        for item in self.items.iter() {
-            let mut n = 0u32;
-            while n < item.max && at < b.len() {
-                let c = b[at];
-                if c < 0x80 {
-                    if !item.set.has_ascii(c) {
-                        break;
-                    }
-                    at += 1;
-                } else {
-                    let ch = s[at..].chars().next()?;
-                    if !item.set.contains(ch) {
-                        break;
-                    }
-                    at += ch.len_utf8();
-                }
-                n += 1;
-            }
-            if n < item.min {
-                return None;
-            }
-        }
-        Some(at)
-    }
-
-    /// Whether greedy matching is exact when `next` can follow the items: every variable item is disjoint from the
-    /// items that can directly follow it (up to the first that cannot match nothing), `next` included.
-    fn greedy_before(items: &[Item], next: CharSet) -> bool {
-        items.iter().enumerate().all(|(i, item)| {
-            if item.min == item.max {
-                return true;
-            }
-            for following in &items[i + 1..] {
-                if !item.set.disjoint(following.set) {
-                    return false;
-                }
-                if following.min > 0 {
-                    return true;
-                }
-            }
-            item.set.disjoint(next)
-        })
-    }
-}
-
-/// A list of items between separators: `^I(SR)*$` or `^I(SR)+$` (`final_` is `None`), or `^(RS)*F$` and
-/// `^(RS)+F$`. The separator is a fixed sequence and no variable class can run into what follows it, so greedy
-/// matching splits the string exactly where the pattern does.
-#[derive(Debug)]
-struct SeparatedList {
-    /// `I` of the first form.
-    first: Option<Sequence>,
-    repeated: Sequence,
-    separator: Sequence,
-    /// `F` of the second form, matched against the whole remainder.
-    final_: Option<Sequence>,
-    min_repeats: u32,
-}
-
-impl SeparatedList {
-    fn is_match(&self, s: &str) -> bool {
-        let mut rest = s;
-        let mut repeats = 0;
-        if let Some(first) = &self.first {
-            let Some(n) = first.consume(rest) else { return false };
-            rest = &rest[n..];
-            loop {
-                if rest.is_empty() {
-                    return repeats >= self.min_repeats;
-                }
-                let Some(n) = self.separator.consume(rest) else { return false };
-                rest = &rest[n..];
-                let Some(n) = self.repeated.consume(rest) else { return false };
-                rest = &rest[n..];
-                repeats += 1;
-            }
-        }
-        let final_ = self.final_.as_ref().expect("a separated list has a first or a final item");
-        // Whether the text is ASCII is worked out once, for the whole of it. The final sequence is tried after
-        // every item, and reading what is left of the text each time to see whether it is ASCII made the match take
-        // time quadratic in the number of items.
-        let ascii = s.is_ascii();
-        loop {
-            if repeats >= self.min_repeats
-                && (if ascii { final_.is_match_ascii(rest.as_bytes()) } else { final_.is_match_chars(rest) })
-            {
-                return true;
-            }
-            let Some(n) = self.repeated.consume(rest) else { return false };
-            let Some(m) = self.separator.consume(&rest[n..]) else { return false };
-            rest = &rest[n + m..];
-            repeats += 1;
-        }
-    }
-
-    fn parse(p: &str) -> Option<SeparatedList> {
-        let body = p.strip_prefix('^')?.strip_suffix('$')?;
-        if ends_with_escape(body) {
-            return None;
-        }
-        let b = body.as_bytes();
-        // Top-level groups: (start, end) of each, where end is the index of its `)`.
-        let mut groups = Vec::new();
-        let (mut depth, mut in_class, mut i, mut open) = (0usize, false, 0, 0);
-        while i < b.len() {
-            match b[i] {
-                b'\\' => i += 1,
-                b'[' if !in_class => in_class = true,
-                b']' if in_class => in_class = false,
-                b'(' if !in_class => {
-                    if depth == 0 {
-                        open = i;
-                    }
-                    depth += 1;
-                }
-                b')' if !in_class => {
-                    depth = depth.checked_sub(1)?;
-                    if depth == 0 {
-                        groups.push((open, i));
-                    }
-                }
-                _ => {}
-            }
-            i += 1;
-        }
-        let quantified: Vec<_> = groups.iter().filter(|&&(_, e)| matches!(b.get(e + 1), Some(b'*' | b'+'))).collect();
-        let &&(open, close) = quantified.first().filter(|_| quantified.len() == 1)?;
-        let min_repeats = u32::from(b[close + 1] == b'+');
-        let group = strip_group(&body[open..=close])?;
-        let before = &body[..open];
-        let after = &body[close + 2..];
-        // The items of a text that is a class sequence. A `$` at the end of the text is not an item, and the list has
-        // no place for it: `^x(,a$)*$` is not `^x(,a)*$`. Such a text is not a part of a list.
-        let items = |t: &str| Sequence::parse(&format!("^{t}")).filter(|s| !s.to_end).map(|s| s.items.into_vec());
-        let seq = |items: &[Item], to_end| Sequence { items: items.into(), to_end };
-        let fixed = |items: &[Item]| !items.is_empty() && items.iter().all(|i| i.min == i.max && i.min > 0);
-        let g = items(group)?;
-        match (before.is_empty(), after.is_empty()) {
-            // ^I(SR)*$
-            (false, true) => {
-                let first = items(unwrap_group(before)?)?;
-                (1..g.len()).find_map(|k| {
-                    let (separator, repeated) = g.split_at(k);
-                    let next = separator[0].set;
-                    (fixed(separator)
-                        && Sequence::greedy_before(&first, next)
-                        && Sequence::greedy_before(repeated, next))
-                    .then(|| SeparatedList {
-                        first: Some(seq(&first, false)),
-                        repeated: seq(repeated, false),
-                        separator: seq(separator, false),
-                        final_: None,
-                        min_repeats,
-                    })
-                })
-            }
-            // ^(RS)*F$
-            (true, false) => {
-                let final_ = Sequence::parse(&format!("^{}$", unwrap_group(after)?))?;
-                (1..g.len()).find_map(|k| {
-                    let (repeated, separator) = g.split_at(k);
-                    (fixed(separator)
-                        && Sequence::greedy_before(repeated, separator[0].set)
-                        && final_stops_at(&final_, separator[0].set))
-                    .then(|| SeparatedList {
-                        first: None,
-                        repeated: seq(repeated, false),
-                        separator: seq(separator, false),
-                        final_: Some(Sequence { items: final_.items.clone(), to_end: true }),
-                        min_repeats,
-                    })
-                })
-            }
-            _ => None,
-        }
-    }
-}
-
-/// Whether the final sequence of a list cannot read past the separator that follows an item: no item of it holds a
-/// character the first item of the separator holds. Tried at the start of an item, it then fails at that separator
-/// at the latest, so trying it after every item reads the text a bounded number of times. A final sequence that can
-/// read through separators would read to the end of the text from every item.
-fn final_stops_at(final_: &Sequence, separator: CharSet) -> bool {
-    final_.items.iter().all(|item| item.set.disjoint(separator))
-}
-
-/// The inside of `(...)` or `(?:...)`; `None` for other groups.
-fn strip_group(g: &str) -> Option<&str> {
-    let inner = g.strip_prefix('(')?.strip_suffix(')')?;
-    match inner.strip_prefix("?:") {
-        Some(rest) => Some(rest),
-        None if inner.starts_with('?') => None,
-        None => Some(inner),
-    }
-}
-
-/// A text that is one group wrapping everything, unwrapped; otherwise the text itself.
-fn unwrap_group(t: &str) -> Option<&str> {
-    if t.starts_with('(') && t.ends_with(')') {
-        let inner = strip_group(t)?;
-        // Only when the parentheses enclose the whole text (`(a)(b)` is two groups).
-        let mut depth = 0i32;
-        let mut escaped = false;
-        for c in inner.chars() {
-            match c {
-                _ if escaped => escaped = false,
-                '\\' => escaped = true,
-                '(' => depth += 1,
-                ')' => {
-                    depth -= 1;
-                    if depth < 0 {
-                        return None;
-                    }
-                }
-                _ => {}
-            }
-        }
-        return Some(inner);
-    }
-    Some(t)
 }
 
 /// The set of a class escape (`\d`, `\w`, their negations, or an escaped punctuation character); `None` for `\s`
@@ -1371,6 +1161,13 @@ mod tests {
 
     const PATTERNS: &[&str] = &[
         "",
+        // Sequences without `$`, which need only the start of the string.
+        "^[a-z]+",
+        "^[a-z]*",
+        "^[a-zA-Z0-9_\\.\\-]*",
+        "^a[b-c]{2,5}",
+        "^[a-z]+[0-9]*",
+        "^[a-z]{0,3}[0-9]{2,4}",
         ".*",
         "^.*",
         ".*$",
@@ -1557,58 +1354,42 @@ mod tests {
         for p in ["^x-", "^\\/", "^abc$"] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::Literal { .. }), "{p}");
         }
-        for p in ["^[a-z]*a$", "(base64key|awskms)://(.*)"] {
-            assert!(matches!(compile(p).unwrap().matcher, Matcher::Engine(_)), "{p}");
-        }
+        assert!(matches!(compile("^[a-z]*a$").unwrap().matcher, Matcher::Engine(_)));
         for p in [".+", "^.+", "(.+)"] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::HasContent { .. }), "{p}");
         }
         for p in ["^.{1,256}$", "^.+$", "^.*$", "^(.*)$", "^(.+)$"] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::Line { .. }), "{p}");
         }
-        for p in ["^(ab|cd)$", "^(?:es|ES|x-)$"] {
+        for p in ["^(ab|cd)$", "^(?:es|ES|x-)$", "^(CRLF|LF|crlf|lf)$"] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::Literals(_)), "{p}");
         }
+        // Without `$`, a sequence is read only as far as it must be.
+        for p in ["^[a-z]+", "^a[b-c]{2,5}"] {
+            assert!(
+                matches!(&compile(p).unwrap().matcher, Matcher::Sequence(seq) if seq.items.last().unwrap().max == seq.items.last().unwrap().min),
+                "{p}"
+            );
+        }
+        assert!(matches!(&compile("^[a-zA-Z0-9_\\.\\-]*").unwrap().matcher, Matcher::Everything));
+        // At most two alternatives, neither anchored at both ends.
+        for p in ["^ab|cd$", "a|b", "^([a|A][u|U][t|T][o|O])|([n|N][o|O][n|N][e|E])$", "(base64key|awskms)://(.*)"] {
+            assert!(matches!(compile(p).unwrap().matcher, Matcher::Alternatives(_)), "{p}");
+        }
+        // The engine is faster for more literals, more alternatives, an alternative anchored at both ends, and a
+        // separated list.
         for p in [
-            "^ab|cd$",
-            "a|b",
-            "^([a|A][u|U][t|T][o|O])|([n|N][o|O][n|N][e|E])$",
+            "^(schemas|responses|parameters|examples|requestBodies)$",
             "^[Ee][Ss]2015(\\.([Cc][Oo][Rr][Ee]|[Pp][Rr][Oo][Xx][Yy]))?$",
             "^[1-5](?:[0-9]{2}|XX)$",
             "(^([0-9]+)\\.([0-9]+)$)|(^\\{[A-F0-9]{8}(-[A-F0-9]{4}){3}-[A-F0-9]{12}\\}$)",
             "^([t|T][o|O][p|P])|([c|C][e|E][n|N][t|T][e|E][r|R])|([b|B][o|O][t|T][t|T][o|O][m|M])$",
             "^([A-Za-z_][-A-Za-z0-9_.:]*)$",
-        ] {
-            assert!(matches!(compile(p).unwrap().matcher, Matcher::Alternatives(_)), "{p}");
-        }
-        for p in [
+            "default|^[0-9]+$",
             "^([a-zA-Z0-9]{2,3})(-[a-zA-Z0-9]{1,6})*$",
             "^([a-zA-Z_$][a-zA-Z0-9_$]{0,39}\\.)*([a-zA-Z_$][a-zA-Z0-9_$]{0,39})$",
-            "^([a-z_$][a-z0-9_$]{0,39}\\.)*([a-zA-Z_$][a-zA-Z0-9_$]{0,39})$",
-            // An escaped `$` or `^` is a literal character of the list.
             "^x(,a\\$)*$",
-            "^x\\$(,a)*$",
-            "^(a\\$,)*b$",
-            "^x(,\\^a)*$",
-            "^(a,)*b\\$$",
-            "^x(,[$^]a)*$",
-        ] {
-            assert!(matches!(compile(p).unwrap().matcher, Matcher::SeparatedList(_)), "{p}");
-        }
-        // A list with an anchor or an assertion inside it has no shape.
-        for p in [
             "^x(,a$)*$",
-            "^x(?:,a$)+$",
-            "^x$(,a)*$",
-            "^(x$)(,a)*$",
-            "^$(,a)*$",
-            "^(a,$)*b$",
-            "^x(^,a)*$",
-            "^(^a,)*b$",
-            "^x(,(a$))*$",
-            "^x(,a\\b)*$",
-            "^x\\B(,a)*$",
-            "^x(,a(?=,|$))*$",
             "^x(?=,)(,a)*$",
         ] {
             assert!(matches!(compile(p).unwrap().matcher, Matcher::Engine(_)), "{p}");
@@ -1667,15 +1448,6 @@ mod limits {
             assert_eq!(found == "alternatives", alternatives, "{pattern:.30} has the matcher {found}");
             assert!(alternatives || found == "engine", "{pattern:.30} has the matcher {found}");
         }
-        // The final sequence of a list must stop at the separator.
-        for (pattern, list) in [
-            (r"^(?:[a-z]+,)*[a-z]{2}[0-9]$", true),
-            (r"^(?:[a-z]+,)*[a-z,]+[0-9]$", false),
-            (r"^(?:[a-z]+,)*[0-9]{1,3}$", true),
-        ] {
-            let found = kind(&compile(pattern).unwrap());
-            assert_eq!(found == "list", list, "{pattern} has the matcher {found}");
-        }
     }
 
     /// The cache of compiled patterns is bounded in number and in size, and a pattern that has left it is still
@@ -1733,6 +1505,133 @@ mod corpus_patterns {
             let kind = compile(p).map(|c| super::kind(&c)).unwrap_or("invalid");
             let retained = compile(p).map_or(0, |c| c.retained);
             println!("{kind}\t{corpus}\t{p}\t{retained}");
+        }
+    }
+
+    /// Times each dedicated matcher against the engine over the corpora of jsonschema-benchmark in `CORVUS_CORPORA`
+    /// (a directory of `<name>-schema.json` and `<name>-instances.jsonl`), so that a matcher the engine beats can be
+    /// removed. The inputs of a pattern are the distinct strings of the corpus's instances (for `pattern`) or their
+    /// property names (for `patternProperties`), at most 1,000. Each figure is the least of 7 rounds of at least 20 ms,
+    /// after a warm-up of 200 ms, through `Pattern::is_match` with the default limit of a match. Run it with
+    /// `cargo test --release --lib time_corpus_patterns -- --ignored --nocapture --test-threads 1`.
+    #[test]
+    #[ignore]
+    fn time_corpus_patterns() {
+        use std::collections::BTreeSet;
+        use std::time::{Duration, Instant};
+
+        use super::{Literals, Matcher, PatternBudget, PatternLimit};
+
+        fn collect(v: &serde_json::Value, strings: &mut BTreeSet<String>, keys: &mut BTreeSet<String>) {
+            match v {
+                serde_json::Value::String(s) => {
+                    strings.insert(s.clone());
+                }
+                serde_json::Value::Array(a) => a.iter().for_each(|v| collect(v, strings, keys)),
+                serde_json::Value::Object(o) => o.iter().for_each(|(k, v)| {
+                    keys.insert(k.clone());
+                    collect(v, strings, keys);
+                }),
+                _ => {}
+            }
+        }
+        fn patterns(v: &serde_json::Value, out: &mut BTreeSet<(&'static str, String)>) {
+            match v {
+                serde_json::Value::Array(a) => a.iter().for_each(|v| patterns(v, out)),
+                serde_json::Value::Object(o) => {
+                    if let Some(serde_json::Value::String(p)) = o.get("pattern") {
+                        out.insert(("pattern", p.clone()));
+                    }
+                    if let Some(serde_json::Value::Object(pp)) = o.get("patternProperties") {
+                        pp.keys().for_each(|p| {
+                            out.insert(("patternProperties", p.clone()));
+                        });
+                    }
+                    o.values().for_each(|v| patterns(v, out));
+                }
+                _ => {}
+            }
+        }
+        fn time(p: &Pattern, inputs: &[String]) -> f64 {
+            let limit = PatternLimit::new(Some(crate::DEFAULT_PATTERN_MATCH_LIMIT));
+            let pass = || {
+                let mut budget = PatternBudget::new(limit);
+                inputs.iter().filter(|s| p.is_match(s, &mut budget)).count()
+            };
+            let warm = Instant::now();
+            while warm.elapsed() < Duration::from_millis(200) {
+                std::hint::black_box(pass());
+            }
+            let mut best = f64::MAX;
+            for _ in 0..7 {
+                let (start, mut calls) = (Instant::now(), 0usize);
+                while start.elapsed() < Duration::from_millis(20) {
+                    std::hint::black_box(pass());
+                    calls += inputs.len();
+                }
+                best = best.min(start.elapsed().as_nanos() as f64 / calls as f64);
+            }
+            best
+        }
+
+        let Ok(dir) = std::env::var("CORVUS_CORPORA") else { return };
+        let mut names: Vec<String> = std::fs::read_dir(&dir)
+            .unwrap()
+            .filter_map(|e| e.unwrap().file_name().to_str()?.strip_suffix("-schema.json").map(str::to_string))
+            .collect();
+        names.sort();
+        // The alternatives a matcher tries one after another.
+        fn alternatives(m: &Matcher) -> usize {
+            match m {
+                Matcher::Alternatives(a) => a.len(),
+                Matcher::Literals(Literals(t)) => t.len(),
+                _ => 1,
+            }
+        }
+        println!("corpus\trole\tkind\talternatives\tshape ns\tengine ns\tshape/engine\tinputs\tpattern");
+        for name in names {
+            let schema: serde_json::Value =
+                serde_json::from_str(&std::fs::read_to_string(format!("{dir}/{name}-schema.json")).unwrap()).unwrap();
+            let (mut strings, mut keys) = (BTreeSet::new(), BTreeSet::new());
+            for line in std::fs::read_to_string(format!("{dir}/{name}-instances.jsonl")).unwrap().lines() {
+                if !line.trim().is_empty() {
+                    collect(&serde_json::from_str(line).unwrap(), &mut strings, &mut keys);
+                }
+            }
+            let strings: Vec<String> = strings.into_iter().take(1000).collect();
+            let keys: Vec<String> = keys.into_iter().take(1000).collect();
+            let mut found = BTreeSet::new();
+            patterns(&schema, &mut found);
+            for (role, source) in found {
+                let Ok(shape) = compile(&source) else { continue };
+                if matches!(shape.matcher, Matcher::Engine(_)) {
+                    continue;
+                }
+                let inputs = if role == "pattern" { &strings } else { &keys };
+                if inputs.is_empty() {
+                    continue;
+                }
+                let regex = G.build(&source, true).or_else(|_| G.build(&source, false)).unwrap();
+                let engine = Pattern {
+                    source: source.clone(),
+                    grammar: G,
+                    matcher: Matcher::Engine(Box::new(regex)),
+                    retained: 0,
+                };
+                // The two must agree before their times mean anything.
+                let mut budget = PatternBudget::new(PatternLimit::new(None));
+                for s in inputs {
+                    assert_eq!(shape.is_match(s, &mut budget), engine.is_match(s, &mut budget), "{source:?} on {s:?}");
+                }
+                let (a, b) = (time(&shape, inputs), time(&engine, inputs));
+                println!(
+                    "{name}\t{role}\t{}\t{}\t{a:.1}\t{b:.1}\t{:.3}\t{}\t{source}",
+                    super::kind(&shape),
+                    alternatives(&shape.matcher),
+                    a / b,
+                    inputs.len()
+                );
+            }
         }
     }
 }
