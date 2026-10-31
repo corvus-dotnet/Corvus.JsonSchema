@@ -54,6 +54,8 @@ $validator->isValidJson('{"id": 3}');        // true: JSON text, parsed in Rust
 | `entryPoint` | none | A subschema to validate against, such as `'#/$defs/item'`. |
 | `maxDepth` | `128` | The deepest the evaluator recurses in place before it throws `DepthException`. |
 | `patternMatchLimit` | `1` | The seconds one match of a regular expression against one string may take before the validation throws `PatternMatchLimitException`. `null` or `0` turns the limit off. |
+| `regexEdition` | `'dialect'` | The edition of ECMA-262 `pattern`, `patternProperties` and the `regex` format are read with: `'dialect'` (ECMAScript 2020 for 2019-09 and 2020-12, which name it, today's for the drafts before them), `'current'` or `'es2020'`. Under ECMAScript 2020 a modifier group such as `(?i:...)` is not valid. |
+| `regexUnicodeVersion` | `'default'` | The version of Unicode patterns are read with: `'default'` (the version of the V8 the answers are held to, 17 today), `'latest'`, `'13'`, `'17'` or `'18'`. |
 
 Errors are exceptions extending `Corvus\JsonSchema\JsonSchemaException`: `CompilationException`, `DepthException`,
 `InvalidJsonException`, `PatternMatchLimitException` and `PatternTooLargeException`.

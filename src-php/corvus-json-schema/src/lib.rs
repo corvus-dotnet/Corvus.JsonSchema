@@ -750,6 +750,32 @@ impl Validator {
                             _ => None,
                         };
                     }
+                    "regexEdition" => {
+                        compile.regex_edition = match optional_string()?.as_deref() {
+                            None | Some("dialect") => None,
+                            Some("current") => Some(corvus::RegexEdition::Current),
+                            Some("es2020") => Some(corvus::RegexEdition::Es2020),
+                            Some(e) => {
+                                return Err(value_error(format!(
+                                    "the regexEdition option is 'dialect', 'current' or 'es2020', not '{e}'"
+                                )));
+                            }
+                        }
+                    }
+                    "regexUnicodeVersion" => {
+                        compile.regex_unicode_version = match optional_string()?.as_deref() {
+                            None | Some("default") => corvus::RegexUnicodeVersion::Default,
+                            Some("latest") => corvus::RegexUnicodeVersion::Latest,
+                            Some("13") => corvus::RegexUnicodeVersion::V13,
+                            Some("17") => corvus::RegexUnicodeVersion::V17,
+                            Some("18") => corvus::RegexUnicodeVersion::V18,
+                            Some(v) => {
+                                return Err(value_error(format!(
+                                    "the regexUnicodeVersion option is 'default', 'latest', '13', '17' or '18', not '{v}'"
+                                )));
+                            }
+                        }
+                    }
                     "formats" => {
                         let Some(formats) = value.array() else {
                             return Err(type_error("the formats option must be an array of format name => callable"));
