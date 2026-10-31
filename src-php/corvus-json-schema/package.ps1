@@ -13,7 +13,7 @@ a release's assets:
                    name
 
 Each archive also holds LICENSE and THIRD-PARTY-NOTICES.txt, the notice of the Unicode data that the tables of the
-corvus-json-schema crate are derived from: the extension holds the tables, and the notice must go wherever it goes.
+corvus-regex-ecma262 crate are derived from: the extension holds the tables, and the notice must go wherever it goes.
 PIE installs the extension from the archive by its name. On Windows it copies the other files to the extras directory
 of the PHP installation.
 

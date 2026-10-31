@@ -15,9 +15,7 @@ VENDOR = File.expand_path("ext/corvus_json_schema/vendor/corvus-json-schema", __
 def vendor_crate
   FileUtils.rm_rf(VENDOR)
   FileUtils.mkdir_p(VENDOR)
-  # THIRD-PARTY-NOTICES.txt is in the crate's include list: it has the notice of the Unicode data the crate's tables
-  # are derived from.
-  %w[Cargo.toml README.md LICENSE THIRD-PARTY-NOTICES.txt].each { |f| FileUtils.cp(File.join(CRATE, f), VENDOR) }
+  %w[Cargo.toml README.md LICENSE].each { |f| FileUtils.cp(File.join(CRATE, f), VENDOR) }
   FileUtils.cp_r(File.join(CRATE, "src"), VENDOR)
 end
 

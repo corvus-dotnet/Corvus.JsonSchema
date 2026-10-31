@@ -4,7 +4,8 @@
 use std::cell::{Cell, RefCell};
 
 use corvus::{
-    ArrayView, CompileOptions, Dialect, Instance, JsonSchemaResultsCollector, Kind, ObjectView, ResultsLevel, View,
+    ArrayView, CompileOptions, Dialect, Instance, JsonSchemaResultsCollector, Kind, ObjectView, RegexEdition,
+    RegexUnicodeVersion, ResultsLevel, View,
 };
 use magnus::prelude::*;
 use magnus::rb_sys::AsRawValue;
@@ -481,6 +482,8 @@ fn compile(
     entry_point: Option<String>,
     max_depth: u32,
     pattern_match_limit: Option<f64>,
+    regex_edition: String,
+    regex_unicode_version: String,
 ) -> Result<Validator, Error> {
     let schema: Json = match RString::from_value(schema) {
         Some(text) => serde_json::from_str(&text.to_string()?)
@@ -512,6 +515,30 @@ fn compile(
                     .filter(|limit| !limit.is_zero())
             }
             _ => None,
+        },
+        regex_edition: match regex_edition.as_str() {
+            "dialect" => None,
+            "current" => Some(RegexEdition::Current),
+            "es2020" => Some(RegexEdition::Es2020),
+            e => {
+                return Err(Error::new(
+                    ruby.exception_arg_error(),
+                    format!("regex_edition is :dialect, :current or :es2020, not {e:?}"),
+                ));
+            }
+        },
+        regex_unicode_version: match regex_unicode_version.as_str() {
+            "default" => RegexUnicodeVersion::Default,
+            "latest" => RegexUnicodeVersion::Latest,
+            "13" => RegexUnicodeVersion::V13,
+            "17" => RegexUnicodeVersion::V17,
+            "18" => RegexUnicodeVersion::V18,
+            v => {
+                return Err(Error::new(
+                    ruby.exception_arg_error(),
+                    format!("regex_unicode_version is :default, :latest, 13, 17 or 18, not {v:?}"),
+                ));
+            }
         },
         ..CompileOptions::default()
     };
@@ -649,7 +676,7 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
     module.define_error("InvalidJsonError", error)?;
 
     let native = module.define_module("Native")?;
-    native.define_singleton_method("compile", function!(compile, 11))?;
+    native.define_singleton_method("compile", function!(compile, 13))?;
     native.define_singleton_method("crate_version", function!(|| corvus::VERSION, 0))?;
 
     let validator = module.define_class("Validator", ruby.class_object())?;

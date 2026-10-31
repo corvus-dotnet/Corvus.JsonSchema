@@ -48,6 +48,8 @@ immutable and can be shared between threads.
 | `entry_point` | `nil` | A subschema to validate against, such as `"#/$defs/item"`. |
 | `max_depth` | `128` | The deepest the evaluator recurses in place before it raises `DepthError`. |
 | `pattern_match_limit` | `1.0` | The seconds one match of a regular expression against one string may take before the validation raises `PatternMatchLimitError`. `nil` or `0` turns the limit off. |
+| `regex_edition` | `:dialect` | The edition of ECMA-262 `pattern`, `patternProperties` and the `regex` format are read with: `:dialect` (ECMAScript 2020 for 2019-09 and 2020-12, which name it, today's for the drafts before them), `:current` or `:es2020`. Under ECMAScript 2020 a modifier group such as `(?i:...)` is not valid. |
+| `regex_unicode_version` | `:default` | The version of Unicode patterns are read with: `:default` (the version of the V8 the answers are held to, 17 today), `:latest`, `13`, `17` or `18`. |
 
 Errors are subclasses of `CorvusJsonSchema::Error`: `CompilationError`, `DepthError`, `InvalidJsonError`,
 `PatternMatchLimitError` and `PatternTooLargeError`.

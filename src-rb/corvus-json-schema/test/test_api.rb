@@ -186,6 +186,24 @@ class TestApi < Minitest::Test
     refute v.valid_json?('"é1"')
   end
 
+  # 2020-12 reads patterns in the grammar of ECMAScript 2020, which has no modifier groups; draft 7 reads today's.
+  def test_patterns_are_read_in_the_edition_and_unicode_version_asked_for
+    modifier = { "$schema" => "https://json-schema.org/draft/2020-12/schema", "pattern" => "^(?i:a)$" }
+    assert_raises(CorvusJsonSchema::CompilationError) { CorvusJsonSchema.compile(modifier) }
+    assert CorvusJsonSchema.compile(modifier, regex_edition: :current).valid?("A")
+    draft7 = { "$schema" => "http://json-schema.org/draft-07/schema#", "pattern" => "^(?i:a)$" }
+    assert CorvusJsonSchema.compile(draft7).valid?("A")
+    assert_raises(CorvusJsonSchema::CompilationError) { CorvusJsonSchema.compile(draft7, regex_edition: :es2020) }
+    # Sidetic is a script from Unicode 17: naming it is a regular expression under 17, not under 13.
+    regex = { "$schema" => "http://json-schema.org/draft-07/schema#", "format" => "regex" }
+    [[:default, true], [17, true], [13, false]].each do |version, valid|
+      v = CorvusJsonSchema.compile(regex, assert_format: true, regex_unicode_version: version)
+      assert_equal valid, v.valid?("\\p{Script=Sidetic}"), "Unicode #{version}"
+    end
+    assert_raises(ArgumentError) { CorvusJsonSchema.compile({}, regex_edition: :es2019) }
+    assert_raises(ArgumentError) { CorvusJsonSchema.compile({}, regex_unicode_version: 16) }
+  end
+
   # The crate before 0.1.6 evaluated a not without the guard on in-place recursion, so the schemas whose not leads back
   # to the schema it is in overflowed the stack, which ends the process.
   def test_not_on_an_in_place_cycle_stops_at_max_depth
