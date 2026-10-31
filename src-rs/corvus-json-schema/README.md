@@ -73,7 +73,7 @@ this way, through CPython's C API.
 - **Patterns:** use ECMA-262 semantics. A pattern is compiled with the `u` flag. One that is not valid with it (it has
   `\&` or `\-`, say) is compiled without it, as many validators accept such patterns, and is then matched as
   ECMA-262 says for it: by UTF-16 code unit, so a character beyond the Basic Multilingual Plane is two. The `regex`
-  format accepts only the grammar of the flag. Common shapes (class sequences, a few literals and alternatives, line
+  format accepts only the grammar of the flag, and asks the grammar alone, without the engine's limits of size. Common shapes (class sequences, a few literals and alternatives, line
   lengths) get dedicated matchers, as in the C# evaluator, where each was measured faster than the engine over the
   strings of the jsonschema-benchmark corpora. Every other pattern is matched by
   [`corvus-regex-ecma262`](https://crates.io/crates/corvus-regex-ecma262), an ECMA-262 engine. The crate depends
@@ -118,7 +118,7 @@ this way, through CPython's C API.
   - *The format checks take time proportional to the string.* They read strings of the instance and are not under
     the limit of a match. Dates, times, UUIDs, IP addresses and host names are read by scanners that pass over the
     string once, and the others are regular expressions on the `regex` crate, which is linear. `regex` reads the
-    string as a pattern, with the limits of size. `idn-hostname`, and the domain of an `idn-email`, read nothing of
+    string with the engine's grammar-only reader, without the limits of size. `idn-hostname`, and the domain of an `idn-email`, read nothing of
     a string over 1,012 bytes: an internationalized host name has 253 characters at most, and its check decodes and
     encodes Punycode, which takes time that grows with the square of a label.
   - *What is not bounded.* The limit is for each match, not for a validation. The matchers that read a string once

@@ -395,19 +395,22 @@ fn a_pattern_that_is_not_valid_is_not_too_large() {
     assert_eq!(e.kind(), &SchemaCompilationErrorKind::Other);
 }
 
-/// The `regex` format reads a pattern up to the engine's limits of size: one over a limit is not read to its end, so
-/// it is not valid, and the answer comes in good time however large it is.
+/// The `regex` format asks the grammar alone: a string over one of the engine's limits of size is valid when its
+/// grammar is and not when it is not, and the answer comes in good time however large it is.
 #[test]
-fn the_regex_format_refuses_a_pattern_over_a_limit() {
+fn the_regex_format_reads_the_grammar_without_the_limits_of_size() {
     let options = CompileOptions { assert_format: Some(true), ..CompileOptions::default() };
     let v: Validator = compile_with(&json!({ "format": "regex" }), &options).unwrap();
     for (text, want) in [
         ("^[a-z]+$".to_string(), true),
         ("(".to_string(), false),
-        ("a".repeat(16384), true),
-        ("a".repeat(16385), false),
-        (nest(999), true),
-        (nest(1000), false),
+        ("a".repeat(16385), true),
+        ("a".repeat(2_000_000), true),
+        ("a".repeat(2_000_000) + "(", false),
+        (nest(1000), true),
+        (nest(100_000), true),
+        (nest(100_000) + ")", false),
+        ("(?:".repeat(100_000) + "a", false),
     ] {
         let start = Instant::now();
         assert_eq!(v.try_validate(&json!(text)), Ok(want), "a string of {} bytes", text.len());

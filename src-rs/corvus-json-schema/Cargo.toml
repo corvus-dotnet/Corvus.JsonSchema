@@ -17,7 +17,7 @@ categories = ["encoding", "parser-implementations"]
 include = ["src/**", "Cargo.toml", "README.md", "LICENSE"]
 
 [dependencies]
-corvus-regex-ecma262 = "0.2.5"
+corvus-regex-ecma262 = "0.2.6"
 regex = "1.13.1"
 serde_json = { version = "1.0.151", features = ["preserve_order", "float_roundtrip"] }
 

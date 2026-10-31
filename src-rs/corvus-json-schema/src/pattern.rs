@@ -809,11 +809,12 @@ fn excluded_class_with_word(p: &str) -> Option<(CharSet, bool)> {
 }
 
 /// The `regex` format: a valid ECMA-262 regular expression in the grammar of the `u` flag, of the edition and version
-/// of Unicode the dialect reads patterns with. A string over one of the engine's limits of size
-/// ([`corvus_regex_ecma262::MAX_PATTERN_LENGTH`], [`corvus_regex_ecma262::MAX_NESTING`],
-/// [`corvus_regex_ecma262::MAX_SIZE`]) is not read to its end, so it is not reported as valid.
+/// of Unicode the dialect reads patterns with. It asks the grammar alone, as the .NET library's check does: the
+/// engine's limits of size belong to compiling a pattern, so a string too large to compile is valid when its grammar
+/// is. The engine's grammar-only reader takes time in proportion to the string and allocates nothing for one of
+/// ordinary size.
 pub(crate) fn is_valid_ecma_regex(s: &str, grammar: Grammar) -> bool {
-    grammar.is_valid_unicode(s)
+    Regex::is_valid_pattern_with(s, Grammar::flags(true), grammar.edition, grammar.unicode_version)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
