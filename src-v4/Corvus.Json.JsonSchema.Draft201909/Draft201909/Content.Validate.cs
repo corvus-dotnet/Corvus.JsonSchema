@@ -35,7 +35,7 @@ public readonly partial struct Content
                 result = result.UsingStack();
             }
 
-            result = result.PushSchemaLocation("https://json-schema.org/draft/2019-09/meta/content");
+            result = result.PushSchemaLocation("meta/content");
         }
 
         JsonValueKind valueKind = this.ValueKind;

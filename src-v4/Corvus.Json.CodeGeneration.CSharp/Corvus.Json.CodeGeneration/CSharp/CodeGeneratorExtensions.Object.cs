@@ -757,6 +757,9 @@ internal static partial class CodeGeneratorExtensions
                 int index = 1;
                 bool hasIndex = declarations.Count > 1;
 
+                // The type of the validation class's field (see AppendRegexValidationField).
+                string regexType = typeDeclaration.RegexEngine() == GeneratedRegexEngine.Ecma262 ? "global::Corvus.Ecma262.RegularExpressions.Regex" : "Regex";
+
                 foreach (PatternPropertyDeclaration declaration in declarations)
                 {
                     if (generator.IsCancellationRequested)
@@ -779,7 +782,7 @@ internal static partial class CodeGeneratorExtensions
                         .AppendLineIndent("/// for the pattern property producing the type")
                         .AppendLineIndent("/// <see cref=\"", declaration.ReducedPatternPropertyType.FullyQualifiedDotnetTypeName(), "\"/>.")
                         .AppendLineIndent("/// </summary>")
-                        .AppendLineIndent("public static Regex ", propertyName, " => ", generator.ValidationClassName(), ".", regexAccessor, ";");
+                        .AppendLineIndent("public static ", regexType, " ", propertyName, " => ", generator.ValidationClassName(), ".", regexAccessor, ";");
 
                     ++index;
                 }

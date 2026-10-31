@@ -31,7 +31,9 @@ public readonly partial struct OpenApiDocument
     /// Generated from JSON Schema.
     /// </summary>
     public readonly partial struct Schema
+#if !NET8_0_OR_GREATER
         : IJsonBoolean<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Schema>
+#endif
     {
         /// <summary>
         /// Conversion from <see cref="bool"/>.
@@ -72,7 +74,7 @@ public readonly partial struct OpenApiDocument
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         /// <exception cref="InvalidOperationException">The value was not a boolean.</exception>
-        public static implicit operator bool(Schema value)
+        public static explicit operator bool(Schema value)
         {
             return value.GetBoolean() ?? throw new InvalidOperationException();
         }

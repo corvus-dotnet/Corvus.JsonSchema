@@ -574,13 +574,13 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <inheritdoc/>
-        OpenApiDocumentParametersParameterOrReferenceArray IJsonArray<OpenApiDocumentParametersParameterOrReferenceArray>.RemoveAt(int index)
+        public OpenApiDocumentParametersParameterOrReferenceArray RemoveAt(int index)
         {
             return new(__CorvusArrayHelpers.GetImmutableListWithoutRange(this, index, 1));
         }
 
         /// <inheritdoc/>
-        OpenApiDocumentParametersParameterOrReferenceArray IJsonArray<OpenApiDocumentParametersParameterOrReferenceArray>.RemoveRange(int index, int count)
+        public OpenApiDocumentParametersParameterOrReferenceArray RemoveRange(int index, int count)
         {
             return new(__CorvusArrayHelpers.GetImmutableListWithoutRange(this, index, count));
         }

@@ -192,7 +192,7 @@ public readonly partial struct Core
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft201909.Core.DefsEntity.DefaultInstance;
         }
     }
 
@@ -256,7 +256,7 @@ public readonly partial struct Core
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity.DefaultInstance;
         }
     }
 
@@ -426,47 +426,47 @@ public readonly partial struct Core
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-        if (anchor is not null)
+        if (anchor is Corvus.Json.JsonSchema.Draft201909.Core.AnchorEntity anchorNotNull && anchorNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Anchor, anchor.Value.AsAny);
         }
 
-        if (comment is not null)
+        if (comment is Corvus.Json.JsonString commentNotNull && commentNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Comment, comment.Value.AsAny);
         }
 
-        if (defs is not null)
+        if (defs is Corvus.Json.JsonSchema.Draft201909.Core.DefsEntity defsNotNull && defsNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Defs, defs.Value.AsAny);
         }
 
-        if (id is not null)
+        if (id is Corvus.Json.JsonSchema.Draft201909.Core.IdEntity idNotNull && idNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Id, id.Value.AsAny);
         }
 
-        if (recursiveAnchor is not null)
+        if (recursiveAnchor is Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity recursiveAnchorNotNull && recursiveAnchorNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.RecursiveAnchor, recursiveAnchor.Value.AsAny);
         }
 
-        if (recursiveRef is not null)
+        if (recursiveRef is Corvus.Json.JsonUriReference recursiveRefNotNull && recursiveRefNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.RecursiveRef, recursiveRef.Value.AsAny);
         }
 
-        if (refValue is not null)
+        if (refValue is Corvus.Json.JsonUriReference refValueNotNull && refValueNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Ref, refValue.Value.AsAny);
         }
 
-        if (schema is not null)
+        if (schema is Corvus.Json.JsonUri schemaNotNull && schemaNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Schema, schema.Value.AsAny);
         }
 
-        if (vocabulary is not null)
+        if (vocabulary is Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity vocabularyNotNull && vocabularyNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Vocabulary, vocabulary.Value.AsAny);
         }
@@ -589,7 +589,7 @@ public readonly partial struct Core
     /// <returns>The instance with the property set.</returns>
     public Core WithAnchor(in Corvus.Json.JsonSchema.Draft201909.Core.AnchorEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.Anchor, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Anchor, value) : this.RemoveProperty(JsonPropertyNames.Anchor);
     }
 
     /// <summary>
@@ -599,7 +599,7 @@ public readonly partial struct Core
     /// <returns>The instance with the property set.</returns>
     public Core WithComment(in Corvus.Json.JsonString value)
     {
-        return this.SetProperty(JsonPropertyNames.Comment, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Comment, value) : this.RemoveProperty(JsonPropertyNames.Comment);
     }
 
     /// <summary>
@@ -609,7 +609,7 @@ public readonly partial struct Core
     /// <returns>The instance with the property set.</returns>
     public Core WithDefs(in Corvus.Json.JsonSchema.Draft201909.Core.DefsEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.Defs, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Defs, value) : this.RemoveProperty(JsonPropertyNames.Defs);
     }
 
     /// <summary>
@@ -619,7 +619,7 @@ public readonly partial struct Core
     /// <returns>The instance with the property set.</returns>
     public Core WithId(in Corvus.Json.JsonSchema.Draft201909.Core.IdEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.Id, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Id, value) : this.RemoveProperty(JsonPropertyNames.Id);
     }
 
     /// <summary>
@@ -629,7 +629,7 @@ public readonly partial struct Core
     /// <returns>The instance with the property set.</returns>
     public Core WithRecursiveAnchor(in Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.RecursiveAnchor, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.RecursiveAnchor, value) : this.RemoveProperty(JsonPropertyNames.RecursiveAnchor);
     }
 
     /// <summary>
@@ -639,7 +639,7 @@ public readonly partial struct Core
     /// <returns>The instance with the property set.</returns>
     public Core WithRecursiveRef(in Corvus.Json.JsonUriReference value)
     {
-        return this.SetProperty(JsonPropertyNames.RecursiveRef, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.RecursiveRef, value) : this.RemoveProperty(JsonPropertyNames.RecursiveRef);
     }
 
     /// <summary>
@@ -649,7 +649,7 @@ public readonly partial struct Core
     /// <returns>The instance with the property set.</returns>
     public Core WithRef(in Corvus.Json.JsonUriReference value)
     {
-        return this.SetProperty(JsonPropertyNames.Ref, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Ref, value) : this.RemoveProperty(JsonPropertyNames.Ref);
     }
 
     /// <summary>
@@ -659,7 +659,7 @@ public readonly partial struct Core
     /// <returns>The instance with the property set.</returns>
     public Core WithSchema(in Corvus.Json.JsonUri value)
     {
-        return this.SetProperty(JsonPropertyNames.Schema, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Schema, value) : this.RemoveProperty(JsonPropertyNames.Schema);
     }
 
     /// <summary>
@@ -669,7 +669,7 @@ public readonly partial struct Core
     /// <returns>The instance with the property set.</returns>
     public Core WithVocabulary(in Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.Vocabulary, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Vocabulary, value) : this.RemoveProperty(JsonPropertyNames.Vocabulary);
     }
 
     /// <summary>
@@ -1248,6 +1248,26 @@ public readonly partial struct Core
             if ((that.backing & Backing.JsonElement) != 0)
             {
                 return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+        /// </summary>
+        /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in Core that)
+        {
+            if ((that.backing & Backing.Object) != 0)
+            {
+                return that.objectBacking.ToBuilder();
+            }
+
+            if ((that.backing & Backing.JsonElement) != 0)
+            {
+                return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking);
             }
 
             throw new InvalidOperationException();

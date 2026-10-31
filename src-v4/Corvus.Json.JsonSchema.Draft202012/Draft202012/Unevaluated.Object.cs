@@ -193,12 +193,12 @@ public readonly partial struct Unevaluated
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-        if (unevaluatedItems is not null)
+        if (unevaluatedItems is Corvus.Json.JsonSchema.Draft202012.Schema unevaluatedItemsNotNull && unevaluatedItemsNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.UnevaluatedItems, unevaluatedItems.Value.AsAny);
         }
 
-        if (unevaluatedProperties is not null)
+        if (unevaluatedProperties is Corvus.Json.JsonSchema.Draft202012.Schema unevaluatedPropertiesNotNull && unevaluatedPropertiesNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.UnevaluatedProperties, unevaluatedProperties.Value.AsAny);
         }
@@ -321,7 +321,7 @@ public readonly partial struct Unevaluated
     /// <returns>The instance with the property set.</returns>
     public Unevaluated WithUnevaluatedItems(in Corvus.Json.JsonSchema.Draft202012.Schema value)
     {
-        return this.SetProperty(JsonPropertyNames.UnevaluatedItems, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.UnevaluatedItems, value) : this.RemoveProperty(JsonPropertyNames.UnevaluatedItems);
     }
 
     /// <summary>
@@ -331,7 +331,7 @@ public readonly partial struct Unevaluated
     /// <returns>The instance with the property set.</returns>
     public Unevaluated WithUnevaluatedProperties(in Corvus.Json.JsonSchema.Draft202012.Schema value)
     {
-        return this.SetProperty(JsonPropertyNames.UnevaluatedProperties, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.UnevaluatedProperties, value) : this.RemoveProperty(JsonPropertyNames.UnevaluatedProperties);
     }
 
     /// <summary>
@@ -840,6 +840,26 @@ public readonly partial struct Unevaluated
             if ((that.backing & Backing.JsonElement) != 0)
             {
                 return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+        /// </summary>
+        /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in Unevaluated that)
+        {
+            if ((that.backing & Backing.Object) != 0)
+            {
+                return that.objectBacking.ToBuilder();
+            }
+
+            if ((that.backing & Backing.JsonElement) != 0)
+            {
+                return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking);
             }
 
             throw new InvalidOperationException();

@@ -448,7 +448,7 @@ public readonly partial struct Validation
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft202012.Validation.MinContainsEntity.DefaultInstance;
         }
     }
 
@@ -512,7 +512,7 @@ public readonly partial struct Validation
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0.DefaultInstance;
         }
     }
 
@@ -544,7 +544,7 @@ public readonly partial struct Validation
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0.DefaultInstance;
         }
     }
 
@@ -576,7 +576,7 @@ public readonly partial struct Validation
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0.DefaultInstance;
         }
     }
 
@@ -615,7 +615,7 @@ public readonly partial struct Validation
     /// <summary>
     /// Gets the (optional) <c>pattern</c> property.
     /// </summary>
-    public Corvus.Json.JsonRegex Pattern
+    public Corvus.Json.JsonSchema.Draft202012.Validation.PatternEntity Pattern
     {
         get
         {
@@ -636,7 +636,7 @@ public readonly partial struct Validation
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.Pattern, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonRegex>();
+                    return result.As<Corvus.Json.JsonSchema.Draft202012.Validation.PatternEntity>();
                 }
             }
 
@@ -672,7 +672,7 @@ public readonly partial struct Validation
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft202012.Validation.StringArray.DefaultInstance;
         }
     }
 
@@ -736,7 +736,7 @@ public readonly partial struct Validation
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft202012.Validation.UniqueItemsEntity.DefaultInstance;
         }
     }
 
@@ -782,109 +782,109 @@ public readonly partial struct Validation
         in Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0? minLength = null,
         in Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0? minProperties = null,
         in Corvus.Json.JsonSchema.Draft202012.Validation.MultipleOfEntity? multipleOf = null,
-        in Corvus.Json.JsonRegex? pattern = null,
+        in Corvus.Json.JsonSchema.Draft202012.Validation.PatternEntity? pattern = null,
         in Corvus.Json.JsonSchema.Draft202012.Validation.StringArray? required = null,
         in Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity? type = null,
         in Corvus.Json.JsonSchema.Draft202012.Validation.UniqueItemsEntity? uniqueItems = null)
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-        if (constValue is not null)
+        if (constValue is Corvus.Json.JsonAny constValueNotNull && constValueNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Const, constValue.Value.AsAny);
         }
 
-        if (dependentRequired is not null)
+        if (dependentRequired is Corvus.Json.JsonSchema.Draft202012.Validation.DependentRequiredEntity dependentRequiredNotNull && dependentRequiredNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.DependentRequired, dependentRequired.Value.AsAny);
         }
 
-        if (enumValue is not null)
+        if (enumValue is Corvus.Json.JsonArray enumValueNotNull && enumValueNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Enum, enumValue.Value.AsAny);
         }
 
-        if (exclusiveMaximum is not null)
+        if (exclusiveMaximum is Corvus.Json.JsonNumber exclusiveMaximumNotNull && exclusiveMaximumNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.ExclusiveMaximum, exclusiveMaximum.Value.AsAny);
         }
 
-        if (exclusiveMinimum is not null)
+        if (exclusiveMinimum is Corvus.Json.JsonNumber exclusiveMinimumNotNull && exclusiveMinimumNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.ExclusiveMinimum, exclusiveMinimum.Value.AsAny);
         }
 
-        if (maxContains is not null)
+        if (maxContains is Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger maxContainsNotNull && maxContainsNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.MaxContains, maxContains.Value.AsAny);
         }
 
-        if (maximum is not null)
+        if (maximum is Corvus.Json.JsonNumber maximumNotNull && maximumNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Maximum, maximum.Value.AsAny);
         }
 
-        if (maxItems is not null)
+        if (maxItems is Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger maxItemsNotNull && maxItemsNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.MaxItems, maxItems.Value.AsAny);
         }
 
-        if (maxLength is not null)
+        if (maxLength is Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger maxLengthNotNull && maxLengthNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.MaxLength, maxLength.Value.AsAny);
         }
 
-        if (maxProperties is not null)
+        if (maxProperties is Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger maxPropertiesNotNull && maxPropertiesNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.MaxProperties, maxProperties.Value.AsAny);
         }
 
-        if (minContains is not null)
+        if (minContains is Corvus.Json.JsonSchema.Draft202012.Validation.MinContainsEntity minContainsNotNull && minContainsNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.MinContains, minContains.Value.AsAny);
         }
 
-        if (minimum is not null)
+        if (minimum is Corvus.Json.JsonNumber minimumNotNull && minimumNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Minimum, minimum.Value.AsAny);
         }
 
-        if (minItems is not null)
+        if (minItems is Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0 minItemsNotNull && minItemsNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.MinItems, minItems.Value.AsAny);
         }
 
-        if (minLength is not null)
+        if (minLength is Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0 minLengthNotNull && minLengthNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.MinLength, minLength.Value.AsAny);
         }
 
-        if (minProperties is not null)
+        if (minProperties is Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0 minPropertiesNotNull && minPropertiesNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.MinProperties, minProperties.Value.AsAny);
         }
 
-        if (multipleOf is not null)
+        if (multipleOf is Corvus.Json.JsonSchema.Draft202012.Validation.MultipleOfEntity multipleOfNotNull && multipleOfNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.MultipleOf, multipleOf.Value.AsAny);
         }
 
-        if (pattern is not null)
+        if (pattern is Corvus.Json.JsonSchema.Draft202012.Validation.PatternEntity patternNotNull && patternNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Pattern, pattern.Value.AsAny);
         }
 
-        if (required is not null)
+        if (required is Corvus.Json.JsonSchema.Draft202012.Validation.StringArray requiredNotNull && requiredNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Required, required.Value.AsAny);
         }
 
-        if (type is not null)
+        if (type is Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity typeNotNull && typeNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Type, type.Value.AsAny);
         }
 
-        if (uniqueItems is not null)
+        if (uniqueItems is Corvus.Json.JsonSchema.Draft202012.Validation.UniqueItemsEntity uniqueItemsNotNull && uniqueItemsNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.UniqueItems, uniqueItems.Value.AsAny);
         }
@@ -1007,7 +1007,7 @@ public readonly partial struct Validation
     /// <returns>The instance with the property set.</returns>
     public Validation WithConst(in Corvus.Json.JsonAny value)
     {
-        return this.SetProperty(JsonPropertyNames.Const, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Const, value) : this.RemoveProperty(JsonPropertyNames.Const);
     }
 
     /// <summary>
@@ -1017,7 +1017,7 @@ public readonly partial struct Validation
     /// <returns>The instance with the property set.</returns>
     public Validation WithDependentRequired(in Corvus.Json.JsonSchema.Draft202012.Validation.DependentRequiredEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.DependentRequired, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.DependentRequired, value) : this.RemoveProperty(JsonPropertyNames.DependentRequired);
     }
 
     /// <summary>
@@ -1027,7 +1027,7 @@ public readonly partial struct Validation
     /// <returns>The instance with the property set.</returns>
     public Validation WithEnum(in Corvus.Json.JsonArray value)
     {
-        return this.SetProperty(JsonPropertyNames.Enum, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Enum, value) : this.RemoveProperty(JsonPropertyNames.Enum);
     }
 
     /// <summary>
@@ -1037,7 +1037,7 @@ public readonly partial struct Validation
     /// <returns>The instance with the property set.</returns>
     public Validation WithExclusiveMaximum(in Corvus.Json.JsonNumber value)
     {
-        return this.SetProperty(JsonPropertyNames.ExclusiveMaximum, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.ExclusiveMaximum, value) : this.RemoveProperty(JsonPropertyNames.ExclusiveMaximum);
     }
 
     /// <summary>
@@ -1047,7 +1047,7 @@ public readonly partial struct Validation
     /// <returns>The instance with the property set.</returns>
     public Validation WithExclusiveMinimum(in Corvus.Json.JsonNumber value)
     {
-        return this.SetProperty(JsonPropertyNames.ExclusiveMinimum, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.ExclusiveMinimum, value) : this.RemoveProperty(JsonPropertyNames.ExclusiveMinimum);
     }
 
     /// <summary>
@@ -1057,7 +1057,7 @@ public readonly partial struct Validation
     /// <returns>The instance with the property set.</returns>
     public Validation WithMaxContains(in Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger value)
     {
-        return this.SetProperty(JsonPropertyNames.MaxContains, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.MaxContains, value) : this.RemoveProperty(JsonPropertyNames.MaxContains);
     }
 
     /// <summary>
@@ -1067,7 +1067,7 @@ public readonly partial struct Validation
     /// <returns>The instance with the property set.</returns>
     public Validation WithMaximum(in Corvus.Json.JsonNumber value)
     {
-        return this.SetProperty(JsonPropertyNames.Maximum, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Maximum, value) : this.RemoveProperty(JsonPropertyNames.Maximum);
     }
 
     /// <summary>
@@ -1077,7 +1077,7 @@ public readonly partial struct Validation
     /// <returns>The instance with the property set.</returns>
     public Validation WithMaxItems(in Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger value)
     {
-        return this.SetProperty(JsonPropertyNames.MaxItems, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.MaxItems, value) : this.RemoveProperty(JsonPropertyNames.MaxItems);
     }
 
     /// <summary>
@@ -1087,7 +1087,7 @@ public readonly partial struct Validation
     /// <returns>The instance with the property set.</returns>
     public Validation WithMaxLength(in Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger value)
     {
-        return this.SetProperty(JsonPropertyNames.MaxLength, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.MaxLength, value) : this.RemoveProperty(JsonPropertyNames.MaxLength);
     }
 
     /// <summary>
@@ -1097,7 +1097,7 @@ public readonly partial struct Validation
     /// <returns>The instance with the property set.</returns>
     public Validation WithMaxProperties(in Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger value)
     {
-        return this.SetProperty(JsonPropertyNames.MaxProperties, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.MaxProperties, value) : this.RemoveProperty(JsonPropertyNames.MaxProperties);
     }
 
     /// <summary>
@@ -1107,7 +1107,7 @@ public readonly partial struct Validation
     /// <returns>The instance with the property set.</returns>
     public Validation WithMinContains(in Corvus.Json.JsonSchema.Draft202012.Validation.MinContainsEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.MinContains, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.MinContains, value) : this.RemoveProperty(JsonPropertyNames.MinContains);
     }
 
     /// <summary>
@@ -1117,7 +1117,7 @@ public readonly partial struct Validation
     /// <returns>The instance with the property set.</returns>
     public Validation WithMinimum(in Corvus.Json.JsonNumber value)
     {
-        return this.SetProperty(JsonPropertyNames.Minimum, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Minimum, value) : this.RemoveProperty(JsonPropertyNames.Minimum);
     }
 
     /// <summary>
@@ -1127,7 +1127,7 @@ public readonly partial struct Validation
     /// <returns>The instance with the property set.</returns>
     public Validation WithMinItems(in Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0 value)
     {
-        return this.SetProperty(JsonPropertyNames.MinItems, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.MinItems, value) : this.RemoveProperty(JsonPropertyNames.MinItems);
     }
 
     /// <summary>
@@ -1137,7 +1137,7 @@ public readonly partial struct Validation
     /// <returns>The instance with the property set.</returns>
     public Validation WithMinLength(in Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0 value)
     {
-        return this.SetProperty(JsonPropertyNames.MinLength, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.MinLength, value) : this.RemoveProperty(JsonPropertyNames.MinLength);
     }
 
     /// <summary>
@@ -1147,7 +1147,7 @@ public readonly partial struct Validation
     /// <returns>The instance with the property set.</returns>
     public Validation WithMinProperties(in Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0 value)
     {
-        return this.SetProperty(JsonPropertyNames.MinProperties, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.MinProperties, value) : this.RemoveProperty(JsonPropertyNames.MinProperties);
     }
 
     /// <summary>
@@ -1157,7 +1157,7 @@ public readonly partial struct Validation
     /// <returns>The instance with the property set.</returns>
     public Validation WithMultipleOf(in Corvus.Json.JsonSchema.Draft202012.Validation.MultipleOfEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.MultipleOf, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.MultipleOf, value) : this.RemoveProperty(JsonPropertyNames.MultipleOf);
     }
 
     /// <summary>
@@ -1165,9 +1165,9 @@ public readonly partial struct Validation
     /// </summary>
     /// <param name="value">The new property value</param>
     /// <returns>The instance with the property set.</returns>
-    public Validation WithPattern(in Corvus.Json.JsonRegex value)
+    public Validation WithPattern(in Corvus.Json.JsonSchema.Draft202012.Validation.PatternEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.Pattern, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Pattern, value) : this.RemoveProperty(JsonPropertyNames.Pattern);
     }
 
     /// <summary>
@@ -1177,7 +1177,7 @@ public readonly partial struct Validation
     /// <returns>The instance with the property set.</returns>
     public Validation WithRequired(in Corvus.Json.JsonSchema.Draft202012.Validation.StringArray value)
     {
-        return this.SetProperty(JsonPropertyNames.Required, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Required, value) : this.RemoveProperty(JsonPropertyNames.Required);
     }
 
     /// <summary>
@@ -1187,7 +1187,7 @@ public readonly partial struct Validation
     /// <returns>The instance with the property set.</returns>
     public Validation WithType(in Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.Type, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Type, value) : this.RemoveProperty(JsonPropertyNames.Type);
     }
 
     /// <summary>
@@ -1197,7 +1197,7 @@ public readonly partial struct Validation
     /// <returns>The instance with the property set.</returns>
     public Validation WithUniqueItems(in Corvus.Json.JsonSchema.Draft202012.Validation.UniqueItemsEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.UniqueItems, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.UniqueItems, value) : this.RemoveProperty(JsonPropertyNames.UniqueItems);
     }
 
     /// <summary>
@@ -1886,6 +1886,26 @@ public readonly partial struct Validation
             if ((that.backing & Backing.JsonElement) != 0)
             {
                 return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+        /// </summary>
+        /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in Validation that)
+        {
+            if ((that.backing & Backing.Object) != 0)
+            {
+                return that.objectBacking.ToBuilder();
+            }
+
+            if ((that.backing & Backing.JsonElement) != 0)
+            {
+                return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking);
             }
 
             throw new InvalidOperationException();

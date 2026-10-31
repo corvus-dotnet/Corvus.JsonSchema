@@ -223,7 +223,7 @@ public readonly partial struct OpenApiDocument
                         }
                     }
 
-                    return default;
+                    return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath.StyleEntity.DefaultInstance;
                 }
             }
 
@@ -258,14 +258,18 @@ public readonly partial struct OpenApiDocument
                 in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath.StyleEntity? style = null)
             {
                 var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
-                builder.Add(JsonPropertyNames.Required, required.AsAny);
 
-                if (inValue is not null)
+                if (required.IsNotUndefined())
+                {
+                    builder.Add(JsonPropertyNames.Required, required.AsAny);
+                }
+
+                if (inValue is Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath.InEntity inValueNotNull && inValueNotNull.IsNotUndefined())
                 {
                     builder.Add(JsonPropertyNames.In, inValue.Value.AsAny);
                 }
 
-                if (style is not null)
+                if (style is Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath.StyleEntity styleNotNull && styleNotNull.IsNotUndefined())
                 {
                     builder.Add(JsonPropertyNames.Style, style.Value.AsAny);
                 }
@@ -388,7 +392,7 @@ public readonly partial struct OpenApiDocument
             /// <returns>The instance with the property set.</returns>
             public ParameterInPath WithIn(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath.InEntity value)
             {
-                return this.SetProperty(JsonPropertyNames.In, value);
+                return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.In, value) : this.RemoveProperty(JsonPropertyNames.In);
             }
 
             /// <summary>
@@ -398,7 +402,7 @@ public readonly partial struct OpenApiDocument
             /// <returns>The instance with the property set.</returns>
             public ParameterInPath WithRequired(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath.RequiredEntity value)
             {
-                return this.SetProperty(JsonPropertyNames.Required, value);
+                return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Required, value) : this.RemoveProperty(JsonPropertyNames.Required);
             }
 
             /// <summary>
@@ -408,7 +412,7 @@ public readonly partial struct OpenApiDocument
             /// <returns>The instance with the property set.</returns>
             public ParameterInPath WithStyle(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath.StyleEntity value)
             {
-                return this.SetProperty(JsonPropertyNames.Style, value);
+                return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Style, value) : this.RemoveProperty(JsonPropertyNames.Style);
             }
 
             /// <summary>
@@ -927,6 +931,26 @@ public readonly partial struct OpenApiDocument
                     if ((that.backing & Backing.JsonElement) != 0)
                     {
                         return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+                    }
+
+                    throw new InvalidOperationException();
+                }
+
+                /// <summary>
+                /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+                /// </summary>
+                /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+                /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+                public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in ParameterInPath that)
+                {
+                    if ((that.backing & Backing.Object) != 0)
+                    {
+                        return that.objectBacking.ToBuilder();
+                    }
+
+                    if ((that.backing & Backing.JsonElement) != 0)
+                    {
+                        return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking);
                     }
 
                     throw new InvalidOperationException();

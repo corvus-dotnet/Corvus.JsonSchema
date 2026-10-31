@@ -252,6 +252,60 @@ public readonly partial struct OpenApiDocument
                 }
 
                 /// <summary>
+                /// Applies a composed value.
+                /// </summary>
+                /// <remarks>
+                /// This returns a new instance with any property values provided by the <paramref name="value"/> added or updated.
+                /// </remarks>
+                /// <param name="value">The composed value to apply.</param>
+                /// <returns>A new instance with the composed value applied.</returns>
+                public AllOfEntity WithApplied(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema value)
+                {
+                    if (!value.HasProperties())
+                    {
+                        return this;
+                    }
+
+                    ImmutableList<JsonObjectProperty>.Builder builder = __CorvusObjectHelpers.GetPropertyBackingBuilder(this);
+                    foreach (JsonObjectProperty property in value.EnumerateObject())
+                    {
+                        if (property.Value.IsNotUndefined())
+                        {
+                            builder.SetItem(property.Name, property.Value);
+                        }
+                    }
+
+                    return new(builder.ToImmutable());
+                }
+
+                /// <summary>
+                /// Applies a composed value.
+                /// </summary>
+                /// <remarks>
+                /// This returns a new instance with any property values provided by the <paramref name="value"/> added or updated.
+                /// </remarks>
+                /// <param name="value">The composed value to apply.</param>
+                /// <returns>A new instance with the composed value applied.</returns>
+                public AllOfEntity WithApplied(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Reference value)
+                {
+                    if (!value.HasProperties())
+                    {
+                        return this;
+                    }
+
+                    ImmutableList<JsonObjectProperty>.Builder builder = __CorvusObjectHelpers.GetPropertyBackingBuilder(this);
+                    foreach (JsonObjectProperty property in value.EnumerateObject())
+                    {
+                        if (property.Value.IsNotUndefined())
+                        {
+                            builder.SetItem(property.Name, property.Value);
+                        }
+                    }
+
+                    return new(builder.ToImmutable());
+                }
+
+                /// <summary>
                 /// Get a property.
                 /// </summary>
                 /// <param name="name">The name of the property.</param>
@@ -731,6 +785,26 @@ public readonly partial struct OpenApiDocument
                         if ((that.backing & Backing.JsonElement) != 0)
                         {
                             return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+                        }
+
+                        throw new InvalidOperationException();
+                    }
+
+                    /// <summary>
+                    /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+                    /// </summary>
+                    /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+                    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+                    public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in AllOfEntity that)
+                    {
+                        if ((that.backing & Backing.Object) != 0)
+                        {
+                            return that.objectBacking.ToBuilder();
+                        }
+
+                        if ((that.backing & Backing.JsonElement) != 0)
+                        {
+                            return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking);
                         }
 
                         throw new InvalidOperationException();

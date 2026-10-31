@@ -4,6 +4,14 @@
 
 using System.Text.Json;
 
+#if BUILDING_SOURCE_GENERATOR
+using EcmaRegexEdition = Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexEdition;
+using EcmaRegexUnicodeVersion = Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexUnicodeVersion;
+#else
+using EcmaRegexEdition = Corvus.Ecma262.RegularExpressions.RegexEdition;
+using EcmaRegexUnicodeVersion = Corvus.Ecma262.RegularExpressions.RegexUnicodeVersion;
+#endif
+
 namespace Corvus.Json;
 
 /// <summary>
@@ -306,8 +314,27 @@ public static partial class ValidateWithoutCoreType
     /// <returns>The updated validation context. A non-conformant value is reported as valid with a warning.</returns>
     public static ValidationContext TypeRegexWarning<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, string? formatKeyword = null)
         where T : struct, IJsonValue<T>
+        => TypeRegexWarning(instance, validationContext, level, EcmaRegexEdition.Current, EcmaRegexUnicodeVersion.Default, formatKeyword);
+
+    /// <summary>
+    /// Validates the format <c>regex</c> in warning mode.
+    /// </summary>
+    /// <typeparam name="T">The type of <see cref="IJsonValue"/> to validate.</typeparam>
+    /// <param name="instance">The instance to validate.</param>
+    /// <param name="validationContext">The validation context.</param>
+    /// <param name="level">The validation level.</param>
+    /// <param name="edition">The edition of ECMA-262 whose grammar the pattern is read with.</param>
+    /// <param name="unicodeVersion">The version of Unicode the pattern is read with.</param>
+    /// <param name="formatKeyword">The format keyword.</param>
+    /// <returns>The updated validation context. A non-conformant value is reported as valid with a warning.</returns>
+#if BUILDING_SOURCE_GENERATOR
+    internal static ValidationContext TypeRegexWarning<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, EcmaRegexEdition edition, EcmaRegexUnicodeVersion unicodeVersion, string? formatKeyword = null)
+#else
+    public static ValidationContext TypeRegexWarning<T>(in T instance, in ValidationContext validationContext, ValidationLevel level, EcmaRegexEdition edition, EcmaRegexUnicodeVersion unicodeVersion, string? formatKeyword = null)
+#endif
+        where T : struct, IJsonValue<T>
     {
-        if (ValidateWithoutCoreType.TypeRegex(instance, ValidationContext.ValidContext, ValidationLevel.Flag, formatKeyword).IsValid)
+        if (ValidateWithoutCoreType.TypeRegex(instance, ValidationContext.ValidContext, ValidationLevel.Flag, edition, unicodeVersion, formatKeyword).IsValid)
         {
             if (level == ValidationLevel.Verbose)
             {

@@ -463,6 +463,38 @@ public class JsonPropertyNameTests
     }
 
     [TestMethod]
+    [DataRow("hello123", true)]
+    [DataRow("world", false)]
+    [DataRow("hello\u0661", false)]
+    public void IsMatch_EcmaRegex_EveryBacking(string text, bool expected)
+    {
+        // \d is ASCII digits in ECMA-262, so the Arabic-Indic digit one is not one, as it is to .NET's engine.
+        Corvus.Ecma262.RegularExpressions.Regex regex = new("^hello\\d+$", Corvus.Ecma262.RegularExpressions.RegexFlags.Unicode);
+        Assert.AreEqual(expected, new JsonPropertyName(text).IsMatch(regex), "string");
+
+        using var element = JsonDocument.Parse(JsonSerializer.Serialize(text));
+        Assert.AreEqual(expected, new JsonPropertyName(element.RootElement).IsMatch(regex), "element");
+
+        using var property = JsonDocument.Parse("{" + JsonSerializer.Serialize(text) + ": 1}");
+        foreach (JsonProperty prop in property.RootElement.EnumerateObject())
+        {
+            Assert.AreEqual(expected, new JsonPropertyName(prop).IsMatch(regex), "property");
+        }
+    }
+
+    [TestMethod]
+    public void IsMatch_EcmaRegex_AMatchPastItsTimeoutThrowsTheTimeoutExceptionOfDotNet()
+    {
+        // A backreference keeps a pattern from the library's memo, so this backtracks until the timeout stops it, and
+        // the caller sees .NET's exception, as a match by .NET's engine threw.
+        Corvus.Ecma262.RegularExpressions.Regex regex = new("^(?:(a)|b)*\\1c$", Corvus.Ecma262.RegularExpressions.RegexFlags.Unicode, TimeSpan.FromTicks(1));
+        string text = new('a', 1_000_000);
+        RegexMatchTimeoutException fromName = Assert.ThrowsExactly<RegexMatchTimeoutException>(() => new JsonPropertyName(text).IsMatch(regex));
+        Assert.AreEqual("^(?:(a)|b)*\\1c$", fromName.Pattern);
+        Assert.ThrowsExactly<RegexMatchTimeoutException>(() => Validate.MatchesPattern(regex, text.AsSpan()));
+    }
+
+    [TestMethod]
     public void WriteTo_StringBacking()
     {
         JsonPropertyName name = new("myProp");

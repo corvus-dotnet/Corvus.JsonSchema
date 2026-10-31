@@ -160,7 +160,7 @@ public readonly partial struct MetaData
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedEntity.DefaultInstance;
         }
     }
 
@@ -256,7 +256,7 @@ public readonly partial struct MetaData
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity.DefaultInstance;
         }
     }
 
@@ -320,7 +320,7 @@ public readonly partial struct MetaData
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity.DefaultInstance;
         }
     }
 
@@ -360,37 +360,37 @@ public readonly partial struct MetaData
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-        if (defaultValue is not null)
+        if (defaultValue is Corvus.Json.JsonAny defaultValueNotNull && defaultValueNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Default, defaultValue.Value.AsAny);
         }
 
-        if (deprecated is not null)
+        if (deprecated is Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedEntity deprecatedNotNull && deprecatedNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Deprecated, deprecated.Value.AsAny);
         }
 
-        if (description is not null)
+        if (description is Corvus.Json.JsonString descriptionNotNull && descriptionNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Description, description.Value.AsAny);
         }
 
-        if (examples is not null)
+        if (examples is Corvus.Json.JsonArray examplesNotNull && examplesNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Examples, examples.Value.AsAny);
         }
 
-        if (readOnly is not null)
+        if (readOnly is Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity readOnlyNotNull && readOnlyNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.ReadOnly, readOnly.Value.AsAny);
         }
 
-        if (title is not null)
+        if (title is Corvus.Json.JsonString titleNotNull && titleNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Title, title.Value.AsAny);
         }
 
-        if (writeOnly is not null)
+        if (writeOnly is Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity writeOnlyNotNull && writeOnlyNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.WriteOnly, writeOnly.Value.AsAny);
         }
@@ -513,7 +513,7 @@ public readonly partial struct MetaData
     /// <returns>The instance with the property set.</returns>
     public MetaData WithDefault(in Corvus.Json.JsonAny value)
     {
-        return this.SetProperty(JsonPropertyNames.Default, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Default, value) : this.RemoveProperty(JsonPropertyNames.Default);
     }
 
     /// <summary>
@@ -523,7 +523,7 @@ public readonly partial struct MetaData
     /// <returns>The instance with the property set.</returns>
     public MetaData WithDeprecated(in Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.Deprecated, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Deprecated, value) : this.RemoveProperty(JsonPropertyNames.Deprecated);
     }
 
     /// <summary>
@@ -533,7 +533,7 @@ public readonly partial struct MetaData
     /// <returns>The instance with the property set.</returns>
     public MetaData WithDescription(in Corvus.Json.JsonString value)
     {
-        return this.SetProperty(JsonPropertyNames.Description, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Description, value) : this.RemoveProperty(JsonPropertyNames.Description);
     }
 
     /// <summary>
@@ -543,7 +543,7 @@ public readonly partial struct MetaData
     /// <returns>The instance with the property set.</returns>
     public MetaData WithExamples(in Corvus.Json.JsonArray value)
     {
-        return this.SetProperty(JsonPropertyNames.Examples, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Examples, value) : this.RemoveProperty(JsonPropertyNames.Examples);
     }
 
     /// <summary>
@@ -553,7 +553,7 @@ public readonly partial struct MetaData
     /// <returns>The instance with the property set.</returns>
     public MetaData WithReadOnly(in Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.ReadOnly, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.ReadOnly, value) : this.RemoveProperty(JsonPropertyNames.ReadOnly);
     }
 
     /// <summary>
@@ -563,7 +563,7 @@ public readonly partial struct MetaData
     /// <returns>The instance with the property set.</returns>
     public MetaData WithTitle(in Corvus.Json.JsonString value)
     {
-        return this.SetProperty(JsonPropertyNames.Title, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Title, value) : this.RemoveProperty(JsonPropertyNames.Title);
     }
 
     /// <summary>
@@ -573,7 +573,7 @@ public readonly partial struct MetaData
     /// <returns>The instance with the property set.</returns>
     public MetaData WithWriteOnly(in Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.WriteOnly, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.WriteOnly, value) : this.RemoveProperty(JsonPropertyNames.WriteOnly);
     }
 
     /// <summary>
@@ -1132,6 +1132,26 @@ public readonly partial struct MetaData
             if ((that.backing & Backing.JsonElement) != 0)
             {
                 return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+        /// </summary>
+        /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in MetaData that)
+        {
+            if ((that.backing & Backing.Object) != 0)
+            {
+                return that.objectBacking.ToBuilder();
+            }
+
+            if ((that.backing & Backing.JsonElement) != 0)
+            {
+                return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking);
             }
 
             throw new InvalidOperationException();

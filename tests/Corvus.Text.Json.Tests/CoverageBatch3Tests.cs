@@ -10,89 +10,12 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Corvus.Text.Json.Tests;
 
 /// <summary>
-/// Coverage batch 3: targeting JsonRegexValidator edge cases and
-/// JsonReaderHelper.Unescaping ArrayPool paths.
+/// Coverage batch 3: targeting JsonReaderHelper.Unescaping ArrayPool paths, numeric comparison and
+/// value parsing.
 /// </summary>
 [TestClass]
 public class CoverageBatch3Tests
 {
-    /// <summary>
-    /// Exercises <c>JsonRegexValidator</c> named capture group path (lines 424-431)
-    /// by validating a pattern with <c>(?&lt;name&gt;\w+)</c>.
-    /// </summary>
-    [TestMethod]
-    public void RegexValidator_NamedCaptureGroup_IsValid()
-    {
-        bool result = JsonRegexValidator.Validate("(?<name>\\w+)", JsonRegexOptions.ECMAScript);
-        Assert.IsTrue(result);
-    }
-
-    /// <summary>
-    /// Exercises named capture with multiple groups, triggering <c>AssignNameSlots</c> iteration.
-    /// </summary>
-    [TestMethod]
-    public void RegexValidator_MultipleNamedCaptures_IsValid()
-    {
-        bool result = JsonRegexValidator.Validate("(?<first>\\w+)\\s(?<last>\\w+)", JsonRegexOptions.ECMAScript);
-        Assert.IsTrue(result);
-    }
-
-    /// <summary>
-    /// Exercises expression conditional group path (lines 595-604 in PopGroup)
-    /// via the pattern <c>(?(condition)yes|no)</c>.
-    /// </summary>
-    [TestMethod]
-    public void RegexValidator_ExpressionConditional_IsValid()
-    {
-        // Expression conditional: (?(lookahead)yes|no)
-        bool result = JsonRegexValidator.Validate("(?(?=a)b|c)", JsonRegexOptions.None);
-        Assert.IsTrue(result);
-    }
-
-    /// <summary>
-    /// Exercises expression conditional with a non-lookahead condition.
-    /// </summary>
-    [TestMethod]
-    public void RegexValidator_ExpressionConditional_NonLookahead()
-    {
-        // Conditional with a capturing group condition
-        bool result = JsonRegexValidator.Validate("(?(\\d)yes|no)", JsonRegexOptions.None);
-        Assert.IsTrue(result);
-    }
-
-    /// <summary>
-    /// Exercises the incomplete quantifier fallback path (lines 1991-1996)
-    /// where <c>{</c> is not followed by a valid <c>{n,m}</c> quantifier format.
-    /// </summary>
-    [TestMethod]
-    public void RegexValidator_IncompleteBraceQuantifier_TreatedAsLiteral()
-    {
-        // { not followed by valid quantifier — treated as literal character
-        bool result = JsonRegexValidator.Validate("a{b", JsonRegexOptions.ECMAScript);
-        Assert.IsTrue(result);
-    }
-
-    /// <summary>
-    /// Exercises incomplete quantifier with just <c>{</c> at end of pattern.
-    /// </summary>
-    [TestMethod]
-    public void RegexValidator_BraceAtEnd_TreatedAsLiteral()
-    {
-        bool result = JsonRegexValidator.Validate("a{", JsonRegexOptions.ECMAScript);
-        Assert.IsTrue(result);
-    }
-
-    /// <summary>
-    /// Exercises incomplete quantifier with digits but no closing brace.
-    /// </summary>
-    [TestMethod]
-    public void RegexValidator_BraceWithDigitsNoClose_TreatedAsLiteral()
-    {
-        // {3 without closing } — falls through to literal
-        bool result = JsonRegexValidator.Validate("a{3b", JsonRegexOptions.ECMAScript);
-        Assert.IsTrue(result);
-    }
-
     /// <summary>
     /// Exercises the ArrayPool return paths in <c>UnescapeAndCompareBothInputs</c>
     /// (lines 172-182) by comparing two objects with long escaped property names
@@ -158,46 +81,6 @@ public class CoverageBatch3Tests
 
         bool areEqual = JsonElementHelpers.DeepEquals(doc1.RootElement, doc2.RootElement);
         Assert.IsFalse(areEqual);
-    }
-
-    /// <summary>
-    /// Exercises <c>AssignNameSlots</c> while loop (lines 323-325)
-    /// by using a pattern where unnamed groups take slots that collide
-    /// with the auto-numbering for named groups.
-    /// Uses non-ECMAScript mode where unnamed groups are noted non-explicitly.
-    /// </summary>
-    [TestMethod]
-    public void RegexValidator_NamedAndUnnamedGroups_AssignNameSlotsLoop()
-    {
-        // (x) takes slot 1, (y) takes slot 2; then (?<name>z) in AssignNameSlots
-        // starts at _autocap=3 which is not taken, so no while loop iteration.
-        // To force the loop: use (?<3>x) to explicitly reserve slot 3, then
-        // unnamed groups take 1, 2 and _autocap ends at 3 — but slot 3 is already taken!
-        // This requires non-ECMAScript mode for numbered named groups.
-        bool result = JsonRegexValidator.Validate("(a)(b)(?<3>c)(?<name>d)", JsonRegexOptions.None);
-        Assert.IsTrue(result);
-    }
-
-    /// <summary>
-    /// Validates a pattern with alternation inside an expression conditional.
-    /// </summary>
-    [TestMethod]
-    public void RegexValidator_ConditionalWithAlternation()
-    {
-        // (?(lookahead)trueExpr|falseExpr)
-        bool result = JsonRegexValidator.Validate("(?(?=\\d)\\d{3}|\\w+)", JsonRegexOptions.None);
-        Assert.IsTrue(result);
-    }
-
-    /// <summary>
-    /// Validates a backreference conditional pattern (?(1)yes|no).
-    /// </summary>
-    [TestMethod]
-    public void RegexValidator_BackreferenceConditional()
-    {
-        // Backreference conditional — (x) captures group 1, then (?(1)yes|no)
-        bool result = JsonRegexValidator.Validate("(x)(?(1)yes|no)", JsonRegexOptions.None);
-        Assert.IsTrue(result);
     }
 
     /// <summary>

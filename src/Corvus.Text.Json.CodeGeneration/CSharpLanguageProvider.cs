@@ -102,10 +102,10 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, IStreamingL
     /// <summary>Gets the name of the emitted schema evaluation program class.</summary>
     internal const string ProgramClassName = "CorvusJsonSchemaProgram";
 
-    /// <summary>Gets the fully qualified reference to the program class for use in generated code.</summary>
     /// <summary>Gets the regular expressions of this generation, each written once (see <see cref="SharedRegularExpressions"/>).</summary>
     internal SharedRegularExpressions SharedRegularExpressions => this.sharedRegularExpressions ??= new(options.DefaultNamespace);
 
+    /// <summary>Gets the fully qualified reference to the program class for use in generated code.</summary>
     internal string ProgramClassReference => options.DefaultNamespace.Length == 0 ? "global::" + ProgramClassName : "global::" + options.DefaultNamespace + "." + ProgramClassName;
 
     /// <inheritdoc/>

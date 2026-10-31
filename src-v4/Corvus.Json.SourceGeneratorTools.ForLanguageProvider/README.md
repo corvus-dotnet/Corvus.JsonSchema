@@ -13,7 +13,6 @@ It minimizes external dependencies by compiling in the source from the following
 `Corvus.UriTemplates`
 `Corvus.Json.JsonReference`
 `Corvus.Json.ExtendedTypes`
-`Corvus.Json.JsonSchema`
 
 It also references `8.x` and prior versions of the System libraries which simplifies referencing in your custom Source Generator or Analyzer.
 

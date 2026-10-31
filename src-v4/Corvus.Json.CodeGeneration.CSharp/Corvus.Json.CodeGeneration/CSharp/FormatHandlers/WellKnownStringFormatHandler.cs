@@ -153,6 +153,16 @@ public class WellKnownStringFormatHandler : IStringFormatHandler
                 ? $"{typeKeywordDisplay}, {formatKeywordDisplay}"
                 : formatKeywordDisplay;
 
+        // The regex format is the grammar of the u flag, read in the edition and version of Unicode the type's
+        // dialect (or the options) reads its patterns with, as V5 reads it.
+        if (format == "regex" && generator.CurrentTypeDeclaration is TypeDeclaration current)
+        {
+            keywordParameters =
+                "global::Corvus.Ecma262.RegularExpressions.RegexEdition." + current.RegexEdition() +
+                ", global::Corvus.Ecma262.RegularExpressions.RegexUnicodeVersion." + current.RegexUnicodeVersion() +
+                ", " + keywordParameters;
+        }
+
         string? methodSuffix = format switch
         {
             "date" => "Date",

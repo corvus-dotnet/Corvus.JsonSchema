@@ -1,7 +1,7 @@
 # Translation Reference
 
-> **Scope.** These translations apply to the DotNet regular expression engine (`--regexEngine DotNet`),
-> `JsonSchemaEvaluator.ToDotNetPattern` and the V4 generators. See the scope note in
+> **Scope.** These translations apply to the DotNet regular expression engine (`--regexEngine DotNet`, in V5 and V4),
+> and `JsonSchemaEvaluator.ToDotNetPattern`. See the scope note in
 > [EcmaRegexTranslator.md](./EcmaRegexTranslator.md).
 
 What `EcmaRegexTranslator` writes for each construct of an ECMA-262 regular expression, and why.

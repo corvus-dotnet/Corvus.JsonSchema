@@ -20,7 +20,9 @@ namespace Corvus.Json.JsonSchema.Draft202012;
 /// Core vocabulary meta-schema
 /// </summary>
 public readonly partial struct Core
+#if !NET8_0_OR_GREATER
     : IJsonBoolean<Corvus.Json.JsonSchema.Draft202012.Core>
+#endif
 {
     /// <summary>
     /// Conversion from <see cref="bool"/>.
@@ -61,7 +63,7 @@ public readonly partial struct Core
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a boolean.</exception>
-    public static implicit operator bool(Core value)
+    public static explicit operator bool(Core value)
     {
         return value.GetBoolean() ?? throw new InvalidOperationException();
     }

@@ -338,32 +338,32 @@ public readonly partial struct OpenApiDocument
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-            if (body is not null)
+            if (body is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Server bodyNotNull && bodyNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.Body, body.Value.AsAny);
             }
 
-            if (description is not null)
+            if (description is Corvus.Json.JsonString descriptionNotNull && descriptionNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.Description, description.Value.AsAny);
             }
 
-            if (operationId is not null)
+            if (operationId is Corvus.Json.JsonString operationIdNotNull && operationIdNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.OperationId, operationId.Value.AsAny);
             }
 
-            if (operationRef is not null)
+            if (operationRef is Corvus.Json.JsonUriReference operationRefNotNull && operationRefNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.OperationRef, operationRef.Value.AsAny);
             }
 
-            if (parameters is not null)
+            if (parameters is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MapOfStrings parametersNotNull && parametersNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.Parameters, parameters.Value.AsAny);
             }
 
-            if (requestBody is not null)
+            if (requestBody is Corvus.Json.JsonAny requestBodyNotNull && requestBodyNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.RequestBody, requestBody.Value.AsAny);
             }
@@ -486,7 +486,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public Link WithBody(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Server value)
         {
-            return this.SetProperty(JsonPropertyNames.Body, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Body, value) : this.RemoveProperty(JsonPropertyNames.Body);
         }
 
         /// <summary>
@@ -496,7 +496,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public Link WithDescription(in Corvus.Json.JsonString value)
         {
-            return this.SetProperty(JsonPropertyNames.Description, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Description, value) : this.RemoveProperty(JsonPropertyNames.Description);
         }
 
         /// <summary>
@@ -506,7 +506,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public Link WithOperationId(in Corvus.Json.JsonString value)
         {
-            return this.SetProperty(JsonPropertyNames.OperationId, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.OperationId, value) : this.RemoveProperty(JsonPropertyNames.OperationId);
         }
 
         /// <summary>
@@ -516,7 +516,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public Link WithOperationRef(in Corvus.Json.JsonUriReference value)
         {
-            return this.SetProperty(JsonPropertyNames.OperationRef, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.OperationRef, value) : this.RemoveProperty(JsonPropertyNames.OperationRef);
         }
 
         /// <summary>
@@ -526,7 +526,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public Link WithParameters(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.MapOfStrings value)
         {
-            return this.SetProperty(JsonPropertyNames.Parameters, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Parameters, value) : this.RemoveProperty(JsonPropertyNames.Parameters);
         }
 
         /// <summary>
@@ -536,7 +536,88 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public Link WithRequestBody(in Corvus.Json.JsonAny value)
         {
-            return this.SetProperty(JsonPropertyNames.RequestBody, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.RequestBody, value) : this.RemoveProperty(JsonPropertyNames.RequestBody);
+        }
+
+        /// <summary>
+        /// Applies a composed value.
+        /// </summary>
+        /// <remarks>
+        /// This returns a new instance with any property values provided by the <paramref name="value"/> added or updated.
+        /// </remarks>
+        /// <param name="value">The composed value to apply.</param>
+        /// <returns>A new instance with the composed value applied.</returns>
+        public Link WithApplied(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions value)
+        {
+            if (!value.HasProperties())
+            {
+                return this;
+            }
+
+            ImmutableList<JsonObjectProperty>.Builder builder = __CorvusObjectHelpers.GetPropertyBackingBuilder(this);
+            foreach (JsonObjectProperty property in value.EnumerateObject())
+            {
+                if (property.Value.IsNotUndefined())
+                {
+                    builder.SetItem(property.Name, property.Value);
+                }
+            }
+
+            return new(builder.ToImmutable());
+        }
+
+        /// <summary>
+        /// Applies a composed value.
+        /// </summary>
+        /// <remarks>
+        /// This returns a new instance with any property values provided by the <paramref name="value"/> added or updated.
+        /// </remarks>
+        /// <param name="value">The composed value to apply.</param>
+        /// <returns>A new instance with the composed value applied.</returns>
+        public Link WithApplied(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Link.RequiredOperationRef value)
+        {
+            if (!value.HasProperties())
+            {
+                return this;
+            }
+
+            ImmutableList<JsonObjectProperty>.Builder builder = __CorvusObjectHelpers.GetPropertyBackingBuilder(this);
+            foreach (JsonObjectProperty property in value.EnumerateObject())
+            {
+                if (property.Value.IsNotUndefined())
+                {
+                    builder.SetItem(property.Name, property.Value);
+                }
+            }
+
+            return new(builder.ToImmutable());
+        }
+
+        /// <summary>
+        /// Applies a composed value.
+        /// </summary>
+        /// <remarks>
+        /// This returns a new instance with any property values provided by the <paramref name="value"/> added or updated.
+        /// </remarks>
+        /// <param name="value">The composed value to apply.</param>
+        /// <returns>A new instance with the composed value applied.</returns>
+        public Link WithApplied(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Link.RequiredOperationId value)
+        {
+            if (!value.HasProperties())
+            {
+                return this;
+            }
+
+            ImmutableList<JsonObjectProperty>.Builder builder = __CorvusObjectHelpers.GetPropertyBackingBuilder(this);
+            foreach (JsonObjectProperty property in value.EnumerateObject())
+            {
+                if (property.Value.IsNotUndefined())
+                {
+                    builder.SetItem(property.Name, property.Value);
+                }
+            }
+
+            return new(builder.ToImmutable());
         }
 
         /// <summary>
@@ -1085,6 +1166,26 @@ public readonly partial struct OpenApiDocument
                 if ((that.backing & Backing.JsonElement) != 0)
                 {
                     return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+            /// </summary>
+            /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+            public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in Link that)
+            {
+                if ((that.backing & Backing.Object) != 0)
+                {
+                    return that.objectBacking.ToBuilder();
+                }
+
+                if ((that.backing & Backing.JsonElement) != 0)
+                {
+                    return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking);
                 }
 
                 throw new InvalidOperationException();

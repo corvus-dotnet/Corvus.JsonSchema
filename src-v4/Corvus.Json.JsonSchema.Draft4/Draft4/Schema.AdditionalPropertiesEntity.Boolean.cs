@@ -49,7 +49,9 @@ public readonly partial struct Schema
     /// </para>
     /// </remarks>
     public readonly partial struct AdditionalPropertiesEntity
+#if !NET8_0_OR_GREATER
         : IJsonBoolean<Corvus.Json.JsonSchema.Draft4.Schema.AdditionalPropertiesEntity>
+#endif
     {
         /// <summary>
         /// Conversion from <see cref="bool"/>.
@@ -90,7 +92,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         /// <exception cref="InvalidOperationException">The value was not a boolean.</exception>
-        public static implicit operator bool(AdditionalPropertiesEntity value)
+        public static explicit operator bool(AdditionalPropertiesEntity value)
         {
             return value.GetBoolean() ?? throw new InvalidOperationException();
         }

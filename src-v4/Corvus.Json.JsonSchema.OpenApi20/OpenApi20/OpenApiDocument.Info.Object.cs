@@ -38,7 +38,7 @@ public readonly partial struct OpenApiDocument
         /// for the pattern property producing the type
         /// <see cref="Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.VendorExtension"/>.
         /// </summary>
-        public static Regex PatternPropertyVendorExtension => CorvusValidation.PatternProperties;
+        public static global::Corvus.Ecma262.RegularExpressions.Regex PatternPropertyVendorExtension => CorvusValidation.PatternProperties;
 
         /// <summary>
         /// Conversion from <see cref="ImmutableList{JsonObjectProperty}"/>.

@@ -20,7 +20,9 @@ namespace Corvus.Json.JsonSchema.Draft202012;
 /// Unevaluated applicator vocabulary meta-schema
 /// </summary>
 public readonly partial struct Unevaluated
+#if !NET8_0_OR_GREATER
     : IJsonBoolean<Corvus.Json.JsonSchema.Draft202012.Unevaluated>
+#endif
 {
     /// <summary>
     /// Conversion from <see cref="bool"/>.
@@ -61,7 +63,7 @@ public readonly partial struct Unevaluated
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a boolean.</exception>
-    public static implicit operator bool(Unevaluated value)
+    public static explicit operator bool(Unevaluated value)
     {
         return value.GetBoolean() ?? throw new InvalidOperationException();
     }

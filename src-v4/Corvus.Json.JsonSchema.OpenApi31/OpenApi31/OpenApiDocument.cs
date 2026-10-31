@@ -12,6 +12,10 @@
 using global::System.Buffers;
 using global::System.Collections.Immutable;
 using global::System.Runtime.CompilerServices;
+
+#if NET8_0_OR_GREATER
+using global::System.Text;
+#endif
 using global::System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
@@ -25,9 +29,16 @@ namespace Corvus.Json.JsonSchema.OpenApi31;
 /// The description of OpenAPI v3.1.x documents without schema validation, as defined by https://spec.openapis.org/oas/v3.1.0
 /// </para>
 /// </remarks>
+[global::System.Diagnostics.DebuggerDisplay("{__CorvusDebuggerDisplay,nq}")]
 [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<OpenApiDocument>))]
 public readonly partial struct OpenApiDocument
-
+#if NET8_0_OR_GREATER
+    : IFormattable,
+      ISpanFormattable,
+      IUtf8SpanFormattable
+#else
+    : IFormattable
+#endif
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
@@ -829,10 +840,80 @@ public readonly partial struct OpenApiDocument
     }
 
     /// <inheritdoc/>
+    public string ToString(string? format, IFormatProvider? formatProvider)
+    {
+        if (!string.IsNullOrEmpty(format))
+        {
+            if (this.ValueKind == JsonValueKind.Number)
+            {
+                return ((IJsonValue)this).AsNumber.AsBinaryJsonNumber.ToString(format, formatProvider);
+            }
+        }
+
+        return this.ToString();
+    }
+
+#if NET8_0_OR_GREATER
+    /// <inheritdoc/>
+    public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+    {
+        if (format.IsEmpty)
+        {
+            return LowAllocJsonUtils.TryFormatJsonValue(destination, this, out charsWritten);
+        }
+
+        if (this.ValueKind == JsonValueKind.Number)
+        {
+            return ((IJsonValue)this).AsNumber.AsBinaryJsonNumber.TryFormat(destination, out charsWritten, format, provider);
+        }
+
+        string formatted = this.ToString(format.IsEmpty ? null : format.ToString(), provider);
+        if (formatted.Length > destination.Length)
+        {
+            charsWritten = 0;
+            return false;
+        }
+
+        formatted.AsSpan().CopyTo(destination);
+        charsWritten = formatted.Length;
+        return true;
+    }
+
+    /// <inheritdoc/>
+    public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+    {
+        if (format.IsEmpty)
+        {
+            return LowAllocJsonUtils.TryFormatJsonValue(utf8Destination, this, out bytesWritten);
+        }
+
+        if (this.ValueKind == JsonValueKind.Number)
+        {
+            return ((IJsonValue)this).AsNumber.AsBinaryJsonNumber.TryFormat(utf8Destination, out bytesWritten, format, provider);
+        }
+
+        string formatted = this.ToString(format.IsEmpty ? null : format.ToString(), provider);
+        int requiredLength = global::System.Text.Encoding.UTF8.GetByteCount(formatted);
+        if (requiredLength > utf8Destination.Length)
+        {
+            bytesWritten = 0;
+            return false;
+        }
+
+        bytesWritten = global::System.Text.Encoding.UTF8.GetBytes(formatted.AsSpan(), utf8Destination);
+        return true;
+    }
+#endif
+
+
+    /// <inheritdoc/>
     public override string ToString()
     {
         return this.Serialize();
     }
+
+    [global::System.Diagnostics.DebuggerBrowsable(global::System.Diagnostics.DebuggerBrowsableState.Never)]
+    private string __CorvusDebuggerDisplay => $"OpenApiDocument: ValueKind = {ValueKind} : \"{ToString()}\"";
 
     /// <summary>
     /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
@@ -907,6 +988,49 @@ public readonly partial struct OpenApiDocument
         }
 
         return defaultMatch(this);
+    }
+
+    /// <summary>
+    /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+    /// </summary>
+    /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+    /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+    /// <param name="matchRequiredPaths">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.RequiredPaths"/>.</param>
+    /// <param name="matchRequiredComponents">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.RequiredComponents"/>.</param>
+    /// <param name="matchRequiredWebhooks">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.RequiredWebhooks"/>.</param>
+    /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+    /// <returns>The accumulator returned by the last match function called.</returns>
+    public TAccumulator MatchEvery<TAccumulator>(
+        TAccumulator accumulator,
+        Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.RequiredPaths, TAccumulator, TAccumulator> matchRequiredPaths,
+        Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.RequiredComponents, TAccumulator, TAccumulator> matchRequiredComponents,
+        Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.RequiredWebhooks, TAccumulator, TAccumulator> matchRequiredWebhooks,
+        Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument, TAccumulator, TAccumulator> defaultMatch)
+    {
+        bool matched = false;
+
+        Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.RequiredPaths matchRequiredPathsValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.RequiredPaths>();
+        if (matchRequiredPathsValue.IsValid())
+        {
+            matched = true;
+            accumulator = matchRequiredPaths(matchRequiredPathsValue, accumulator);
+        }
+
+        Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.RequiredComponents matchRequiredComponentsValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.RequiredComponents>();
+        if (matchRequiredComponentsValue.IsValid())
+        {
+            matched = true;
+            accumulator = matchRequiredComponents(matchRequiredComponentsValue, accumulator);
+        }
+
+        Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.RequiredWebhooks matchRequiredWebhooksValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.RequiredWebhooks>();
+        if (matchRequiredWebhooksValue.IsValid())
+        {
+            matched = true;
+            accumulator = matchRequiredWebhooks(matchRequiredWebhooksValue, accumulator);
+        }
+
+        return matched ? accumulator : defaultMatch(this, accumulator);
     }
 
     /// <summary>

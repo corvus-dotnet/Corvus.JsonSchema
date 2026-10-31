@@ -10,7 +10,8 @@ namespace Corvus.Text.Json.SourceGenerator.Tests;
 
 /// <summary>
 /// The build properties a generator driver gives the source generator, for the tests that choose the engine its
-/// regular expressions are written for (<c>CorvusTextJsonRegexEngine</c>).
+/// regular expressions are written for (<c>CorvusTextJsonRegexEngine</c>, or <c>CorvusJsonSchemaRegexEngine</c> for the
+/// V4 source generator).
 /// </summary>
 internal static class RegexEngineOptions
 {
@@ -19,6 +20,12 @@ internal static class RegexEngineOptions
     /// <returns>The options.</returns>
     public static AnalyzerConfigOptionsProvider For(string engine) =>
         new GlobalOptionsProvider(ImmutableDictionary<string, string>.Empty.Add("build_property.CorvusTextJsonRegexEngine", engine));
+
+    /// <summary>Gets the options of a build that sets the V4 source generator's <c>CorvusJsonSchemaRegexEngine</c>.</summary>
+    /// <param name="engine">The engine: <c>Ecma262</c> or <c>DotNet</c>.</param>
+    /// <returns>The options.</returns>
+    public static AnalyzerConfigOptionsProvider ForV4(string engine) =>
+        new GlobalOptionsProvider(ImmutableDictionary<string, string>.Empty.Add("build_property.CorvusJsonSchemaRegexEngine", engine));
 
     private sealed class GlobalOptionsProvider(ImmutableDictionary<string, string> values) : AnalyzerConfigOptionsProvider
     {

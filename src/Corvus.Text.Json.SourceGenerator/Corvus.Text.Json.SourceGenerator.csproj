@@ -110,43 +110,11 @@
     <Compile Include="$(CorvusV4Path)Corvus.Json.CodeGeneration.OpenApi30\Corvus.Json.CodeGeneration\OpenApi30\**\*.cs">
       <Link>Corvus.Json.CodeGeneration.OpenApi30\%(RecursiveDir)\%(Filename)%(Extension)</Link>
     </Compile>
-    <Compile Include="$(CorvusV4Path)Corvus.Json.JsonSchema.Draft201909\Draft201909\**\*.cs">
-      <Link>Corvus.Json.CodeGeneration.Draft201909\%(RecursiveDir)\%(Filename)%(Extension)</Link>
-    </Compile>
-    <Compile Include="$(CorvusV4Path)Corvus.Json.JsonSchema.Draft202012\Draft202012\**\*.cs">
-      <Link>Corvus.Json.CodeGeneration.Draft202012\%(RecursiveDir)\%(Filename)%(Extension)</Link>
-    </Compile>
-    <Compile Include="$(CorvusV4Path)Corvus.Json.JsonSchema.Draft4\Draft4\**\*.cs">
-      <Link>Corvus.Json.CodeGeneration.Draft4\%(RecursiveDir)\%(Filename)%(Extension)</Link>
-    </Compile>
-    <Compile Include="$(CorvusV4Path)Corvus.Json.JsonSchema.Draft6\Draft6\**\*.cs">
-      <Link>Corvus.Json.CodeGeneration.Draft6\%(RecursiveDir)\%(Filename)%(Extension)</Link>
-    </Compile>
-    <Compile Include="$(CorvusV4Path)Corvus.Json.JsonSchema.Draft7\Draft7\**\*.cs">
-      <Link>Corvus.Json.CodeGeneration.Draft7\%(RecursiveDir)\%(Filename)%(Extension)</Link>
-    </Compile>
-    <Compile Include="$(CorvusV4Path)Corvus.Json.JsonSchema.OpenApi20\OpenApi20\**\*.cs">
-      <Link>Corvus.Json.CodeGeneration.OpenApi20\%(RecursiveDir)\%(Filename)%(Extension)</Link>
-    </Compile>
-    <Compile Include="$(CorvusV4Path)Corvus.Json.JsonSchema.OpenApi30\OpenApi30\**\*.cs">
-      <Link>Corvus.Json.CodeGeneration.OpenApi30\%(RecursiveDir)\%(Filename)%(Extension)</Link>
-    </Compile>
-    <Compile Include="$(CorvusV4Path)Corvus.Json.JsonSchema.OpenApi31\OpenApi31\**\*.cs">
-      <Link>Corvus.Json.CodeGeneration.OpenApi31\%(RecursiveDir)\%(Filename)%(Extension)</Link>
-    </Compile>
     <Compile Remove="$(CorvusV4Path)Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration\**\FileSystemDocumentResolver.cs" />
     <Compile Remove="$(CorvusV4Path)Corvus.Json.CodeGeneration.CSharp\Corvus.Json.CodeGeneration\CSharp\**\NullableAttributes.cs" />
     <Compile Remove="$(CorvusV4Path)Corvus.Json.JsonReference\Corvus.Json\**\NullableAttributes.cs" />
     <Compile Remove="$(CorvusV4Path)Corvus.Json.ExtendedTypes\Corvus.Json\**\NullableAttributes.cs" />
     <Compile Remove="$(CorvusV4Path)Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration\NullableAttributes.cs" />
-    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Regex\JsonRegexValidator.cs" Link="Regex\JsonRegexValidator.cs" />
-    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Regex\JsonRegexNode.cs" Link="Regex\JsonRegexNode.cs" />
-    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Regex\JsonRegexNodeKind.cs" Link="Regex\JsonRegexNodeKind.cs" />
-    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Regex\JsonRegexOpCode.cs" Link="Regex\JsonRegexOpCode.cs" />
-    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Regex\JsonRegexOptions.cs" Link="Regex\JsonRegexOptions.cs" />
-    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Regex\JsonRegexCharClass.cs" Link="Regex\JsonRegexCharClass.cs" />
-    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Regex\JsonRegexCaseBehavior.cs" Link="Regex\JsonRegexCaseBehavior.cs" />
-    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Regex\JsonRegexReplacement.cs" Link="Regex\JsonRegexReplacement.cs" />
     <Compile Include="..\..\Common\src\System\HexConverter.cs" Link="Common\System\HexConverter.cs" />
   </ItemGroup>
   <ItemGroup>

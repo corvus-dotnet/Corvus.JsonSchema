@@ -14,10 +14,11 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Corvus.Text.Json.SourceGenerator.Tests;
 
 /// <summary>
-/// The regular expressions in the code the V4 source generator (<c>Corvus.Json.SourceGenerator</c>) emits. Roslyn does not chain generators, so there is
-/// no <c>[GeneratedRegex]</c> in it: a generated type constructs its expression, with the match timeout of 1
-/// second. A pattern that is not a valid ECMA-262 regular expression is reported as the diagnostic CRV1001, and a
-/// pattern over a limit of size as CRV1003.
+/// The regular expressions in the code the V4 source generator (<c>Corvus.Json.SourceGenerator</c>) emits. By default
+/// each is Corvus.Regex.Ecma262's compiled matcher, written once in <c>CorvusJsonSchemaRegularExpressions</c>. With the
+/// DotNet engine Roslyn does not chain generators, so there is no <c>[GeneratedRegex]</c> in it: a generated type
+/// constructs its expression, with the match timeout of 1 second. Under either engine a pattern that is not a valid
+/// ECMA-262 regular expression is reported as the diagnostic CRV1001, and a pattern over a limit of size as CRV1003.
 /// </summary>
 [TestClass]
 public class V4SourceGeneratorRegexPatternTests
@@ -50,7 +51,8 @@ public class V4SourceGeneratorRegexPatternTests
                 "^(a|aa)+-$": { "type": "integer" }
               }
             }
-            """);
+            """,
+            "DotNet");
 
         Assert.IsNull(result.Exception, $"The generator threw: {result.Exception}");
         Assert.AreEqual(0, result.Diagnostics.Count(d => d.Severity == DiagnosticSeverity.Error), string.Join("\n", result.Diagnostics));
@@ -78,21 +80,25 @@ public class V4SourceGeneratorRegexPatternTests
     }
 
     [TestMethod]
-    public void APatternThatIsNotValid_IsReportedAsADiagnostic()
+    [DataRow("Ecma262")]
+    [DataRow("DotNet")]
+    public void APatternThatIsNotValid_IsReportedAsADiagnostic(string engine)
     {
-        GeneratorRunResult result = Run("""
+        GeneratorRunResult result = Run(
+            """
             {
               "$schema": "https://json-schema.org/draft/2020-12/schema",
               "type": "string",
               "pattern": "a{2,1}"
             }
-            """);
+            """,
+            engine);
 
         Assert.IsNull(result.Exception, $"The generator threw: {result.Exception}");
         Diagnostic[] errors = [.. result.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error)];
         Assert.AreEqual(1, errors.Length, string.Join("\n", result.Diagnostics));
         Assert.AreEqual("CRV1001", errors[0].Id);
-        StringAssert.Contains(errors[0].GetMessage(), "The pattern 'a{2,1}' of the keyword 'pattern' is not a valid ECMA-262 regular expression. Numbers out of order in {} quantifier at offset 6.");
+        StringAssert.Contains(errors[0].GetMessage(), "The pattern 'a{2,1}' of the keyword 'pattern' is not a valid ECMA-262 regular expression. ");
     }
 
     [TestMethod]
@@ -104,7 +110,8 @@ public class V4SourceGeneratorRegexPatternTests
               "type": "string",
               "pattern": "(?:(?:(?:(?:(?:(?:(?:(?:(?:ab){4}){4}){4}){4}){4}){4}){4}){4}){4}"
             }
-            """);
+            """,
+            "DotNet");
 
         Assert.IsNull(result.Exception, $"The generator threw: {result.Exception}");
         Diagnostic[] errors = [.. result.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error)];
@@ -115,7 +122,43 @@ public class V4SourceGeneratorRegexPatternTests
             errors[0].GetMessage(System.Globalization.CultureInfo.InvariantCulture));
     }
 
-    private static GeneratorRunResult Run(string schema)
+    [TestMethod]
+    public void WithTheLibrary_APatternOverItsLimits_IsReportedAsADiagnosticOfItsOwn()
+    {
+        // Nested past the 200 groups the library compiles.
+        string pattern = new string('(', 201) + "a" + new string(')', 201);
+        GeneratorRunResult result = Run("{\"$schema\": \"https://json-schema.org/draft/2020-12/schema\", \"type\": \"string\", \"pattern\": \"" + pattern + "\"}", "Ecma262");
+
+        Assert.IsNull(result.Exception, $"The generator threw: {result.Exception}");
+        Diagnostic[] errors = [.. result.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error)];
+        Assert.AreEqual(1, errors.Length, string.Join("\n", result.Diagnostics));
+        Assert.AreEqual("CRV1003", errors[0].Id);
+        StringAssert.StartsWith(errors[0].GetMessage(System.Globalization.CultureInfo.InvariantCulture), "The pattern of the keyword 'pattern' is too large.");
+    }
+
+    [TestMethod]
+    public void ByDefault_TheCodeCarriesTheLibrarysMatchers()
+    {
+        GeneratorRunResult result = Run("""
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "object",
+              "properties": { "code": { "type": "string", "pattern": "^(a|aa)+$" } },
+              "patternProperties": { "^x-": { "type": "integer" } }
+            }
+            """);
+
+        Assert.IsNull(result.Exception, $"The generator threw: {result.Exception}");
+        Assert.AreEqual(0, result.Diagnostics.Count(d => d.Severity == DiagnosticSeverity.Error), string.Join("\n", result.Diagnostics));
+        string code = string.Concat(result.GeneratedSources.Select(s => s.SourceText.ToString()));
+        Assert.AreEqual(1, result.GeneratedSources.Count(s => s.HintName.StartsWith("CorvusJsonSchemaRegularExpressions", StringComparison.Ordinal)), string.Join(", ", result.GeneratedSources.Select(s => s.HintName)));
+        StringAssert.Contains(code, "public static readonly global::Corvus.Ecma262.RegularExpressions.Regex Pattern = global::");
+        StringAssert.Contains(code, "Compiled => new byte[]");
+        StringAssert.Contains(code, "Corvus.Json.Validate.MatchesPattern(Pattern, input)");
+        Assert.IsFalse(code.Contains("Regex CreatePattern", StringComparison.Ordinal));
+    }
+
+    private static GeneratorRunResult Run(string schema, string? engine = null)
     {
         IEnumerable<MetadataReference> references = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!)
             .Split(Path.PathSeparator)
@@ -130,7 +173,8 @@ public class V4SourceGeneratorRegexPatternTests
 
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
             [new V4SourceGenerator::Corvus.Json.SourceGenerator.IncrementalSourceGenerator().AsSourceGenerator()],
-            additionalTexts: [new InMemoryAdditionalText(Path.Combine(TestDirectory, SchemaFileName), schema)]);
+            additionalTexts: [new InMemoryAdditionalText(Path.Combine(TestDirectory, SchemaFileName), schema)],
+            optionsProvider: engine is null ? null : RegexEngineOptions.ForV4(engine));
 
         driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out ImmutableArray<Diagnostic> _);
         return driver.GetRunResult().Results[0];

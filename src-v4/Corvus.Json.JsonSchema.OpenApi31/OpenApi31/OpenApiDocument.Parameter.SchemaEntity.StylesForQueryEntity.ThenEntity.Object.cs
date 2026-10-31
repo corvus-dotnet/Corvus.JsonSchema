@@ -154,7 +154,7 @@ public readonly partial struct OpenApiDocument
                                 }
                             }
 
-                            return default;
+                            return Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.DefaultInstance;
                         }
                     }
 
@@ -186,7 +186,7 @@ public readonly partial struct OpenApiDocument
                                 }
                             }
 
-                            return default;
+                            return Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.StyleEntity.DefaultInstance;
                         }
                     }
 
@@ -219,12 +219,12 @@ public readonly partial struct OpenApiDocument
                     {
                         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-                        if (allowReserved is not null)
+                        if (allowReserved is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity allowReservedNotNull && allowReservedNotNull.IsNotUndefined())
                         {
                             builder.Add(JsonPropertyNames.AllowReserved, allowReserved.Value.AsAny);
                         }
 
-                        if (style is not null)
+                        if (style is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.StyleEntity styleNotNull && styleNotNull.IsNotUndefined())
                         {
                             builder.Add(JsonPropertyNames.Style, style.Value.AsAny);
                         }
@@ -347,7 +347,7 @@ public readonly partial struct OpenApiDocument
                     /// <returns>The instance with the property set.</returns>
                     public ThenEntity WithAllowReserved(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity value)
                     {
-                        return this.SetProperty(JsonPropertyNames.AllowReserved, value);
+                        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.AllowReserved, value) : this.RemoveProperty(JsonPropertyNames.AllowReserved);
                     }
 
                     /// <summary>
@@ -357,7 +357,7 @@ public readonly partial struct OpenApiDocument
                     /// <returns>The instance with the property set.</returns>
                     public ThenEntity WithStyle(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.StyleEntity value)
                     {
-                        return this.SetProperty(JsonPropertyNames.Style, value);
+                        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Style, value) : this.RemoveProperty(JsonPropertyNames.Style);
                     }
 
                     /// <summary>
@@ -866,6 +866,26 @@ public readonly partial struct OpenApiDocument
                             if ((that.backing & Backing.JsonElement) != 0)
                             {
                                 return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+                            }
+
+                            throw new InvalidOperationException();
+                        }
+
+                        /// <summary>
+                        /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+                        /// </summary>
+                        /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+                        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+                        public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in ThenEntity that)
+                        {
+                            if ((that.backing & Backing.Object) != 0)
+                            {
+                                return that.objectBacking.ToBuilder();
+                            }
+
+                            if ((that.backing & Backing.JsonElement) != 0)
+                            {
+                                return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking);
                             }
 
                             throw new InvalidOperationException();

@@ -35,7 +35,7 @@ public readonly partial struct MetaData
                 result = result.UsingStack();
             }
 
-            result = result.PushSchemaLocation("https://json-schema.org/draft/2019-09/meta/meta-data");
+            result = result.PushSchemaLocation("meta/meta-data");
         }
 
         JsonValueKind valueKind = this.ValueKind;

@@ -1104,6 +1104,54 @@ public readonly struct JsonPropertyName
         }
     }
 
+#if !BUILDING_SOURCE_GENERATOR
+    /// <summary>
+    /// Gets a value indicating whether this property name matches the given ECMA-262 regular expression, the
+    /// Corvus.Regex.Ecma262 matcher generated code holds for a <c>patternProperties</c> pattern.
+    /// </summary>
+    /// <param name="regex">The regular expression to match.</param>
+    /// <returns><see langword="true"/> if the expression is a match.</returns>
+    /// <exception cref="InvalidOperationException">The name was not in a valid state.</exception>
+    /// <exception cref="System.Text.RegularExpressions.RegexMatchTimeoutException">The match ran for longer than the
+    /// expression's match timeout (see <see cref="Validate.MatchesPattern"/>).</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool IsMatch(Corvus.Ecma262.RegularExpressions.Regex regex)
+    {
+        if (this.HasJsonElementBacking)
+        {
+            if (this.jsonElementBacking.TryGetValue(MatchRegex, regex, out bool isMatch))
+            {
+                return isMatch;
+            }
+
+            return false;
+        }
+
+        if (this.HasStringBacking)
+        {
+            return Validate.MatchesPattern(regex, this.stringBacking.AsSpan());
+        }
+
+        if (this.HasJsonPropertyBacking)
+        {
+            if (TryGetJsonPropertyNameValue(this.jsonPropertyBacking, MatchRegex, regex, out bool isMatch))
+            {
+                return isMatch;
+            }
+
+            return false;
+        }
+
+        throw new InvalidOperationException();
+
+        static bool MatchRegex(ReadOnlySpan<char> span, in Corvus.Ecma262.RegularExpressions.Regex regex, out bool value)
+        {
+            value = Validate.MatchesPattern(regex, span);
+            return true;
+        }
+    }
+#endif
+
     /// <summary>
     /// Gets an estimate of the length of the name.
     /// </summary>

@@ -20,7 +20,9 @@ namespace Corvus.Json.JsonSchema.Draft201909;
 /// Format vocabulary meta-schema
 /// </summary>
 public readonly partial struct Format
+#if !NET8_0_OR_GREATER
     : IJsonBoolean<Corvus.Json.JsonSchema.Draft201909.Format>
+#endif
 {
     /// <summary>
     /// Conversion from <see cref="bool"/>.
@@ -61,7 +63,7 @@ public readonly partial struct Format
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a boolean.</exception>
-    public static implicit operator bool(Format value)
+    public static explicit operator bool(Format value)
     {
         return value.GetBoolean() ?? throw new InvalidOperationException();
     }

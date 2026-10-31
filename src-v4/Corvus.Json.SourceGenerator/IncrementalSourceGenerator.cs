@@ -151,7 +151,10 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             excludeNonNullDefaulted: generationSource.ExcludeNonNullDefaulted,
             formatModeOverrides: string.IsNullOrWhiteSpace(generationSource.FormatModeSpecification)
                 ? null
-                : FormatAssertionModeParser.ParseSpecification(generationSource.FormatModeSpecification, ';', ','));
+                : FormatAssertionModeParser.ParseSpecification(generationSource.FormatModeSpecification, ';', ','),
+            regexEngine: generationSource.RegexEngine,
+            regexEdition: generationSource.RegexEdition,
+            regexUnicodeVersion: generationSource.RegexUnicodeVersion);
 
         var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
 
@@ -333,6 +336,43 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             disabledNamingHeuristics = disabledNames.Select(d => d.Trim()).ToImmutableArray();
         }
 
+        GeneratedRegexEngine regexEngine = GeneratedRegexEngine.Ecma262;
+        if (source.GlobalOptions.TryGetValue("build_property.CorvusJsonSchemaRegexEngine", out string? regexEngineName))
+        {
+            regexEngine = regexEngineName.ToLowerInvariant() switch
+            {
+                "ecma262" or "" => GeneratedRegexEngine.Ecma262,
+                "dotnet" => GeneratedRegexEngine.DotNet,
+                _ => throw new InvalidOperationException($"Invalid build property value for 'CorvusJsonSchemaRegexEngine': '{regexEngineName}'. Try 'Ecma262' or 'DotNet'."),
+            };
+        }
+
+        GeneratedRegexEdition? regexEdition = null;
+        if (source.GlobalOptions.TryGetValue("build_property.CorvusJsonSchemaRegexEdition", out string? regexEditionName))
+        {
+            regexEdition = regexEditionName.ToLowerInvariant() switch
+            {
+                "" => null,
+                "current" => GeneratedRegexEdition.Current,
+                "es2020" => GeneratedRegexEdition.Es2020,
+                _ => throw new InvalidOperationException($"Invalid build property value for 'CorvusJsonSchemaRegexEdition': '{regexEditionName}'. Try 'Current' or 'Es2020', or leave it empty for each dialect's."),
+            };
+        }
+
+        GeneratedRegexUnicodeVersion regexUnicodeVersion = GeneratedRegexUnicodeVersion.Default;
+        if (source.GlobalOptions.TryGetValue("build_property.CorvusJsonSchemaRegexUnicodeVersion", out string? regexUnicodeVersionName))
+        {
+            regexUnicodeVersion = regexUnicodeVersionName.ToLowerInvariant() switch
+            {
+                "" or "default" => GeneratedRegexUnicodeVersion.Default,
+                "13" or "v13" => GeneratedRegexUnicodeVersion.V13,
+                "17" or "v17" => GeneratedRegexUnicodeVersion.V17,
+                "18" or "v18" => GeneratedRegexUnicodeVersion.V18,
+                "latest" => GeneratedRegexUnicodeVersion.Latest,
+                _ => throw new InvalidOperationException($"Invalid build property value for 'CorvusJsonSchemaRegexUnicodeVersion': '{regexUnicodeVersionName}'. Try '13', '17', '18' or 'Latest', or leave it empty for the default."),
+            };
+        }
+
         return new(
             fallbackVocabulary,
             optionalAsNullable,
@@ -343,7 +383,10 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             defaultAccessibility,
             addExplicitUsings,
             useImplicitOperatorString,
-            formatModeSpecification);
+            formatModeSpecification,
+            regexEngine,
+            regexEdition,
+            regexUnicodeVersion);
     }
 
     private static CompoundDocumentResolver BuildDocumentResolver(ImmutableArray<AdditionalText> source, CancellationToken token)
@@ -493,6 +536,12 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         public bool UseImplicitOperatorString { get; } = right.UseImplicitOperatorString;
 
         public string? FormatModeSpecification { get; } = right.FormatModeSpecification;
+
+        public GeneratedRegexEngine RegexEngine { get; } = right.RegexEngine;
+
+        public GeneratedRegexEdition? RegexEdition { get; } = right.RegexEdition;
+
+        public GeneratedRegexUnicodeVersion RegexUnicodeVersion { get; } = right.RegexUnicodeVersion;
     }
 
     private readonly struct TypesToGenerate(ImmutableArray<GenerationSpecification> left, GenerationContext right)
@@ -520,6 +569,12 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         public bool UseImplicitOperatorString { get; } = right.UseImplicitOperatorString;
 
         public string? FormatModeSpecification { get; } = right.FormatModeSpecification;
+
+        public GeneratedRegexEngine RegexEngine { get; } = right.RegexEngine;
+
+        public GeneratedRegexEdition? RegexEdition { get; } = right.RegexEdition;
+
+        public GeneratedRegexUnicodeVersion RegexUnicodeVersion { get; } = right.RegexUnicodeVersion;
     }
 
     private readonly struct GlobalOptions(
@@ -532,7 +587,10 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         GeneratedTypeAccessibility defaultAccessibility,
         bool addExplicitUsings,
         bool useImplicitOperatorString,
-        string? formatModeSpecification)
+        string? formatModeSpecification,
+        GeneratedRegexEngine regexEngine,
+        GeneratedRegexEdition? regexEdition,
+        GeneratedRegexUnicodeVersion regexUnicodeVersion)
     {
         public IVocabulary FallbackVocabulary { get; } = fallbackVocabulary;
 
@@ -553,5 +611,11 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         public bool UseImplicitOperatorString { get; } = useImplicitOperatorString;
 
         public string? FormatModeSpecification { get; } = formatModeSpecification;
+
+        public GeneratedRegexEngine RegexEngine { get; } = regexEngine;
+
+        public GeneratedRegexEdition? RegexEdition { get; } = regexEdition;
+
+        public GeneratedRegexUnicodeVersion RegexUnicodeVersion { get; } = regexUnicodeVersion;
     }
 }

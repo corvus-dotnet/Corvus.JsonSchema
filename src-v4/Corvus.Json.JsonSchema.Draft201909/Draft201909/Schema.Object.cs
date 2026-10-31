@@ -192,7 +192,7 @@ public readonly partial struct Schema
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft201909.Core.DefsEntity.DefaultInstance;
         }
     }
 
@@ -256,7 +256,7 @@ public readonly partial struct Schema
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity.DefaultInstance;
         }
     }
 
@@ -736,7 +736,7 @@ public readonly partial struct Schema
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft201909.Schema.DefinitionsEntity.DefaultInstance;
         }
     }
 
@@ -864,7 +864,7 @@ public readonly partial struct Schema
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft201909.MetaData.DeprecatedEntity.DefaultInstance;
         }
     }
 
@@ -1344,7 +1344,7 @@ public readonly partial struct Schema
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft201909.Validation.MinContainsEntity.DefaultInstance;
         }
     }
 
@@ -1408,7 +1408,7 @@ public readonly partial struct Schema
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerDefault0.DefaultInstance;
         }
     }
 
@@ -1440,7 +1440,7 @@ public readonly partial struct Schema
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerDefault0.DefaultInstance;
         }
     }
 
@@ -1472,7 +1472,7 @@ public readonly partial struct Schema
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerDefault0.DefaultInstance;
         }
     }
 
@@ -1575,7 +1575,7 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the (optional) <c>pattern</c> property.
     /// </summary>
-    public Corvus.Json.JsonRegex Pattern
+    public Corvus.Json.JsonSchema.Draft201909.Validation.PatternEntity Pattern
     {
         get
         {
@@ -1596,7 +1596,7 @@ public readonly partial struct Schema
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.Pattern, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonRegex>();
+                    return result.As<Corvus.Json.JsonSchema.Draft201909.Validation.PatternEntity>();
                 }
             }
 
@@ -1632,7 +1632,7 @@ public readonly partial struct Schema
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft201909.Applicator.PatternPropertiesEntity.DefaultInstance;
         }
     }
 
@@ -1664,7 +1664,7 @@ public readonly partial struct Schema
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesEntity.DefaultInstance;
         }
     }
 
@@ -1728,7 +1728,7 @@ public readonly partial struct Schema
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft201909.MetaData.ReadOnlyEntity.DefaultInstance;
         }
     }
 
@@ -1760,7 +1760,7 @@ public readonly partial struct Schema
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft201909.Validation.StringArray.DefaultInstance;
         }
     }
 
@@ -1952,7 +1952,7 @@ public readonly partial struct Schema
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft201909.Validation.UniqueItemsEntity.DefaultInstance;
         }
     }
 
@@ -1984,7 +1984,7 @@ public readonly partial struct Schema
                 }
             }
 
-            return default;
+            return Corvus.Json.JsonSchema.Draft201909.MetaData.WriteOnlyEntity.DefaultInstance;
         }
     }
 
@@ -2060,7 +2060,7 @@ public readonly partial struct Schema
         in Corvus.Json.JsonSchema.Draft201909.Validation.MultipleOfEntity? multipleOf = null,
         in Corvus.Json.JsonSchema.Draft201909.Schema? not = null,
         in Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray? oneOf = null,
-        in Corvus.Json.JsonRegex? pattern = null,
+        in Corvus.Json.JsonSchema.Draft201909.Validation.PatternEntity? pattern = null,
         in Corvus.Json.JsonSchema.Draft201909.Applicator.PatternPropertiesEntity? patternProperties = null,
         in Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesEntity? properties = null,
         in Corvus.Json.JsonSchema.Draft201909.Schema? propertyNames = null,
@@ -2076,297 +2076,297 @@ public readonly partial struct Schema
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-        if (anchor is not null)
+        if (anchor is Corvus.Json.JsonSchema.Draft201909.Core.AnchorEntity anchorNotNull && anchorNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Anchor, anchor.Value.AsAny);
         }
 
-        if (comment is not null)
+        if (comment is Corvus.Json.JsonString commentNotNull && commentNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Comment, comment.Value.AsAny);
         }
 
-        if (defs is not null)
+        if (defs is Corvus.Json.JsonSchema.Draft201909.Core.DefsEntity defsNotNull && defsNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Defs, defs.Value.AsAny);
         }
 
-        if (id is not null)
+        if (id is Corvus.Json.JsonSchema.Draft201909.Core.IdEntity idNotNull && idNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Id, id.Value.AsAny);
         }
 
-        if (recursiveAnchor is not null)
+        if (recursiveAnchor is Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity recursiveAnchorNotNull && recursiveAnchorNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.RecursiveAnchor, recursiveAnchor.Value.AsAny);
         }
 
-        if (recursiveRef is not null)
+        if (recursiveRef is Corvus.Json.JsonUriReference recursiveRefNotNull && recursiveRefNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.RecursiveRef, recursiveRef.Value.AsAny);
         }
 
-        if (refValue is not null)
+        if (refValue is Corvus.Json.JsonUriReference refValueNotNull && refValueNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Ref, refValue.Value.AsAny);
         }
 
-        if (schema is not null)
+        if (schema is Corvus.Json.JsonUri schemaNotNull && schemaNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.SchemaValue, schema.Value.AsAny);
         }
 
-        if (vocabulary is not null)
+        if (vocabulary is Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity vocabularyNotNull && vocabularyNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Vocabulary, vocabulary.Value.AsAny);
         }
 
-        if (additionalItems is not null)
+        if (additionalItems is Corvus.Json.JsonSchema.Draft201909.Schema additionalItemsNotNull && additionalItemsNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.AdditionalItems, additionalItems.Value.AsAny);
         }
 
-        if (additionalProperties is not null)
+        if (additionalProperties is Corvus.Json.JsonSchema.Draft201909.Schema additionalPropertiesNotNull && additionalPropertiesNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.AdditionalProperties, additionalProperties.Value.AsAny);
         }
 
-        if (allOf is not null)
+        if (allOf is Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray allOfNotNull && allOfNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.AllOf, allOf.Value.AsAny);
         }
 
-        if (anyOf is not null)
+        if (anyOf is Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray anyOfNotNull && anyOfNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.AnyOf, anyOf.Value.AsAny);
         }
 
-        if (constValue is not null)
+        if (constValue is Corvus.Json.JsonAny constValueNotNull && constValueNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Const, constValue.Value.AsAny);
         }
 
-        if (contains is not null)
+        if (contains is Corvus.Json.JsonSchema.Draft201909.Schema containsNotNull && containsNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Contains, contains.Value.AsAny);
         }
 
-        if (contentEncoding is not null)
+        if (contentEncoding is Corvus.Json.JsonString contentEncodingNotNull && contentEncodingNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.ContentEncoding, contentEncoding.Value.AsAny);
         }
 
-        if (contentMediaType is not null)
+        if (contentMediaType is Corvus.Json.JsonString contentMediaTypeNotNull && contentMediaTypeNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.ContentMediaType, contentMediaType.Value.AsAny);
         }
 
-        if (contentSchema is not null)
+        if (contentSchema is Corvus.Json.JsonSchema.Draft201909.Schema contentSchemaNotNull && contentSchemaNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.ContentSchema, contentSchema.Value.AsAny);
         }
 
-        if (defaultValue is not null)
+        if (defaultValue is Corvus.Json.JsonAny defaultValueNotNull && defaultValueNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Default, defaultValue.Value.AsAny);
         }
 
-        if (definitions is not null)
+        if (definitions is Corvus.Json.JsonSchema.Draft201909.Schema.DefinitionsEntity definitionsNotNull && definitionsNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Definitions, definitions.Value.AsAny);
         }
 
-        if (dependencies is not null)
+        if (dependencies is Corvus.Json.JsonSchema.Draft201909.Schema.DependenciesEntity dependenciesNotNull && dependenciesNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Dependencies, dependencies.Value.AsAny);
         }
 
-        if (dependentRequired is not null)
+        if (dependentRequired is Corvus.Json.JsonSchema.Draft201909.Validation.DependentRequiredEntity dependentRequiredNotNull && dependentRequiredNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.DependentRequired, dependentRequired.Value.AsAny);
         }
 
-        if (dependentSchemas is not null)
+        if (dependentSchemas is Corvus.Json.JsonSchema.Draft201909.Applicator.DependentSchemasEntity dependentSchemasNotNull && dependentSchemasNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.DependentSchemas, dependentSchemas.Value.AsAny);
         }
 
-        if (deprecated is not null)
+        if (deprecated is Corvus.Json.JsonSchema.Draft201909.MetaData.DeprecatedEntity deprecatedNotNull && deprecatedNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Deprecated, deprecated.Value.AsAny);
         }
 
-        if (description is not null)
+        if (description is Corvus.Json.JsonString descriptionNotNull && descriptionNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Description, description.Value.AsAny);
         }
 
-        if (elseValue is not null)
+        if (elseValue is Corvus.Json.JsonSchema.Draft201909.Schema elseValueNotNull && elseValueNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Else, elseValue.Value.AsAny);
         }
 
-        if (enumValue is not null)
+        if (enumValue is Corvus.Json.JsonArray enumValueNotNull && enumValueNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Enum, enumValue.Value.AsAny);
         }
 
-        if (examples is not null)
+        if (examples is Corvus.Json.JsonArray examplesNotNull && examplesNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Examples, examples.Value.AsAny);
         }
 
-        if (exclusiveMaximum is not null)
+        if (exclusiveMaximum is Corvus.Json.JsonNumber exclusiveMaximumNotNull && exclusiveMaximumNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.ExclusiveMaximum, exclusiveMaximum.Value.AsAny);
         }
 
-        if (exclusiveMinimum is not null)
+        if (exclusiveMinimum is Corvus.Json.JsonNumber exclusiveMinimumNotNull && exclusiveMinimumNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.ExclusiveMinimum, exclusiveMinimum.Value.AsAny);
         }
 
-        if (format is not null)
+        if (format is Corvus.Json.JsonString formatNotNull && formatNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Format, format.Value.AsAny);
         }
 
-        if (ifValue is not null)
+        if (ifValue is Corvus.Json.JsonSchema.Draft201909.Schema ifValueNotNull && ifValueNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.If, ifValue.Value.AsAny);
         }
 
-        if (items is not null)
+        if (items is Corvus.Json.JsonSchema.Draft201909.Applicator.ItemsEntity itemsNotNull && itemsNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.ItemsValue, items.Value.AsAny);
         }
 
-        if (maxContains is not null)
+        if (maxContains is Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger maxContainsNotNull && maxContainsNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.MaxContains, maxContains.Value.AsAny);
         }
 
-        if (maximum is not null)
+        if (maximum is Corvus.Json.JsonNumber maximumNotNull && maximumNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Maximum, maximum.Value.AsAny);
         }
 
-        if (maxItems is not null)
+        if (maxItems is Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger maxItemsNotNull && maxItemsNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.MaxItems, maxItems.Value.AsAny);
         }
 
-        if (maxLength is not null)
+        if (maxLength is Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger maxLengthNotNull && maxLengthNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.MaxLength, maxLength.Value.AsAny);
         }
 
-        if (maxProperties is not null)
+        if (maxProperties is Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger maxPropertiesNotNull && maxPropertiesNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.MaxProperties, maxProperties.Value.AsAny);
         }
 
-        if (minContains is not null)
+        if (minContains is Corvus.Json.JsonSchema.Draft201909.Validation.MinContainsEntity minContainsNotNull && minContainsNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.MinContains, minContains.Value.AsAny);
         }
 
-        if (minimum is not null)
+        if (minimum is Corvus.Json.JsonNumber minimumNotNull && minimumNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Minimum, minimum.Value.AsAny);
         }
 
-        if (minItems is not null)
+        if (minItems is Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerDefault0 minItemsNotNull && minItemsNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.MinItems, minItems.Value.AsAny);
         }
 
-        if (minLength is not null)
+        if (minLength is Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerDefault0 minLengthNotNull && minLengthNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.MinLength, minLength.Value.AsAny);
         }
 
-        if (minProperties is not null)
+        if (minProperties is Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerDefault0 minPropertiesNotNull && minPropertiesNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.MinProperties, minProperties.Value.AsAny);
         }
 
-        if (multipleOf is not null)
+        if (multipleOf is Corvus.Json.JsonSchema.Draft201909.Validation.MultipleOfEntity multipleOfNotNull && multipleOfNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.MultipleOf, multipleOf.Value.AsAny);
         }
 
-        if (not is not null)
+        if (not is Corvus.Json.JsonSchema.Draft201909.Schema notNotNull && notNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Not, not.Value.AsAny);
         }
 
-        if (oneOf is not null)
+        if (oneOf is Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray oneOfNotNull && oneOfNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.OneOf, oneOf.Value.AsAny);
         }
 
-        if (pattern is not null)
+        if (pattern is Corvus.Json.JsonSchema.Draft201909.Validation.PatternEntity patternNotNull && patternNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Pattern, pattern.Value.AsAny);
         }
 
-        if (patternProperties is not null)
+        if (patternProperties is Corvus.Json.JsonSchema.Draft201909.Applicator.PatternPropertiesEntity patternPropertiesNotNull && patternPropertiesNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.PatternProperties, patternProperties.Value.AsAny);
         }
 
-        if (properties is not null)
+        if (properties is Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesEntity propertiesNotNull && propertiesNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Properties, properties.Value.AsAny);
         }
 
-        if (propertyNames is not null)
+        if (propertyNames is Corvus.Json.JsonSchema.Draft201909.Schema propertyNamesNotNull && propertyNamesNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.PropertyNames, propertyNames.Value.AsAny);
         }
 
-        if (readOnly is not null)
+        if (readOnly is Corvus.Json.JsonSchema.Draft201909.MetaData.ReadOnlyEntity readOnlyNotNull && readOnlyNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.ReadOnly, readOnly.Value.AsAny);
         }
 
-        if (required is not null)
+        if (required is Corvus.Json.JsonSchema.Draft201909.Validation.StringArray requiredNotNull && requiredNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Required, required.Value.AsAny);
         }
 
-        if (then is not null)
+        if (then is Corvus.Json.JsonSchema.Draft201909.Schema thenNotNull && thenNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Then, then.Value.AsAny);
         }
 
-        if (title is not null)
+        if (title is Corvus.Json.JsonString titleNotNull && titleNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Title, title.Value.AsAny);
         }
 
-        if (type is not null)
+        if (type is Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity typeNotNull && typeNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.Type, type.Value.AsAny);
         }
 
-        if (unevaluatedItems is not null)
+        if (unevaluatedItems is Corvus.Json.JsonSchema.Draft201909.Schema unevaluatedItemsNotNull && unevaluatedItemsNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.UnevaluatedItems, unevaluatedItems.Value.AsAny);
         }
 
-        if (unevaluatedProperties is not null)
+        if (unevaluatedProperties is Corvus.Json.JsonSchema.Draft201909.Schema unevaluatedPropertiesNotNull && unevaluatedPropertiesNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.UnevaluatedProperties, unevaluatedProperties.Value.AsAny);
         }
 
-        if (uniqueItems is not null)
+        if (uniqueItems is Corvus.Json.JsonSchema.Draft201909.Validation.UniqueItemsEntity uniqueItemsNotNull && uniqueItemsNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.UniqueItems, uniqueItems.Value.AsAny);
         }
 
-        if (writeOnly is not null)
+        if (writeOnly is Corvus.Json.JsonSchema.Draft201909.MetaData.WriteOnlyEntity writeOnlyNotNull && writeOnlyNotNull.IsNotUndefined())
         {
             builder.Add(JsonPropertyNames.WriteOnly, writeOnly.Value.AsAny);
         }
@@ -2489,7 +2489,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithAnchor(in Corvus.Json.JsonSchema.Draft201909.Core.AnchorEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.Anchor, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Anchor, value) : this.RemoveProperty(JsonPropertyNames.Anchor);
     }
 
     /// <summary>
@@ -2499,7 +2499,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithComment(in Corvus.Json.JsonString value)
     {
-        return this.SetProperty(JsonPropertyNames.Comment, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Comment, value) : this.RemoveProperty(JsonPropertyNames.Comment);
     }
 
     /// <summary>
@@ -2509,7 +2509,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithDefs(in Corvus.Json.JsonSchema.Draft201909.Core.DefsEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.Defs, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Defs, value) : this.RemoveProperty(JsonPropertyNames.Defs);
     }
 
     /// <summary>
@@ -2519,7 +2519,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithId(in Corvus.Json.JsonSchema.Draft201909.Core.IdEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.Id, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Id, value) : this.RemoveProperty(JsonPropertyNames.Id);
     }
 
     /// <summary>
@@ -2529,7 +2529,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithRecursiveAnchor(in Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.RecursiveAnchor, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.RecursiveAnchor, value) : this.RemoveProperty(JsonPropertyNames.RecursiveAnchor);
     }
 
     /// <summary>
@@ -2539,7 +2539,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithRecursiveRef(in Corvus.Json.JsonUriReference value)
     {
-        return this.SetProperty(JsonPropertyNames.RecursiveRef, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.RecursiveRef, value) : this.RemoveProperty(JsonPropertyNames.RecursiveRef);
     }
 
     /// <summary>
@@ -2549,7 +2549,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithRef(in Corvus.Json.JsonUriReference value)
     {
-        return this.SetProperty(JsonPropertyNames.Ref, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Ref, value) : this.RemoveProperty(JsonPropertyNames.Ref);
     }
 
     /// <summary>
@@ -2559,7 +2559,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithSchemaValue(in Corvus.Json.JsonUri value)
     {
-        return this.SetProperty(JsonPropertyNames.SchemaValue, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.SchemaValue, value) : this.RemoveProperty(JsonPropertyNames.SchemaValue);
     }
 
     /// <summary>
@@ -2569,7 +2569,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithVocabulary(in Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.Vocabulary, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Vocabulary, value) : this.RemoveProperty(JsonPropertyNames.Vocabulary);
     }
 
     /// <summary>
@@ -2579,7 +2579,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithAdditionalItems(in Corvus.Json.JsonSchema.Draft201909.Schema value)
     {
-        return this.SetProperty(JsonPropertyNames.AdditionalItems, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.AdditionalItems, value) : this.RemoveProperty(JsonPropertyNames.AdditionalItems);
     }
 
     /// <summary>
@@ -2589,7 +2589,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithAdditionalProperties(in Corvus.Json.JsonSchema.Draft201909.Schema value)
     {
-        return this.SetProperty(JsonPropertyNames.AdditionalProperties, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.AdditionalProperties, value) : this.RemoveProperty(JsonPropertyNames.AdditionalProperties);
     }
 
     /// <summary>
@@ -2599,7 +2599,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithAllOf(in Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray value)
     {
-        return this.SetProperty(JsonPropertyNames.AllOf, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.AllOf, value) : this.RemoveProperty(JsonPropertyNames.AllOf);
     }
 
     /// <summary>
@@ -2609,7 +2609,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithAnyOf(in Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray value)
     {
-        return this.SetProperty(JsonPropertyNames.AnyOf, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.AnyOf, value) : this.RemoveProperty(JsonPropertyNames.AnyOf);
     }
 
     /// <summary>
@@ -2619,7 +2619,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithConst(in Corvus.Json.JsonAny value)
     {
-        return this.SetProperty(JsonPropertyNames.Const, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Const, value) : this.RemoveProperty(JsonPropertyNames.Const);
     }
 
     /// <summary>
@@ -2629,7 +2629,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithContains(in Corvus.Json.JsonSchema.Draft201909.Schema value)
     {
-        return this.SetProperty(JsonPropertyNames.Contains, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Contains, value) : this.RemoveProperty(JsonPropertyNames.Contains);
     }
 
     /// <summary>
@@ -2639,7 +2639,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithContentEncoding(in Corvus.Json.JsonString value)
     {
-        return this.SetProperty(JsonPropertyNames.ContentEncoding, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.ContentEncoding, value) : this.RemoveProperty(JsonPropertyNames.ContentEncoding);
     }
 
     /// <summary>
@@ -2649,7 +2649,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithContentMediaType(in Corvus.Json.JsonString value)
     {
-        return this.SetProperty(JsonPropertyNames.ContentMediaType, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.ContentMediaType, value) : this.RemoveProperty(JsonPropertyNames.ContentMediaType);
     }
 
     /// <summary>
@@ -2659,7 +2659,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithContentSchema(in Corvus.Json.JsonSchema.Draft201909.Schema value)
     {
-        return this.SetProperty(JsonPropertyNames.ContentSchema, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.ContentSchema, value) : this.RemoveProperty(JsonPropertyNames.ContentSchema);
     }
 
     /// <summary>
@@ -2669,7 +2669,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithDefault(in Corvus.Json.JsonAny value)
     {
-        return this.SetProperty(JsonPropertyNames.Default, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Default, value) : this.RemoveProperty(JsonPropertyNames.Default);
     }
 
     /// <summary>
@@ -2679,7 +2679,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithDefinitions(in Corvus.Json.JsonSchema.Draft201909.Schema.DefinitionsEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.Definitions, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Definitions, value) : this.RemoveProperty(JsonPropertyNames.Definitions);
     }
 
     /// <summary>
@@ -2689,7 +2689,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithDependencies(in Corvus.Json.JsonSchema.Draft201909.Schema.DependenciesEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.Dependencies, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Dependencies, value) : this.RemoveProperty(JsonPropertyNames.Dependencies);
     }
 
     /// <summary>
@@ -2699,7 +2699,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithDependentRequired(in Corvus.Json.JsonSchema.Draft201909.Validation.DependentRequiredEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.DependentRequired, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.DependentRequired, value) : this.RemoveProperty(JsonPropertyNames.DependentRequired);
     }
 
     /// <summary>
@@ -2709,7 +2709,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithDependentSchemas(in Corvus.Json.JsonSchema.Draft201909.Applicator.DependentSchemasEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.DependentSchemas, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.DependentSchemas, value) : this.RemoveProperty(JsonPropertyNames.DependentSchemas);
     }
 
     /// <summary>
@@ -2719,7 +2719,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithDeprecated(in Corvus.Json.JsonSchema.Draft201909.MetaData.DeprecatedEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.Deprecated, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Deprecated, value) : this.RemoveProperty(JsonPropertyNames.Deprecated);
     }
 
     /// <summary>
@@ -2729,7 +2729,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithDescription(in Corvus.Json.JsonString value)
     {
-        return this.SetProperty(JsonPropertyNames.Description, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Description, value) : this.RemoveProperty(JsonPropertyNames.Description);
     }
 
     /// <summary>
@@ -2739,7 +2739,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithElse(in Corvus.Json.JsonSchema.Draft201909.Schema value)
     {
-        return this.SetProperty(JsonPropertyNames.Else, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Else, value) : this.RemoveProperty(JsonPropertyNames.Else);
     }
 
     /// <summary>
@@ -2749,7 +2749,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithEnum(in Corvus.Json.JsonArray value)
     {
-        return this.SetProperty(JsonPropertyNames.Enum, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Enum, value) : this.RemoveProperty(JsonPropertyNames.Enum);
     }
 
     /// <summary>
@@ -2759,7 +2759,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithExamples(in Corvus.Json.JsonArray value)
     {
-        return this.SetProperty(JsonPropertyNames.Examples, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Examples, value) : this.RemoveProperty(JsonPropertyNames.Examples);
     }
 
     /// <summary>
@@ -2769,7 +2769,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithExclusiveMaximum(in Corvus.Json.JsonNumber value)
     {
-        return this.SetProperty(JsonPropertyNames.ExclusiveMaximum, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.ExclusiveMaximum, value) : this.RemoveProperty(JsonPropertyNames.ExclusiveMaximum);
     }
 
     /// <summary>
@@ -2779,7 +2779,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithExclusiveMinimum(in Corvus.Json.JsonNumber value)
     {
-        return this.SetProperty(JsonPropertyNames.ExclusiveMinimum, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.ExclusiveMinimum, value) : this.RemoveProperty(JsonPropertyNames.ExclusiveMinimum);
     }
 
     /// <summary>
@@ -2789,7 +2789,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithFormat(in Corvus.Json.JsonString value)
     {
-        return this.SetProperty(JsonPropertyNames.Format, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Format, value) : this.RemoveProperty(JsonPropertyNames.Format);
     }
 
     /// <summary>
@@ -2799,7 +2799,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithIf(in Corvus.Json.JsonSchema.Draft201909.Schema value)
     {
-        return this.SetProperty(JsonPropertyNames.If, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.If, value) : this.RemoveProperty(JsonPropertyNames.If);
     }
 
     /// <summary>
@@ -2809,7 +2809,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithItemsValue(in Corvus.Json.JsonSchema.Draft201909.Applicator.ItemsEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.ItemsValue, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.ItemsValue, value) : this.RemoveProperty(JsonPropertyNames.ItemsValue);
     }
 
     /// <summary>
@@ -2819,7 +2819,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithMaxContains(in Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger value)
     {
-        return this.SetProperty(JsonPropertyNames.MaxContains, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.MaxContains, value) : this.RemoveProperty(JsonPropertyNames.MaxContains);
     }
 
     /// <summary>
@@ -2829,7 +2829,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithMaximum(in Corvus.Json.JsonNumber value)
     {
-        return this.SetProperty(JsonPropertyNames.Maximum, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Maximum, value) : this.RemoveProperty(JsonPropertyNames.Maximum);
     }
 
     /// <summary>
@@ -2839,7 +2839,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithMaxItems(in Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger value)
     {
-        return this.SetProperty(JsonPropertyNames.MaxItems, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.MaxItems, value) : this.RemoveProperty(JsonPropertyNames.MaxItems);
     }
 
     /// <summary>
@@ -2849,7 +2849,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithMaxLength(in Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger value)
     {
-        return this.SetProperty(JsonPropertyNames.MaxLength, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.MaxLength, value) : this.RemoveProperty(JsonPropertyNames.MaxLength);
     }
 
     /// <summary>
@@ -2859,7 +2859,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithMaxProperties(in Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger value)
     {
-        return this.SetProperty(JsonPropertyNames.MaxProperties, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.MaxProperties, value) : this.RemoveProperty(JsonPropertyNames.MaxProperties);
     }
 
     /// <summary>
@@ -2869,7 +2869,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithMinContains(in Corvus.Json.JsonSchema.Draft201909.Validation.MinContainsEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.MinContains, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.MinContains, value) : this.RemoveProperty(JsonPropertyNames.MinContains);
     }
 
     /// <summary>
@@ -2879,7 +2879,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithMinimum(in Corvus.Json.JsonNumber value)
     {
-        return this.SetProperty(JsonPropertyNames.Minimum, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Minimum, value) : this.RemoveProperty(JsonPropertyNames.Minimum);
     }
 
     /// <summary>
@@ -2889,7 +2889,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithMinItems(in Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerDefault0 value)
     {
-        return this.SetProperty(JsonPropertyNames.MinItems, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.MinItems, value) : this.RemoveProperty(JsonPropertyNames.MinItems);
     }
 
     /// <summary>
@@ -2899,7 +2899,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithMinLength(in Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerDefault0 value)
     {
-        return this.SetProperty(JsonPropertyNames.MinLength, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.MinLength, value) : this.RemoveProperty(JsonPropertyNames.MinLength);
     }
 
     /// <summary>
@@ -2909,7 +2909,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithMinProperties(in Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerDefault0 value)
     {
-        return this.SetProperty(JsonPropertyNames.MinProperties, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.MinProperties, value) : this.RemoveProperty(JsonPropertyNames.MinProperties);
     }
 
     /// <summary>
@@ -2919,7 +2919,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithMultipleOf(in Corvus.Json.JsonSchema.Draft201909.Validation.MultipleOfEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.MultipleOf, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.MultipleOf, value) : this.RemoveProperty(JsonPropertyNames.MultipleOf);
     }
 
     /// <summary>
@@ -2929,7 +2929,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithNot(in Corvus.Json.JsonSchema.Draft201909.Schema value)
     {
-        return this.SetProperty(JsonPropertyNames.Not, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Not, value) : this.RemoveProperty(JsonPropertyNames.Not);
     }
 
     /// <summary>
@@ -2939,7 +2939,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithOneOf(in Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray value)
     {
-        return this.SetProperty(JsonPropertyNames.OneOf, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.OneOf, value) : this.RemoveProperty(JsonPropertyNames.OneOf);
     }
 
     /// <summary>
@@ -2947,9 +2947,9 @@ public readonly partial struct Schema
     /// </summary>
     /// <param name="value">The new property value</param>
     /// <returns>The instance with the property set.</returns>
-    public Schema WithPattern(in Corvus.Json.JsonRegex value)
+    public Schema WithPattern(in Corvus.Json.JsonSchema.Draft201909.Validation.PatternEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.Pattern, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Pattern, value) : this.RemoveProperty(JsonPropertyNames.Pattern);
     }
 
     /// <summary>
@@ -2959,7 +2959,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithPatternProperties(in Corvus.Json.JsonSchema.Draft201909.Applicator.PatternPropertiesEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.PatternProperties, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.PatternProperties, value) : this.RemoveProperty(JsonPropertyNames.PatternProperties);
     }
 
     /// <summary>
@@ -2969,7 +2969,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithProperties(in Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.Properties, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Properties, value) : this.RemoveProperty(JsonPropertyNames.Properties);
     }
 
     /// <summary>
@@ -2979,7 +2979,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithPropertyNames(in Corvus.Json.JsonSchema.Draft201909.Schema value)
     {
-        return this.SetProperty(JsonPropertyNames.PropertyNames, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.PropertyNames, value) : this.RemoveProperty(JsonPropertyNames.PropertyNames);
     }
 
     /// <summary>
@@ -2989,7 +2989,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithReadOnly(in Corvus.Json.JsonSchema.Draft201909.MetaData.ReadOnlyEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.ReadOnly, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.ReadOnly, value) : this.RemoveProperty(JsonPropertyNames.ReadOnly);
     }
 
     /// <summary>
@@ -2999,7 +2999,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithRequired(in Corvus.Json.JsonSchema.Draft201909.Validation.StringArray value)
     {
-        return this.SetProperty(JsonPropertyNames.Required, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Required, value) : this.RemoveProperty(JsonPropertyNames.Required);
     }
 
     /// <summary>
@@ -3009,7 +3009,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithThen(in Corvus.Json.JsonSchema.Draft201909.Schema value)
     {
-        return this.SetProperty(JsonPropertyNames.Then, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Then, value) : this.RemoveProperty(JsonPropertyNames.Then);
     }
 
     /// <summary>
@@ -3019,7 +3019,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithTitle(in Corvus.Json.JsonString value)
     {
-        return this.SetProperty(JsonPropertyNames.Title, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Title, value) : this.RemoveProperty(JsonPropertyNames.Title);
     }
 
     /// <summary>
@@ -3029,7 +3029,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithType(in Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.Type, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Type, value) : this.RemoveProperty(JsonPropertyNames.Type);
     }
 
     /// <summary>
@@ -3039,7 +3039,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithUnevaluatedItems(in Corvus.Json.JsonSchema.Draft201909.Schema value)
     {
-        return this.SetProperty(JsonPropertyNames.UnevaluatedItems, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.UnevaluatedItems, value) : this.RemoveProperty(JsonPropertyNames.UnevaluatedItems);
     }
 
     /// <summary>
@@ -3049,7 +3049,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithUnevaluatedProperties(in Corvus.Json.JsonSchema.Draft201909.Schema value)
     {
-        return this.SetProperty(JsonPropertyNames.UnevaluatedProperties, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.UnevaluatedProperties, value) : this.RemoveProperty(JsonPropertyNames.UnevaluatedProperties);
     }
 
     /// <summary>
@@ -3059,7 +3059,7 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithUniqueItems(in Corvus.Json.JsonSchema.Draft201909.Validation.UniqueItemsEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.UniqueItems, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.UniqueItems, value) : this.RemoveProperty(JsonPropertyNames.UniqueItems);
     }
 
     /// <summary>
@@ -3069,7 +3069,169 @@ public readonly partial struct Schema
     /// <returns>The instance with the property set.</returns>
     public Schema WithWriteOnly(in Corvus.Json.JsonSchema.Draft201909.MetaData.WriteOnlyEntity value)
     {
-        return this.SetProperty(JsonPropertyNames.WriteOnly, value);
+        return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.WriteOnly, value) : this.RemoveProperty(JsonPropertyNames.WriteOnly);
+    }
+
+    /// <summary>
+    /// Applies a composed value.
+    /// </summary>
+    /// <remarks>
+    /// This returns a new instance with any property values provided by the <paramref name="value"/> added or updated.
+    /// </remarks>
+    /// <param name="value">The composed value to apply.</param>
+    /// <returns>A new instance with the composed value applied.</returns>
+    public Schema WithApplied(in Corvus.Json.JsonSchema.Draft201909.Core value)
+    {
+        if (!value.HasProperties())
+        {
+            return this;
+        }
+
+        ImmutableList<JsonObjectProperty>.Builder builder = __CorvusObjectHelpers.GetPropertyBackingBuilder(this);
+        foreach (JsonObjectProperty property in value.EnumerateObject())
+        {
+            if (property.Value.IsNotUndefined())
+            {
+                builder.SetItem(property.Name, property.Value);
+            }
+        }
+
+        return new(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Applies a composed value.
+    /// </summary>
+    /// <remarks>
+    /// This returns a new instance with any property values provided by the <paramref name="value"/> added or updated.
+    /// </remarks>
+    /// <param name="value">The composed value to apply.</param>
+    /// <returns>A new instance with the composed value applied.</returns>
+    public Schema WithApplied(in Corvus.Json.JsonSchema.Draft201909.Applicator value)
+    {
+        if (!value.HasProperties())
+        {
+            return this;
+        }
+
+        ImmutableList<JsonObjectProperty>.Builder builder = __CorvusObjectHelpers.GetPropertyBackingBuilder(this);
+        foreach (JsonObjectProperty property in value.EnumerateObject())
+        {
+            if (property.Value.IsNotUndefined())
+            {
+                builder.SetItem(property.Name, property.Value);
+            }
+        }
+
+        return new(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Applies a composed value.
+    /// </summary>
+    /// <remarks>
+    /// This returns a new instance with any property values provided by the <paramref name="value"/> added or updated.
+    /// </remarks>
+    /// <param name="value">The composed value to apply.</param>
+    /// <returns>A new instance with the composed value applied.</returns>
+    public Schema WithApplied(in Corvus.Json.JsonSchema.Draft201909.Validation value)
+    {
+        if (!value.HasProperties())
+        {
+            return this;
+        }
+
+        ImmutableList<JsonObjectProperty>.Builder builder = __CorvusObjectHelpers.GetPropertyBackingBuilder(this);
+        foreach (JsonObjectProperty property in value.EnumerateObject())
+        {
+            if (property.Value.IsNotUndefined())
+            {
+                builder.SetItem(property.Name, property.Value);
+            }
+        }
+
+        return new(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Applies a composed value.
+    /// </summary>
+    /// <remarks>
+    /// This returns a new instance with any property values provided by the <paramref name="value"/> added or updated.
+    /// </remarks>
+    /// <param name="value">The composed value to apply.</param>
+    /// <returns>A new instance with the composed value applied.</returns>
+    public Schema WithApplied(in Corvus.Json.JsonSchema.Draft201909.MetaData value)
+    {
+        if (!value.HasProperties())
+        {
+            return this;
+        }
+
+        ImmutableList<JsonObjectProperty>.Builder builder = __CorvusObjectHelpers.GetPropertyBackingBuilder(this);
+        foreach (JsonObjectProperty property in value.EnumerateObject())
+        {
+            if (property.Value.IsNotUndefined())
+            {
+                builder.SetItem(property.Name, property.Value);
+            }
+        }
+
+        return new(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Applies a composed value.
+    /// </summary>
+    /// <remarks>
+    /// This returns a new instance with any property values provided by the <paramref name="value"/> added or updated.
+    /// </remarks>
+    /// <param name="value">The composed value to apply.</param>
+    /// <returns>A new instance with the composed value applied.</returns>
+    public Schema WithApplied(in Corvus.Json.JsonSchema.Draft201909.Format value)
+    {
+        if (!value.HasProperties())
+        {
+            return this;
+        }
+
+        ImmutableList<JsonObjectProperty>.Builder builder = __CorvusObjectHelpers.GetPropertyBackingBuilder(this);
+        foreach (JsonObjectProperty property in value.EnumerateObject())
+        {
+            if (property.Value.IsNotUndefined())
+            {
+                builder.SetItem(property.Name, property.Value);
+            }
+        }
+
+        return new(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Applies a composed value.
+    /// </summary>
+    /// <remarks>
+    /// This returns a new instance with any property values provided by the <paramref name="value"/> added or updated.
+    /// </remarks>
+    /// <param name="value">The composed value to apply.</param>
+    /// <returns>A new instance with the composed value applied.</returns>
+    public Schema WithApplied(in Corvus.Json.JsonSchema.Draft201909.Content value)
+    {
+        if (!value.HasProperties())
+        {
+            return this;
+        }
+
+        ImmutableList<JsonObjectProperty>.Builder builder = __CorvusObjectHelpers.GetPropertyBackingBuilder(this);
+        foreach (JsonObjectProperty property in value.EnumerateObject())
+        {
+            if (property.Value.IsNotUndefined())
+            {
+                builder.SetItem(property.Name, property.Value);
+            }
+        }
+
+        return new(builder.ToImmutable());
     }
 
     /// <summary>
@@ -4148,6 +4310,26 @@ public readonly partial struct Schema
             if ((that.backing & Backing.JsonElement) != 0)
             {
                 return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+        /// </summary>
+        /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in Schema that)
+        {
+            if ((that.backing & Backing.Object) != 0)
+            {
+                return that.objectBacking.ToBuilder();
+            }
+
+            if ((that.backing & Backing.JsonElement) != 0)
+            {
+                return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking);
             }
 
             throw new InvalidOperationException();

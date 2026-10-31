@@ -26,7 +26,9 @@ public readonly partial struct Applicator
     /// Generated from JSON Schema.
     /// </summary>
     public readonly partial struct ItemsEntity
+#if !NET8_0_OR_GREATER
         : IJsonBoolean<Corvus.Json.JsonSchema.Draft201909.Applicator.ItemsEntity>
+#endif
     {
         /// <summary>
         /// Conversion from <see cref="bool"/>.
@@ -67,7 +69,7 @@ public readonly partial struct Applicator
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         /// <exception cref="InvalidOperationException">The value was not a boolean.</exception>
-        public static implicit operator bool(ItemsEntity value)
+        public static explicit operator bool(ItemsEntity value)
         {
             return value.GetBoolean() ?? throw new InvalidOperationException();
         }

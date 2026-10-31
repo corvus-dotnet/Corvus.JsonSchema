@@ -314,6 +314,7 @@ public class JsonSchemaBuilderDriver : IDisposable
     /// <param name="validateFormat">If true, the format keyword will be validated.</param>
     /// <param name="optionalAsNullable">If true, optional properties are generated as nullable.</param>
     /// <param name="useImplicitOperatorString">If true, conversion operators to string are implicit rather than explicit.</param>
+    /// <param name="regexEngine">The engine the regular expressions of the generated code are written for.</param>
     /// <returns>A <see cref="ValueTask{Type}"/> which, when complete, returns the <see cref="Type"/> generated for the schema.</returns>
     public async ValueTask<Type> GenerateTypeForVirtualFile(
         string schema,
@@ -322,7 +323,8 @@ public class JsonSchemaBuilderDriver : IDisposable
         string scenarioName,
         bool validateFormat,
         bool optionalAsNullable,
-        bool useImplicitOperatorString)
+        bool useImplicitOperatorString,
+        GeneratedRegexEngine regexEngine = GeneratedRegexEngine.Ecma262)
     {
         string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
         string path = Path.Combine(baseDirectory, virtualFileName);
@@ -340,7 +342,8 @@ public class JsonSchemaBuilderDriver : IDisposable
             $"{featureName}Feature.{scenarioName}",
             alwaysAssertFormat: validateFormat,
             optionalAsNullable: optionalAsNullable,
-            useImplicitOperatorString: useImplicitOperatorString);
+            useImplicitOperatorString: useImplicitOperatorString,
+            regexEngine: regexEngine);
 
         var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =
@@ -366,6 +369,7 @@ public class JsonSchemaBuilderDriver : IDisposable
     /// <param name="validateFormat">If true, the format keyword will be validated.</param>
     /// <param name="optionalAsNullable">If true, optional properties are generated as nullable.</param>
     /// <param name="useImplicitOperatorString">If true, conversion operators to string are implicit rather than explicit.</param>
+    /// <param name="regexEngine">The engine the regular expressions of the generated code are written for.</param>
     /// <returns>A <see cref="ValueTask{Type}"/> which, when complete, returns the <see cref="Type"/> generated for the schema.</returns>
     public async ValueTask<IReadOnlyCollection<GeneratedCodeFile>> GenerateCodeForVirtualFile(
         string schema,
@@ -374,7 +378,8 @@ public class JsonSchemaBuilderDriver : IDisposable
         string scenarioName,
         bool validateFormat,
         bool optionalAsNullable,
-        bool useImplicitOperatorString)
+        bool useImplicitOperatorString,
+        GeneratedRegexEngine regexEngine = GeneratedRegexEngine.Ecma262)
     {
         string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
         string path = Path.Combine(baseDirectory, virtualFileName);
@@ -392,7 +397,8 @@ public class JsonSchemaBuilderDriver : IDisposable
             $"{featureName}Feature.{scenarioName}",
             alwaysAssertFormat: validateFormat,
             optionalAsNullable: optionalAsNullable,
-            useImplicitOperatorString: useImplicitOperatorString);
+            useImplicitOperatorString: useImplicitOperatorString,
+            regexEngine: regexEngine);
 
         var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
         return

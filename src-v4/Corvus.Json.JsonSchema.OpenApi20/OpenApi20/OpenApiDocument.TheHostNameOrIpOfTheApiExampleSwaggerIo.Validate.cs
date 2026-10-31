@@ -82,7 +82,7 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// A regular expression for the <c>pattern</c> keyword.
             /// </summary>
-            public static readonly Regex Pattern = CreatePattern();
+            public static readonly global::Corvus.Ecma262.RegularExpressions.Regex Pattern = global::Corvus.Json.JsonSchema.OpenApi20.CorvusJsonSchemaRegularExpressions.Regex3;
 
             /// <summary>
             /// Core type validation.
@@ -137,7 +137,7 @@ public readonly partial struct OpenApiDocument
                 {
                     result = context.Context;
 
-                    if (Pattern.IsMatch(input))
+                    if (Corvus.Json.Validate.MatchesPattern(Pattern, input))
                     {
                         if (context.Level == ValidationLevel.Verbose)
                         {
@@ -164,13 +164,6 @@ public readonly partial struct OpenApiDocument
                     return true;
                 }
             }
-
-#if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-            [GeneratedRegex("^[^{}/ :\\\\]+(?!(?<=[\\uD800-\\uDBFF])[\\uDC00-\\uDFFF])(?::[0-9]+)?\\z", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
-            private static partial Regex CreatePattern();
-#else
-            private static Regex CreatePattern() => new("^[^{}/ :\\\\]+(?!(?<=[\\uD800-\\uDBFF])[\\uDC00-\\uDFFF])(?::[0-9]+)?\\z", RegexOptions.Compiled, global::System.TimeSpan.FromMilliseconds(1000));
-#endif
         }
     }
 }

@@ -93,15 +93,15 @@
         },
         "regexEngine": {
             "$ref": "#/$defs/regexEngine",
-            "description": "The engine the regular expressions of generated code are written for (V5 engine only). Ecma262 (the default) writes Corvus.Regex.Ecma262's compiled matchers, with the compiled regular expression as data; DotNet writes .NET's System.Text.RegularExpressions, as earlier versions did, for code that depends on the generated fields being .NET's Regex."
+            "description": "The engine the regular expressions of generated code are written for (V4 and V5 engines). Ecma262 (the default) writes Corvus.Regex.Ecma262's compiled matchers, with the compiled regular expression as data; DotNet writes .NET's System.Text.RegularExpressions, as earlier versions did, for code that depends on the generated fields being .NET's Regex."
         },
         "regexEdition": {
             "$ref": "#/$defs/regexEdition",
-            "description": "The edition of ECMA-262 whose grammar every pattern is read with (V5 engine, Ecma262 regular expressions only). By default, each dialect's: Es2020 for draft 2019-09 and draft 2020-12, Current for the others."
+            "description": "The edition of ECMA-262 whose grammar every pattern is read with (Ecma262 regular expressions only). By default, each dialect's: Es2020 for draft 2019-09 and draft 2020-12, Current for the others."
         },
         "regexUnicodeVersion": {
             "$ref": "#/$defs/regexUnicodeVersion",
-            "description": "The version of Unicode every pattern is read with (V5 engine, Ecma262 regular expressions only). Default is the version V8 uses (17)."
+            "description": "The version of Unicode every pattern is read with (Ecma262 regular expressions only). Default is the version V8 uses (17)."
         }
     },
     "$defs": {

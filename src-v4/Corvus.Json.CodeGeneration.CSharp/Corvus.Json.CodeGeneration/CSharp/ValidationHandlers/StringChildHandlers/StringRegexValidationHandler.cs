@@ -47,11 +47,25 @@ public class StringRegexValidationHandler : IChildValidationHandler
                 string regularExpression = regularExpressions[0];
                 string quotedReducedPathModifier = SymbolDisplay.FormatLiteral(keyword.GetPathModifier(), true);
 
+                // Corvus.Regex.Ecma262's match goes through the runtime, which throws .NET's timeout exception for a match
+                // that outlasts its timeout, as a match by .NET's Regex did.
+                generator.AppendSeparatorLine();
+                if (typeDeclaration.RegexEngine() == GeneratedRegexEngine.Ecma262)
+                {
+                    generator
+                        .AppendIndent("if (Corvus.Json.Validate.MatchesPattern(")
+                        .Append(memberName)
+                        .AppendLine(", input))");
+                }
+                else
+                {
+                    generator
+                        .AppendIndent("if (")
+                        .Append(memberName)
+                        .AppendLine(".IsMatch(input))");
+                }
+
                 generator
-                    .AppendSeparatorLine()
-                    .AppendIndent("if (")
-                    .Append(memberName)
-                    .AppendLine(".IsMatch(input))")
                     .AppendLineIndent("{")
                     .PushIndent()
                         .AppendLineIndent("if (context.Level == ValidationLevel.Verbose)")

@@ -27,6 +27,9 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     /// </summary>
     public static CSharpLanguageProvider Default { get; } = CreateDefaultCSharpLanguageProvider(null);
 
+    /// <summary>Gets the namespace of the generation's own files, such as its shared regular expressions.</summary>
+    internal string DefaultNamespace => this.options.DefaultNamespace;
+
     /// <summary>
     /// Gets a <see cref="CSharpLanguageProvider"/> instance with the default configuration and specified options.
     /// </summary>
@@ -174,7 +177,15 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
             }
         }
 
-        return generator.GetGeneratedCodeFiles(t => new(t.DotnetTypeNameWithoutNamespace(), this.options.FileExtension));
+        IReadOnlyCollection<GeneratedCodeFile> files = generator.GetGeneratedCodeFiles(t => new(t.DotnetTypeNameWithoutNamespace(), this.options.FileExtension));
+
+        // Last, as the types have now asked for every regular expression they refer to.
+        if (SharedRegularExpressions.Of(generator)?.Generate(this.options.FileExtension, this.options.LineEndSequence) is GeneratedCodeFile regularExpressions)
+        {
+            return [.. files, regularExpressions];
+        }
+
+        return files;
     }
 
     /// <inheritdoc/>
@@ -659,6 +670,9 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     /// <param name="defaultAccessibility">Defines the accessibility of the generated types. Defaults to <see cref="GeneratedTypeAccessibility.Public"/>.</param>
     /// <param name="excludeNonNullDefaulted">If true (and <paramref name="optionalAsNullable"/> is true), then optional properties that declare a non-null <c>default</c> are generated as non-nullable types.</param>
     /// <param name="formatModeOverrides">Per-format assertion mode overrides, keyed by format name (e.g. <c>date-time</c>). An override takes precedence over both the vocabulary's format-assertion behaviour and <paramref name="alwaysAssertFormat"/>.</param>
+    /// <param name="regexEngine">The engine the regular expressions of generated code are written for (see <see cref="GeneratedRegexEngine"/>). Defaults to <see cref="GeneratedRegexEngine.Ecma262"/>.</param>
+    /// <param name="regexEdition">The edition of the grammar every pattern is read with, or <see langword="null"/> (the default) for the dialect's: ECMAScript 2020 for draft 2019-09 and draft 2020-12, today's for the others. For <see cref="GeneratedRegexEngine.Ecma262"/> only.</param>
+    /// <param name="regexUnicodeVersion">The version of Unicode every pattern is read with. For <see cref="GeneratedRegexEngine.Ecma262"/> only.</param>
     public class Options(
         string defaultNamespace,
         NamedType[]? namedTypes = null,
@@ -673,7 +687,10 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         bool addExplicitUsings = false,
         GeneratedTypeAccessibility defaultAccessibility = GeneratedTypeAccessibility.Public,
         bool excludeNonNullDefaulted = false,
-        IReadOnlyDictionary<string, FormatAssertionMode>? formatModeOverrides = null)
+        IReadOnlyDictionary<string, FormatAssertionMode>? formatModeOverrides = null,
+        GeneratedRegexEngine regexEngine = GeneratedRegexEngine.Ecma262,
+        GeneratedRegexEdition? regexEdition = null,
+        GeneratedRegexUnicodeVersion regexUnicodeVersion = GeneratedRegexUnicodeVersion.Default)
     {
         private readonly FrozenDictionary<string, NamedType> namedTypeMap = namedTypes?.ToFrozenDictionary(kvp => kvp.Reference, kvp => kvp) ?? FrozenDictionary<string, NamedType>.Empty;
         private readonly FrozenDictionary<string, string> namespaceMap = namespaces?.ToFrozenDictionary(kvp => kvp.BaseUri, kvp => kvp.DotnetNamespace) ?? FrozenDictionary<string, string>.Empty;
@@ -753,6 +770,15 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         /// Gets the default accessibility of the generated types.
         /// </summary>
         internal GeneratedTypeAccessibility DefaultAccessibility { get; } = defaultAccessibility;
+
+        /// <summary>Gets the engine the regular expressions of generated code are written for.</summary>
+        internal GeneratedRegexEngine RegexEngine { get; } = regexEngine;
+
+        /// <summary>Gets the edition every pattern is read with, or <see langword="null"/> for the dialect's.</summary>
+        internal GeneratedRegexEdition? RegexEdition { get; } = regexEdition;
+
+        /// <summary>Gets the version of Unicode every pattern is read with.</summary>
+        internal GeneratedRegexUnicodeVersion RegexUnicodeVersion { get; } = regexUnicodeVersion;
 
         /// <summary>
         /// Try to get the namespace for the base URI.

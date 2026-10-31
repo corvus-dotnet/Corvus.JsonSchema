@@ -186,7 +186,11 @@ public readonly partial struct OpenApiDocument
                 public static RequiredOpenIdConnectUrl Create(in Corvus.Json.JsonUri openIdConnectUrl)
                 {
                     var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
-                    builder.Add(JsonPropertyNames.OpenIdConnectUrl, openIdConnectUrl.AsAny);
+
+                    if (openIdConnectUrl.IsNotUndefined())
+                    {
+                        builder.Add(JsonPropertyNames.OpenIdConnectUrl, openIdConnectUrl.AsAny);
+                    }
 
                     return new(builder.ToImmutable());
                 }
@@ -306,7 +310,7 @@ public readonly partial struct OpenApiDocument
                 /// <returns>The instance with the property set.</returns>
                 public RequiredOpenIdConnectUrl WithOpenIdConnectUrl(in Corvus.Json.JsonUri value)
                 {
-                    return this.SetProperty(JsonPropertyNames.OpenIdConnectUrl, value);
+                    return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.OpenIdConnectUrl, value) : this.RemoveProperty(JsonPropertyNames.OpenIdConnectUrl);
                 }
 
                 /// <summary>
@@ -805,6 +809,26 @@ public readonly partial struct OpenApiDocument
                         if ((that.backing & Backing.JsonElement) != 0)
                         {
                             return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+                        }
+
+                        throw new InvalidOperationException();
+                    }
+
+                    /// <summary>
+                    /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+                    /// </summary>
+                    /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+                    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+                    public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in RequiredOpenIdConnectUrl that)
+                    {
+                        if ((that.backing & Backing.Object) != 0)
+                        {
+                            return that.objectBacking.ToBuilder();
+                        }
+
+                        if ((that.backing & Backing.JsonElement) != 0)
+                        {
+                            return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking);
                         }
 
                         throw new InvalidOperationException();

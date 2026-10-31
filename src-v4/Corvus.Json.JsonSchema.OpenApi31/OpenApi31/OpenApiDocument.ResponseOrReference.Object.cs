@@ -338,32 +338,32 @@ public readonly partial struct OpenApiDocument
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 
-            if (refValue is not null)
+            if (refValue is Corvus.Json.JsonUriReference refValueNotNull && refValueNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.Ref, refValue.Value.AsAny);
             }
 
-            if (content is not null)
+            if (content is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content contentNotNull && contentNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.Content, content.Value.AsAny);
             }
 
-            if (description is not null)
+            if (description is Corvus.Json.JsonString descriptionNotNull && descriptionNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.Description, description.Value.AsAny);
             }
 
-            if (headers is not null)
+            if (headers is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Response.HeadersEntity headersNotNull && headersNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.Headers, headers.Value.AsAny);
             }
 
-            if (links is not null)
+            if (links is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Response.LinksEntity linksNotNull && linksNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.Links, links.Value.AsAny);
             }
 
-            if (summary is not null)
+            if (summary is Corvus.Json.JsonString summaryNotNull && summaryNotNull.IsNotUndefined())
             {
                 builder.Add(JsonPropertyNames.Summary, summary.Value.AsAny);
             }
@@ -486,7 +486,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public ResponseOrReference WithRef(in Corvus.Json.JsonUriReference value)
         {
-            return this.SetProperty(JsonPropertyNames.Ref, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Ref, value) : this.RemoveProperty(JsonPropertyNames.Ref);
         }
 
         /// <summary>
@@ -496,7 +496,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public ResponseOrReference WithContent(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content value)
         {
-            return this.SetProperty(JsonPropertyNames.Content, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Content, value) : this.RemoveProperty(JsonPropertyNames.Content);
         }
 
         /// <summary>
@@ -506,7 +506,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public ResponseOrReference WithDescription(in Corvus.Json.JsonString value)
         {
-            return this.SetProperty(JsonPropertyNames.Description, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Description, value) : this.RemoveProperty(JsonPropertyNames.Description);
         }
 
         /// <summary>
@@ -516,7 +516,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public ResponseOrReference WithHeaders(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Response.HeadersEntity value)
         {
-            return this.SetProperty(JsonPropertyNames.Headers, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Headers, value) : this.RemoveProperty(JsonPropertyNames.Headers);
         }
 
         /// <summary>
@@ -526,7 +526,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public ResponseOrReference WithLinks(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Response.LinksEntity value)
         {
-            return this.SetProperty(JsonPropertyNames.Links, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Links, value) : this.RemoveProperty(JsonPropertyNames.Links);
         }
 
         /// <summary>
@@ -536,7 +536,7 @@ public readonly partial struct OpenApiDocument
         /// <returns>The instance with the property set.</returns>
         public ResponseOrReference WithSummary(in Corvus.Json.JsonString value)
         {
-            return this.SetProperty(JsonPropertyNames.Summary, value);
+            return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Summary, value) : this.RemoveProperty(JsonPropertyNames.Summary);
         }
 
         /// <summary>
@@ -1085,6 +1085,26 @@ public readonly partial struct OpenApiDocument
                 if ((that.backing & Backing.JsonElement) != 0)
                 {
                     return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+            /// </summary>
+            /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+            public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in ResponseOrReference that)
+            {
+                if ((that.backing & Backing.Object) != 0)
+                {
+                    return that.objectBacking.ToBuilder();
+                }
+
+                if ((that.backing & Backing.JsonElement) != 0)
+                {
+                    return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking);
                 }
 
                 throw new InvalidOperationException();

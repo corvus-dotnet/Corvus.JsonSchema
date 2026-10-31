@@ -41,7 +41,7 @@ public readonly partial struct Validation
                     result = result.UsingStack();
                 }
 
-                result = result.PushSchemaLocation("https://json-schema.org/draft/2019-09/meta/validation#/$defs/simpleTypes");
+                result = result.PushSchemaLocation("meta/validation#/$defs/simpleTypes");
             }
 
             result = CorvusValidation.CompositionAnyOfValidationHandler(this, result, level);

@@ -35,7 +35,7 @@ public readonly partial struct Unevaluated
                 result = result.UsingStack();
             }
 
-            result = result.PushSchemaLocation("https://json-schema.org/draft/2020-12/meta/unevaluated");
+            result = result.PushSchemaLocation("meta/unevaluated");
         }
 
         JsonValueKind valueKind = this.ValueKind;

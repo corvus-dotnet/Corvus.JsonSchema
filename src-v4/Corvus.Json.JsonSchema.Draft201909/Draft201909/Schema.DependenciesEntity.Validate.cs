@@ -41,7 +41,7 @@ public readonly partial struct Schema
                     result = result.UsingStack();
                 }
 
-                result = result.PushSchemaLocation("https://json-schema.org/draft/2019-09/schema#/properties/dependencies");
+                result = result.PushSchemaLocation("schema#/properties/dependencies");
             }
 
             JsonValueKind valueKind = this.ValueKind;

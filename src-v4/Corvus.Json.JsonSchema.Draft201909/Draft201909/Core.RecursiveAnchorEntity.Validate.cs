@@ -51,7 +51,7 @@ public readonly partial struct Core
                     result = result.UsingStack();
                 }
 
-                result = result.PushSchemaLocation("https://json-schema.org/draft/2019-09/meta/core#/properties/$recursiveAnchor");
+                result = result.PushSchemaLocation("meta/core#/properties/$recursiveAnchor");
             }
 
             JsonValueKind valueKind = this.ValueKind;

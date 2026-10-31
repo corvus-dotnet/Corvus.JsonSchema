@@ -56,7 +56,7 @@ public readonly partial struct Schema
                         result = result.UsingStack();
                     }
 
-                    result = result.PushSchemaLocation("https://json-schema.org/draft/2020-12/schema#/properties/dependencies/additionalProperties");
+                    result = result.PushSchemaLocation("schema#/properties/dependencies/additionalProperties");
                 }
 
                 result = CorvusValidation.CompositionAnyOfValidationHandler(this, result, level);

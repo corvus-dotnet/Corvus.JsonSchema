@@ -186,7 +186,11 @@ public readonly partial struct OpenApiDocument
                 public static RequiredFlows Create(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows flows)
                 {
                     var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
-                    builder.Add(JsonPropertyNames.Flows, flows.AsAny);
+
+                    if (flows.IsNotUndefined())
+                    {
+                        builder.Add(JsonPropertyNames.Flows, flows.AsAny);
+                    }
 
                     return new(builder.ToImmutable());
                 }
@@ -306,7 +310,7 @@ public readonly partial struct OpenApiDocument
                 /// <returns>The instance with the property set.</returns>
                 public RequiredFlows WithFlows(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows value)
                 {
-                    return this.SetProperty(JsonPropertyNames.Flows, value);
+                    return value.IsNotUndefined() ? this.SetProperty(JsonPropertyNames.Flows, value) : this.RemoveProperty(JsonPropertyNames.Flows);
                 }
 
                 /// <summary>
@@ -805,6 +809,26 @@ public readonly partial struct OpenApiDocument
                         if ((that.backing & Backing.JsonElement) != 0)
                         {
                             return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+                        }
+
+                        throw new InvalidOperationException();
+                    }
+
+                    /// <summary>
+                    /// Builds an <see cref="ImmutableList{JsonObjectProperty}.Builder"/> from the object.
+                    /// </summary>
+                    /// <returns>An immutable list builder of <see cref="JsonObjectProperty"/>, built from the existing object.</returns>
+                    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+                    public static ImmutableList<JsonObjectProperty>.Builder GetPropertyBackingBuilder(in RequiredFlows that)
+                    {
+                        if ((that.backing & Backing.Object) != 0)
+                        {
+                            return that.objectBacking.ToBuilder();
+                        }
+
+                        if ((that.backing & Backing.JsonElement) != 0)
+                        {
+                            return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking);
                         }
 
                         throw new InvalidOperationException();

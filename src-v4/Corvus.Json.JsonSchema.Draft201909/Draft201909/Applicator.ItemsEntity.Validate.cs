@@ -41,7 +41,7 @@ public readonly partial struct Applicator
                     result = result.UsingStack();
                 }
 
-                result = result.PushSchemaLocation("https://json-schema.org/draft/2019-09/meta/applicator#/properties/items");
+                result = result.PushSchemaLocation("meta/applicator#/properties/items");
             }
 
             result = CorvusValidation.CompositionAnyOfValidationHandler(this, result, level);
