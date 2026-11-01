@@ -20,7 +20,7 @@
 
 #define CJS_VERSION_MINOR 1
 
-#define CJS_VERSION_PATCH 4
+#define CJS_VERSION_PATCH 5
 
 // The results of an evaluation. Used by one thread at a time.
 typedef struct cjs_collector cjs_collector;
@@ -52,6 +52,13 @@ typedef uint32_t cjs_dialect;
 
 // An option left to its default, or set on or off.
 typedef uint32_t cjs_tristate;
+
+// The edition of ECMA-262 whose grammar `pattern`, `patternProperties` and the `regex` format are read with.
+typedef uint32_t cjs_regex_edition;
+
+// The version of Unicode patterns are read with: the members of each `\p{...}`, the characters of a group name and
+// the case folding of the `i` flag.
+typedef uint32_t cjs_regex_unicode_version;
 
 // A format assertion: whether the string (or, for a number, its JSON text) is valid. It runs during validation, on
 // whichever thread validates, so it must be thread-safe. It must not unwind (throw) into the library.
@@ -110,6 +117,31 @@ typedef uint32_t cjs_results_level;
 #define CJS_DRAFT201909 2019
 
 #define CJS_DRAFT202012 2020
+
+// The dialect's: ECMAScript 2020 for 2019-09 and 2020-12, which name it, and today's for the drafts before them (the
+// default).
+#define CJS_REGEX_EDITION_DIALECT 0
+
+// Today's grammar, ECMAScript 2025, for every dialect.
+#define CJS_REGEX_EDITION_CURRENT 1
+
+// The grammar of ECMAScript 2020 (ECMA-262, 11th edition), for every dialect.
+#define CJS_REGEX_EDITION_ES2020 2020
+
+// The version of the V8 the answers are held to, Unicode 17 today (the default).
+#define CJS_REGEX_UNICODE_DEFAULT 0
+
+// The latest version the library carries, Unicode 18 today.
+#define CJS_REGEX_UNICODE_LATEST 1
+
+// Unicode 13.0, the version of the year of ECMAScript 2020.
+#define CJS_REGEX_UNICODE_13 13
+
+// Unicode 17.0.
+#define CJS_REGEX_UNICODE_17 17
+
+// Unicode 18.0.
+#define CJS_REGEX_UNICODE_18 18
 
 #define CJS_DEFAULT 0
 
@@ -184,6 +216,15 @@ cjs_status cjs_options_set_max_depth(cjs_options *options, uint32_t depth);
 // both the schema and the instances: a match then has no limit on its memory either. The limit is on each match,
 // not on the validation.
 cjs_status cjs_options_set_pattern_match_limit_ms(cjs_options *options, uint64_t milliseconds);
+
+// The edition of ECMA-262 whose grammar patterns are read with (`CJS_REGEX_EDITION_DIALECT`, the default,
+// `CJS_REGEX_EDITION_CURRENT` or `CJS_REGEX_EDITION_ES2020`). Under ECMAScript 2020 a pattern that uses what later
+// editions added, such as a modifier group `(?i:...)`, is not valid, and a schema that holds one does not compile.
+cjs_status cjs_options_set_regex_edition(cjs_options *options, cjs_regex_edition edition);
+
+// The version of Unicode patterns are read with (`CJS_REGEX_UNICODE_DEFAULT`, the default,
+// `CJS_REGEX_UNICODE_LATEST`, `CJS_REGEX_UNICODE_13`, `CJS_REGEX_UNICODE_17` or `CJS_REGEX_UNICODE_18`).
+cjs_status cjs_options_set_regex_unicode_version(cjs_options *options, cjs_regex_unicode_version version);
 
 // A custom format assertion, taking precedence over the built-in one of that name. `free_user_data` (may be NULL)
 // runs when the options and every validator compiled with them have been freed.

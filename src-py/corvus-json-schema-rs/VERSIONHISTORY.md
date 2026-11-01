@@ -2,6 +2,15 @@
 
 The version history of `corvus-json-schema-rs`, the Python package backed by the `corvus-json-schema` Rust crate. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md).
 
+## V0.2.0
+
+V0.2.0 takes version 0.2.0 of the `corvus-json-schema` crate, which matches patterns with the [`corvus-regex-ecma262`](https://crates.io/crates/corvus-regex-ecma262) crate and reads them in the grammar of the dialect. It is a minor version because under 2019-09 and 2020-12 a pattern that uses what ECMAScript added after 2020 is no longer valid. Everything else that was there is unchanged, and there are two new options.
+
+- **The grammar of the dialect.** JSON Schema 2019-09 and 2020-12 name the grammar of ECMAScript 2020, and patterns under them are now read with it: a modifier group such as `(?i:...)`, or a group name used by two groups, is not valid, and `compile` raises `SchemaCompilationError` for a schema with one in a `pattern`. A property escape that the tables of 2020 do not have (`\p{Script=Yezidi}`) is not valid with the `u` flag, so the pattern is read without it, where `\p` is the letter `p`, as a pattern with `\&` is. The `regex` format reads only the grammar of the flag. Drafts 4 to 7 read today's grammar, as before.
+- **`regex_edition`** (`RegexEdition.DIALECT`, the default, `CURRENT` or `ES2020`, or the strings `"dialect"`, `"current"` and `"es2020"`) chooses the edition for every dialect, and **`regex_unicode_version`** (`RegexUnicodeVersion.DEFAULT`, the default, `LATEST`, `V13`, `V17` or `V18`, or `"default"`, `"latest"`, `"13"`, `"17"` and `"18"`) the version of Unicode. Both are fields of `CompileOptions` and keywords of `compile`. Another value raises `ValueError`.
+- **The engine.** Every pattern that no dedicated matcher of the crate takes is matched by `corvus-regex-ecma262`, whose answers are V8's for the whole of the ECMA-262 regular expression test data. The limits are those of 0.1.4. Over the jsonschema-benchmark corpora the crate validates in 0.98 of the time of 0.1.7 once warm, and takes 1.06 of it for the first validation and 1.05 to compile, since the engine builds a pattern's automaton on its first match.
+- **Notices.** `THIRD-PARTY-NOTICES.txt` names the tables of `corvus-regex-ecma262`, which the wheels now hold in place of the crate's own.
+
 ## V0.1.4
 
 V0.1.4 takes version 0.1.7 of the `corvus-json-schema` crate. That fixes wrong results for several forms of pattern and a validation that did not end, replaces the crate's regular expression engine, and gives every match of a pattern a limit of time. The functions and types that were there are unchanged, and there are additions for the limit. Versions 0.1.0 to 0.1.3 are affected. The pure-Python `corvus-json-schema` package is not.

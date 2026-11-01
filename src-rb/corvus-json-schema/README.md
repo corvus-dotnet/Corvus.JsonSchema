@@ -54,6 +54,8 @@ Its options:
 | `entry_point` | `nil` | A reference to the subschema to validate against, such as `"#/$defs/item"`. |
 | `max_depth` | `128` | The deepest the evaluator recurses in place before it raises `DepthError`. |
 | `pattern_match_limit` | `1.0` | The seconds one match of a `pattern` or `patternProperties` regular expression against one string may take before the validation raises `PatternMatchLimitError`. `nil` or `0` turns the limit off, for a caller who trusts both the schema and the instances. |
+| `regex_edition` | `:dialect` | The edition of ECMA-262 `pattern`, `patternProperties` and the `regex` format are read with: `:dialect` (ECMAScript 2020 for 2019-09 and 2020-12, which name it, today's for the drafts before them), `:current` or `:es2020`. Under ECMAScript 2020 a modifier group such as `(?i:...)` is not valid. |
+| `regex_unicode_version` | `:default` | The version of Unicode patterns are read with: `:default` (the version of the V8 the answers are held to, 17 today), `:latest`, `13`, `17` or `18`. |
 
 A `Validator` is immutable and can be shared between threads.
 
@@ -114,7 +116,7 @@ repository's submodule (or `JSON_SCHEMA_TEST_SUITE`).
 
 Apache-2.0
 
-The gem is built on the `corvus-json-schema` Rust crate, whose Unicode tables are derived from the Unicode Character
-Database, which is under the Unicode License V3. [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) has that notice,
-and the one of the `regress` crate that the tables were first read from. The file is in the source gem and in every
-native gem, beside `LICENSE`.
+The gem is built on the `corvus-json-schema` Rust crate, which matches patterns with the `corvus-regex-ecma262` crate,
+whose Unicode tables are derived from the Unicode Character Database, which is under the Unicode License V3.
+[THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) has that notice, and the one of the `regress` crate, from whose
+tables those were written. The file is in the source gem and in every native gem, beside `LICENSE`.

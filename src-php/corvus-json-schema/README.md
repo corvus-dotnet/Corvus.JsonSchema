@@ -61,6 +61,8 @@ options:
 | `entryPoint` | none | A reference to the subschema to validate against, such as `'#/$defs/item'`. |
 | `maxDepth` | `128` | The deepest the evaluator recurses in place before it throws `DepthException`. |
 | `patternMatchLimit` | `1` | The seconds (an `int` or a `float`) one match of a `pattern` or `patternProperties` regular expression against one string may take before the validation throws `PatternMatchLimitException`. `null` or `0` turns the limit off, for a caller who trusts both the schema and the values. |
+| `regexEdition` | `'dialect'` | The edition of ECMA-262 `pattern`, `patternProperties` and the `regex` format are read with: `'dialect'` (ECMAScript 2020 for 2019-09 and 2020-12, which name it, today's for the drafts before them), `'current'` or `'es2020'`. Under ECMAScript 2020 a modifier group such as `(?i:...)` is not valid. |
+| `regexUnicodeVersion` | `'default'` | The version of Unicode patterns are read with: `'default'` (the version of the V8 the answers are held to, 17 today), `'latest'`, `'13'`, `'17'` or `'18'`. |
 
 A `Validator` is immutable.
 
@@ -133,7 +135,7 @@ holds a copy of this directory for each release; changes are made here.
 
 Apache-2.0
 
-The extension is built on the `corvus-json-schema` Rust crate, whose Unicode tables are derived from the Unicode
-Character Database, which is under the Unicode License V3. [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) has
-that notice, and the one of the `regress` crate that the tables were first read from. The file is in the package's
-repository and in the archive of every build, beside `LICENSE`.
+The extension is built on the `corvus-json-schema` Rust crate, which matches patterns with the `corvus-regex-ecma262`
+crate, whose Unicode tables are derived from the Unicode Character Database, which is under the Unicode License V3.
+[THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) has that notice, and the one of the `regress` crate, from whose
+tables those were written. The file is in the package's repository and in the archive of every build, beside `LICENSE`.

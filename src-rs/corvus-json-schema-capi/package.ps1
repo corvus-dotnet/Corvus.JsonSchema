@@ -13,7 +13,7 @@ Builds the shared and static libraries (cargo, release profile) for a Rust targe
                                  corvus_json_schema::corvus_json_schema_static, with a version file
   lib/pkgconfig/                 corvus-json-schema.pc
   LICENSE, DESIGN.md
-  THIRD-PARTY-NOTICES.txt        the notice of the Unicode data that the tables of the corvus-json-schema crate are
+  THIRD-PARTY-NOTICES.txt        the notice of the Unicode data that the tables of the corvus-regex-ecma262 crate are
                                  derived from, which the libraries hold and which must go wherever they go
 
 The static library needs the system libraries the Rust standard library uses; they are asked of the compiler

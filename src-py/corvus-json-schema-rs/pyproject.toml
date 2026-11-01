@@ -4,12 +4,12 @@ build-backend = "maturin"
 
 [project]
 name = "corvus-json-schema-rs"
-version = "0.1.4"
+version = "0.2.0"
 description = "A high-performance JSON Schema evaluator (draft 4 to 2020-12) for Python, backed by the corvus-json-schema Rust crate, with results collection and annotations."
 readme = "README.md"
 license = "Apache-2.0"
-# THIRD-PARTY-NOTICES.txt has the notice of the Unicode data that the crate's tables are derived from, which must go
-# wherever the package goes: both files are in the sdist and in every wheel (dist-info/licenses).
+# THIRD-PARTY-NOTICES.txt has the notice of the Unicode data that the regex engine's tables are derived from, which
+# must go wherever the package goes: both files are in the sdist and in every wheel (dist-info/licenses).
 license-files = ["LICENSE", "THIRD-PARTY-NOTICES.txt"]
 requires-python = ">=3.10"
 authors = [{ name = "endjin" }]

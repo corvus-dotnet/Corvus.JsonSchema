@@ -89,6 +89,8 @@ text more than once, parse it with `cjs_document_parse` and validate the documen
 | `cjs_options_set_entry_point` | A subschema to validate against, such as `#/$defs/item`. |
 | `cjs_options_set_max_depth` | The deepest the evaluator recurses in place (default 128). |
 | `cjs_options_set_pattern_match_limit_ms` | The milliseconds one match of a regular expression against one string may take (default `CJS_DEFAULT_PATTERN_MATCH_LIMIT_MS`, 1000). 0 turns the limit off. |
+| `cjs_options_set_regex_edition` | The edition of ECMA-262 patterns are read with: `CJS_REGEX_EDITION_DIALECT` (the default: ECMAScript 2020 for 2019-09 and 2020-12, which name it, today's for the drafts before them), `CJS_REGEX_EDITION_CURRENT` or `CJS_REGEX_EDITION_ES2020`. Under ECMAScript 2020 a modifier group such as `(?i:...)` is not valid. |
+| `cjs_options_set_regex_unicode_version` | The version of Unicode patterns are read with: `CJS_REGEX_UNICODE_DEFAULT` (the version of the V8 the answers are held to, 17 today), `CJS_REGEX_UNICODE_LATEST`, `CJS_REGEX_UNICODE_13`, `CJS_REGEX_UNICODE_17` or `CJS_REGEX_UNICODE_18`. |
 
 Callbacks run on whichever thread validates (format callbacks) or compiles (the resolver), and must not unwind into
 the library.

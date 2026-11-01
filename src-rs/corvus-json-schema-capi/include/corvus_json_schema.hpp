@@ -38,6 +38,27 @@ enum class dialect : cjs_dialect {
     draft2020_12 = CJS_DRAFT202012,
 };
 
+/// The edition of ECMA-262 whose grammar patterns are read with.
+enum class regex_edition : cjs_regex_edition {
+    /// The dialect's: ECMAScript 2020 for 2019-09 and 2020-12, today's for the drafts before them (the default).
+    dialect = CJS_REGEX_EDITION_DIALECT,
+    /// Today's grammar, for every dialect.
+    current = CJS_REGEX_EDITION_CURRENT,
+    /// The grammar of ECMAScript 2020, for every dialect.
+    es2020 = CJS_REGEX_EDITION_ES2020,
+};
+
+/// The version of Unicode patterns are read with.
+enum class regex_unicode_version : cjs_regex_unicode_version {
+    /// The version of the V8 the answers are held to, Unicode 17 today (the default).
+    default_version = CJS_REGEX_UNICODE_DEFAULT,
+    /// The latest version the library carries, Unicode 18 today.
+    latest = CJS_REGEX_UNICODE_LATEST,
+    v13 = CJS_REGEX_UNICODE_13,
+    v17 = CJS_REGEX_UNICODE_17,
+    v18 = CJS_REGEX_UNICODE_18,
+};
+
 /// How much a collector records.
 enum class results_level : cjs_results_level {
     /// Failures only, without message text.
@@ -181,6 +202,18 @@ public:
     options& pattern_match_limit(std::chrono::milliseconds limit) {
         detail::check(cjs_options_set_pattern_match_limit_ms(
             handle_.get(), limit.count() > 0 ? static_cast<std::uint64_t>(limit.count()) : 0));
+        return *this;
+    }
+
+    /// The edition of ECMA-262 whose grammar patterns are read with (default regex_edition::dialect).
+    options& regex_edition(corvus::json_schema::regex_edition e) {
+        detail::check(cjs_options_set_regex_edition(handle_.get(), static_cast<cjs_regex_edition>(e)));
+        return *this;
+    }
+
+    /// The version of Unicode patterns are read with (default regex_unicode_version::default_version).
+    options& regex_unicode_version(corvus::json_schema::regex_unicode_version v) {
+        detail::check(cjs_options_set_regex_unicode_version(handle_.get(), static_cast<cjs_regex_unicode_version>(v)));
         return *this;
     }
 

@@ -275,6 +275,23 @@ check('default collector level: no failures recorded', [], (function () use ($pe
     $person->evaluate(['name' => 'Ada'], $basic);
     return array_filter($basic->results(), fn ($r) => !$r['isMatch']);
 })());
+// 2020-12 reads patterns in the grammar of ECMAScript 2020, which has no modifier groups; draft 7 reads today's.
+$modifier = ['$schema' => 'https://json-schema.org/draft/2020-12/schema', 'pattern' => '^(?i:a)$'];
+throws('a modifier group under 2020-12', CompilationException::class, fn () => Validator::compile($modifier));
+check('a modifier group in today\'s grammar', true, Validator::compile($modifier, ['regexEdition' => 'current'])->isValid('A'));
+$draft7 = ['$schema' => 'http://json-schema.org/draft-07/schema#', 'pattern' => '^(?i:a)$'];
+check('a modifier group under draft 7', true, Validator::compile($draft7)->isValid('A'));
+throws('a modifier group in ECMAScript 2020', CompilationException::class,
+    fn () => Validator::compile($draft7, ['regexEdition' => 'es2020']));
+// Sidetic is a script from Unicode 17: naming it is a regular expression under 17, not under 13.
+$regex = ['$schema' => 'http://json-schema.org/draft-07/schema#', 'format' => 'regex'];
+foreach ([['default', true], ['17', true], ['13', false]] as [$version, $valid]) {
+    $v = Validator::compile($regex, ['assertFormat' => true, 'regexUnicodeVersion' => $version]);
+    check("Sidetic under Unicode $version", $valid, $v->isValid('\\p{Script=Sidetic}'));
+}
+throws('an edition that is not one', ValueError::class, fn () => Validator::compile([], ['regexEdition' => 'es2019']));
+throws('a version of Unicode that is not one', ValueError::class,
+    fn () => Validator::compile([], ['regexUnicodeVersion' => '16']));
 check('crate_version', 1, preg_match('/^\d+\.\d+\.\d+$/', Corvus\JsonSchema\crate_version()));
 check('the extension\'s name', true, extension_loaded('corvus_json_schema'));
 check('the extension\'s version', 1, preg_match('/^\d+\.\d+\.\d+$/', (string) phpversion('corvus_json_schema')));

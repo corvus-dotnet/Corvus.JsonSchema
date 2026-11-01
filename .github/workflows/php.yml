@@ -56,6 +56,19 @@ jobs:
         run: |
           rustup toolchain install 1.98.0 --profile minimal --component clippy,rustfmt
           rustup default 1.98.0
+          # bindgen's libclang and the clang whose headers it reads must be one version of LLVM. The runner image
+          # carries several (ubuntu-26.04: 20, 21 and 22), and left alone bindgen loads the newest libclang with the
+          # headers of the default clang, which call builtins the newer one has dropped. Take the newest that has both.
+          if [ "$RUNNER_OS" = Linux ]; then
+            for d in $(ls -d /usr/lib/llvm-* | sort -V -r); do
+              if ls "$d"/lib/libclang*.so* >/dev/null 2>&1 && [ -x "$d/bin/clang" ]; then
+                echo "LIBCLANG_PATH=$d/lib" >> "$GITHUB_ENV"
+                echo "CLANG_PATH=$d/bin/clang" >> "$GITHUB_ENV"
+                echo "bindgen reads with $d"
+                break
+              fi
+            done
+          fi
       - name: Format and lint
         run: |
           cargo fmt --check

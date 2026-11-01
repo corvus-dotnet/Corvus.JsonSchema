@@ -61,7 +61,9 @@ cjs::validator validator = cjs::validator::compile(schema, options);
 ```
 
 The options are those of the C library: `default_dialect`, `assert_format`, `assert_format_in_legacy_drafts`,
-`assert_content`, `format`, `resolver`, `base_uri`, `entry_point`, `max_depth` and `pattern_match_limit`. Failures
+`assert_content`, `format`, `resolver`, `base_uri`, `entry_point`, `max_depth`, `pattern_match_limit`, `regex_edition`
+(`cjs::regex_edition::dialect`, `current` or `es2020`) and `regex_unicode_version` (`cjs::regex_unicode_version::default_version`,
+`latest`, `v13`, `v17` or `v18`). Failures
 throw `corvus::json_schema::error`, with the C library's status, the message and, for invalid JSON, the byte offset.
 
 `pattern_match_limit(std::chrono::milliseconds)` is the time one match of a regular expression against one string may

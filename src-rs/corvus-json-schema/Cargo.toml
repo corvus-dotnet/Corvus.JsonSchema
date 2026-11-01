@@ -1,6 +1,6 @@
 [package]
 name = "corvus-json-schema"
-version = "0.1.7"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.89"
 description = "A high-performance JSON Schema evaluator (draft 4 to 2020-12) with results collection and annotations, ported from the Corvus.Text.Json V5 runtime evaluator."
@@ -13,18 +13,13 @@ keywords = ["json-schema", "validation", "jsonschema", "validator"]
 categories = ["encoding", "parser-implementations"]
 # The published crate: the library and its documents. The tests read the repository's JSON-Schema-Test-Suite
 # submodule and the C# metaschemas, so they only run from a checkout. LICENSE is a copy of the repository's (CI checks
-# it matches). THIRD-PARTY-NOTICES.txt has the notice of the Unicode data that src/ecmaregex/tables_gen.rs is derived
-# from, which must go wherever the crate goes.
-include = ["src/**", "Cargo.toml", "README.md", "LICENSE", "THIRD-PARTY-NOTICES.txt"]
+# it matches).
+include = ["src/**", "Cargo.toml", "README.md", "LICENSE"]
 
 [dependencies]
+corvus-regex-ecma262 = "0.2.7"
 regex = "1.13.1"
 serde_json = { version = "1.0.151", features = ["preserve_order", "float_roundtrip"] }
-
-[lints.rust]
-# A build with this cfg makes every match of the regular expression engine use its memory of failed places from its
-# first step (see src/ecmaregex/vm.rs), which is how the test data is run with the memory in use for every pattern.
-unexpected_cfgs = { level = "warn", check-cfg = ['cfg(corvus_memo_from_the_start)'] }
 
 [profile.release]
 codegen-units = 1

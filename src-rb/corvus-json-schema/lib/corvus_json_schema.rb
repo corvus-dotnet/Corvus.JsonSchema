@@ -39,16 +39,21 @@ module CorvusJsonSchema
   # "#/$defs/item"), max_depth (of in-place recursion, default 128) and pattern_match_limit (the seconds one match of
   # a pattern or patternProperties regular expression may take, default 1. A match that takes longer is abandoned and
   # the validation raises PatternMatchLimitError. nil or 0 turns the limit off, for a caller who trusts both the
-  # schema and the instances).
+  # schema and the instances), regex_edition (the edition of ECMA-262 patterns are read with: :dialect, the default,
+  # which is ECMAScript 2020 for 2019-09 and 2020-12 and today's for the drafts before them, :current or :es2020) and
+  # regex_unicode_version (the version of Unicode they are read with: :default, Unicode 17 today, :latest, 13, 17 or
+  # 18).
   #
   # A schema that does not compile raises CompilationError, and one with a regular expression over a limit of size
   # (1,048,576 bytes of pattern, 1,000 levels of groups) raises PatternTooLargeError, which is a CompilationError.
   def self.compile(schema, default_dialect: :draft202012, assert_format: nil, assert_format_in_legacy_drafts: false,
                    assert_content: true, formats: nil, resolver: nil, base_uri: nil, entry_point: nil, max_depth: 128,
-                   pattern_match_limit: DEFAULT_PATTERN_MATCH_LIMIT)
+                   pattern_match_limit: DEFAULT_PATTERN_MATCH_LIMIT, regex_edition: :dialect,
+                   regex_unicode_version: :default)
     dialect = DIALECTS.fetch(default_dialect) { raise ArgumentError, "unknown dialect #{default_dialect.inspect}" }
     Native.compile(schema, dialect, assert_format, assert_format_in_legacy_drafts, assert_content, formats, resolver,
-                   base_uri, entry_point, Integer(max_depth), pattern_match_limit&.to_f)
+                   base_uri, entry_point, Integer(max_depth), pattern_match_limit&.to_f, regex_edition.to_s,
+                   regex_unicode_version.to_s)
   end
 
   # The version of the corvus-json-schema crate the extension was built from.

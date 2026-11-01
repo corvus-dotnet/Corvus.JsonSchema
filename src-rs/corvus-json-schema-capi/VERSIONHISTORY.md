@@ -2,6 +2,15 @@
 
 The version history of the corvus-json-schema C library and its C++ wrapper (`src-rs/corvus-json-schema-capi`), released on GitHub as `capi-v<version>`. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md), and of the Rust crate it wraps.
 
+## V0.1.5
+
+V0.1.5 takes version 0.2.0 of the `corvus-json-schema` crate, which matches patterns with the [`corvus-regex-ecma262`](https://crates.io/crates/corvus-regex-ecma262) crate and reads them in the grammar of the dialect. Nothing that was in the header has changed, so it is a patch for the ABI, and a program built against 0.1.4 runs against it. There are two new functions and their constants.
+
+- **The grammar of the dialect.** JSON Schema 2019-09 and 2020-12 name the grammar of ECMAScript 2020, and patterns under them are now read with it: a modifier group such as `(?i:...)`, or a group name used by two groups, is not valid, and `cjs_compile` returns `CJS_COMPILATION_FAILED` for a schema with one in a `pattern`. A property escape that the tables of 2020 do not have (`\p{Script=Yezidi}`) is not valid with the `u` flag, so the pattern is read without it, where `\p` is the letter `p`, as a pattern with `\&` is. The `regex` format reads only the grammar of the flag. Drafts 4 to 7 read today's grammar, as before.
+- **`cjs_options_set_regex_edition(options, edition)`** chooses the edition for every dialect: `CJS_REGEX_EDITION_DIALECT` (0, the default), `CJS_REGEX_EDITION_CURRENT` (1) or `CJS_REGEX_EDITION_ES2020` (2020). **`cjs_options_set_regex_unicode_version(options, version)`** chooses the version of Unicode: `CJS_REGEX_UNICODE_DEFAULT` (0, the default, the version of the V8 the answers are held to, 17 today), `CJS_REGEX_UNICODE_LATEST` (1), `CJS_REGEX_UNICODE_13`, `CJS_REGEX_UNICODE_17` or `CJS_REGEX_UNICODE_18`. Another value is `CJS_INVALID_ARGUMENT`. The C++ wrapper has `options::regex_edition` and `options::regex_unicode_version`, with the enums `regex_edition` and `regex_unicode_version`.
+- **The engine.** Every pattern that no dedicated matcher of the crate takes is matched by `corvus-regex-ecma262`, whose answers are V8's for the whole of the ECMA-262 regular expression test data. The limits are those of 0.1.4. Over the jsonschema-benchmark corpora the crate validates in 0.98 of the time of 0.1.7 once warm, and takes 1.06 of it for the first validation and 1.05 to compile, since the engine builds a pattern's automaton on its first match.
+- **Notices.** `THIRD-PARTY-NOTICES.txt` names the tables of `corvus-regex-ecma262`, which the libraries now hold in place of the crate's own.
+
 ## V0.1.4
 
 V0.1.4 takes version 0.1.7 of the `corvus-json-schema` crate. That fixes wrong results for several forms of pattern and a validation that did not end, replaces the crate's regular expression engine, and gives every match of a pattern a limit of time. The functions and types that were there are unchanged, and there are additions for the limit. Versions 0.1.0 to 0.1.3 are affected, and so is everything built on them, the C++ wrapper included.

@@ -13,13 +13,15 @@ License notice for the Unicode Character Database
 
 The C library and its C++ wrapper are built on the corvus-json-schema Rust
 crate, and the shared and static libraries of a release package hold the
-compiled crate. src/ecmaregex/tables_gen.rs of that crate holds tables derived
-from the data files of the Unicode Character Database, version 17.0.0
-(https://www.unicode.org/Public/17.0.0/ucd/): the General_Category values, the
-binary properties, the Script and Script_Extensions values, the simple case
-folding and the simple uppercase mapping. The data files are "© 2025 Unicode®,
-Inc." and are licensed under the Unicode License V3 (SPDX-License-Identifier:
-Unicode-3.0), as https://www.unicode.org/license.txt gives it:
+compiled crate. That crate matches patterns with the corvus-regex-ecma262
+crate, which is compiled in with it. corvus-regex-ecma262 holds tables derived
+from the data files of the Unicode Character Database, versions 13.0.0, 17.0.0
+and 18.0.0 (https://www.unicode.org/Public/), and from its emoji sequence
+files: the General_Category values, the binary properties, the Script and
+Script_Extensions values, the simple case folding, the simple uppercase
+mapping and the properties of strings. The data files are licensed under the
+Unicode License V3 (SPDX-License-Identifier: Unicode-3.0), as
+https://www.unicode.org/license.txt gives it:
 
 UNICODE LICENSE V3
 
@@ -64,12 +66,12 @@ authorization of the copyright holder.
 License notice for https://github.com/ridiculousfish/regress
 -------------------------------
 
-The tables of src/ecmaregex/tables_gen.rs of the corvus-json-schema crate were
-written from the tables of the Corvus Go module, which were written from
-src/unicodetables.rs of regress 0.12.0. That crate generates the file from the
-Unicode Character Database. regress is licensed under the MIT license or the
-Apache License, Version 2.0, at the user's option. Neither the C library nor
-the corvus-json-schema crate depends on it.
+The tables of the corvus-regex-ecma262 crate were written, through the tables
+of the Corvus Go module, from the property tables of regress (its gen-unicode
+tool), which are generated from the Unicode Character Database. regress is
+licensed under the MIT license or the Apache License, Version 2.0, at the
+user's option. Neither the C library nor the crates it is built on depend on
+it.
 
 MIT License
 
