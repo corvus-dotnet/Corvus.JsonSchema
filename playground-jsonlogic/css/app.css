@@ -1,0 +1,375 @@
+/* ── Theme variables ── */
+:root,
+[data-theme="dark"] {
+    --bg-primary: #1e1e1e;
+    --bg-secondary: #252526;
+    --bg-tertiary: #2d2d30;
+    --bg-hover: #3e3e42;
+    --text-primary: #cccccc;
+    --text-secondary: #969696;
+    --text-muted: #6e6e6e;
+    --border: #3e3e42;
+    --accent: #0078d4;
+    --accent-hover: #1a8ae8;
+    --error: #f44747;
+    --error-bg: rgba(244, 71, 71, 0.12);
+    --success: #6a9955;
+    --panel-header: #2d2d30;
+}
+
+[data-theme="light"] {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f3f3f3;
+    --bg-tertiary: #e8e8e8;
+    --bg-hover: #e0e0e0;
+    --text-primary: #333333;
+    --text-secondary: #666666;
+    --text-muted: #999999;
+    --border: #d0d0d0;
+    --accent: #0066b8;
+    --accent-hover: #005da6;
+    --error: #d32f2f;
+    --error-bg: rgba(211, 47, 47, 0.08);
+    --success: #388e3c;
+    --panel-header: #e8e8e8;
+}
+
+/* ── Reset & base ── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #app {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+    color: var(--text-primary);
+    background: var(--bg-primary);
+}
+
+/* ── Toolbar ── */
+.playground-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    height: 42px;
+    flex-shrink: 0;
+}
+
+.playground-toolbar h1 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.spacer { flex: 1; }
+
+.toolbar-btn {
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.toolbar-btn:hover { background: var(--bg-hover); }
+.toolbar-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.toolbar-btn.primary:hover { background: var(--accent-hover); }
+
+.toolbar-select {
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-size: 13px;
+    max-width: 220px;
+}
+
+.theme-toggle-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.theme-toggle-btn:hover { background: var(--bg-hover); }
+
+/* ── Sample description ── */
+.sample-description {
+    padding: 4px 12px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+}
+
+/* ── Grid layout ── */
+.jsonlogic-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    flex: 1;
+    overflow: hidden;
+    /* Fill remaining viewport */
+    height: calc(100vh - 42px - 24px); /* toolbar + status bar */
+}
+
+.sample-description ~ .jsonlogic-grid {
+    height: calc(100vh - 42px - 24px - 26px);
+}
+
+.panel-rule  { grid-column: 1; grid-row: 1 / span 2; }
+.panel-data  { grid-column: 2; grid-row: 1; }
+.panel-output { grid-column: 2; grid-row: 2; }
+
+.has-maximized .panel-hidden { display: none !important; }
+.has-maximized .panel-maximized { grid-column: 1 / -1; grid-row: 1 / -1; }
+
+/* ── Panels ── */
+.playground-panel {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-primary);
+    overflow: hidden;
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: var(--panel-header);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+/* ── Panel tabs (Schema | Data) ── */
+.panel-tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    padding: 4px 8px;
+    margin: 0;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.panel-tab:hover {
+    color: var(--text-primary);
+}
+
+.panel-tab--active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+.schema-status {
+    font-size: 11px;
+    opacity: 0.7;
+}
+
+.panel-body {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    min-height: 0;
+}
+
+/* BlazorMonaco editor containers must fill their parent */
+.panel-body .monaco-editor-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.panel-body--builder {
+    overflow-y: auto;
+    padding: 12px;
+}
+
+.panel-copy-btn,
+.panel-maximize-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    color: var(--text-secondary);
+}
+
+.panel-copy-btn:hover,
+.panel-maximize-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+/* ── Error output ── */
+.error-output {
+    padding: 12px 16px;
+    color: var(--error);
+    background: var(--error-bg);
+    font-family: "Cascadia Code", "Fira Code", Consolas, monospace;
+    font-size: 13px;
+    white-space: pre-wrap;
+    overflow-y: auto;
+    height: 100%;
+}
+
+/* ── Status bar ── */
+.status-bar {
+    display: flex;
+    align-items: center;
+    padding: 2px 12px;
+    font-size: 12px;
+    background: var(--accent);
+    color: #fff;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.status-bar--error {
+    background: var(--error);
+}
+
+/* ── Rule Builder container ── */
+.rule-builder {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.rule-builder__tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.rule-builder__tab {
+    padding: 6px 16px;
+    border: none;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+}
+
+.rule-builder__tab:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.rule-builder__tab.active {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border-bottom-color: var(--accent);
+}
+
+.rule-builder__content {
+    overflow: hidden;
+    position: absolute;
+    inset: 0;
+}
+
+.rule-builder__content--active {
+    visibility: visible;
+    z-index: 1;
+}
+
+.rule-builder__content--hidden {
+    visibility: hidden;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.rule-builder__panels {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+}
+
+.rule-builder__visual {
+    padding: 12px;
+    overflow: auto;
+    height: 100%;
+}
+
+/* Blockly workspace fills the visual panel */
+.blockly-editor {
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+}
+
+.rule-builder__error {
+    padding: 6px 12px;
+    font-size: 12px;
+    color: var(--error);
+    background: var(--error-bg);
+    border-bottom: 1px solid var(--error);
+}
+
+
+/* ── Modal ── */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-dialog {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    max-width: 400px;
+    width: 90%;
+}
+
+.modal-dialog h3 {
+    margin: 0 0 8px;
+}
+
+.modal-dialog p {
+    margin: 0 0 16px;
+    color: var(--text-secondary);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
