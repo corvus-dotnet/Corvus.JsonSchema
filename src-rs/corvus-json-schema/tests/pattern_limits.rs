@@ -411,6 +411,8 @@ fn the_regex_format_reads_the_grammar_without_the_limits_of_size() {
         (nest(100_000), true),
         (nest(100_000) + ")", false),
         ("(?:".repeat(100_000) + "a", false),
+        // Nested named groups take memory in proportion to their number (corvus-regex-ecma262 0.2.7).
+        ((0..100_000).map(|k| format!("(?<g{k}>")).collect::<String>() + "a" + &")".repeat(100_000), true),
     ] {
         let start = Instant::now();
         assert_eq!(v.try_validate(&json!(text)), Ok(want), "a string of {} bytes", text.len());
