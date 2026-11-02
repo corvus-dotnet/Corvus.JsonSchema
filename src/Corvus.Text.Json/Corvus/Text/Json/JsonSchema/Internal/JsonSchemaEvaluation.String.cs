@@ -1874,9 +1874,10 @@ public static partial class JsonSchemaEvaluation
     /// <returns><see langword="true"/> if the value is a valid email address; otherwise, <see langword="false"/>.</returns>
     internal static bool MatchEmail(ReadOnlySpan<byte> value)
     {
-        if (value.Length > 320 || value.Length < 3)
+        // There is no limit on the address as a whole, or on its local part: only the domain has one (253 characters,
+        // as a host name). The other ports limit only the domain too (#1029).
+        if (value.Length < 3)
         {
-            // The maximum length of an email address is 320 characters (RFC 5321).
             return false;
         }
 
@@ -2108,9 +2109,11 @@ public static partial class JsonSchemaEvaluation
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static bool MatchIdnEmail(ReadOnlySpan<byte> value)
     {
-        if (value.Length > 320 || value.Length < 3)
+        // There is no limit on the address as a whole, or on its local part: only the domain has one, the limit of a
+        // host name (253 characters as A-labels), which a domain of U-labels can meet with more than 320 bytes of UTF-8
+        // in the address. The other ports limit only the domain too (#1029).
+        if (value.Length < 3)
         {
-            // The maximum length of an email address is 320 characters (RFC 5321).
             return false;
         }
 
@@ -2612,11 +2615,7 @@ public static partial class JsonSchemaEvaluation
 
     private static bool MatchEmailLocalPart(ReadOnlySpan<byte> segment)
     {
-        if (segment.Length > 64)
-        {
-            return false;
-        }
-
+        // No limit on the length of the local part, as in the other ports (#1029).
         // Skip an opening comment
         if (segment[0] == (byte)'(')
         {
@@ -2689,11 +2688,7 @@ public static partial class JsonSchemaEvaluation
 
     private static bool MatchEmailLocalPartUnicode(ReadOnlySpan<byte> segment)
     {
-        if (segment.Length > 64)
-        {
-            return false;
-        }
-
+        // No limit on the length of the local part, as in the other ports (#1029).
         // Skip an opening comment
         if (segment[0] == (byte)'(')
         {

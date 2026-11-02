@@ -57,8 +57,6 @@ answers. Each is a decision recorded here, with an issue where there is work to 
   `InvalidOperationException` (in V4 generated code too). Every other port refuses such a document when it parses
   it, or reports it as not valid. The 46,438 texts of the dataset's `lone-surrogates.jsonl` all throw
   ([#1021](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1021)).
-- **`idn-email` has a limit of 320 bytes on the whole address.** The Rust crate has no limit on the address as a
-  whole. The host name of the address has the limit of 253 characters as A-labels in both ([#1029](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1029)).
 - **.NET Framework and a large count, with the DotNet engine.** .NET Framework's `Regex` makes a string of the count
   of a repetition of one character when it is constructed, so `^a{100000000}$` costs some 200 MB there, and a count
   no string can reach is written as a part that never matches. .NET does neither, and nor does Corvus.Regex.Ecma262.
