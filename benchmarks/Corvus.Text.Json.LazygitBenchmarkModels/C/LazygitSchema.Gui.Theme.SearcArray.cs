@@ -33,11 +33,13 @@ public readonly partial struct LazygitSchema
             public readonly partial struct SearcArray
 #if NET8_0_OR_GREATER
                 : IJsonElement<SearcArray>,
+                  global::System.Collections.Generic.IReadOnlyCollection<Corvus.LazygitBenchmark.Current.LazygitSchema.Color>,
                   IFormattable,
                   ISpanFormattable,
                   IUtf8SpanFormattable
 #else
                 : IJsonElement<SearcArray>,
+                  global::System.Collections.Generic.IReadOnlyCollection<Corvus.LazygitBenchmark.Current.LazygitSchema.Color>,
                   IFormattable
 #endif
             {
@@ -86,6 +88,21 @@ public readonly partial struct LazygitSchema
                     CheckValidInstance();
                     return EnumeratorCreator.CreateArrayEnumerator<Corvus.LazygitBenchmark.Current.LazygitSchema.Color>(_parent, _idx);
                 }
+
+                /// <summary>
+                /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+                /// </summary>
+                /// <returns>The enumerator.</returns>
+                public ArrayEnumerator<Corvus.LazygitBenchmark.Current.LazygitSchema.Color> GetEnumerator() => EnumerateArray();
+
+                /// <inheritdoc/>
+                global::System.Collections.Generic.IEnumerator<Corvus.LazygitBenchmark.Current.LazygitSchema.Color> global::System.Collections.Generic.IEnumerable<Corvus.LazygitBenchmark.Current.LazygitSchema.Color>.GetEnumerator() => EnumerateArray();
+
+                /// <inheritdoc/>
+                global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+                /// <inheritdoc/>
+                int global::System.Collections.Generic.IReadOnlyCollection<Corvus.LazygitBenchmark.Current.LazygitSchema.Color>.Count => GetArrayLength();
 
                 /// <inheritdoc/>
                 public JsonValueKind ValueKind => TokenType.ToValueKind();
@@ -300,6 +317,12 @@ public readonly partial struct LazygitSchema
                 public SearcArray Clone()
                 {
                     CheckValidInstance();
+                    if (!_parent.IsDisposable)
+                    {
+                        // Already a clone, or backed by a document that is never disposed.
+                        return this;
+                    }
+
                     return _parent.CloneElement<SearcArray>(_idx);
                 }
 

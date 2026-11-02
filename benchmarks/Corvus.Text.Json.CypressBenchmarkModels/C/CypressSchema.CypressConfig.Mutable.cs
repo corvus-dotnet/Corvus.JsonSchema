@@ -3698,6 +3698,261 @@ public readonly partial struct CypressSchema
                 return result;
             }
 
+            /// <summary>
+            /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+            /// as its value, and then does the same inside each property whose own type has properties.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// This changes the data. Reading an absent property already gives its default without it; this method writes
+            /// the defaults into the document as additional properties, so that they are there when the document is sent
+            /// to a system that does not apply the schema's defaults itself.
+            /// </para>
+            /// <para>
+            /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+            /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+            /// as it is.
+            /// </para>
+            /// </remarks>
+            public void ApplyDefaults()
+            {
+                CheckValidInstance();
+                if (ValueKind != JsonValueKind.Object)
+                {
+                    return;
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AnimationDistanceThresholdUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetAnimationDistanceThreshold(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.AnimationDistanceThresholdEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BaseUrlUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetBaseUrl(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.BaseUrlEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BlockHostsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetBlockHosts(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.BlockHostsArray.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ChromeWebSecurityUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetChromeWebSecurity(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ChromeWebSecurityEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ComponentFolderUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetComponentFolder(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ComponentFolderEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DefaultCommandTimeoutUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetDefaultCommandTimeout(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.DefaultCommandTimeoutEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DownloadsFolderUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetDownloadsFolder(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereFilesDownloadedDuringATestAreSaved.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExecTimeoutUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetExecTimeout(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExecTimeoutEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExperimentalFetchPolyfillUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetExperimentalFetchPolyfill(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PolyfillsWindowFetchToEnableNetworkSpyingAndStubbing.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExperimentalInteractiveRunEventsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetExperimentalInteractiveRunEvents(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalInteractiveRunEventsEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExperimentalSessionSupportUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetExperimentalSessionSupport(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSessionSupportEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExperimentalSourceRewritingUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetExperimentalSourceRewriting(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSourceRewritingEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExperimentalStudioUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetExperimentalStudio(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalStudioEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FileServerFolderUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetFileServerFolder(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FileServerFolderEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FixturesFolderUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetFixturesFolder(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingFixtureFilesPassFalseToDisable.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IncludeShadowDomUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetIncludeShadowDom(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IncludeShadowDomEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IntegrationFolderUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetIntegrationFolder(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingIntegrationTestFiles.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ModifyObstructiveCodeUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetModifyObstructiveCode(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ModifyObstructiveCodeEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NodeVersionUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNodeVersion(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.NodeVersionEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NumTestsKeptInMemoryUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNumTestsKeptInMemory(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.NumTestsKeptInMemoryEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PageLoadTimeoutUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetPageLoadTimeout(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PageLoadTimeoutEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PluginsFileUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetPluginsFile(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToPluginsFilePassFalseToDisable.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PortUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetPort(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PortEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ProjectIdUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetProjectId(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ProjectIdEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ReporterUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetReporter(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ReporterEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ReporterOptionsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetReporterOptions(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ReporterOptionsEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RequestTimeoutUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetRequestTimeout(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequestTimeoutEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ResponseTimeoutUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetResponseTimeout(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ResponseTimeoutEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RetriesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetRetries(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RetriesEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ScreenshotOnRunFailureUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetScreenshotOnRunFailure(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScreenshotOnRunFailureEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ScreenshotsFolderUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetScreenshotsFolder(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScreenshotsFolderEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ScrollBehaviorUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetScrollBehavior(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScrollBehaviorEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SlowTestThresholdUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSlowTestThreshold(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.SlowTestThresholdEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SupportFileUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSupportFile(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.SupportFileEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TaskTimeoutUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetTaskTimeout(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TaskTimeoutEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TestFilesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetTestFiles(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TestFilesArray.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TrashAssetsBeforeRunsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetTrashAssetsBeforeRuns(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TrashAssetsBeforeRunsEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UserAgentUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetUserAgent(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.UserAgentEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VideoUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetVideo(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VideoCompressionUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetVideoCompression(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoCompressionEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VideoUploadOnPassesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetVideoUploadOnPasses(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoUploadOnPassesEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VideosFolderUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetVideosFolder(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereVideosWillBeSavedDuringCypressRun.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ViewportHeightUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetViewportHeight(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ViewportHeightEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ViewportWidthUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetViewportWidth(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ViewportWidthEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WaitForAnimationsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetWaitForAnimations(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WaitForAnimationsEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WatchForFileChangesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetWatchForFileChanges(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WatchForFileChangesEntity.DefaultInstance);
+                }
+            }
+
             /// <inheritdoc/>
             public void WriteTo(Utf8JsonWriter writer)
             {

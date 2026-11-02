@@ -206,6 +206,16 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             };
         }
 
+        int regexMatchTimeoutMilliseconds = Text.Json.CodeGeneration.CodeGenerationExtensions.DefaultRegexMatchTimeoutMilliseconds;
+        if (source.GlobalOptions.TryGetValue("build_property.CorvusTextJsonRegexMatchTimeout", out string? regexMatchTimeoutName) && regexMatchTimeoutName.Length > 0)
+        {
+            if (!int.TryParse(regexMatchTimeoutName, System.Globalization.NumberStyles.AllowLeadingSign, System.Globalization.CultureInfo.InvariantCulture, out regexMatchTimeoutMilliseconds) ||
+                (regexMatchTimeoutMilliseconds != -1 && regexMatchTimeoutMilliseconds <= 0))
+            {
+                throw new InvalidOperationException($"Invalid build property value for 'CorvusTextJsonRegexMatchTimeout': '{regexMatchTimeoutName}'. Expected a positive number of milliseconds, or -1 for no limit.");
+            }
+        }
+
         bool addExplicitUsings = true;
 
         if (source.GlobalOptions.TryGetValue("build_property.CorvusTextJsonAddExplicitUsings", out string? addExplicitUsingsName))
@@ -307,7 +317,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             emitUnions,
             regexEngine,
             regexEdition,
-            regexUnicodeVersion);
+            regexUnicodeVersion,
+            regexMatchTimeoutMilliseconds);
     }
 
     private static void EmitGeneratorAttribute(IncrementalGeneratorInitializationContext initializationContext)
@@ -380,7 +391,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         bool emitUnions,
         Text.Json.CodeGeneration.GeneratedRegexEngine regexEngine,
         Text.Json.CodeGeneration.GeneratedRegexEdition? regexEdition,
-        Text.Json.CodeGeneration.GeneratedRegexUnicodeVersion regexUnicodeVersion) : IGlobalOptions, IEquatable<GlobalOptions>
+        Text.Json.CodeGeneration.GeneratedRegexUnicodeVersion regexUnicodeVersion,
+        int regexMatchTimeoutMilliseconds) : IGlobalOptions, IEquatable<GlobalOptions>
     {
         public IVocabulary FallbackVocabulary { get; } = fallbackVocabulary;
 
@@ -415,6 +427,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         public Text.Json.CodeGeneration.GeneratedRegexEdition? RegexEdition { get; } = regexEdition;
 
         public Text.Json.CodeGeneration.GeneratedRegexUnicodeVersion RegexUnicodeVersion { get; } = regexUnicodeVersion;
+
+        public int RegexMatchTimeoutMilliseconds { get; } = regexMatchTimeoutMilliseconds;
 
         public ILanguageProvider CreateLanguageProvider(string? defaultNamespace, IReadOnlyList<NamedTypeSpecification> namedTypes, bool emitEvaluator)
         {
@@ -451,7 +465,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                 EmitUnions == other.EmitUnions &&
                 RegexEngine == other.RegexEngine &&
                 RegexEdition == other.RegexEdition &&
-                RegexUnicodeVersion == other.RegexUnicodeVersion;
+                RegexUnicodeVersion == other.RegexUnicodeVersion &&
+                RegexMatchTimeoutMilliseconds == other.RegexMatchTimeoutMilliseconds;
         }
 
         public override bool Equals(object? obj) => obj is GlobalOptions other && Equals(other);
@@ -476,6 +491,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             hash.Add(RegexEngine);
             hash.Add(RegexEdition);
             hash.Add(RegexUnicodeVersion);
+            hash.Add(RegexMatchTimeoutMilliseconds);
             return hash.ToHashCode();
         }
 
@@ -540,7 +556,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                 storeFilesAsStrings: true,
                 regexEngine: RegexEngine,
                 regexEdition: RegexEdition,
-                regexUnicodeVersion: RegexUnicodeVersion);
+                regexUnicodeVersion: RegexUnicodeVersion,
+                regexMatchTimeoutMilliseconds: RegexMatchTimeoutMilliseconds);
 
             return options;
         }

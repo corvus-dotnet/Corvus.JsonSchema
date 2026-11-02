@@ -27,11 +27,13 @@ public readonly partial struct Ui5Schema
                 public readonly partial struct IncludeDepArray
 #if NET8_0_OR_GREATER
                     : IJsonElement<IncludeDepArray>,
+                      global::System.Collections.Generic.IReadOnlyCollection<Corvus.Ui5Benchmark.Current.JsonString>,
                       IFormattable,
                       ISpanFormattable,
                       IUtf8SpanFormattable
 #else
                     : IJsonElement<IncludeDepArray>,
+                      global::System.Collections.Generic.IReadOnlyCollection<Corvus.Ui5Benchmark.Current.JsonString>,
                       IFormattable
 #endif
                 {
@@ -80,6 +82,21 @@ public readonly partial struct Ui5Schema
                         CheckValidInstance();
                         return EnumeratorCreator.CreateArrayEnumerator<Corvus.Ui5Benchmark.Current.JsonString>(_parent, _idx);
                     }
+
+                    /// <summary>
+                    /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+                    /// </summary>
+                    /// <returns>The enumerator.</returns>
+                    public ArrayEnumerator<Corvus.Ui5Benchmark.Current.JsonString> GetEnumerator() => EnumerateArray();
+
+                    /// <inheritdoc/>
+                    global::System.Collections.Generic.IEnumerator<Corvus.Ui5Benchmark.Current.JsonString> global::System.Collections.Generic.IEnumerable<Corvus.Ui5Benchmark.Current.JsonString>.GetEnumerator() => EnumerateArray();
+
+                    /// <inheritdoc/>
+                    global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+                    /// <inheritdoc/>
+                    int global::System.Collections.Generic.IReadOnlyCollection<Corvus.Ui5Benchmark.Current.JsonString>.Count => GetArrayLength();
 
                     /// <inheritdoc/>
                     public JsonValueKind ValueKind => TokenType.ToValueKind();
@@ -294,6 +311,12 @@ public readonly partial struct Ui5Schema
                     public IncludeDepArray Clone()
                     {
                         CheckValidInstance();
+                        if (!_parent.IsDisposable)
+                        {
+                            // Already a clone, or backed by a document that is never disposed.
+                            return this;
+                        }
+
                         return _parent.CloneElement<IncludeDepArray>(_idx);
                     }
 

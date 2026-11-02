@@ -27,11 +27,13 @@ public readonly partial struct Cql2Schema
                 public readonly partial struct JsonNumberArray
 #if NET8_0_OR_GREATER
                     : IJsonElement<JsonNumberArray>,
+                      global::System.Collections.Generic.IReadOnlyCollection<Corvus.Cql2Benchmark.Current.JsonNumber>,
                       IFormattable,
                       ISpanFormattable,
                       IUtf8SpanFormattable
 #else
                     : IJsonElement<JsonNumberArray>,
+                      global::System.Collections.Generic.IReadOnlyCollection<Corvus.Cql2Benchmark.Current.JsonNumber>,
                       IFormattable
 #endif
                 {
@@ -108,6 +110,21 @@ public readonly partial struct Cql2Schema
                         CheckValidInstance();
                         return EnumeratorCreator.CreateArrayEnumerator<Corvus.Cql2Benchmark.Current.JsonNumber>(_parent, _idx);
                     }
+
+                    /// <summary>
+                    /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+                    /// </summary>
+                    /// <returns>The enumerator.</returns>
+                    public ArrayEnumerator<Corvus.Cql2Benchmark.Current.JsonNumber> GetEnumerator() => EnumerateArray();
+
+                    /// <inheritdoc/>
+                    global::System.Collections.Generic.IEnumerator<Corvus.Cql2Benchmark.Current.JsonNumber> global::System.Collections.Generic.IEnumerable<Corvus.Cql2Benchmark.Current.JsonNumber>.GetEnumerator() => EnumerateArray();
+
+                    /// <inheritdoc/>
+                    global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+                    /// <inheritdoc/>
+                    int global::System.Collections.Generic.IReadOnlyCollection<Corvus.Cql2Benchmark.Current.JsonNumber>.Count => GetArrayLength();
 
                     /// <inheritdoc/>
                     public JsonValueKind ValueKind => TokenType.ToValueKind();
@@ -322,6 +339,12 @@ public readonly partial struct Cql2Schema
                     public JsonNumberArray Clone()
                     {
                         CheckValidInstance();
+                        if (!_parent.IsDisposable)
+                        {
+                            // Already a clone, or backed by a document that is never disposed.
+                            return this;
+                        }
+
                         return _parent.CloneElement<JsonNumberArray>(_idx);
                     }
 

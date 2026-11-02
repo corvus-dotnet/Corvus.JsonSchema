@@ -1026,6 +1026,95 @@ internal static partial class CodeGeneratorExtensions
         public string VisitPatternName { get; }
     }
 
+    /// <summary>
+    /// Appends the <c>ApplyDefaults()</c> method of a mutable object type: it sets each absent property that has a
+    /// default in the schema to that default, and then applies the defaults of each property whose type has properties.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to emit the method.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendApplyDefaultsMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (generator.IsCancellationRequested || typeDeclaration.PropertyDeclarations.Count == 0)
+        {
+            return generator;
+        }
+
+        generator
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default")
+            .AppendLineIndent("/// as its value, and then does the same inside each property whose own type has properties.")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent("/// <remarks>")
+            .AppendLineIndent("/// <para>")
+            .AppendLineIndent("/// This changes the data. Reading an absent property already gives its default without it; this method writes")
+            .AppendLineIndent("/// the defaults into the document as additional properties, so that they are there when the document is sent")
+            .AppendLineIndent("/// to a system that does not apply the schema's defaults itself.")
+            .AppendLineIndent("/// </para>")
+            .AppendLineIndent("/// <para>")
+            .AppendLineIndent("/// A property that is present keeps its value. Does nothing when the value is not an object. The items of")
+            .AppendLineIndent("/// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written")
+            .AppendLineIndent("/// as it is.")
+            .AppendLineIndent("/// </para>")
+            .AppendLineIndent("/// </remarks>")
+            .AppendLineIndent("public void ApplyDefaults()")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendLineIndent("CheckValidInstance();")
+                .AppendLineIndent("if (ValueKind != JsonValueKind.Object)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("return;")
+                .PopIndent()
+                .AppendLineIndent("}");
+
+        // First the defaults of the absent properties, so that the defaults written are visited below too.
+        foreach (PropertyDeclaration property in typeDeclaration.PropertyDeclarations)
+        {
+            if (property.ReducedPropertyType.IsBuiltInJsonNotAnyType() ||
+                property.ReducedPropertyType.DefaultValue().ValueKind == JsonValueKind.Undefined)
+            {
+                continue;
+            }
+
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("if (!_parent.TryGetNamedPropertyValue(_idx, ", generator.JsonPropertyNamesClassName(), ".", property.DotnetPropertyName(), "Utf8, out IJsonDocument? _, out int _))")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("Set", property.DotnetPropertyName(), "(", property.ReducedPropertyType.FullyQualifiedDotnetTypeName(), ".DefaultInstance);")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        // Then the properties whose types have properties of their own. Each is looked up after the writes above, and
+        // the version is taken again after each, as a write inside a property changes the document.
+        foreach (PropertyDeclaration property in typeDeclaration.PropertyDeclarations)
+        {
+            if (property.ReducedPropertyType.IsBuiltInJsonNotAnyType() ||
+                property.ReducedPropertyType.PropertyDeclarations.Count == 0)
+            {
+                continue;
+            }
+
+            string propertyMutableType = property.ReducedPropertyType.FullyQualifiedDotnetTypeName() + ".Mutable";
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("if (_parent.TryGetNamedPropertyValue(_idx, ", generator.JsonPropertyNamesClassName(), ".", property.DotnetPropertyName(), "Utf8, out ", propertyMutableType, " ", "__corvus", property.DotnetPropertyName(), "))")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("__corvus", property.DotnetPropertyName(), ".ApplyDefaults();")
+                    .AppendLineIndent("_documentVersion = _parent.Version;")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        return generator
+            .PopIndent()
+            .AppendLineIndent("}");
+    }
+
     public static CodeGenerator AppendObjectPropertySetters(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
         if (generator.IsCancellationRequested)

@@ -47,18 +47,19 @@ internal static partial class CodeGenerationExtensions
     private const string MutableClassNameKey = "CSharp_JsonSchema_MutableClassNameKey";
 
     /// <summary>
-    /// The match timeout, in milliseconds, of every regular expression in generated code that is not proved to
-    /// match in time proportional to the text: 1 second.
+    /// The default match timeout, in milliseconds, of every regular expression in generated code that is not proved
+    /// to match in time proportional to the text: 1 second. <c>CSharpLanguageProvider.Options</c> sets another, or
+    /// none (-1).
     /// </summary>
     /// <remarks>
     /// There are patterns on which a match in .NET's regular expression engine never finishes. With a timeout the
     /// match throws <see cref="System.Text.RegularExpressions.RegexMatchTimeoutException"/> to the caller of the
-    /// generated code. This is the one place the generator holds the value. The runtime evaluator has the same
+    /// generated code. This is the one place the generator holds the default. The runtime evaluator has the same
     /// default for the expressions it constructs, in <c>JsonSchemaEvaluatorOptions.DefaultRegexMatchTimeout</c>.
     /// A pattern that <c>EcmaRegexTranslator.IsLinear</c> proves linear has no timeout, in generated code and in
     /// the evaluator.
     /// </remarks>
-    internal const int RegexMatchTimeoutMilliseconds = 1_000;
+    internal const int DefaultRegexMatchTimeoutMilliseconds = 1_000;
 
     // Both end in \z and not in $, which in .NET also holds before a final line feed. A pattern that ends in a
     // line feed (^abc\n) is neither of these.
@@ -406,16 +407,18 @@ internal static partial class CodeGenerationExtensions
 
         string memberName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: index?.ToString(CultureInfo.InvariantCulture));
 
-        // Every form carries the match timeout (see RegexMatchTimeoutMilliseconds), but for a pattern proved to
-        // match in time proportional to the text, which has none (see EcmaRegexTranslator.IsLinear). The timeout
-        // makes .NET's engines check the clock as they match, which costs that pattern up to half its time again.
-        bool linear = EcmaRegexTranslator.IsLinear(value);
-        string timeout = linear
+        // Every form carries the generation's match timeout (1 second unless the options say otherwise), but for a
+        // pattern proved to match in time proportional to the text, which has none (see EcmaRegexTranslator.IsLinear).
+        // The timeout makes .NET's engines check the clock as they match, which costs that pattern up to half its time
+        // again.
+        int matchTimeout = ((CSharpLanguageProvider)generator.LanguageProvider).RegexMatchTimeoutMilliseconds;
+        bool unlimited = matchTimeout == global::System.Threading.Timeout.Infinite || EcmaRegexTranslator.IsLinear(value);
+        string timeout = unlimited
             ? "global::System.Text.RegularExpressions.Regex.InfiniteMatchTimeout"
-            : "global::System.TimeSpan.FromMilliseconds(" + RegexMatchTimeoutMilliseconds.ToString(CultureInfo.InvariantCulture) + ")";
-        string generatedTimeout = linear
+            : "global::System.TimeSpan.FromMilliseconds(" + matchTimeout.ToString(CultureInfo.InvariantCulture) + ")";
+        string generatedTimeout = unlimited
             ? "global::System.Threading.Timeout.Infinite"
-            : RegexMatchTimeoutMilliseconds.ToString(CultureInfo.InvariantCulture);
+            : matchTimeout.ToString(CultureInfo.InvariantCulture);
 
 #if !BUILDING_SOURCE_GENERATOR
         if (translatedValue.StartsWith(EcmaRegexTranslator.InterpretedMarker, StringComparison.Ordinal))

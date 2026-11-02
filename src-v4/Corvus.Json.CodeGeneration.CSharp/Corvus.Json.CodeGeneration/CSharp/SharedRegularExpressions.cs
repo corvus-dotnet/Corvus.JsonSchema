@@ -33,11 +33,14 @@ internal sealed class SharedRegularExpressions
     private readonly List<(string Name, string Pattern, bool Unicode, GeneratedRegexEdition Edition, GeneratedRegexUnicodeVersion UnicodeVersion)> entries = [];
     private readonly object sync = new();
     private readonly string classReference;
+    private readonly int matchTimeoutMilliseconds;
 
     /// <summary>Initializes a new instance of the <see cref="SharedRegularExpressions"/> class.</summary>
     /// <param name="defaultNamespace">The namespace the class is written in (the generation's default).</param>
-    public SharedRegularExpressions(string defaultNamespace)
+    /// <param name="matchTimeoutMilliseconds">The limit, in milliseconds, on one match, or -1 for none.</param>
+    public SharedRegularExpressions(string defaultNamespace, int matchTimeoutMilliseconds = ValidationCodeGeneratorExtensions.DefaultRegexMatchTimeoutMilliseconds)
     {
+        this.matchTimeoutMilliseconds = matchTimeoutMilliseconds;
         this.Namespace = defaultNamespace;
         this.classReference = defaultNamespace.Length == 0 ? "global::" + ClassName : "global::" + defaultNamespace + "." + ClassName;
     }
@@ -45,9 +48,10 @@ internal sealed class SharedRegularExpressions
     /// <summary>Gets the regular expressions of a generation, adding the set when it is the first asked for.</summary>
     /// <param name="generator">The code generator of the generation.</param>
     /// <param name="defaultNamespace">The namespace the class is written in.</param>
+    /// <param name="matchTimeoutMilliseconds">The limit, in milliseconds, on one match, or -1 for none.</param>
     /// <returns>The set.</returns>
-    public static SharedRegularExpressions For(CodeGenerator generator, string defaultNamespace)
-        => Generations.GetValue(generator, _ => new SharedRegularExpressions(defaultNamespace));
+    public static SharedRegularExpressions For(CodeGenerator generator, string defaultNamespace, int matchTimeoutMilliseconds = ValidationCodeGeneratorExtensions.DefaultRegexMatchTimeoutMilliseconds)
+        => Generations.GetValue(generator, _ => new SharedRegularExpressions(defaultNamespace, matchTimeoutMilliseconds));
 
     /// <summary>Gets the regular expressions of a generation, or <see langword="null"/> when none was asked for.</summary>
     /// <param name="generator">The code generator of the generation.</param>
@@ -128,7 +132,7 @@ internal sealed class SharedRegularExpressions
                 if (!EcmaRegexEmitter.TryEmit(
                     pattern,
                     unicode ? EcmaRegexFlags.Unicode : EcmaRegexFlags.None,
-                    ValidationCodeGeneratorExtensions.RegexMatchTimeoutMilliseconds,
+                    this.matchTimeoutMilliseconds,
                     (EcmaRegexEdition)(int)edition,
                     (EcmaRegexUnicodeVersion)(int)unicodeVersion,
                     holder,

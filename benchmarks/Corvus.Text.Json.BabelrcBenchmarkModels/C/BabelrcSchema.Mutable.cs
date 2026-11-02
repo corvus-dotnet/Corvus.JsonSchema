@@ -2112,6 +2112,86 @@ public readonly partial struct BabelrcSchema
         }
 
         /// <summary>
+        /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+        /// as its value, and then does the same inside each property whose own type has properties.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This changes the data. Reading an absent property already gives its default without it; this method writes
+        /// the defaults into the document as additional properties, so that they are there when the document is sent
+        /// to a system that does not apply the schema's defaults itself.
+        /// </para>
+        /// <para>
+        /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+        /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+        /// as it is.
+        /// </para>
+        /// </remarks>
+        public void ApplyDefaults()
+        {
+            CheckValidInstance();
+            if (ValueKind != JsonValueKind.Object)
+            {
+                return;
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AstUtf8, out IJsonDocument? _, out int _))
+            {
+                SetAst(Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CodeUtf8, out IJsonDocument? _, out int _))
+            {
+                SetCode(Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CommentsUtf8, out IJsonDocument? _, out int _))
+            {
+                SetComments(Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CompactUtf8, out IJsonDocument? _, out int _))
+            {
+                SetCompact(Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvUtf8, out IJsonDocument? _, out int _))
+            {
+                SetEnv(Corvus.BabelrcBenchmark.Current.BabelrcSchema.AllOf1Entity.EnvEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FilenameUtf8, out IJsonDocument? _, out int _))
+            {
+                SetFilename(Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.InputSourceMapUtf8, out IJsonDocument? _, out int _))
+            {
+                SetInputSourceMap(Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeepModuleIdExtensionsUtf8, out IJsonDocument? _, out int _))
+            {
+                SetKeepModuleIdExtensions(Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ModuleIdsUtf8, out IJsonDocument? _, out int _))
+            {
+                SetModuleIds(Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RetainLinesUtf8, out IJsonDocument? _, out int _))
+            {
+                SetRetainLines(Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SourceMapsUtf8, out IJsonDocument? _, out int _))
+            {
+                SetSourceMaps(Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.DefaultInstance);
+            }
+        }
+
+        /// <summary>
         /// Apply a composed value.
         /// </summary>
         /// <remarks>

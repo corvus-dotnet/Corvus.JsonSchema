@@ -323,6 +323,12 @@ public readonly partial struct VercelSchema
                             public Type1256Entity Clone()
                             {
                                 CheckValidInstance();
+                                if (!_parent.IsDisposable)
+                                {
+                                    // Already a clone, or backed by a document that is never disposed.
+                                    return this;
+                                }
+
                                 return _parent.CloneElement<Type1256Entity>(_idx);
                             }
 

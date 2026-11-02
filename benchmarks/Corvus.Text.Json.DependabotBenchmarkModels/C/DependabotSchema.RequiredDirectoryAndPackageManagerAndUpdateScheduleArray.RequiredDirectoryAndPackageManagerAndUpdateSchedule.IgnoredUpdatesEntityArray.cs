@@ -30,11 +30,13 @@ public readonly partial struct DependabotSchema
             public readonly partial struct IgnoredUpdatesEntityArray
 #if NET8_0_OR_GREATER
                 : IJsonElement<IgnoredUpdatesEntityArray>,
+                  global::System.Collections.Generic.IReadOnlyCollection<Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.RequiredDirectoryAndPackageManagerAndUpdateSchedule.IgnoredUpdatesEntityArray.IgnoredUpdatesEntity>,
                   IFormattable,
                   ISpanFormattable,
                   IUtf8SpanFormattable
 #else
                 : IJsonElement<IgnoredUpdatesEntityArray>,
+                  global::System.Collections.Generic.IReadOnlyCollection<Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.RequiredDirectoryAndPackageManagerAndUpdateSchedule.IgnoredUpdatesEntityArray.IgnoredUpdatesEntity>,
                   IFormattable
 #endif
             {
@@ -83,6 +85,21 @@ public readonly partial struct DependabotSchema
                     CheckValidInstance();
                     return EnumeratorCreator.CreateArrayEnumerator<Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.RequiredDirectoryAndPackageManagerAndUpdateSchedule.IgnoredUpdatesEntityArray.IgnoredUpdatesEntity>(_parent, _idx);
                 }
+
+                /// <summary>
+                /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+                /// </summary>
+                /// <returns>The enumerator.</returns>
+                public ArrayEnumerator<Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.RequiredDirectoryAndPackageManagerAndUpdateSchedule.IgnoredUpdatesEntityArray.IgnoredUpdatesEntity> GetEnumerator() => EnumerateArray();
+
+                /// <inheritdoc/>
+                global::System.Collections.Generic.IEnumerator<Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.RequiredDirectoryAndPackageManagerAndUpdateSchedule.IgnoredUpdatesEntityArray.IgnoredUpdatesEntity> global::System.Collections.Generic.IEnumerable<Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.RequiredDirectoryAndPackageManagerAndUpdateSchedule.IgnoredUpdatesEntityArray.IgnoredUpdatesEntity>.GetEnumerator() => EnumerateArray();
+
+                /// <inheritdoc/>
+                global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+                /// <inheritdoc/>
+                int global::System.Collections.Generic.IReadOnlyCollection<Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.RequiredDirectoryAndPackageManagerAndUpdateSchedule.IgnoredUpdatesEntityArray.IgnoredUpdatesEntity>.Count => GetArrayLength();
 
                 /// <inheritdoc/>
                 public JsonValueKind ValueKind => TokenType.ToValueKind();
@@ -297,6 +314,12 @@ public readonly partial struct DependabotSchema
                 public IgnoredUpdatesEntityArray Clone()
                 {
                     CheckValidInstance();
+                    if (!_parent.IsDisposable)
+                    {
+                        // Already a clone, or backed by a document that is never disposed.
+                        return this;
+                    }
+
                     return _parent.CloneElement<IgnoredUpdatesEntityArray>(_idx);
                 }
 

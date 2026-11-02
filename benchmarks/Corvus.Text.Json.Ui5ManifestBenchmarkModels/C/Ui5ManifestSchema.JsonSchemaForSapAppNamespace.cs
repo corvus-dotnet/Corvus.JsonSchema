@@ -766,6 +766,12 @@ public readonly partial struct Ui5ManifestSchema
         public JsonSchemaForSapAppNamespace Clone()
         {
             CheckValidInstance();
+            if (!_parent.IsDisposable)
+            {
+                // Already a clone, or backed by a document that is never disposed.
+                return this;
+            }
+
             return _parent.CloneElement<JsonSchemaForSapAppNamespace>(_idx);
         }
 

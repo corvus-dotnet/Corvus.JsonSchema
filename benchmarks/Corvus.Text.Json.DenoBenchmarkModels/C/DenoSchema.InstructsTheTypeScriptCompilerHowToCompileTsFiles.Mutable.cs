@@ -2228,6 +2228,181 @@ public readonly partial struct DenoSchema
                 return result;
             }
 
+            /// <summary>
+            /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+            /// as its value, and then does the same inside each property whose own type has properties.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// This changes the data. Reading an absent property already gives its default without it; this method writes
+            /// the defaults into the document as additional properties, so that they are there when the document is sent
+            /// to a system that does not apply the schema's defaults itself.
+            /// </para>
+            /// <para>
+            /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+            /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+            /// as it is.
+            /// </para>
+            /// </remarks>
+            public void ApplyDefaults()
+            {
+                CheckValidInstance();
+                if (ValueKind != JsonValueKind.Object)
+                {
+                    return;
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AllowJsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetAllowJs(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowJsEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AllowUnreachableCodeUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetAllowUnreachableCode(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnreachableCode.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AllowUnusedLabelsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetAllowUnusedLabels(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErrorReportingForUnusedLabels.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CheckJsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetCheckJs(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExactOptionalPropertyTypesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetExactOptionalPropertyTypes(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExperimentalDecoratorsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetExperimentalDecorators(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableExperimentalSupportForTc39Stage2DraftDecorators.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.JsxUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetJsx(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.JsxFactoryUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetJsxFactory(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.JsxFragmentFactoryUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetJsxFragmentFactory(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.JsxImportSourceUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetJsxImportSource(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxImportSourceEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeyofStringsOnlyUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetKeyofStringsOnly(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.KeyofStringsOnlyEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LibUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetLib(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsonStringArray.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoErrorTruncationUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNoErrorTruncation(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DoNotTruncateErrorMessages.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoFallthroughCasesInSwitchUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNoFallthroughCasesInSwitch(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoFallthroughCasesInSwitchEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoImplicitAnyUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNoImplicitAny(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitAnyEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoImplicitOverrideUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNoImplicitOverride(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitOverrideEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoImplicitReturnsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNoImplicitReturns(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitReturnsEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoImplicitThisUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNoImplicitThis(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenThisIsGivenTheTypeAny.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoImplicitUseStrictUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNoImplicitUseStrict(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitUseStrictEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoStrictGenericChecksUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNoStrictGenericChecks(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoStrictGenericChecksEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoUncheckedIndexedAccessUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNoUncheckedIndexedAccess(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AddUndefinedToATypeWhenAccessedUsingAnIndex.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoUnusedLocalsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNoUnusedLocals(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenALocalVariablesArenTRead.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoUnusedParametersUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNoUnusedParameters(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RaiseAnErrorWhenAFunctionParameterIsnTRead.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StrictUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetStrict(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableAllStrictTypeCheckingOptions.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StrictBindCallApplyUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetStrictBindCallApply(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictBindCallApplyEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StrictFunctionTypesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetStrictFunctionTypes(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictFunctionTypesEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StrictNullChecksUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetStrictNullChecks(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WhenTypeCheckingTakeIntoAccountNullAndUndefined.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StrictPropertyInitializationUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetStrictPropertyInitialization(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictPropertyInitializationEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SuppressExcessPropertyErrorsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSuppressExcessPropertyErrors(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SuppressImplicitAnyIndexErrorsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSuppressImplicitAnyIndexErrors(Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.DefaultInstance);
+                }
+            }
+
             /// <inheritdoc/>
             public void WriteTo(Utf8JsonWriter writer)
             {

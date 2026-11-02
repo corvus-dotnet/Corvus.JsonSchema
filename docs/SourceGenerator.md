@@ -159,6 +159,7 @@ Control the generator's behaviour with MSBuild properties in your `.csproj`:
 | `CorvusTextJsonRegexEngine` | `Ecma262` | The engine the generated regular expressions are written for. `Ecma262` writes [Corvus.Regex.Ecma262](https://corvus-oss.org/Corvus.Regex.Ecma262/)'s compiled matchers, with the compiled regular expression as data (once each, in `CorvusJsonSchemaRegularExpressions`), for the program and for pattern-property fields, which are that library's `Regex`; the generator compiles them into the program, so the evaluator compiles none at run time. `DotNet` writes .NET's `System.Text.RegularExpressions`, as earlier versions did. |
 | `CorvusTextJsonRegexEdition` | each dialect's | The edition of ECMA-262 whose grammar every pattern is read with: `Current` or `Es2020`. By default draft 2019-09 and draft 2020-12 read patterns with the grammar of ECMAScript 2020, which they cite, and the other dialects with today's. `Ecma262` only. |
 | `CorvusTextJsonRegexUnicodeVersion` | `Default` | The version of Unicode every pattern is read with: `Default` (V8's, 17), `13`, `17`, `18` or `Latest`. `Ecma262` only. |
+| `CorvusTextJsonRegexMatchTimeout` | `1000` | The limit, in milliseconds, on one match of a regular expression in generated code, or `-1` for none. A match that runs for longer throws `RegexMatchTimeoutException`. A pattern proved to match in time proportional to the text has no limit whatever this says. Any other value is reported as an error of the generator. The V4 source generator's property is `CorvusJsonSchemaRegexMatchTimeout`. |
 | `CorvusTextJsonDisabledNamingHeuristics` | `DocumentationNameHeuristic` | Semicolon-separated list of specific naming heuristics to disable (e.g., `DocumentationNameHeuristic;PathNameHeuristic`). |
 | `CorvusTextJsonSuppressAnalyzerDiagnosticsInGeneratedCode` | `true` | When `true`, analyzer diagnostics located in the generated code are not reported (see [Analyzers and generated code](#analyzers-and-generated-code)). Compiler diagnostics are unaffected. Set to `false` to have them reported. |
 
@@ -170,7 +171,7 @@ For each `[JsonSchemaTypeGenerator]` attribute, the generator produces a complet
 
 - **Type-safe property accessors** for every property defined in the schema
 - **Validation** via `EvaluateSchema()` with full draft 2020-12 (or earlier draft) support. A `pattern` whose match
-  runs for longer than 1 second throws `RegexMatchTimeoutException` (see
+  runs for longer than 1 second (or the limit `CorvusTextJsonRegexMatchTimeout` sets) throws `RegexMatchTimeoutException` (see
   [SchemaEvaluator.md](SchemaEvaluator.md#what-gets-generated)). A `pattern` or `patternProperties` pattern that is
   not a valid ECMA-262 regular expression is reported as an error of the generator (`CRV1001`) and nothing is
   generated for the schema (see [RuntimeEvaluator.md](RuntimeEvaluator.md#patterns)). A pattern over a limit of size

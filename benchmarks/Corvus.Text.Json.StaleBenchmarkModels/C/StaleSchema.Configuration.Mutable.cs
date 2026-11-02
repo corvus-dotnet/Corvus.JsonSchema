@@ -1088,6 +1088,76 @@ public readonly partial struct StaleSchema
                 return result;
             }
 
+            /// <summary>
+            /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+            /// as its value, and then does the same inside each property whose own type has properties.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// This changes the data. Reading an absent property already gives its default without it; this method writes
+            /// the defaults into the document as additional properties, so that they are there when the document is sent
+            /// to a system that does not apply the schema's defaults itself.
+            /// </para>
+            /// <para>
+            /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+            /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+            /// as it is.
+            /// </para>
+            /// </remarks>
+            public void ApplyDefaults()
+            {
+                CheckValidInstance();
+                if (ValueKind != JsonValueKind.Object)
+                {
+                    return;
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DaysUntilCloseValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetDaysUntilCloseValue(Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilClose.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DaysUntilStaleValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetDaysUntilStaleValue(Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilStale.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExemptAssigneesValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetExemptAssigneesValue(Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptAssignees.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExemptLabelsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetExemptLabels(Corvus.StaleBenchmark.Current.StaleSchema.Configuration.JsonStringArray.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExemptProjectsValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetExemptProjectsValue(Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptProjects.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LimitPerRunValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetLimitPerRunValue(Corvus.StaleBenchmark.Current.StaleSchema.Configuration.LimitPerRun.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MarkCommentValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetMarkCommentValue(Corvus.StaleBenchmark.Current.StaleSchema.Configuration.MarkComment.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OnlyLabelsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetOnlyLabels(Corvus.StaleBenchmark.Current.StaleSchema.Configuration.OnlyLJsonSArray.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StaleLabelValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetStaleLabelValue(Corvus.StaleBenchmark.Current.StaleSchema.Configuration.StaleLabel.DefaultInstance);
+                }
+            }
+
             /// <inheritdoc/>
             public void WriteTo(Utf8JsonWriter writer)
             {

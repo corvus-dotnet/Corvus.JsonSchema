@@ -17,15 +17,20 @@ internal static class RegexEngineOptions
 {
     /// <summary>Gets the options of a build that sets <c>CorvusTextJsonRegexEngine</c>.</summary>
     /// <param name="engine">The engine: <c>Ecma262</c> or <c>DotNet</c>.</param>
+    /// <param name="matchTimeout">The value of <c>CorvusTextJsonRegexMatchTimeout</c>, or <see langword="null"/> to leave it unset.</param>
     /// <returns>The options.</returns>
-    public static AnalyzerConfigOptionsProvider For(string engine) =>
-        new GlobalOptionsProvider(ImmutableDictionary<string, string>.Empty.Add("build_property.CorvusTextJsonRegexEngine", engine));
+    public static AnalyzerConfigOptionsProvider For(string engine, string? matchTimeout = null) =>
+        new GlobalOptionsProvider(With(ImmutableDictionary<string, string>.Empty.Add("build_property.CorvusTextJsonRegexEngine", engine), "build_property.CorvusTextJsonRegexMatchTimeout", matchTimeout));
 
     /// <summary>Gets the options of a build that sets the V4 source generator's <c>CorvusJsonSchemaRegexEngine</c>.</summary>
     /// <param name="engine">The engine: <c>Ecma262</c> or <c>DotNet</c>.</param>
+    /// <param name="matchTimeout">The value of <c>CorvusJsonSchemaRegexMatchTimeout</c>, or <see langword="null"/> to leave it unset.</param>
     /// <returns>The options.</returns>
-    public static AnalyzerConfigOptionsProvider ForV4(string engine) =>
-        new GlobalOptionsProvider(ImmutableDictionary<string, string>.Empty.Add("build_property.CorvusJsonSchemaRegexEngine", engine));
+    public static AnalyzerConfigOptionsProvider ForV4(string engine, string? matchTimeout = null) =>
+        new GlobalOptionsProvider(With(ImmutableDictionary<string, string>.Empty.Add("build_property.CorvusJsonSchemaRegexEngine", engine), "build_property.CorvusJsonSchemaRegexMatchTimeout", matchTimeout));
+
+    private static ImmutableDictionary<string, string> With(ImmutableDictionary<string, string> values, string key, string? value) =>
+        value is null ? values : values.Add(key, value);
 
     private sealed class GlobalOptionsProvider(ImmutableDictionary<string, string> values) : AnalyzerConfigOptionsProvider
     {

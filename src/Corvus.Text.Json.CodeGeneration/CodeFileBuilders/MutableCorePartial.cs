@@ -100,6 +100,7 @@ public sealed class MutableCorePartial : ICodeFileBuilder
                             .AppendEqualsOverloads(typeDeclaration)
                             .AppendValueEqualsOverloads(typeDeclaration)
                             .AppendObjectPropertySetters(typeDeclaration)
+                            .AppendApplyDefaultsMethod(typeDeclaration)
                             .AppendApplyObjectCompositionTypes(typeDeclaration)
                             .AppendWriteToMethod()
                             .AppendGetHashCodeAndToStringMethods(typeDeclaration, forMutable: true)

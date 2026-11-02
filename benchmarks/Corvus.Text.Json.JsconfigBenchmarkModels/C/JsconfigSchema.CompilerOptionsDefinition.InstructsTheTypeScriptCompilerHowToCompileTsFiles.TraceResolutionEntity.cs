@@ -318,6 +318,12 @@ public readonly partial struct JsconfigSchema
                 public TraceResolutionEntity Clone()
                 {
                     CheckValidInstance();
+                    if (!_parent.IsDisposable)
+                    {
+                        // Already a clone, or backed by a document that is never disposed.
+                        return this;
+                    }
+
                     return _parent.CloneElement<TraceResolutionEntity>(_idx);
                 }
 

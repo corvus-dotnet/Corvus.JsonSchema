@@ -19,12 +19,13 @@ namespace Corvus.Json.CodeGeneration.CSharp;
 public static partial class ValidationCodeGeneratorExtensions
 {
     /// <summary>
-    /// The match timeout of every regular expression generated code holds, in milliseconds: 1 second. A match that
+    /// The default match timeout of every regular expression generated code holds, in milliseconds: 1 second
+    /// (<c>CSharpLanguageProvider.Options</c> sets another, or none, -1). A match that
     /// runs for longer throws <see cref="System.Text.RegularExpressions.RegexMatchTimeoutException"/> to the caller.
     /// .NET's engine does not return from a match of some patterns, and takes time exponential in the length of the
     /// text for others.
     /// </summary>
-    internal const int RegexMatchTimeoutMilliseconds = 1_000;
+    internal const int DefaultRegexMatchTimeoutMilliseconds = 1_000;
 
     private static CodeGenerator AppendValidationConstantFields(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
@@ -389,7 +390,7 @@ public static partial class ValidationCodeGeneratorExtensions
                     : new InvalidOperationException($"The pattern '{value}' of the keyword '{keyword.Keyword}' is not a valid ECMA-262 regular expression. {error}");
             }
 
-            string reference = SharedRegularExpressions.For(generator, ((CSharpLanguageProvider)generator.LanguageProvider).DefaultNamespace).Reference(
+            string reference = SharedRegularExpressions.For(generator, ((CSharpLanguageProvider)generator.LanguageProvider).DefaultNamespace, ((CSharpLanguageProvider)generator.LanguageProvider).RegexMatchTimeoutMilliseconds).Reference(
                 value,
                 flags == EcmaRegexFlags.Unicode,
                 typeDeclaration.RegexEdition(),
@@ -480,8 +481,14 @@ public static partial class ValidationCodeGeneratorExtensions
 
         string memberName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: index?.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
-        // Every form carries the match timeout (see RegexMatchTimeoutMilliseconds).
-        string timeout = RegexMatchTimeoutMilliseconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        // Every form carries the generation's match timeout (1 second unless the options say otherwise, -1 for none).
+        int matchTimeout = ((CSharpLanguageProvider)generator.LanguageProvider).RegexMatchTimeoutMilliseconds;
+        string timeout = matchTimeout == System.Threading.Timeout.Infinite
+            ? "global::System.Threading.Timeout.Infinite"
+            : matchTimeout.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        string constructedTimeout = matchTimeout == System.Threading.Timeout.Infinite
+            ? "global::System.Text.RegularExpressions.Regex.InfiniteMatchTimeout"
+            : "global::System.TimeSpan.FromMilliseconds(" + timeout + ")";
 
 #if !BUILDING_SOURCE_GENERATOR
         if (translatedValue.StartsWith(EcmaRegexTranslator.InterpretedMarker, StringComparison.Ordinal))
@@ -495,9 +502,9 @@ public static partial class ValidationCodeGeneratorExtensions
                 .Append(SymbolDisplay.FormatLiteral(translatedValue, true))
                 .Append(", ")
                 .Append(constructedOptions)
-                .Append(", global::System.TimeSpan.FromMilliseconds(")
-                .Append(timeout)
-                .AppendLine("));");
+                .Append(", ")
+                .Append(constructedTimeout)
+                .AppendLine(");");
         }
 #endif
 
@@ -509,9 +516,9 @@ public static partial class ValidationCodeGeneratorExtensions
                 .AppendQuotedStringLiteral(translatedValue)
                 .Append(", ")
                 .Append(constructedOptions)
-                .Append(", global::System.TimeSpan.FromMilliseconds(")
-                .Append(timeout)
-                .AppendLine("));");
+                .Append(", ")
+                .Append(constructedTimeout)
+                .AppendLine(");");
 #else
                 .AppendLine("#if NET8_0_OR_GREATER && !DYNAMIC_BUILD")
                 .AppendIndent("[GeneratedRegex(")
@@ -531,9 +538,9 @@ public static partial class ValidationCodeGeneratorExtensions
             .AppendQuotedStringLiteral(translatedValue)
             .Append(", ")
             .Append(constructedOptions)
-            .Append(", global::System.TimeSpan.FromMilliseconds(")
-            .Append(timeout)
-            .AppendLine("));")
+            .Append(", ")
+            .Append(constructedTimeout)
+            .AppendLine(");")
             .AppendLine("#endif");
 #endif
     }

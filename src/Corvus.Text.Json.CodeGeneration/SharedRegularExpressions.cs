@@ -29,11 +29,14 @@ internal sealed class SharedRegularExpressions
     private readonly List<(string Name, string Pattern, bool Unicode, GeneratedRegexEdition Edition, GeneratedRegexUnicodeVersion UnicodeVersion)> entries = [];
     private readonly object sync = new();
     private readonly string classReference;
+    private readonly int matchTimeoutMilliseconds;
 
     /// <summary>Initializes a new instance of the <see cref="SharedRegularExpressions"/> class.</summary>
     /// <param name="defaultNamespace">The namespace the class is written in (the program's).</param>
-    public SharedRegularExpressions(string defaultNamespace)
+    /// <param name="matchTimeoutMilliseconds">The limit, in milliseconds, on one match, or -1 for none.</param>
+    public SharedRegularExpressions(string defaultNamespace, int matchTimeoutMilliseconds = CodeGenerationExtensions.DefaultRegexMatchTimeoutMilliseconds)
     {
+        this.matchTimeoutMilliseconds = matchTimeoutMilliseconds;
         this.Namespace = defaultNamespace;
         this.classReference = defaultNamespace.Length == 0 ? "global::" + ClassName : "global::" + defaultNamespace + "." + ClassName;
     }
@@ -111,7 +114,7 @@ internal sealed class SharedRegularExpressions
                 if (!EcmaRegexEmitter.TryEmit(
                     pattern,
                     unicode ? EcmaRegexFlags.Unicode : EcmaRegexFlags.None,
-                    CodeGenerationExtensions.RegexMatchTimeoutMilliseconds,
+                    this.matchTimeoutMilliseconds,
                     (EcmaRegexEdition)(int)edition,
                     (EcmaRegexUnicodeVersion)(int)unicodeVersion,
                     holder,

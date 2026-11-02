@@ -343,6 +343,12 @@ public readonly partial struct JsonDecimal
     public JsonDecimal Clone()
     {
         CheckValidInstance();
+        if (!_parent.IsDisposable)
+        {
+            // Already a clone, or backed by a document that is never disposed.
+            return this;
+        }
+
         return _parent.CloneElement<JsonDecimal>(_idx);
     }
 

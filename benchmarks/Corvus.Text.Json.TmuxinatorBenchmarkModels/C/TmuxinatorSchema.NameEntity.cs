@@ -478,6 +478,12 @@ public readonly partial struct TmuxinatorSchema
         public NameEntity Clone()
         {
             CheckValidInstance();
+            if (!_parent.IsDisposable)
+            {
+                // Already a clone, or backed by a document that is never disposed.
+                return this;
+            }
+
             return _parent.CloneElement<NameEntity>(_idx);
         }
 

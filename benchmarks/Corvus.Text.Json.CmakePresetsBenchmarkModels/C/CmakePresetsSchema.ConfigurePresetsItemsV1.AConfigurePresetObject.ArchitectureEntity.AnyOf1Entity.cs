@@ -319,6 +319,12 @@ public readonly partial struct CmakePresetsSchema
                     public AnyOf1Entity Clone()
                     {
                         CheckValidInstance();
+                        if (!_parent.IsDisposable)
+                        {
+                            // Already a clone, or backed by a document that is never disposed.
+                            return this;
+                        }
+
                         return _parent.CloneElement<AnyOf1Entity>(_idx);
                     }
 

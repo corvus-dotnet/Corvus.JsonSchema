@@ -718,9 +718,24 @@ internal sealed class PatternMatcher
     }
 #endif
 
+    /// <summary>Whether text matches the pattern.</summary>
+    /// <param name="utf8Value">The text.</param>
+    /// <param name="knownUtf8">Whether the text is known to be UTF-8: the parser found it all ASCII, or it has been checked.</param>
+    /// <returns><see langword="true"/> when the text matches.</returns>
+    /// <remarks>
+    /// Text that is not UTF-8 matches no pattern (https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1021). It
+    /// is checked here, unless it is known to be UTF-8.
+    /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool IsMatch(ReadOnlySpan<byte> utf8Value)
+    public bool IsMatch(ReadOnlySpan<byte> utf8Value, bool knownUtf8)
     {
+#if !STJ
+        if (!knownUtf8 && !Evaluation.Evaluator.IsUtf8(utf8Value))
+        {
+            return false;
+        }
+#endif
+
         return this.kind switch
         {
             Kind.Noop => true,

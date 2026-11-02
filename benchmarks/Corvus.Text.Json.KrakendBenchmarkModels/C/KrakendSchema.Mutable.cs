@@ -2862,6 +2862,125 @@ public readonly partial struct KrakendSchema
             return result;
         }
 
+        /// <summary>
+        /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+        /// as its value, and then does the same inside each property whose own type has properties.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This changes the data. Reading an absent property already gives its default without it; this method writes
+        /// the defaults into the document as additional properties, so that they are there when the document is sent
+        /// to a system that does not apply the schema's defaults itself.
+        /// </para>
+        /// <para>
+        /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+        /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+        /// as it is.
+        /// </para>
+        /// </remarks>
+        public void ApplyDefaults()
+        {
+            CheckValidInstance();
+            if (ValueKind != JsonValueKind.Object)
+            {
+                return;
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DebugEndpointValueUtf8, out IJsonDocument? _, out int _))
+            {
+                SetDebugEndpointValue(Corvus.KrakendBenchmark.Current.KrakendSchema.DebugEndpoint.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DisableCompressionValueUtf8, out IJsonDocument? _, out int _))
+            {
+                SetDisableCompressionValue(Corvus.KrakendBenchmark.Current.KrakendSchema.DisableCompression.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DisableKeepAlivesValueUtf8, out IJsonDocument? _, out int _))
+            {
+                SetDisableKeepAlivesValue(Corvus.KrakendBenchmark.Current.KrakendSchema.DisableKeepAlives.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DisableRestUtf8, out IJsonDocument? _, out int _))
+            {
+                SetDisableRest(Corvus.KrakendBenchmark.Current.KrakendSchema.DisableResTfulUrLs.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EchoEndpointValueUtf8, out IJsonDocument? _, out int _))
+            {
+                SetEchoEndpointValue(Corvus.KrakendBenchmark.Current.KrakendSchema.EchoEndpoint.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ListenIpValueUtf8, out IJsonDocument? _, out int _))
+            {
+                SetListenIpValue(Corvus.KrakendBenchmark.Current.KrakendSchema.ListenIp.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxHeaderBytesValueUtf8, out IJsonDocument? _, out int _))
+            {
+                SetMaxHeaderBytesValue(Corvus.KrakendBenchmark.Current.KrakendSchema.MaxHeaderBytes.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxIdleConnectionsValueUtf8, out IJsonDocument? _, out int _))
+            {
+                SetMaxIdleConnectionsValue(Corvus.KrakendBenchmark.Current.KrakendSchema.MaxIdleConnections.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxIdleConnectionsPerHostValueUtf8, out IJsonDocument? _, out int _))
+            {
+                SetMaxIdleConnectionsPerHostValue(Corvus.KrakendBenchmark.Current.KrakendSchema.MaxIdleConnectionsPerHost.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NameValueUtf8, out IJsonDocument? _, out int _))
+            {
+                SetNameValue(Corvus.KrakendBenchmark.Current.KrakendSchema.Name.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OutputEncodingValueUtf8, out IJsonDocument? _, out int _))
+            {
+                SetOutputEncodingValue(Corvus.KrakendBenchmark.Current.KrakendSchema.OutputEncoding.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PortValueUtf8, out IJsonDocument? _, out int _))
+            {
+                SetPortValue(Corvus.KrakendBenchmark.Current.KrakendSchema.Port.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SequentialStartValueUtf8, out IJsonDocument? _, out int _))
+            {
+                SetSequentialStartValue(Corvus.KrakendBenchmark.Current.KrakendSchema.SequentialStart.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UseH2cUtf8, out IJsonDocument? _, out int _))
+            {
+                SetUseH2c(Corvus.KrakendBenchmark.Current.KrakendSchema.EnableH2c.DefaultInstance);
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ClientTlsValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Mutable __corvusClientTlsValue))
+            {
+                __corvusClientTlsValue.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExtraConfigUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.Mutable __corvusExtraConfig))
+            {
+                __corvusExtraConfig.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PluginValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Plugin.Mutable __corvusPluginValue))
+            {
+                __corvusPluginValue.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TlsValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.Mutable __corvusTlsValue))
+            {
+                __corvusTlsValue.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+        }
+
         /// <inheritdoc/>
         public void WriteTo(Utf8JsonWriter writer)
         {

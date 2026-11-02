@@ -1133,6 +1133,71 @@ public readonly partial struct KrakendSchema
             }
 
             /// <summary>
+            /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+            /// as its value, and then does the same inside each property whose own type has properties.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// This changes the data. Reading an absent property already gives its default without it; this method writes
+            /// the defaults into the document as additional properties, so that they are there when the document is sent
+            /// to a system that does not apply the schema's defaults itself.
+            /// </para>
+            /// <para>
+            /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+            /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+            /// as it is.
+            /// </para>
+            /// </remarks>
+            public void ApplyDefaults()
+            {
+                CheckValidInstance();
+                if (ValueKind != JsonValueKind.Object)
+                {
+                    return;
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CaCertsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetCaCerts(Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CaCertificatesForMtls.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CipherSuitesValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetCipherSuitesValue(Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CipherSuites.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CurvePreferencesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetCurvePreferences(Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CurvePreferencesEntityArray.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DisableSystemCaPoolUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetDisableSystemCaPool(Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableSystemSCa.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DisabledUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetDisabled(Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableTls.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnableMtlsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetEnableMtls(Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.EnableMutualAuthentication.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxVersionUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetMaxVersion(Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MaximumTlsVersion.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MinVersionUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetMinVersion(Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MinimumTlsVersion.DefaultInstance);
+                }
+            }
+
+            /// <summary>
             /// Apply a composed value.
             /// </summary>
             /// <remarks>

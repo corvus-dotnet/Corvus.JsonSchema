@@ -625,7 +625,7 @@ internal static class FusedObjects
             {
                 foreach (FusedAbsentPattern pattern in absent)
                 {
-                    if (!pattern.Matcher.IsMatch(names[e]))
+                    if (!pattern.Matcher.IsMatch(names[e], knownUtf8: false))
                     {
                         continue;
                     }
@@ -679,7 +679,7 @@ internal static class FusedObjects
                 {
                     foreach (PatternPropertyEntry pattern in patterns)
                     {
-                        if (pattern.Matcher.IsMatch(name))
+                        if (pattern.Matcher.IsMatch(name, knownUtf8: false))
                         {
                             matched = true;
                             applications.Add(Application(nodes, c, pattern.Schema));

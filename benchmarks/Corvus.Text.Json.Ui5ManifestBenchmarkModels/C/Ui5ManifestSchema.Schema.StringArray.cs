@@ -33,11 +33,13 @@ public readonly partial struct Ui5ManifestSchema
         public readonly partial struct StringArray
 #if NET8_0_OR_GREATER
             : IJsonElement<StringArray>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.Ui5ManifestBenchmark.Current.JsonString>,
               IFormattable,
               ISpanFormattable,
               IUtf8SpanFormattable
 #else
             : IJsonElement<StringArray>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.Ui5ManifestBenchmark.Current.JsonString>,
               IFormattable
 #endif
         {
@@ -87,6 +89,21 @@ public readonly partial struct Ui5ManifestSchema
                 CheckValidInstance();
                 return EnumeratorCreator.CreateArrayEnumerator<Corvus.Ui5ManifestBenchmark.Current.JsonString>(_parent, _idx);
             }
+
+            /// <summary>
+            /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+            /// </summary>
+            /// <returns>The enumerator.</returns>
+            public ArrayEnumerator<Corvus.Ui5ManifestBenchmark.Current.JsonString> GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.Generic.IEnumerator<Corvus.Ui5ManifestBenchmark.Current.JsonString> global::System.Collections.Generic.IEnumerable<Corvus.Ui5ManifestBenchmark.Current.JsonString>.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            int global::System.Collections.Generic.IReadOnlyCollection<Corvus.Ui5ManifestBenchmark.Current.JsonString>.Count => GetArrayLength();
 
             /// <inheritdoc/>
             public JsonValueKind ValueKind => TokenType.ToValueKind();
@@ -301,6 +318,12 @@ public readonly partial struct Ui5ManifestSchema
             public StringArray Clone()
             {
                 CheckValidInstance();
+                if (!_parent.IsDisposable)
+                {
+                    // Already a clone, or backed by a document that is never disposed.
+                    return this;
+                }
+
                 return _parent.CloneElement<StringArray>(_idx);
             }
 

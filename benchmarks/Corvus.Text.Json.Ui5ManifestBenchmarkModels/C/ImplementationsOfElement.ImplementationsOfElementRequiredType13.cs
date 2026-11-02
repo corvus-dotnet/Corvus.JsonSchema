@@ -648,6 +648,12 @@ public readonly partial struct ImplementationsOfElement
         public ImplementationsOfElementRequiredType13 Clone()
         {
             CheckValidInstance();
+            if (!_parent.IsDisposable)
+            {
+                // Already a clone, or backed by a document that is never disposed.
+                return this;
+            }
+
             return _parent.CloneElement<ImplementationsOfElementRequiredType13>(_idx);
         }
 

@@ -33,11 +33,13 @@ public readonly partial struct GeoJsonSchema
                             public readonly partial struct ItemsArray2Array
 #if NET8_0_OR_GREATER
                                 : IJsonElement<ItemsArray2Array>,
+                                  global::System.Collections.Generic.IReadOnlyCollection<Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonMultiPolygon.CoordinatesArray2Array.ItemsArrayArray.ItemsArray2Array.JsonNumberArray>,
                                   IFormattable,
                                   ISpanFormattable,
                                   IUtf8SpanFormattable
 #else
                                 : IJsonElement<ItemsArray2Array>,
+                                  global::System.Collections.Generic.IReadOnlyCollection<Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonMultiPolygon.CoordinatesArray2Array.ItemsArrayArray.ItemsArray2Array.JsonNumberArray>,
                                   IFormattable
 #endif
                             {
@@ -110,6 +112,21 @@ public readonly partial struct GeoJsonSchema
                                     CheckValidInstance();
                                     return EnumeratorCreator.CreateArrayEnumerator<Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonMultiPolygon.CoordinatesArray2Array.ItemsArrayArray.ItemsArray2Array.JsonNumberArray>(_parent, _idx);
                                 }
+
+                                /// <summary>
+                                /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+                                /// </summary>
+                                /// <returns>The enumerator.</returns>
+                                public ArrayEnumerator<Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonMultiPolygon.CoordinatesArray2Array.ItemsArrayArray.ItemsArray2Array.JsonNumberArray> GetEnumerator() => EnumerateArray();
+
+                                /// <inheritdoc/>
+                                global::System.Collections.Generic.IEnumerator<Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonMultiPolygon.CoordinatesArray2Array.ItemsArrayArray.ItemsArray2Array.JsonNumberArray> global::System.Collections.Generic.IEnumerable<Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonMultiPolygon.CoordinatesArray2Array.ItemsArrayArray.ItemsArray2Array.JsonNumberArray>.GetEnumerator() => EnumerateArray();
+
+                                /// <inheritdoc/>
+                                global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+                                /// <inheritdoc/>
+                                int global::System.Collections.Generic.IReadOnlyCollection<Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonGeometryCollection.GeometriesEntityArray.GeometriesEntity.GeoJsonMultiPolygon.CoordinatesArray2Array.ItemsArrayArray.ItemsArray2Array.JsonNumberArray>.Count => GetArrayLength();
 
                                 /// <inheritdoc/>
                                 public JsonValueKind ValueKind => TokenType.ToValueKind();
@@ -324,6 +341,12 @@ public readonly partial struct GeoJsonSchema
                                 public ItemsArray2Array Clone()
                                 {
                                     CheckValidInstance();
+                                    if (!_parent.IsDisposable)
+                                    {
+                                        // Already a clone, or backed by a document that is never disposed.
+                                        return this;
+                                    }
+
                                     return _parent.CloneElement<ItemsArray2Array>(_idx);
                                 }
 

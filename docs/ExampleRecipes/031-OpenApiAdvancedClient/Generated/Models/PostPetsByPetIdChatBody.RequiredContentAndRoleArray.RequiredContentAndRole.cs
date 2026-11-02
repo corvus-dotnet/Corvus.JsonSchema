@@ -383,6 +383,12 @@ public readonly partial struct PostPetsByPetIdChatBody
             public RequiredContentAndRole Clone()
             {
                 CheckValidInstance();
+                if (!_parent.IsDisposable)
+                {
+                    // Already a clone, or backed by a document that is never disposed.
+                    return this;
+                }
+
                 return _parent.CloneElement<RequiredContentAndRole>(_idx);
             }
 

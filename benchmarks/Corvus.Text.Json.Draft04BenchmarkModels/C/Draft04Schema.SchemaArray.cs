@@ -21,11 +21,13 @@ public readonly partial struct Draft04Schema
     public readonly partial struct SchemaArray
 #if NET8_0_OR_GREATER
         : IJsonElement<SchemaArray>,
+          global::System.Collections.Generic.IReadOnlyCollection<Corvus.Draft04Benchmark.Current.Draft04Schema>,
           IFormattable,
           ISpanFormattable,
           IUtf8SpanFormattable
 #else
         : IJsonElement<SchemaArray>,
+          global::System.Collections.Generic.IReadOnlyCollection<Corvus.Draft04Benchmark.Current.Draft04Schema>,
           IFormattable
 #endif
     {
@@ -74,6 +76,21 @@ public readonly partial struct Draft04Schema
             CheckValidInstance();
             return EnumeratorCreator.CreateArrayEnumerator<Corvus.Draft04Benchmark.Current.Draft04Schema>(_parent, _idx);
         }
+
+        /// <summary>
+        /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+        /// </summary>
+        /// <returns>The enumerator.</returns>
+        public ArrayEnumerator<Corvus.Draft04Benchmark.Current.Draft04Schema> GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        global::System.Collections.Generic.IEnumerator<Corvus.Draft04Benchmark.Current.Draft04Schema> global::System.Collections.Generic.IEnumerable<Corvus.Draft04Benchmark.Current.Draft04Schema>.GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        int global::System.Collections.Generic.IReadOnlyCollection<Corvus.Draft04Benchmark.Current.Draft04Schema>.Count => GetArrayLength();
 
         /// <inheritdoc/>
         public JsonValueKind ValueKind => TokenType.ToValueKind();
@@ -288,6 +305,12 @@ public readonly partial struct Draft04Schema
         public SchemaArray Clone()
         {
             CheckValidInstance();
+            if (!_parent.IsDisposable)
+            {
+                // Already a clone, or backed by a document that is never disposed.
+                return this;
+            }
+
             return _parent.CloneElement<SchemaArray>(_idx);
         }
 

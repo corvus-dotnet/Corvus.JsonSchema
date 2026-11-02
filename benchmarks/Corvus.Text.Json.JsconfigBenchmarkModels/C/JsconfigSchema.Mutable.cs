@@ -979,6 +979,55 @@ public readonly partial struct JsconfigSchema
         }
 
         /// <summary>
+        /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+        /// as its value, and then does the same inside each property whose own type has properties.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This changes the data. Reading an absent property already gives its default without it; this method writes
+        /// the defaults into the document as additional properties, so that they are there when the document is sent
+        /// to a system that does not apply the schema's defaults itself.
+        /// </para>
+        /// <para>
+        /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+        /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+        /// as it is.
+        /// </para>
+        /// </remarks>
+        public void ApplyDefaults()
+        {
+            CheckValidInstance();
+            if (ValueKind != JsonValueKind.Object)
+            {
+                return;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BuildOptionsUtf8, out Corvus.JsconfigBenchmark.Current.JsconfigSchema.BuildOptionsDefinition.BuildOptionsEntity.Mutable __corvusBuildOptions))
+            {
+                __corvusBuildOptions.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CompilerOptionsUtf8, out Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.Mutable __corvusCompilerOptions))
+            {
+                __corvusCompilerOptions.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TypeAcquisitionUtf8, out Corvus.JsconfigBenchmark.Current.JsconfigSchema.TypeAcquisitionDefinition.TypeAcquisitionEntity.Mutable __corvusTypeAcquisition))
+            {
+                __corvusTypeAcquisition.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WatchOptionsUtf8, out Corvus.JsconfigBenchmark.Current.JsconfigSchema.WatchOptionsDefinition.SettingsForTheWatchModeInTypeScript.Mutable __corvusWatchOptions))
+            {
+                __corvusWatchOptions.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+        }
+
+        /// <summary>
         /// Apply a composed value.
         /// </summary>
         /// <remarks>

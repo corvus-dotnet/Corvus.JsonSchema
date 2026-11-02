@@ -387,6 +387,7 @@ internal static class RuntimeProgramGenerator
     /// <param name="regexUnicodeVersion">The version of Unicode every pattern is read with.</param>
     /// <param name="sharedRegularExpression">Gives the reference to the shared compiled matcher of a regular
     /// expression of the table, or <see langword="null"/> to write each in the program.</param>
+    /// <param name="regexMatchTimeoutMilliseconds">The limit, in milliseconds, on one match, or -1 for none.</param>
     /// <returns>The generated file.</returns>
     public static GeneratedCodeFile Generate(
         string ns,
@@ -402,7 +403,8 @@ internal static class RuntimeProgramGenerator
         SchemaProgramImage? image = null,
         GeneratedRegexEdition? regexEdition = null,
         GeneratedRegexUnicodeVersion regexUnicodeVersion = GeneratedRegexUnicodeVersion.Default,
-        Func<SchemaProgramRegularExpression, string>? sharedRegularExpression = null)
+        Func<SchemaProgramRegularExpression, string>? sharedRegularExpression = null,
+        int regexMatchTimeoutMilliseconds = CodeGenerationExtensions.DefaultRegexMatchTimeoutMilliseconds)
     {
         var sb = new StringBuilder();
         void Line(string text = "")
@@ -504,7 +506,9 @@ internal static class RuntimeProgramGenerator
 
         // The expressions the evaluator constructs itself (every one of them when there is no [GeneratedRegex] table,
         // or no regex generator to implement it) have the timeout the table's expressions have.
-        Line($"            RegexMatchTimeout = global::System.TimeSpan.FromMilliseconds({CodeGenerationExtensions.RegexMatchTimeoutMilliseconds}),");
+        Line(regexMatchTimeoutMilliseconds == global::System.Threading.Timeout.Infinite
+            ? "            RegexMatchTimeout = global::System.Text.RegularExpressions.Regex.InfiniteMatchTimeout,"
+            : $"            RegexMatchTimeout = global::System.TimeSpan.FromMilliseconds({regexMatchTimeoutMilliseconds}),");
         if (formatModes.Count > 0)
         {
             Line("            FormatModes = new global::System.Collections.Generic.Dictionary<string, JsonSchemaFormatMode>(global::System.StringComparer.Ordinal)");
@@ -537,7 +541,7 @@ internal static class RuntimeProgramGenerator
         Line();
         if (image is not null)
         {
-            EmitImage(Line, image, sharedRegularExpression);
+            EmitImage(Line, image, sharedRegularExpression, regexMatchTimeoutMilliseconds);
             Line("}");
             return new GeneratedCodeFile(className + fileExtension, sb.ToString());
         }
@@ -577,13 +581,14 @@ internal static class RuntimeProgramGenerator
     /// Emits the image (base64 in UTF-8 literals, decoded on first use) and the regular-expression table: one
     /// <c>[GeneratedRegex]</c> method per pattern, in the image's pattern-table order, on runtimes that have the
     /// generator; elsewhere the provider returns <see langword="null"/> and the evaluator constructs the expression.
-    /// Each has the match timeout of <see cref="CodeGenerationExtensions.RegexMatchTimeoutMilliseconds"/>: the
-    /// attribute carries it, and the options the program is loaded with carry it for the evaluator's own. A pattern
-    /// proved linear (<see cref="EcmaRegexTranslator.IsLinear"/>) has none, in both.
+    /// Each has the generation's match timeout (1 second by default, see
+    /// <see cref="CodeGenerationExtensions.DefaultRegexMatchTimeoutMilliseconds"/>): the attribute carries it, and the
+    /// options the program is loaded with carry it for the evaluator's own. A pattern proved linear
+    /// (<see cref="EcmaRegexTranslator.IsLinear"/>) has none, in both.
     /// A program from a Roslyn source generator carries no patterns (generators do not chain, so the regex generator
     /// would never implement the methods) and the evaluator constructs every expression on first use.
     /// </summary>
-    private static void EmitImage(Action<string> line, SchemaProgramImage image, Func<SchemaProgramRegularExpression, string>? sharedRegularExpression)
+    private static void EmitImage(Action<string> line, SchemaProgramImage image, Func<SchemaProgramRegularExpression, string>? sharedRegularExpression, int regexMatchTimeoutMilliseconds)
     {
         line("    private static byte[] LoadImage()");
         line("    {");
@@ -633,9 +638,9 @@ internal static class RuntimeProgramGenerator
                 {
                     // A pattern proved to match in time proportional to the text has no timeout, as in the evaluator.
                     bool linear = image.EcmaPatterns.Count == image.DotNetPatterns.Count && EcmaRegexTranslator.IsLinear(image.EcmaPatterns[i]);
-                    string timeout = linear
+                    string timeout = linear || regexMatchTimeoutMilliseconds == global::System.Threading.Timeout.Infinite
                         ? "global::System.Threading.Timeout.Infinite"
-                        : CodeGenerationExtensions.RegexMatchTimeoutMilliseconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                        : regexMatchTimeoutMilliseconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
                     line($"    [GeneratedRegex({Literal(image.DotNetPatterns[i])}, RegexOptions.CultureInvariant, matchTimeoutMilliseconds: {timeout})]");
                     line($"    private static partial Regex Regex{i}();");
                 }
@@ -644,7 +649,7 @@ internal static class RuntimeProgramGenerator
             line("#endif");
         }
 
-        EmitEcmaRegularExpressions(line, image.EcmaRegularExpressions, sharedRegularExpression);
+        EmitEcmaRegularExpressions(line, image.EcmaRegularExpressions, sharedRegularExpression, regexMatchTimeoutMilliseconds);
         line(string.Empty);
         string base64 = Convert.ToBase64String(image.Image);
         line($"    // Program image: {image.Image.Length} bytes.");
@@ -852,7 +857,7 @@ internal static class RuntimeProgramGenerator
     /// evaluator each by its index. The evaluator uses one only when it is the pattern compiled as it would compile
     /// it. A pattern read with two editions (by dialects that read patterns differently) has a matcher for the first.
     /// </summary>
-    private static void EmitEcmaRegularExpressions(Action<string> line, IReadOnlyList<SchemaProgramRegularExpression> regularExpressions, Func<SchemaProgramRegularExpression, string>? sharedRegularExpression)
+    private static void EmitEcmaRegularExpressions(Action<string> line, IReadOnlyList<SchemaProgramRegularExpression> regularExpressions, Func<SchemaProgramRegularExpression, string>? sharedRegularExpression, int regexMatchTimeoutMilliseconds)
     {
         if (regularExpressions.Count == 0)
         {
@@ -896,7 +901,7 @@ internal static class RuntimeProgramGenerator
             if (!Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexEmitter.TryEmit(
                 regex.Pattern,
                 regex.Unicode ? Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexFlags.Unicode : Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexFlags.None,
-                CodeGenerationExtensions.RegexMatchTimeoutMilliseconds,
+                regexMatchTimeoutMilliseconds,
                 (Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexEdition)(int)regex.Edition,
                 (Corvus.Ecma262.RegularExpressions.CodeGeneration.RegexUnicodeVersion)(int)regex.UnicodeVersion,
                 holder,

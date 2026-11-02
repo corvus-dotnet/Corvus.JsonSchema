@@ -37,11 +37,13 @@ public readonly partial struct KrakendSchema
                     public readonly partial struct RequiredKeyAndValueArray
 #if NET8_0_OR_GREATER
                         : IJsonElement<RequiredKeyAndValueArray>,
+                          global::System.Collections.Generic.IReadOnlyCollection<Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.RequiredKeyAndValueArray.RequiredKeyAndValue>,
                           IFormattable,
                           ISpanFormattable,
                           IUtf8SpanFormattable
 #else
                         : IJsonElement<RequiredKeyAndValueArray>,
+                          global::System.Collections.Generic.IReadOnlyCollection<Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.RequiredKeyAndValueArray.RequiredKeyAndValue>,
                           IFormattable
 #endif
                     {
@@ -90,6 +92,21 @@ public readonly partial struct KrakendSchema
                             CheckValidInstance();
                             return EnumeratorCreator.CreateArrayEnumerator<Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.RequiredKeyAndValueArray.RequiredKeyAndValue>(_parent, _idx);
                         }
+
+                        /// <summary>
+                        /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+                        /// </summary>
+                        /// <returns>The enumerator.</returns>
+                        public ArrayEnumerator<Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.RequiredKeyAndValueArray.RequiredKeyAndValue> GetEnumerator() => EnumerateArray();
+
+                        /// <inheritdoc/>
+                        global::System.Collections.Generic.IEnumerator<Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.RequiredKeyAndValueArray.RequiredKeyAndValue> global::System.Collections.Generic.IEnumerable<Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.RequiredKeyAndValueArray.RequiredKeyAndValue>.GetEnumerator() => EnumerateArray();
+
+                        /// <inheritdoc/>
+                        global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+                        /// <inheritdoc/>
+                        int global::System.Collections.Generic.IReadOnlyCollection<Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.RequiredKeyAndValueArray.RequiredKeyAndValue>.Count => GetArrayLength();
 
                         /// <inheritdoc/>
                         public JsonValueKind ValueKind => TokenType.ToValueKind();
@@ -304,6 +321,12 @@ public readonly partial struct KrakendSchema
                         public RequiredKeyAndValueArray Clone()
                         {
                             CheckValidInstance();
+                            if (!_parent.IsDisposable)
+                            {
+                                // Already a clone, or backed by a document that is never disposed.
+                                return this;
+                            }
+
                             return _parent.CloneElement<RequiredKeyAndValueArray>(_idx);
                         }
 

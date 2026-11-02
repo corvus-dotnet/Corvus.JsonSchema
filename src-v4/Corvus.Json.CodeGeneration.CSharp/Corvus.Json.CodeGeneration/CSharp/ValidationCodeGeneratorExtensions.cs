@@ -624,6 +624,11 @@ public static partial class ValidationCodeGeneratorExtensions
                         extendedWarn = false;
                     }
 
+                    generator
+                        .AppendLineIndent("try")
+                        .AppendLineIndent("{")
+                        .PushIndent();
+
                     FormatHandlerRegistry.Instance.FormatHandlers.AppendFormatAssertion(
                         generator,
                         extendedFormat,
@@ -634,6 +639,11 @@ public static partial class ValidationCodeGeneratorExtensions
                         returnFromMethod: false,
                         includeType: true,
                         warn: extendedWarn);
+
+                    generator
+                        .PopIndent()
+                        .AppendLineIndent("}")
+                        .AppendCatchTextThatIsNotWellFormed();
                     break;
             }
 
@@ -673,7 +683,13 @@ public static partial class ValidationCodeGeneratorExtensions
                 .AppendRequiresJsonValueKind(typeDeclaration)
                 .AppendValidationHandlerSetup(typeDeclaration)
                 .AppendSeparatorLine()
+                .AppendLineIndent("try")
+                .AppendLineIndent("{")
+                .PushIndent()
                 .AppendValidationHandlerMethodCalls(typeDeclaration)
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendCatchTextThatIsNotWellFormed()
                 .AppendSeparatorLine()
                 .AppendBlockIndent(
                     """
@@ -693,6 +709,25 @@ public static partial class ValidationCodeGeneratorExtensions
             .EndMethodDeclaration();
 
         return generator;
+    }
+
+    /// <summary>
+    /// Append the catch that reports a value whose text is not well-formed (an escape of half of a surrogate pair, or
+    /// bytes that are not UTF-8) as not valid. The parser accepts such text, and reading it throws; the catch takes
+    /// the exception only when the value's own text is not well-formed, so any other exception is not hidden
+    /// (https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1021).
+    /// </summary>
+    /// <param name="generator">The generator for the type.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    private static CodeGenerator AppendCatchTextThatIsNotWellFormed(this CodeGenerator generator)
+    {
+        return generator
+            .AppendLineIndent("catch (global::System.InvalidOperationException) when (Corvus.Json.Validate.IsNotWellFormedText(this))")
+            .AppendLineIndent("{")
+            .PushIndent()
+            .AppendLineIndent("result = Corvus.Json.Validate.TextIsNotWellFormed(result, level);")
+            .PopIndent()
+            .AppendLineIndent("}");
     }
 
     /// <summary>

@@ -556,6 +556,12 @@ public readonly partial struct InputDate
     public InputDate Clone()
     {
         CheckValidInstance();
+        if (!_parent.IsDisposable)
+        {
+            // Already a clone, or backed by a document that is never disposed.
+            return this;
+        }
+
         return _parent.CloneElement<InputDate>(_idx);
     }
 

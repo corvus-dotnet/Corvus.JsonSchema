@@ -1265,6 +1265,86 @@ public readonly partial struct KrakendSchema
                 return result;
             }
 
+            /// <summary>
+            /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+            /// as its value, and then does the same inside each property whose own type has properties.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// This changes the data. Reading an absent property already gives its default without it; this method writes
+            /// the defaults into the document as additional properties, so that they are there when the document is sent
+            /// to a system that does not apply the schema's defaults itself.
+            /// </para>
+            /// <para>
+            /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+            /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+            /// as it is.
+            /// </para>
+            /// </remarks>
+            public void ApplyDefaults()
+            {
+                CheckValidInstance();
+                if (ValueKind != JsonValueKind.Object)
+                {
+                    return;
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BackoffStrategyValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetBackoffStrategyValue(Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.BackoffStrategy.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ConnectEventUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetConnectEvent(Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyConnections.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DisconnectEventUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetDisconnectEvent(Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyDisconnections.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnableDirectCommunicationUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetEnableDirectCommunication(Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.DirectCommunicationNoMultiplexing.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.InputHeadersUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetInputHeaders(Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.JsonStringArray.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxMessageSizeUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetMaxMessageSize(Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaximumMessageSize.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxRetriesValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetMaxRetriesValue(Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaxRetries.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MessageBufferSizeValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetMessageBufferSizeValue(Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MessageBufferSize.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ReadBufferSizeValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetReadBufferSizeValue(Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReadBufferSize.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ReturnErrorDetailsValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetReturnErrorDetailsValue(Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReturnErrorDetails.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WriteBufferSizeValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetWriteBufferSizeValue(Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.WriteBufferSize.DefaultInstance);
+                }
+            }
+
             /// <inheritdoc/>
             public void WriteTo(Utf8JsonWriter writer)
             {

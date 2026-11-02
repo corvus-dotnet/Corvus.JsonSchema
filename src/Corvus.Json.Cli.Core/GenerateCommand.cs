@@ -97,7 +97,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         public OptionalAsNullable OptionalAsNullable { get; init; }
 
         [CommandOption("--nativeEnums")]
-        [Description("Controls emission of native C# enums on generated types (V5 engine only). StringEnums emits a nested enum for pure string-enum schemas; FlagsObjects emits a nested [Flags] enum for objects whose declared properties are all boolean; All (the default) emits both; None emits neither.")]
+        [Description("Controls emission of native C# enums on generated types (V5 engine only). StringEnums emits a nested enum for pure string-enum schemas; FlagsObjects emits a nested [[Flags]] enum for objects whose declared properties are all boolean; All (the default) emits both; None emits neither.")]
         [DefaultValue(NativeEnums.All)]
         public NativeEnums NativeEnums { get; init; }
 
@@ -119,6 +119,10 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [Description("The version of Unicode every pattern is read with (Ecma262 regular expressions only): Default (the version V8 uses, 17), V13, V17, V18 or Latest.")]
         [DefaultValue(GeneratedRegexUnicodeVersion.Default)]
         public GeneratedRegexUnicodeVersion RegexUnicodeVersion { get; init; }
+
+        [CommandOption("--regexMatchTimeout <MILLISECONDS>")]
+        [Description("The limit, in milliseconds, on one match of a regular expression in generated code that is not proved to match in time proportional to the text, or -1 for none. A match that runs for longer throws RegexMatchTimeoutException. Default is 1000 (1 second).")]
+        public int? RegexMatchTimeout { get; init; }
 
         [CommandOption("--useImplicitOperatorString")]
         [Description("If true, conversion operators to string are implicit, rather than explicit.")]
@@ -192,6 +196,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             regexEngine: settings.RegexEngine.ToString(),
             regexEdition: settings.RegexEdition is GeneratedRegexEdition regexEdition ? (GeneratorConfig.RegexEdition)regexEdition.ToString() : default(GeneratorConfig.RegexEdition?),
             regexUnicodeVersion: settings.RegexUnicodeVersion.ToString(),
+            regexMatchTimeout: settings.RegexMatchTimeout is int regexMatchTimeout ? new GeneratorConfig.RegexMatchTimeoutEntity(regexMatchTimeout) : default(GeneratorConfig.RegexMatchTimeoutEntity?),
             outputMapFile: settings.OutputMapFile.AsNullableJsonString(),
             outputPath: settings.OutputPath.AsNullableJsonString(),
             useSchema: settings.UseSchema != SchemaVariant.NotSpecified ? (GeneratorConfig.UseSchema)settings.UseSchema.ToString() : default(GeneratorConfig.UseSchema?),

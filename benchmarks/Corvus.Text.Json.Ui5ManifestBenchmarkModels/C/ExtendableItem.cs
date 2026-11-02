@@ -357,6 +357,12 @@ public readonly partial struct ExtendableItem
     public ExtendableItem Clone()
     {
         CheckValidInstance();
+        if (!_parent.IsDisposable)
+        {
+            // Already a clone, or backed by a document that is never disposed.
+            return this;
+        }
+
         return _parent.CloneElement<ExtendableItem>(_idx);
     }
 

@@ -96,6 +96,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     private static readonly MethodInfo GenUniqueItems = Helper(nameof(Evaluator.GenUniqueItems));
     private static readonly MethodInfo GenStringBytes = Helper(nameof(Evaluator.GenStringBytes));
     private static readonly MethodInfo GenStringLengthCounted = Helper(nameof(Evaluator.GenStringLengthCounted));
+    private static readonly MethodInfo GenIsUtf8 = Helper(nameof(Evaluator.GenIsUtf8));
     private static readonly MethodInfo GenIsInteger = Helper(nameof(Evaluator.GenIsInteger));
     private static readonly MethodInfo GenStringSet = Helper(nameof(Evaluator.GenStringSet));
     private static readonly MethodInfo GenStringConst = Helper(nameof(Evaluator.GenStringConst));
@@ -1452,6 +1453,12 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
             il.Emit(OpCodes.Blt, counted);
         }
 
+        // The byte length decides it, for text that is UTF-8 (Evaluator.IsUtf8).
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Ldloc, this.value!);
+        il.Emit(OpCodes.Call, GenIsUtf8);
+        il.Emit(OpCodes.Brfalse, this.fail);
         il.Emit(OpCodes.Br, within);
         this.Mark(counted);
         il.Emit(OpCodes.Ldarg_0);

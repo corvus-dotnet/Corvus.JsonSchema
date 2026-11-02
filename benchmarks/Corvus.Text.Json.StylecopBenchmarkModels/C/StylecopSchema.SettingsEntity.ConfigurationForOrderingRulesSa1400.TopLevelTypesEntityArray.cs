@@ -40,11 +40,13 @@ public readonly partial struct StylecopSchema
             public readonly partial struct TopLevelTypesEntityArray
 #if NET8_0_OR_GREATER
                 : IJsonElement<TopLevelTypesEntityArray>,
+                  global::System.Collections.Generic.IReadOnlyCollection<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.TopLevelTypesEntityArray.TopLevelTypesEntity>,
                   IFormattable,
                   ISpanFormattable,
                   IUtf8SpanFormattable
 #else
                 : IJsonElement<TopLevelTypesEntityArray>,
+                  global::System.Collections.Generic.IReadOnlyCollection<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.TopLevelTypesEntityArray.TopLevelTypesEntity>,
                   IFormattable
 #endif
             {
@@ -94,6 +96,21 @@ public readonly partial struct StylecopSchema
                     CheckValidInstance();
                     return EnumeratorCreator.CreateArrayEnumerator<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.TopLevelTypesEntityArray.TopLevelTypesEntity>(_parent, _idx);
                 }
+
+                /// <summary>
+                /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+                /// </summary>
+                /// <returns>The enumerator.</returns>
+                public ArrayEnumerator<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.TopLevelTypesEntityArray.TopLevelTypesEntity> GetEnumerator() => EnumerateArray();
+
+                /// <inheritdoc/>
+                global::System.Collections.Generic.IEnumerator<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.TopLevelTypesEntityArray.TopLevelTypesEntity> global::System.Collections.Generic.IEnumerable<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.TopLevelTypesEntityArray.TopLevelTypesEntity>.GetEnumerator() => EnumerateArray();
+
+                /// <inheritdoc/>
+                global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+                /// <inheritdoc/>
+                int global::System.Collections.Generic.IReadOnlyCollection<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.TopLevelTypesEntityArray.TopLevelTypesEntity>.Count => GetArrayLength();
 
                 /// <inheritdoc/>
                 public JsonValueKind ValueKind => TokenType.ToValueKind();
@@ -308,6 +325,12 @@ public readonly partial struct StylecopSchema
                 public TopLevelTypesEntityArray Clone()
                 {
                     CheckValidInstance();
+                    if (!_parent.IsDisposable)
+                    {
+                        // Already a clone, or backed by a document that is never disposed.
+                        return this;
+                    }
+
                     return _parent.CloneElement<TopLevelTypesEntityArray>(_idx);
                 }
 

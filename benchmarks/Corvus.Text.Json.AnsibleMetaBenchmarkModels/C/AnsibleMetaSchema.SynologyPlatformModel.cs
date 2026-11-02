@@ -372,6 +372,12 @@ public readonly partial struct AnsibleMetaSchema
         public SynologyPlatformModel Clone()
         {
             CheckValidInstance();
+            if (!_parent.IsDisposable)
+            {
+                // Already a clone, or backed by a document that is never disposed.
+                return this;
+            }
+
             return _parent.CloneElement<SynologyPlatformModel>(_idx);
         }
 

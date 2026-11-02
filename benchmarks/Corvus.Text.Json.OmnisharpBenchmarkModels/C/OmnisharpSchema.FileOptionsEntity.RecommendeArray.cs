@@ -41,11 +41,13 @@ public readonly partial struct OmnisharpSchema
         public readonly partial struct RecommendeArray
 #if NET8_0_OR_GREATER
             : IJsonElement<RecommendeArray>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.OmnisharpBenchmark.Current.JsonString>,
               IFormattable,
               ISpanFormattable,
               IUtf8SpanFormattable
 #else
             : IJsonElement<RecommendeArray>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.OmnisharpBenchmark.Current.JsonString>,
               IFormattable
 #endif
         {
@@ -95,6 +97,21 @@ public readonly partial struct OmnisharpSchema
                 CheckValidInstance();
                 return EnumeratorCreator.CreateArrayEnumerator<Corvus.OmnisharpBenchmark.Current.JsonString>(_parent, _idx);
             }
+
+            /// <summary>
+            /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+            /// </summary>
+            /// <returns>The enumerator.</returns>
+            public ArrayEnumerator<Corvus.OmnisharpBenchmark.Current.JsonString> GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.Generic.IEnumerator<Corvus.OmnisharpBenchmark.Current.JsonString> global::System.Collections.Generic.IEnumerable<Corvus.OmnisharpBenchmark.Current.JsonString>.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            int global::System.Collections.Generic.IReadOnlyCollection<Corvus.OmnisharpBenchmark.Current.JsonString>.Count => GetArrayLength();
 
             /// <inheritdoc/>
             public JsonValueKind ValueKind => TokenType.ToValueKind();
@@ -309,6 +326,12 @@ public readonly partial struct OmnisharpSchema
             public RecommendeArray Clone()
             {
                 CheckValidInstance();
+                if (!_parent.IsDisposable)
+                {
+                    // Already a clone, or backed by a document that is never disposed.
+                    return this;
+                }
+
                 return _parent.CloneElement<RecommendeArray>(_idx);
             }
 

@@ -610,6 +610,61 @@ public readonly partial struct JsconfigSchema
                     return result;
                 }
 
+                /// <summary>
+                /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+                /// as its value, and then does the same inside each property whose own type has properties.
+                /// </summary>
+                /// <remarks>
+                /// <para>
+                /// This changes the data. Reading an absent property already gives its default without it; this method writes
+                /// the defaults into the document as additional properties, so that they are there when the document is sent
+                /// to a system that does not apply the schema's defaults itself.
+                /// </para>
+                /// <para>
+                /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+                /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+                /// as it is.
+                /// </para>
+                /// </remarks>
+                public void ApplyDefaults()
+                {
+                    CheckValidInstance();
+                    if (ValueKind != JsonValueKind.Object)
+                    {
+                        return;
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AssumeChangesOnlyAffectDirectDependenciesUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetAssumeChangesOnlyAffectDirectDependencies(Corvus.JsconfigBenchmark.Current.JsconfigSchema.BuildOptionsDefinition.BuildOptionsEntity.AssumeChangesOnlyAffectDirectDependenciesEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DryUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetDry(Corvus.JsconfigBenchmark.Current.JsconfigSchema.BuildOptionsDefinition.BuildOptionsEntity.Entity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ForceUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetForce(Corvus.JsconfigBenchmark.Current.JsconfigSchema.BuildOptionsDefinition.BuildOptionsEntity.ForceEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IncrementalUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetIncremental(Corvus.JsconfigBenchmark.Current.JsconfigSchema.BuildOptionsDefinition.BuildOptionsEntity.IncrementalEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TraceResolutionUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetTraceResolution(Corvus.JsconfigBenchmark.Current.JsconfigSchema.BuildOptionsDefinition.BuildOptionsEntity.LogPathsUsedDuringTheModuleResolutionProcess.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VerboseUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetVerbose(Corvus.JsconfigBenchmark.Current.JsconfigSchema.BuildOptionsDefinition.BuildOptionsEntity.EnableVerboseLogging.DefaultInstance);
+                    }
+                }
+
                 /// <inheritdoc/>
                 public void WriteTo(Utf8JsonWriter writer)
                 {

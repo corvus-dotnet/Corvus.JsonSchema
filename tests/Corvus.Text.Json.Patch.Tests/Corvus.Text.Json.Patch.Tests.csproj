@@ -8,6 +8,7 @@
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Patch\Corvus.Text.Json.Patch.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Yaml\Corvus.Text.Json.Yaml.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Tests.GeneratedModels\Corvus.Text.Json.Tests.GeneratedModels.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="TestData\**\*.json" CopyToOutputDirectory="PreserveNewest" />

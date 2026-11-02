@@ -32,11 +32,13 @@ public readonly partial struct KrakendSchema
                 public readonly partial struct MetricsStaticAttributesEntityArray
 #if NET8_0_OR_GREATER
                     : IJsonElement<MetricsStaticAttributesEntityArray>,
+                      global::System.Collections.Generic.IReadOnlyCollection<Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.MetricsStaticAttributesEntityArray.MetricsStaticAttributesEntity>,
                       IFormattable,
                       ISpanFormattable,
                       IUtf8SpanFormattable
 #else
                     : IJsonElement<MetricsStaticAttributesEntityArray>,
+                      global::System.Collections.Generic.IReadOnlyCollection<Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.MetricsStaticAttributesEntityArray.MetricsStaticAttributesEntity>,
                       IFormattable
 #endif
                 {
@@ -85,6 +87,21 @@ public readonly partial struct KrakendSchema
                         CheckValidInstance();
                         return EnumeratorCreator.CreateArrayEnumerator<Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.MetricsStaticAttributesEntityArray.MetricsStaticAttributesEntity>(_parent, _idx);
                     }
+
+                    /// <summary>
+                    /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+                    /// </summary>
+                    /// <returns>The enumerator.</returns>
+                    public ArrayEnumerator<Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.MetricsStaticAttributesEntityArray.MetricsStaticAttributesEntity> GetEnumerator() => EnumerateArray();
+
+                    /// <inheritdoc/>
+                    global::System.Collections.Generic.IEnumerator<Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.MetricsStaticAttributesEntityArray.MetricsStaticAttributesEntity> global::System.Collections.Generic.IEnumerable<Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.MetricsStaticAttributesEntityArray.MetricsStaticAttributesEntity>.GetEnumerator() => EnumerateArray();
+
+                    /// <inheritdoc/>
+                    global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+                    /// <inheritdoc/>
+                    int global::System.Collections.Generic.IReadOnlyCollection<Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.MetricsStaticAttributesEntityArray.MetricsStaticAttributesEntity>.Count => GetArrayLength();
 
                     /// <inheritdoc/>
                     public JsonValueKind ValueKind => TokenType.ToValueKind();
@@ -299,6 +316,12 @@ public readonly partial struct KrakendSchema
                     public MetricsStaticAttributesEntityArray Clone()
                     {
                         CheckValidInstance();
+                        if (!_parent.IsDisposable)
+                        {
+                            // Already a clone, or backed by a document that is never disposed.
+                            return this;
+                        }
+
                         return _parent.CloneElement<MetricsStaticAttributesEntityArray>(_idx);
                     }
 

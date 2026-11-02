@@ -23,11 +23,13 @@ public readonly partial struct SemanticReleaseSchema
         public readonly partial struct Type2EntityArray
 #if NET8_0_OR_GREATER
             : IJsonElement<Type2EntityArray>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Type2EntityArray.Type2Entity>,
               IFormattable,
               ISpanFormattable,
               IUtf8SpanFormattable
 #else
             : IJsonElement<Type2EntityArray>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Type2EntityArray.Type2Entity>,
               IFormattable
 #endif
         {
@@ -76,6 +78,21 @@ public readonly partial struct SemanticReleaseSchema
                 CheckValidInstance();
                 return EnumeratorCreator.CreateArrayEnumerator<Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Type2EntityArray.Type2Entity>(_parent, _idx);
             }
+
+            /// <summary>
+            /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+            /// </summary>
+            /// <returns>The enumerator.</returns>
+            public ArrayEnumerator<Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Type2EntityArray.Type2Entity> GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.Generic.IEnumerator<Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Type2EntityArray.Type2Entity> global::System.Collections.Generic.IEnumerable<Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Type2EntityArray.Type2Entity>.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            int global::System.Collections.Generic.IReadOnlyCollection<Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Type2EntityArray.Type2Entity>.Count => GetArrayLength();
 
             /// <inheritdoc/>
             public JsonValueKind ValueKind => TokenType.ToValueKind();
@@ -290,6 +307,12 @@ public readonly partial struct SemanticReleaseSchema
             public Type2EntityArray Clone()
             {
                 CheckValidInstance();
+                if (!_parent.IsDisposable)
+                {
+                    // Already a clone, or backed by a document that is never disposed.
+                    return this;
+                }
+
                 return _parent.CloneElement<Type2EntityArray>(_idx);
             }
 

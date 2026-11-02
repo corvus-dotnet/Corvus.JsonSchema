@@ -42,11 +42,13 @@ public readonly partial struct LazygitSchema
         public readonly partial struct MainBranchesEntityArray
 #if NET8_0_OR_GREATER
             : IJsonElement<MainBranchesEntityArray>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.MainBranchesEntity>,
               IFormattable,
               ISpanFormattable,
               IUtf8SpanFormattable
 #else
             : IJsonElement<MainBranchesEntityArray>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.MainBranchesEntity>,
               IFormattable
 #endif
         {
@@ -96,6 +98,21 @@ public readonly partial struct LazygitSchema
                 CheckValidInstance();
                 return EnumeratorCreator.CreateArrayEnumerator<Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.MainBranchesEntity>(_parent, _idx);
             }
+
+            /// <summary>
+            /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+            /// </summary>
+            /// <returns>The enumerator.</returns>
+            public ArrayEnumerator<Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.MainBranchesEntity> GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.Generic.IEnumerator<Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.MainBranchesEntity> global::System.Collections.Generic.IEnumerable<Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.MainBranchesEntity>.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            int global::System.Collections.Generic.IReadOnlyCollection<Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.MainBranchesEntity>.Count => GetArrayLength();
 
             /// <inheritdoc/>
             public JsonValueKind ValueKind => TokenType.ToValueKind();
@@ -310,6 +327,12 @@ public readonly partial struct LazygitSchema
             public MainBranchesEntityArray Clone()
             {
                 CheckValidInstance();
+                if (!_parent.IsDisposable)
+                {
+                    // Already a clone, or backed by a document that is never disposed.
+                    return this;
+                }
+
                 return _parent.CloneElement<MainBranchesEntityArray>(_idx);
             }
 

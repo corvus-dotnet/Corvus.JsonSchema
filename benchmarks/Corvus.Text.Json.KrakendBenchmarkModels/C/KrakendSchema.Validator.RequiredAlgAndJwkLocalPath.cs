@@ -383,6 +383,12 @@ public readonly partial struct KrakendSchema
             public RequiredAlgAndJwkLocalPath Clone()
             {
                 CheckValidInstance();
+                if (!_parent.IsDisposable)
+                {
+                    // Already a clone, or backed by a document that is never disposed.
+                    return this;
+                }
+
                 return _parent.CloneElement<RequiredAlgAndJwkLocalPath>(_idx);
             }
 

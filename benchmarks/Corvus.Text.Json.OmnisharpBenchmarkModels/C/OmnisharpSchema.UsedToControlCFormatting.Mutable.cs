@@ -3384,6 +3384,291 @@ public readonly partial struct OmnisharpSchema
                 return result;
             }
 
+            /// <summary>
+            /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+            /// as its value, and then does the same inside each property whose own type has properties.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// This changes the data. Reading an absent property already gives its default without it; this method writes
+            /// the defaults into the document as additional properties, so that they are there when the document is sent
+            /// to a system that does not apply the schema's defaults itself.
+            /// </para>
+            /// <para>
+            /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+            /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+            /// as it is.
+            /// </para>
+            /// </remarks>
+            public void ApplyDefaults()
+            {
+                CheckValidInstance();
+                if (ValueKind != JsonValueKind.Object)
+                {
+                    return;
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnableEditorConfigSupportUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetEnableEditorConfigSupport(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.EnableEditorConfigSupportEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IndentBlockUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetIndentBlock(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentBlockEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IndentBracesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetIndentBraces(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentBracesEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IndentSwitchCaseSectionUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetIndentSwitchCaseSection(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentSwitchCaseSectionEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IndentSwitchCaseSectionWhenBlockUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetIndentSwitchCaseSectionWhenBlock(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentSwitchCaseSectionWhenBlockEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IndentSwitchSectionUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetIndentSwitchSection(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentSwitchSectionEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IndentationSizeUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetIndentationSize(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentationSizeEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LabelPositioningUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetLabelPositioning(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.LabelPositioningEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NewLineUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNewLine(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NewLineForCatchUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNewLineForCatch(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForCatchEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NewLineForClausesInQueryUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNewLineForClausesInQuery(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForClausesInQueryEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NewLineForElseUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNewLineForElse(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForElseEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NewLineForFinallyUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNewLineForFinally(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForFinallyEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NewLineForMembersInAnonymousTypesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNewLineForMembersInAnonymousTypes(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForMembersInAnonymousTypesEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NewLineForMembersInObjectInitUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNewLineForMembersInObjectInit(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForMembersInObjectInitEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NewLinesForBracesInAccessorsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNewLinesForBracesInAccessors(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInAccessorsEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NewLinesForBracesInAnonymousMethodsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNewLinesForBracesInAnonymousMethods(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInAnonymousMethodsEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NewLinesForBracesInAnonymousTypesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNewLinesForBracesInAnonymousTypes(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInAnonymousTypesEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NewLinesForBracesInControlBlocksUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNewLinesForBracesInControlBlocks(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInControlBlocksEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NewLinesForBracesInLambdaExpressionBodyUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNewLinesForBracesInLambdaExpressionBody(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInLambdaExpressionBodyEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NewLinesForBracesInMethodsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNewLinesForBracesInMethods(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInMethodsEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NewLinesForBracesInObjectCollectionArrayInitializersUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNewLinesForBracesInObjectCollectionArrayInitializers(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInObjectCollectionArrayInitializersEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NewLinesForBracesInPropertiesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNewLinesForBracesInProperties(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInPropertiesEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NewLinesForBracesInTypesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNewLinesForBracesInTypes(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInTypesEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpaceAfterCastUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSpaceAfterCast(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterCastEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpaceAfterColonInBaseTypeDeclarationUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSpaceAfterColonInBaseTypeDeclaration(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterColonInBaseTypeDeclarationEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpaceAfterCommaUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSpaceAfterComma(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterCommaEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpaceAfterControlFlowStatementKeywordUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSpaceAfterControlFlowStatementKeyword(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterControlFlowStatementKeywordEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpaceAfterDotUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSpaceAfterDot(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterDotEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpaceAfterMethodCallNameUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSpaceAfterMethodCallName(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterMethodCallNameEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpaceAfterSemicolonsInForStatementUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSpaceAfterSemicolonsInForStatement(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterSemicolonsInForStatementEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpaceBeforeColonInBaseTypeDeclarationUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSpaceBeforeColonInBaseTypeDeclaration(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeColonInBaseTypeDeclarationEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpaceBeforeCommaUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSpaceBeforeComma(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeCommaEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpaceBeforeDotUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSpaceBeforeDot(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeDotEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpaceBeforeOpenSquareBracketUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSpaceBeforeOpenSquareBracket(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeOpenSquareBracketEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpaceBeforeSemicolonsInForStatementUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSpaceBeforeSemicolonsInForStatement(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeSemicolonsInForStatementEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpaceBetweenEmptyMethodCallParenthesesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSpaceBetweenEmptyMethodCallParentheses(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBetweenEmptyMethodCallParenthesesEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpaceBetweenEmptyMethodDeclarationParenthesesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSpaceBetweenEmptyMethodDeclarationParentheses(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBetweenEmptyMethodDeclarationParenthesesEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpaceBetweenEmptySquareBracketsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSpaceBetweenEmptySquareBrackets(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBetweenEmptySquareBracketsEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpaceWithinCastParenthesesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSpaceWithinCastParentheses(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinCastParenthesesEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpaceWithinExpressionParenthesesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSpaceWithinExpressionParentheses(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinExpressionParenthesesEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpaceWithinMethodCallParenthesesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSpaceWithinMethodCallParentheses(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinMethodCallParenthesesEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpaceWithinMethodDeclarationParenthesisUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSpaceWithinMethodDeclarationParenthesis(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinMethodDeclarationParenthesisEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpaceWithinOtherParenthesesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSpaceWithinOtherParentheses(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinOtherParenthesesEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpaceWithinSquareBracketsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSpaceWithinSquareBrackets(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinSquareBracketsEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpacesIgnoreAroundVariableDeclarationUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSpacesIgnoreAroundVariableDeclaration(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpacesIgnoreAroundVariableDeclarationEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpacingAfterMethodDeclarationNameUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSpacingAfterMethodDeclarationName(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpacingAfterMethodDeclarationNameEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpacingAroundBinaryOperatorUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSpacingAroundBinaryOperator(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpacingAroundBinaryOperatorEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TabSizeUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetTabSize(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.TabSizeEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UseTabsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetUseTabs(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.UseTabsEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WrappingKeepStatementsOnSingleLineUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetWrappingKeepStatementsOnSingleLine(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.WrappingKeepStatementsOnSingleLineEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WrappingPreserveSingleLineUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetWrappingPreserveSingleLine(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.WrappingPreserveSingleLineEntity.DefaultInstance);
+                }
+            }
+
             /// <inheritdoc/>
             public void WriteTo(Utf8JsonWriter writer)
             {

@@ -304,7 +304,8 @@ public static class GenerationDriverV5
             emitUnions: generatorConfig.Unions ?? true,
             regexEngine: regexEngine,
             regexEdition: regexEdition,
-            regexUnicodeVersion: regexUnicodeVersion);
+            regexUnicodeVersion: regexUnicodeVersion,
+            regexMatchTimeoutMilliseconds: (int)(generatorConfig.RegexMatchTimeout ?? GeneratorConfig.RegexMatchTimeoutEntity.DefaultInstance));
     }
 
     private static IReadOnlyDictionary<string, FormatAssertionMode>? GetFormatModeOverrides(in GeneratorConfig generatorConfig)

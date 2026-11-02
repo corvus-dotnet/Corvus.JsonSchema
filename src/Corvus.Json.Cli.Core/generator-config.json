@@ -102,6 +102,13 @@
         "regexUnicodeVersion": {
             "$ref": "#/$defs/regexUnicodeVersion",
             "description": "The version of Unicode every pattern is read with (Ecma262 regular expressions only). Default is the version V8 uses (17)."
+        },
+        "regexMatchTimeout": {
+            "type": "integer",
+            "minimum": -1,
+            "not": { "const": 0 },
+            "default": 1000,
+            "description": "The limit, in milliseconds, on one match of a regular expression in generated code that is not proved to match in time proportional to the text, or -1 for none. A match that runs for longer throws RegexMatchTimeoutException. Default is 1000 (1 second)."
         }
     },
     "$defs": {

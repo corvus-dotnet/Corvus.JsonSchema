@@ -346,6 +346,12 @@ public readonly partial struct LazygitSchema
                                 public Filter Clone()
                                 {
                                     CheckValidInstance();
+                                    if (!_parent.IsDisposable)
+                                    {
+                                        // Already a clone, or backed by a document that is never disposed.
+                                        return this;
+                                    }
+
                                     return _parent.CloneElement<Filter>(_idx);
                                 }
 

@@ -23,7 +23,14 @@ public readonly partial struct JsonIpV4
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
         ValidationContext result = validationContext;
-        result =  Corvus.Json.Validate.TypeIpV4(this, result, level, null, null);
+        try
+        {
+            result =  Corvus.Json.Validate.TypeIpV4(this, result, level, null, null);
+        }
+        catch (global::System.InvalidOperationException) when (Corvus.Json.Validate.IsNotWellFormedText(this))
+        {
+            result = Corvus.Json.Validate.TextIsNotWellFormed(result, level);
+        }
         return result;
     }
 }

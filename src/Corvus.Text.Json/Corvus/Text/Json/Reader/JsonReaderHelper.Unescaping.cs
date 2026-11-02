@@ -72,9 +72,13 @@ internal static partial class JsonReaderHelper
         return utf8String;
     }
 
+    // The comparisons unescape an escape of half of a surrogate pair as its generalized UTF-8 bytes rather than
+    // throwing (see UnescapeToGeneralizedUtf8): such text is then equal to the same text and to nothing else, as the
+    // same bytes raw are. Callers check the lengths of the whole texts against MaxExpansionFactorWhileEscaping, and
+    // pass what follows a common prefix, which keeps only the first of the two bounds.
     public static bool UnescapeAndCompare(ReadOnlySpan<byte> utf8Source, ReadOnlySpan<byte> other)
     {
-        Debug.Assert(utf8Source.Length >= other.Length && utf8Source.Length / JsonConstants.MaxExpansionFactorWhileEscaping <= other.Length);
+        Debug.Assert(utf8Source.Length >= other.Length);
 
         byte[]? unescapedArray = null;
 
@@ -82,7 +86,7 @@ internal static partial class JsonReaderHelper
             stackalloc byte[JsonConstants.StackallocByteThreshold] :
             (unescapedArray = ArrayPool<byte>.Shared.Rent(utf8Source.Length));
 
-        Unescape(utf8Source, utf8Unescaped, 0, out int written);
+        UnescapeToGeneralizedUtf8(utf8Source, utf8Unescaped, 0, out int written);
         Debug.Assert(written > 0);
 
         utf8Unescaped = utf8Unescaped.Slice(0, written);
@@ -102,7 +106,7 @@ internal static partial class JsonReaderHelper
     public static bool UnescapeAndCompare(ReadOnlySequence<byte> utf8Source, ReadOnlySpan<byte> other)
     {
         Debug.Assert(!utf8Source.IsSingleSegment);
-        Debug.Assert(utf8Source.Length >= other.Length && utf8Source.Length / JsonConstants.MaxExpansionFactorWhileEscaping <= other.Length);
+        Debug.Assert(utf8Source.Length >= other.Length);
 
         byte[]? escapedArray = null;
         byte[]? unescapedArray = null;
@@ -120,7 +124,7 @@ internal static partial class JsonReaderHelper
         utf8Source.CopyTo(utf8Escaped);
         utf8Escaped = utf8Escaped.Slice(0, length);
 
-        Unescape(utf8Escaped, utf8Unescaped, 0, out int written);
+        UnescapeToGeneralizedUtf8(utf8Escaped, utf8Unescaped, 0, out int written);
         Debug.Assert(written > 0);
 
         utf8Unescaped = utf8Unescaped.Slice(0, written);
@@ -159,11 +163,11 @@ internal static partial class JsonReaderHelper
             stackalloc byte[JsonConstants.StackallocByteThreshold] :
             (unescapedArray2 = ArrayPool<byte>.Shared.Rent(utf8Source2.Length));
 
-        Unescape(utf8Source1, utf8Unescaped1, index1, out int written);
+        UnescapeToGeneralizedUtf8(utf8Source1, utf8Unescaped1, index1, out int written);
         utf8Unescaped1 = utf8Unescaped1.Slice(0, written);
         Debug.Assert(!utf8Unescaped1.IsEmpty);
 
-        Unescape(utf8Source2, utf8Unescaped2, index2, out written);
+        UnescapeToGeneralizedUtf8(utf8Source2, utf8Unescaped2, index2, out written);
         utf8Unescaped2 = utf8Unescaped2.Slice(0, written);
         Debug.Assert(!utf8Unescaped2.IsEmpty);
 

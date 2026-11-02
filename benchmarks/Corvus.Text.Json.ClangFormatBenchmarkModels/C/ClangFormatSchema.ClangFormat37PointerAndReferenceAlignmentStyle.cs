@@ -318,6 +318,12 @@ public readonly partial struct ClangFormatSchema
         public ClangFormat37PointerAndReferenceAlignmentStyle Clone()
         {
             CheckValidInstance();
+            if (!_parent.IsDisposable)
+            {
+                // Already a clone, or backed by a document that is never disposed.
+                return this;
+            }
+
             return _parent.CloneElement<ClangFormat37PointerAndReferenceAlignmentStyle>(_idx);
         }
 

@@ -116,8 +116,6 @@ async function runFile(draft, file, label, assertFormat) {
         }
       }
       if (error !== undefined || actual !== test.valid) {
-        // Leap seconds are skipped in the format run, as in the C# runner.
-        if (assertFormat && /leap second/i.test(test.description)) continue;
         fileFailed++;
         failures.push(`${label} [${group.description}] ${test.description}: expected ${test.valid}, got ${error ? `${error.name}: ${error.message}` : actual}`);
         if (verbose && validate) failures.push(validate.source);

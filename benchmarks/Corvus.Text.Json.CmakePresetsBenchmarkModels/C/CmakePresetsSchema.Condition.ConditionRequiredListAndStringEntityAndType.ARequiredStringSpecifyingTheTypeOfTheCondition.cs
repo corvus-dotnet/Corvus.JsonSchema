@@ -327,6 +327,12 @@ public readonly partial struct CmakePresetsSchema
                 public ARequiredStringSpecifyingTheTypeOfTheCondition Clone()
                 {
                     CheckValidInstance();
+                    if (!_parent.IsDisposable)
+                    {
+                        // Already a clone, or backed by a document that is never disposed.
+                        return this;
+                    }
+
                     return _parent.CloneElement<ARequiredStringSpecifyingTheTypeOfTheCondition>(_idx);
                 }
 

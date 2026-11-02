@@ -1071,6 +1071,91 @@ public readonly partial struct StylecopSchema
                     return result;
                 }
 
+                /// <summary>
+                /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+                /// as its value, and then does the same inside each property whose own type has properties.
+                /// </summary>
+                /// <remarks>
+                /// <para>
+                /// This changes the data. Reading an absent property already gives its default without it; this method writes
+                /// the defaults into the document as additional properties, so that they are there when the document is sent
+                /// to a system that does not apply the schema's defaults itself.
+                /// </para>
+                /// <para>
+                /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+                /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+                /// as it is.
+                /// </para>
+                /// </remarks>
+                public void ApplyDefaults()
+                {
+                    CheckValidInstance();
+                    if (ValueKind != JsonValueKind.Object)
+                    {
+                        return;
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CompanyNameUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetCompanyName(Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.TheNameOfTheCompanyWhichAppearsInFileHeaders.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CopyrightTextUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetCopyrightText(Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.TheCopyrightTextWhichShouldAppearInFileHeaders.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DocumentExposedElementsUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetDocumentExposedElements(Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.DocumentExposedElementsEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DocumentInterfacesUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetDocumentInterfaces(Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.DocumentInterfacesEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DocumentInternalElementsUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetDocumentInternalElements(Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.DocumentInternalElementsEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DocumentPrivateElementsUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetDocumentPrivateElements(Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.DocumentPrivateElementsEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DocumentPrivateFieldsUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetDocumentPrivateFields(Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.DocumentPrivateFieldsEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DocumentationCultureUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetDocumentationCulture(Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.TheCultureThatShouldBeUsedForDocumentationComments.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExcludeFromPunctuationCheckUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetExcludeFromPunctuationCheck(Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.ExcludeFromPunctuationCheckArray.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FileNamingConventionUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetFileNamingConvention(Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.FileNamingConventionEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HeaderDecorationUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetHeaderDecoration(Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.TheTextUsedAsDecorationForTheCopyrightHeaderComment.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.XmlHeaderUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetXmlHeader(Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.XmlHeaderEntity.DefaultInstance);
+                    }
+                }
+
                 /// <inheritdoc/>
                 public void WriteTo(Utf8JsonWriter writer)
                 {

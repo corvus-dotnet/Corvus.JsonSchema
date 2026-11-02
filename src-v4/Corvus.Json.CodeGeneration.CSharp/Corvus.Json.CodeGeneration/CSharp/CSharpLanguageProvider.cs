@@ -30,6 +30,9 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     /// <summary>Gets the namespace of the generation's own files, such as its shared regular expressions.</summary>
     internal string DefaultNamespace => this.options.DefaultNamespace;
 
+    /// <summary>Gets the limit, in milliseconds, on one match of a regular expression of the generated code, or -1 for none.</summary>
+    internal int RegexMatchTimeoutMilliseconds => this.options.RegexMatchTimeoutMilliseconds;
+
     /// <summary>
     /// Gets a <see cref="CSharpLanguageProvider"/> instance with the default configuration and specified options.
     /// </summary>
@@ -673,6 +676,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     /// <param name="regexEngine">The engine the regular expressions of generated code are written for (see <see cref="GeneratedRegexEngine"/>). Defaults to <see cref="GeneratedRegexEngine.Ecma262"/>.</param>
     /// <param name="regexEdition">The edition of the grammar every pattern is read with, or <see langword="null"/> (the default) for the dialect's: ECMAScript 2020 for draft 2019-09 and draft 2020-12, today's for the others. For <see cref="GeneratedRegexEngine.Ecma262"/> only.</param>
     /// <param name="regexUnicodeVersion">The version of Unicode every pattern is read with. For <see cref="GeneratedRegexEngine.Ecma262"/> only.</param>
+    /// <param name="regexMatchTimeoutMilliseconds">The limit, in milliseconds, on one match of a regular expression of generated code, or -1 for none. Defaults to 1,000 (1 second).</param>
     public class Options(
         string defaultNamespace,
         NamedType[]? namedTypes = null,
@@ -690,7 +694,8 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         IReadOnlyDictionary<string, FormatAssertionMode>? formatModeOverrides = null,
         GeneratedRegexEngine regexEngine = GeneratedRegexEngine.Ecma262,
         GeneratedRegexEdition? regexEdition = null,
-        GeneratedRegexUnicodeVersion regexUnicodeVersion = GeneratedRegexUnicodeVersion.Default)
+        GeneratedRegexUnicodeVersion regexUnicodeVersion = GeneratedRegexUnicodeVersion.Default,
+        int regexMatchTimeoutMilliseconds = ValidationCodeGeneratorExtensions.DefaultRegexMatchTimeoutMilliseconds)
     {
         private readonly FrozenDictionary<string, NamedType> namedTypeMap = namedTypes?.ToFrozenDictionary(kvp => kvp.Reference, kvp => kvp) ?? FrozenDictionary<string, NamedType>.Empty;
         private readonly FrozenDictionary<string, string> namespaceMap = namespaces?.ToFrozenDictionary(kvp => kvp.BaseUri, kvp => kvp.DotnetNamespace) ?? FrozenDictionary<string, string>.Empty;
@@ -779,6 +784,11 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
 
         /// <summary>Gets the version of Unicode every pattern is read with.</summary>
         internal GeneratedRegexUnicodeVersion RegexUnicodeVersion { get; } = regexUnicodeVersion;
+
+        /// <summary>Gets the limit, in milliseconds, on one match of a regular expression of generated code, or -1 for none.</summary>
+        internal int RegexMatchTimeoutMilliseconds { get; } = regexMatchTimeoutMilliseconds == System.Threading.Timeout.Infinite || regexMatchTimeoutMilliseconds > 0
+            ? regexMatchTimeoutMilliseconds
+            : throw new ArgumentOutOfRangeException(nameof(regexMatchTimeoutMilliseconds), regexMatchTimeoutMilliseconds, "The match timeout is a positive number of milliseconds, or -1 for none.");
 
         /// <summary>
         /// Try to get the namespace for the base URI.

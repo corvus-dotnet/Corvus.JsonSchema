@@ -1334,6 +1334,92 @@ public readonly partial struct LazygitSchema
             return result;
         }
 
+        /// <summary>
+        /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+        /// as its value, and then does the same inside each property whose own type has properties.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This changes the data. Reading an absent property already gives its default without it; this method writes
+        /// the defaults into the document as additional properties, so that they are there when the document is sent
+        /// to a system that does not apply the schema's defaults itself.
+        /// </para>
+        /// <para>
+        /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+        /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+        /// as it is.
+        /// </para>
+        /// </remarks>
+        public void ApplyDefaults()
+        {
+            CheckValidInstance();
+            if (ValueKind != JsonValueKind.Object)
+            {
+                return;
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ConfirmOnQuitValueUtf8, out IJsonDocument? _, out int _))
+            {
+                SetConfirmOnQuitValue(Corvus.LazygitBenchmark.Current.LazygitSchema.ConfirmOnQuit.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DisableStartupPopupsValueUtf8, out IJsonDocument? _, out int _))
+            {
+                SetDisableStartupPopupsValue(Corvus.LazygitBenchmark.Current.LazygitSchema.DisableStartupPopups.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NotARepositoryValueUtf8, out IJsonDocument? _, out int _))
+            {
+                SetNotARepositoryValue(Corvus.LazygitBenchmark.Current.LazygitSchema.NotARepository.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PromptToReturnFromSubprocessValueUtf8, out IJsonDocument? _, out int _))
+            {
+                SetPromptToReturnFromSubprocessValue(Corvus.LazygitBenchmark.Current.LazygitSchema.PromptToReturnFromSubprocess.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.QuitOnTopLevelReturnValueUtf8, out IJsonDocument? _, out int _))
+            {
+                SetQuitOnTopLevelReturnValue(Corvus.LazygitBenchmark.Current.LazygitSchema.QuitOnTopLevelReturn.DefaultInstance);
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.GitValueUtf8, out Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Mutable __corvusGitValue))
+            {
+                __corvusGitValue.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.GuiValueUtf8, out Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Mutable __corvusGuiValue))
+            {
+                __corvusGuiValue.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeybindingValueUtf8, out Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Mutable __corvusKeybindingValue))
+            {
+                __corvusKeybindingValue.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OsValueUtf8, out Corvus.LazygitBenchmark.Current.LazygitSchema.Os.Mutable __corvusOsValue))
+            {
+                __corvusOsValue.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RefresherValueUtf8, out Corvus.LazygitBenchmark.Current.LazygitSchema.Refresher.Mutable __corvusRefresherValue))
+            {
+                __corvusRefresherValue.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UpdateValueUtf8, out Corvus.LazygitBenchmark.Current.LazygitSchema.Update.Mutable __corvusUpdateValue))
+            {
+                __corvusUpdateValue.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+        }
+
         /// <inheritdoc/>
         public void WriteTo(Utf8JsonWriter writer)
         {

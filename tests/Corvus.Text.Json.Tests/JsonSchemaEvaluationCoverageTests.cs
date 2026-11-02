@@ -221,10 +221,11 @@ public class JsonSchemaEvaluationCoverageTests
     }
 
     [TestMethod]
-    public void MatchEmail_LocalPartOver64Chars_ReturnsFalse()
+    public void MatchEmail_HasNoLimitOnTheLocalPartOrTheWholeAddress()
     {
-        // Local part > 64 characters
-        string localPart = new string('a', 65);
+        // The other ports limit neither the local part nor the address as a whole, only the domain (253 characters as
+        // A-labels) (https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1029).
+        string localPart = new string('a', 300);
         string email = localPart + "@example.com";
 
         var collector = new DummyResultsCollector();
@@ -232,7 +233,7 @@ public class JsonSchemaEvaluationCoverageTests
 
         bool result = JsonSchemaEvaluation.MatchEmail(Encoding.UTF8.GetBytes(email), "dummy"u8, ref context);
 
-        Assert.IsFalse(result);
+        Assert.IsTrue(result);
         context.Dispose();
     }
 
@@ -287,9 +288,11 @@ public class JsonSchemaEvaluationCoverageTests
     }
 
     [TestMethod]
-    public void MatchIdnEmail_LocalPartOver64Chars_ReturnsFalse()
+    public void MatchIdnEmail_HasNoLimitOnTheLocalPartOrTheWholeAddress()
     {
-        string localPart = new string('a', 65);
+        // The other ports limit neither the local part nor the address as a whole, only the domain (253 characters as
+        // A-labels) (https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1029).
+        string localPart = new string('a', 300);
         string email = localPart + "@example.com";
 
         var collector = new DummyResultsCollector();
@@ -297,7 +300,7 @@ public class JsonSchemaEvaluationCoverageTests
 
         bool result = JsonSchemaEvaluation.MatchIdnEmail(Encoding.UTF8.GetBytes(email), "dummy"u8, ref context);
 
-        Assert.IsFalse(result);
+        Assert.IsTrue(result);
         context.Dispose();
     }
 

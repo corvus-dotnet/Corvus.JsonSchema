@@ -156,7 +156,7 @@ public static class SourceGeneratorHelpers
         {
             if (!context.CancellationToken.IsCancellationRequested)
             {
-                context.AddSource(codeFile.FileName, SourceText.From(codeFile.FileContent, Encoding.UTF8));
+                context.AddSource(GetHintName(codeFile.FileName, codeFile.TypeDeclaration?.DotnetNamespace() ?? defaultNamespace), SourceText.From(codeFile.FileContent, Encoding.UTF8));
             }
         }
 
@@ -414,5 +414,41 @@ public static class SourceGeneratorHelpers
         /// Gets the default accessibility for generated types.
         /// </summary>
         public GeneratedTypeAccessibility DefaultAccessibility { get; } = defaultAccessibility;
+    }
+
+    /// <summary>
+    /// Gets the hint name for a generated file: its file name, with a short hash of its namespace before the extension.
+    /// </summary>
+    /// <remarks>
+    /// A hint name must be unique within a generator run. File names are made unique within one call to
+    /// <c>GenerateCode()</c>, but a generator that calls it more than once can produce the same file name twice, for
+    /// types of the same name in different namespaces (https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/651).
+    /// The hash keeps the hint names apart without making them longer by the whole namespace.
+    /// </remarks>
+    /// <param name="fileName">The generated file name.</param>
+    /// <param name="ns">The namespace of the file's type, or of the generation for a file with no type.</param>
+    /// <returns>The hint name.</returns>
+    private static string GetHintName(string fileName, string? ns)
+    {
+        if (string.IsNullOrEmpty(ns))
+        {
+            return fileName;
+        }
+
+        // FNV-1a over the namespace, so the hint name is the same in every run and on every platform.
+        uint hash = 2166136261;
+        foreach (char c in ns!)
+        {
+            hash = (hash ^ c) * 16777619;
+        }
+
+        // Before ".g.cs" (or the last extension), so that "Foo.g.cs" becomes "Foo.1a2b3c4d.g.cs".
+        string suffix = "." + hash.ToString("x8", System.Globalization.CultureInfo.InvariantCulture);
+        int extension = fileName.EndsWith(".g.cs", StringComparison.OrdinalIgnoreCase)
+            ? fileName.Length - ".g.cs".Length
+            : fileName.LastIndexOf('.');
+        return extension <= 0
+            ? fileName + suffix
+            : fileName.Substring(0, extension) + suffix + fileName.Substring(extension);
     }
 }

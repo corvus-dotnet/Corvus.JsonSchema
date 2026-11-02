@@ -66,6 +66,7 @@ corvusjson jsonschema <schemaFile> [OPTIONS]
 | `--regexEngine` | `Ecma262` | The engine the generated regular expressions are written for, by the V5 and V4 engines alike. `Ecma262` writes [Corvus.Regex.Ecma262](https://corvus-oss.org/Corvus.Regex.Ecma262/)'s compiled matchers, with the compiled regular expression as data, so nothing is parsed or built when one is first used; a pattern-property field is that library's `Regex`. `DotNet` writes .NET's `System.Text.RegularExpressions`, as earlier versions did, for code that depends on those fields being .NET's `Regex`. |
 | `--regexEdition` | each dialect's | The edition of ECMA-262 whose grammar every pattern is read with: `Current` or `Es2020`. By default draft 2019-09 and draft 2020-12 (and OpenAPI 3.1) read patterns with the grammar of ECMAScript 2020, which they cite, and the other dialects with today's. `Ecma262` only. |
 | `--regexUnicodeVersion` | `Default` | The version of Unicode every pattern is read with: `Default` (V8's, 17), `V13`, `V17`, `V18` or `Latest`. `Ecma262` only. |
+| `--regexMatchTimeout` | `1000` | The limit, in milliseconds, on one match of a regular expression in generated code, or `-1` for none. A match that runs for longer throws `RegexMatchTimeoutException`. A pattern proved to match in time proportional to the text has no limit whatever this says. Both engines, V5 and V4. The value is fixed when the code is generated: change it and regenerate. |
 | `--disableOptionalNamingHeuristics` | `false` | Disable all optional naming heuristics at once (see [Naming Heuristics](#naming-heuristics)) |
 | `--disableNamingHeuristic` | — | Disable a specific naming heuristic by name (repeatable; see [Naming Heuristics](#naming-heuristics)) |
 | `--useUnixLineEndings` | `false` | Use Unix line endings (`\n`) instead of Windows (`\r\n`) in generated files |
@@ -277,7 +278,7 @@ The tool generates:
 
 - **Type-safe property accessors**: `person.Name` returns a strongly-typed string value
 - **Validation**: `person.EvaluateSchema()` validates against the full schema. A `pattern` whose match runs for
-  longer than 1 second throws `RegexMatchTimeoutException` (see
+  longer than 1 second (or the limit `--regexMatchTimeout` sets) throws `RegexMatchTimeoutException` (see
   [SchemaEvaluator.md](SchemaEvaluator.md#what-gets-generated)). A `pattern` or `patternProperties` pattern that is
   not a valid ECMA-262 regular expression stops the generation with an error that names it (see
   [RuntimeEvaluator.md](RuntimeEvaluator.md#patterns)). A pattern over a limit of size stops it with an error of its

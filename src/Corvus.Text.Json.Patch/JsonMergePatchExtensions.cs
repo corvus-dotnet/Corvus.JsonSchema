@@ -87,7 +87,7 @@ public static class JsonMergePatchExtensions
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(mutableDoc, 30);
         value.AddAsItem(ref cvb);
         mutableDoc.ReplaceRootAndDispose(ref cvb);
-        target = ((JsonDocumentBuilder<JsonElement.Mutable>)mutableDoc).RootElement;
+        target = RootOf(mutableDoc);
     }
 
     private static void ReplaceRootWithEmptyObject(ref JsonElement.Mutable target)
@@ -96,12 +96,29 @@ public static class JsonMergePatchExtensions
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(mutableDoc, 0);
         JsonElement.ObjectBuilder.BuildValue(static (ref JsonElement.ObjectBuilder _) => { }, ref cvb);
         mutableDoc.ReplaceRootAndDispose(ref cvb);
-        target = ((JsonDocumentBuilder<JsonElement.Mutable>)mutableDoc).RootElement;
+        target = RootOf(mutableDoc);
     }
 
     private static IMutableJsonDocument GetMutableDoc<T>(in T element)
         where T : struct, IJsonElement<T>
     {
         return (IMutableJsonDocument)element.ParentDocument;
+    }
+
+    private static JsonElement.Mutable RootOf(IMutableJsonDocument document)
+    {
+        // The root of a builder is its first row, whatever the type of its root element (a generated type's builder
+        // is not a JsonDocumentBuilder<JsonElement.Mutable>).
+        return CreateRoot<JsonElement.Mutable>(document);
+
+        static T CreateRoot<T>(IMutableJsonDocument document)
+            where T : struct, IJsonElement<T>
+        {
+#if NET
+            return T.CreateInstance(document, 0);
+#else
+            return JsonElementHelpers.CreateInstance<T>(document, 0);
+#endif
+        }
     }
 }

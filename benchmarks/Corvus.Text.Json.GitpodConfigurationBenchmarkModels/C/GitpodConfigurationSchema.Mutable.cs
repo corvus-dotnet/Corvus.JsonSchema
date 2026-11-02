@@ -1318,6 +1318,66 @@ public readonly partial struct GitpodConfigurationSchema
             return result;
         }
 
+        /// <summary>
+        /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+        /// as its value, and then does the same inside each property whose own type has properties.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This changes the data. Reading an absent property already gives its default without it; this method writes
+        /// the defaults into the document as additional properties, so that they are there when the document is sent
+        /// to a system that does not apply the schema's defaults itself.
+        /// </para>
+        /// <para>
+        /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+        /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+        /// as it is.
+        /// </para>
+        /// </remarks>
+        public void ApplyDefaults()
+        {
+            CheckValidInstance();
+            if (ValueKind != JsonValueKind.Object)
+            {
+                return;
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ImageUtf8, out IJsonDocument? _, out int _))
+            {
+                SetImage(Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.DefaultInstance);
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CoreDumpUtf8, out Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.CoreDumpEntity.Mutable __corvusCoreDump))
+            {
+                __corvusCoreDump.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.GithubUtf8, out Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Mutable __corvusGithub))
+            {
+                __corvusGithub.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ImageUtf8, out Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Mutable __corvusImage))
+            {
+                __corvusImage.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.JetbrainsUtf8, out Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.Mutable __corvusJetbrains))
+            {
+                __corvusJetbrains.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VscodeUtf8, out Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureVsCodeIntegration.Mutable __corvusVscode))
+            {
+                __corvusVscode.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+        }
+
         /// <inheritdoc/>
         public void WriteTo(Utf8JsonWriter writer)
         {

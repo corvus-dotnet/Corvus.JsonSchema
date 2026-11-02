@@ -240,12 +240,10 @@ public class JsonSchemaMatchingStringTests
         JsonSchemaContext context = CreateContext(collector, JsonTokenType.String);
         Assert.AreEqual(expected, JsonSchemaEvaluation.MatchIdnHostname(Encoding.UTF8.GetBytes(value), "dummy"u8, ref context), "idn-hostname");
 
-        // An address whose domain is not a host name is not an address. (An address that is valid by its domain can
-        // still be over the limit of 320 bytes the idn-email check keeps on the whole address.)
-        if (!expected)
-        {
-            Assert.IsFalse(JsonSchemaEvaluation.MatchIdnEmail(Encoding.UTF8.GetBytes("a@" + value), "dummy"u8, ref context), "idn-email");
-        }
+        // An address is an address exactly when its domain is a host name. The limits are on its parts, not on the
+        // whole address, so an address of over 320 bytes is valid when its domain is within 253 characters as A-labels
+        // (https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1029).
+        Assert.AreEqual(expected, JsonSchemaEvaluation.MatchIdnEmail(Encoding.UTF8.GetBytes("a@" + value), "dummy"u8, ref context), "idn-email");
 
         collector.AssertState();
         context.Dispose();

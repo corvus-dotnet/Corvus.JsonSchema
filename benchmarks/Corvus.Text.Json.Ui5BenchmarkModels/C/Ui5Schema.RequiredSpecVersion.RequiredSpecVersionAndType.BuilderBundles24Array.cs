@@ -367,6 +367,12 @@ public readonly partial struct Ui5Schema
                 public BuilderBundles24Array Clone()
                 {
                     CheckValidInstance();
+                    if (!_parent.IsDisposable)
+                    {
+                        // Already a clone, or backed by a document that is never disposed.
+                        return this;
+                    }
+
                     return _parent.CloneElement<BuilderBundles24Array>(_idx);
                 }
 

@@ -810,6 +810,76 @@ public readonly partial struct CspellSchema
                     return result;
                 }
 
+                /// <summary>
+                /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+                /// as its value, and then does the same inside each property whose own type has properties.
+                /// </summary>
+                /// <remarks>
+                /// <para>
+                /// This changes the data. Reading an absent property already gives its default without it; this method writes
+                /// the defaults into the document as additional properties, so that they are there when the document is sent
+                /// to a system that does not apply the schema's defaults itself.
+                /// </para>
+                /// <para>
+                /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+                /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+                /// as it is.
+                /// </para>
+                /// </remarks>
+                public void ApplyDefaults()
+                {
+                    CheckValidInstance();
+                    if (ValueKind != JsonValueKind.Object)
+                    {
+                        return;
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AccentCostsUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetAccentCosts(Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.AccentCostsEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BaseCostUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetBaseCost(Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.ThisIsTheBaseCostForMakingAnEdit.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CapsCostsUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetCapsCosts(Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.CapsCostsEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FirstLetterPenaltyUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetFirstLetterPenalty(Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.FirstLetterPenaltyEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IoConvertCostUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetIoConvertCost(Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.IoConvertCostEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeyboardCostUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetKeyboardCost(Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.KeyboardCostEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MapCostUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetMapCost(Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.MapCostEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NonAlphabetCostsUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetNonAlphabetCosts(Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.ThisIsTheCostForCharactersNotInTheAlphabet.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ReplaceCostsUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetReplaceCosts(Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.TheCostToSubstitutePairsFoundInTheReplaceSettings.DefaultInstance);
+                    }
+                }
+
                 /// <inheritdoc/>
                 public void WriteTo(Utf8JsonWriter writer)
                 {

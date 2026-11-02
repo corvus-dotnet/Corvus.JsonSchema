@@ -424,6 +424,12 @@ public readonly partial struct SemanticReleaseSchema
                 public Type2Entity Clone()
                 {
                     CheckValidInstance();
+                    if (!_parent.IsDisposable)
+                    {
+                        // Already a clone, or backed by a document that is never disposed.
+                        return this;
+                    }
+
                     return _parent.CloneElement<Type2Entity>(_idx);
                 }
 

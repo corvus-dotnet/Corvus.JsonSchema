@@ -30,11 +30,13 @@ public readonly partial struct DependabotSchema
             public readonly partial struct ReviewersTArray
 #if NET8_0_OR_GREATER
                 : IJsonElement<ReviewersTArray>,
+                  global::System.Collections.Generic.IReadOnlyCollection<Corvus.DependabotBenchmark.Current.JsonString>,
                   IFormattable,
                   ISpanFormattable,
                   IUtf8SpanFormattable
 #else
                 : IJsonElement<ReviewersTArray>,
+                  global::System.Collections.Generic.IReadOnlyCollection<Corvus.DependabotBenchmark.Current.JsonString>,
                   IFormattable
 #endif
             {
@@ -83,6 +85,21 @@ public readonly partial struct DependabotSchema
                     CheckValidInstance();
                     return EnumeratorCreator.CreateArrayEnumerator<Corvus.DependabotBenchmark.Current.JsonString>(_parent, _idx);
                 }
+
+                /// <summary>
+                /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+                /// </summary>
+                /// <returns>The enumerator.</returns>
+                public ArrayEnumerator<Corvus.DependabotBenchmark.Current.JsonString> GetEnumerator() => EnumerateArray();
+
+                /// <inheritdoc/>
+                global::System.Collections.Generic.IEnumerator<Corvus.DependabotBenchmark.Current.JsonString> global::System.Collections.Generic.IEnumerable<Corvus.DependabotBenchmark.Current.JsonString>.GetEnumerator() => EnumerateArray();
+
+                /// <inheritdoc/>
+                global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+                /// <inheritdoc/>
+                int global::System.Collections.Generic.IReadOnlyCollection<Corvus.DependabotBenchmark.Current.JsonString>.Count => GetArrayLength();
 
                 /// <inheritdoc/>
                 public JsonValueKind ValueKind => TokenType.ToValueKind();
@@ -297,6 +314,12 @@ public readonly partial struct DependabotSchema
                 public ReviewersTArray Clone()
                 {
                     CheckValidInstance();
+                    if (!_parent.IsDisposable)
+                    {
+                        // Already a clone, or backed by a document that is never disposed.
+                        return this;
+                    }
+
                     return _parent.CloneElement<ReviewersTArray>(_idx);
                 }
 

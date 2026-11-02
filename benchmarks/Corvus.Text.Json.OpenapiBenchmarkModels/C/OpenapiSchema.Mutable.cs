@@ -1108,6 +1108,59 @@ public readonly partial struct OpenapiSchema
         }
 
         /// <summary>
+        /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+        /// as its value, and then does the same inside each property whose own type has properties.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This changes the data. Reading an absent property already gives its default without it; this method writes
+        /// the defaults into the document as additional properties, so that they are there when the document is sent
+        /// to a system that does not apply the schema's defaults itself.
+        /// </para>
+        /// <para>
+        /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+        /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+        /// as it is.
+        /// </para>
+        /// </remarks>
+        public void ApplyDefaults()
+        {
+            CheckValidInstance();
+            if (ValueKind != JsonValueKind.Object)
+            {
+                return;
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.JsonSchemaDialectUtf8, out IJsonDocument? _, out int _))
+            {
+                SetJsonSchemaDialect(Corvus.OpenapiBenchmark.Current.OpenapiSchema.JsonSchemaDialectEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ServersUtf8, out IJsonDocument? _, out int _))
+            {
+                SetServers(Corvus.OpenapiBenchmark.Current.OpenapiSchema.ServerArray.DefaultInstance);
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ComponentsValueUtf8, out Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.Mutable __corvusComponentsValue))
+            {
+                __corvusComponentsValue.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExternalDocsUtf8, out Corvus.OpenapiBenchmark.Current.OpenapiSchema.ExternalDocumentation.Mutable __corvusExternalDocs))
+            {
+                __corvusExternalDocs.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.InfoValueUtf8, out Corvus.OpenapiBenchmark.Current.OpenapiSchema.Info.Mutable __corvusInfoValue))
+            {
+                __corvusInfoValue.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+        }
+
+        /// <summary>
         /// Apply a composed value.
         /// </summary>
         /// <remarks>

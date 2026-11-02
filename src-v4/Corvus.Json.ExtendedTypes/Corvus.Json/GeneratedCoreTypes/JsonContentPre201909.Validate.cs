@@ -23,7 +23,14 @@ public readonly partial struct JsonContentPre201909
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
         ValidationContext result = validationContext;
-        result =  Corvus.Json.Validate.TypeContent(this, result, level, false);
+        try
+        {
+            result =  Corvus.Json.Validate.TypeContent(this, result, level, false);
+        }
+        catch (global::System.InvalidOperationException) when (Corvus.Json.Validate.IsNotWellFormedText(this))
+        {
+            result = Corvus.Json.Validate.TextIsNotWellFormed(result, level);
+        }
         return result;
     }
 }

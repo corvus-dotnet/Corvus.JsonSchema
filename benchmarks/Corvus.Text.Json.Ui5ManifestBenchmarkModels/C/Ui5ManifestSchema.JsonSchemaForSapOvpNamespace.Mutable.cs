@@ -1786,6 +1786,115 @@ public readonly partial struct Ui5ManifestSchema
                 return result;
             }
 
+            /// <summary>
+            /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+            /// as its value, and then does the same inside each property whose own type has properties.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// This changes the data. Reading an absent property already gives its default without it; this method writes
+            /// the defaults into the document as additional properties, so that they are there when the document is sent
+            /// to a system that does not apply the schema's defaults itself.
+            /// </para>
+            /// <para>
+            /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+            /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+            /// as it is.
+            /// </para>
+            /// </remarks>
+            public void ApplyDefaults()
+            {
+                CheckValidInstance();
+                if (ValueKind != JsonValueKind.Object)
+                {
+                    return;
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BHeaderExpandedUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetBHeaderExpanded(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.BHeaderExpandedEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ConsiderAnalyticalParametersUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetConsiderAnalyticalParameters(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ConsiderAnalyticalParametersEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ContainerLayoutUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetContainerLayout(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheLayoutOfTheCardContainer.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DisableErrorPageUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetDisableErrorPage(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DisableErrorPageEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DisableTableCardFlexibilityUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetDisableTableCardFlexibility(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DisableTableCardFlexibilityEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnableLazyRenderingUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetEnableLazyRendering(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.EnableLoadingOfCardsWhenTheyEnterViewport.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnableLiveFilterUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetEnableLiveFilter(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.EnableLiveFilterEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RefreshIntervalInMinutesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetRefreshIntervalInMinutes(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.TimeIntervalInMinutesToAutoRefreshTheCardModels.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ShowBasicSearchUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetShowBasicSearch(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ShowBasicSearchEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ShowDateInRelativeFormatUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetShowDateInRelativeFormat(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ShowDateInRelativeFormatEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SmartVariantRequiredUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSmartVariantRequired(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.SmartVariantRequiredEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UseDateRangeTypeUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetUseDateRangeType(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.UseDateRangeTypeEntity.DefaultInstance);
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ChartSettingsUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreAnalyticalChartSettings.Mutable __corvusChartSettings))
+                {
+                    __corvusChartSettings.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DataLoadSettingsUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DataLoadSettingsEntity.Mutable __corvusDataLoadSettings))
+                {
+                    __corvusDataLoadSettings.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FilterSettingsUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.Mutable __corvusFilterSettings))
+                {
+                    __corvusFilterSettings.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RefreshStrategyOnAppRestoreUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RefreshStrategiesPropDef.Mutable __corvusRefreshStrategyOnAppRestore))
+                {
+                    __corvusRefreshStrategyOnAppRestore.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+            }
+
             /// <inheritdoc/>
             public void WriteTo(Utf8JsonWriter writer)
             {

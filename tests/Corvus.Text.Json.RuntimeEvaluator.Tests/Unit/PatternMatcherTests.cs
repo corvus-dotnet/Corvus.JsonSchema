@@ -322,7 +322,7 @@ public class PatternMatcherTests
             foreach (string input in Inputs)
             {
                 bool expected = regex.IsMatch(input);
-                bool actual = matcher.IsMatch(Encoding.UTF8.GetBytes(input));
+                bool actual = matcher.IsMatch(Encoding.UTF8.GetBytes(input), knownUtf8: false);
                 Assert.AreEqual(expected, actual, $"pattern {pattern} translated {regex} input \"{input}\" bytes {BitConverter.ToString(Encoding.UTF8.GetBytes(input))}");
                 checkedCount++;
             }
@@ -341,8 +341,8 @@ public class PatternMatcherTests
         var options = new JsonSchemaEvaluatorOptions { RegexEdition = Corvus.Ecma262.RegularExpressions.RegexEdition.Current };
         PatternMatcher wide = PatternMatcher.Create(@"^(?i:(.+)-\1)$", options);
         Assert.IsTrue(wide.UsesRegex);
-        Assert.IsTrue(wide.IsMatch(Encoding.UTF8.GetBytes("\u03C3\u03C2-\u03A3\u03C3")));
-        Assert.IsFalse(wide.IsMatch(Encoding.UTF8.GetBytes("\u03C3\u03C2-\u03A3\u03B1")));
+        Assert.IsTrue(wide.IsMatch(Encoding.UTF8.GetBytes("\u03C3\u03C2-\u03A3\u03C3"), knownUtf8: false));
+        Assert.IsFalse(wide.IsMatch(Encoding.UTF8.GetBytes("\u03C3\u03C2-\u03A3\u03B1"), knownUtf8: false));
     }
 
     /// <summary>
@@ -360,8 +360,8 @@ public class PatternMatcherTests
 
         PatternMatcher matcher = PatternMatcher.Create("^(?:a|b)+$", options);
         Assert.IsNull(matcher.EcmaExpression);
-        Assert.IsTrue(matcher.IsMatch("provided"u8));
-        Assert.IsFalse(matcher.IsMatch("ab"u8));
+        Assert.IsTrue(matcher.IsMatch("provided"u8, knownUtf8: false));
+        Assert.IsFalse(matcher.IsMatch("ab"u8, knownUtf8: false));
     }
 
     /// <summary>
@@ -387,7 +387,7 @@ public class PatternMatcherTests
         PatternMatcher compiled = PatternMatcher.Create("^(?:a|b)+$", options, JsonSchemaDialect.Draft202012);
         Assert.AreNotSame(given, compiled.EcmaExpression);
         Assert.AreEqual(Corvus.Ecma262.RegularExpressions.RegexEdition.Es2020, compiled.EcmaExpression!.Edition);
-        Assert.IsTrue(compiled.IsMatch("abba"u8));
+        Assert.IsTrue(compiled.IsMatch("abba"u8, knownUtf8: false));
     }
 
     /// <summary>
@@ -412,11 +412,11 @@ public class PatternMatcherTests
         }
         else
         {
-            Assert.IsTrue(PatternMatcher.Create("^(?i:ab)c$", options, dialect).IsMatch("ABc"u8));
+            Assert.IsTrue(PatternMatcher.Create("^(?i:ab)c$", options, dialect).IsMatch("ABc"u8, knownUtf8: false));
         }
 
         var current = new JsonSchemaEvaluatorOptions { RegexEdition = Corvus.Ecma262.RegularExpressions.RegexEdition.Current };
-        Assert.IsTrue(PatternMatcher.Create("^(?i:ab)c$", current, dialect).IsMatch("ABc"u8));
+        Assert.IsTrue(PatternMatcher.Create("^(?i:ab)c$", current, dialect).IsMatch("ABc"u8, knownUtf8: false));
     }
 
     /// <summary>
@@ -430,7 +430,7 @@ public class PatternMatcherTests
         PatternMatcher matcher = PatternMatcher.Create(@"^(?:(a)|b)*\1c$", options);
         Assert.IsNotNull(matcher.EcmaExpression);
         byte[] text = Encoding.UTF8.GetBytes(new string('a', 1_000_000));
-        System.Text.RegularExpressions.RegexMatchTimeoutException thrown = Assert.ThrowsExactly<System.Text.RegularExpressions.RegexMatchTimeoutException>(() => matcher.IsMatch(text));
+        System.Text.RegularExpressions.RegexMatchTimeoutException thrown = Assert.ThrowsExactly<System.Text.RegularExpressions.RegexMatchTimeoutException>(() => matcher.IsMatch(text, knownUtf8: false));
         Assert.AreEqual(@"^(?:(a)|b)*\1c$", thrown.Pattern);
     }
 
@@ -684,7 +684,7 @@ public class PatternMatcherTests
             {
                 foreach (string text in texts)
                 {
-                    if (matcher.IsMatch(Encoding.UTF8.GetBytes(text)) != expected)
+                    if (matcher.IsMatch(Encoding.UTF8.GetBytes(text), knownUtf8: false) != expected)
                     {
                         wrong.Add($"matcher: {pattern} on \"{text}\", want {expected}");
                     }

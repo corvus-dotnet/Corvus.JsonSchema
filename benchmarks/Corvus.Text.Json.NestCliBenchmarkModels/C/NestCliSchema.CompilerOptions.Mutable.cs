@@ -907,6 +907,76 @@ public readonly partial struct NestCliSchema
                 return result;
             }
 
+            /// <summary>
+            /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+            /// as its value, and then does the same inside each property whose own type has properties.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// This changes the data. Reading an absent property already gives its default without it; this method writes
+            /// the defaults into the document as additional properties, so that they are there when the document is sent
+            /// to a system that does not apply the schema's defaults itself.
+            /// </para>
+            /// <para>
+            /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+            /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+            /// as it is.
+            /// </para>
+            /// </remarks>
+            public void ApplyDefaults()
+            {
+                CheckValidInstance();
+                if (ValueKind != JsonValueKind.Object)
+                {
+                    return;
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AssetsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetAssets(Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.AssetsOptionsArray.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DeleteOutDirUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetDeleteOutDir(Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.DeleteOutDirEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ManualRestartUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetManualRestart(Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.ManualRestartEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PluginsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetPlugins(Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.PluginItemsArray.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TsConfigPathUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetTsConfigPath(Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TsConfigPathEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TypeCheckUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetTypeCheck(Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TypeCheckEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WatchAssetsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetWatchAssets(Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WatchAssetsEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WebpackUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetWebpack(Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WebpackConfigPathUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetWebpackConfigPath(Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackConfigPathEntity.DefaultInstance);
+                }
+            }
+
             /// <inheritdoc/>
             public void WriteTo(Utf8JsonWriter writer)
             {

@@ -313,6 +313,12 @@ public readonly partial struct Draft04Schema
         public SimpleTypes Clone()
         {
             CheckValidInstance();
+            if (!_parent.IsDisposable)
+            {
+                // Already a clone, or backed by a document that is never disposed.
+                return this;
+            }
+
             return _parent.CloneElement<SimpleTypes>(_idx);
         }
 

@@ -1,0 +1,23 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["name"],
+    "properties": {
+        "name": { "type": "string" },
+        "retries": { "type": "integer", "format": "int32", "default": 3 },
+        "settings": {
+            "type": "object",
+            "default": {},
+            "properties": {
+                "port": { "type": "integer", "format": "int32", "default": 502 },
+                "host": { "type": "string", "default": "localhost" }
+            }
+        },
+        "limits": {
+            "type": "object",
+            "properties": {
+                "max": { "type": "integer", "format": "int32", "default": 10 }
+            }
+        }
+    }
+}

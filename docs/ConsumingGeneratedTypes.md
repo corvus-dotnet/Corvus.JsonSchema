@@ -37,6 +37,25 @@ DateTimeOffset when = element.GetDateTimeOffset();
 To read a string value's bytes without allocating a managed `string`, use `element.GetUtf8String()` (see the UTF-8
 section of [Performance Techniques](./PerformanceTechniques.md)).
 
+### Arrays
+
+`EnumerateArray()` gives the items of any array-valued type. A **pure array** type, one whose only type is `array`
+and which is not a tuple (`prefixItems`), is also an `IReadOnlyCollection<T>` of its item type, so it can be handed
+to an API that takes a collection, and `foreach` works on the value itself:
+
+```csharp
+foreach (Order.LineItem item in order.LineItems)
+{
+    // ...
+}
+
+int count = order.LineItems.Count();          // LINQ, through IReadOnlyCollection<Order.LineItem>
+IReadOnlyCollection<Order.LineItem> all = order.LineItems;
+```
+
+`foreach` over the value uses its own enumerator and does not allocate. LINQ and the interface box the value and its
+enumerator, as they do for any struct.
+
 ### Discriminated unions: `Match`, or a `switch`
 
 A `oneOf` schema generates a union. Read it with the generated `Match<TResult>(...)` (or the `IsX` / `AsX`
@@ -93,6 +112,28 @@ if (parent.Child.ValueKind == JsonValueKind.Object)
 If a property declares a non-null `default` in its schema, the generated getter returns that default when the
 property is absent. So express a server-assigned or optional-with-a-default value in the schema rather than
 hand-writing a null guard at every call site; the generated type carries the default for you.
+
+The getter does not change the document: an absent property stays absent, and a system that reads the JSON
+without the schema does not see the default.
+
+### Writing the defaults into the document: `ApplyDefaults()`
+
+When the JSON goes to a system that does not apply the schema's defaults itself, call `ApplyDefaults()` on the
+mutable element. It **adds additional properties to the document**: each property that is absent and has a
+`default` in the schema is added, with the schema's default as its value. It then does the same inside each
+property whose type has properties of its own, including an object it has just added from a default.
+
+```csharp
+using JsonDocumentBuilder<Order.Mutable> builder = order.CreateBuilder(workspace);
+builder.RootElement.ApplyDefaults();
+
+// The document now holds the defaulted properties, ready to send upstream.
+string json = builder.RootElement.ToString();
+```
+
+A property that is present keeps its value, and a property with no `default` is not added. The items of arrays
+are not visited, and the result is not validated: a default that does not satisfy its schema is written as it
+is. Calling it again changes nothing.
 
 ## Building a value: convert and construct, never compose-then-parse
 

@@ -26,11 +26,13 @@ public readonly partial struct CmakePresetsSchema
     public readonly partial struct ConfigurePresetsItemsV3
 #if NET8_0_OR_GREATER
         : IJsonElement<ConfigurePresetsItemsV3>,
+          global::System.Collections.Generic.IReadOnlyCollection<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV3.AConfigurePresetObject>,
           IFormattable,
           ISpanFormattable,
           IUtf8SpanFormattable
 #else
         : IJsonElement<ConfigurePresetsItemsV3>,
+          global::System.Collections.Generic.IReadOnlyCollection<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV3.AConfigurePresetObject>,
           IFormattable
 #endif
     {
@@ -79,6 +81,21 @@ public readonly partial struct CmakePresetsSchema
             CheckValidInstance();
             return EnumeratorCreator.CreateArrayEnumerator<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV3.AConfigurePresetObject>(_parent, _idx);
         }
+
+        /// <summary>
+        /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+        /// </summary>
+        /// <returns>The enumerator.</returns>
+        public ArrayEnumerator<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV3.AConfigurePresetObject> GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        global::System.Collections.Generic.IEnumerator<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV3.AConfigurePresetObject> global::System.Collections.Generic.IEnumerable<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV3.AConfigurePresetObject>.GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        int global::System.Collections.Generic.IReadOnlyCollection<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV3.AConfigurePresetObject>.Count => GetArrayLength();
 
         /// <inheritdoc/>
         public JsonValueKind ValueKind => TokenType.ToValueKind();
@@ -293,6 +310,12 @@ public readonly partial struct CmakePresetsSchema
         public ConfigurePresetsItemsV3 Clone()
         {
             CheckValidInstance();
+            if (!_parent.IsDisposable)
+            {
+                // Already a clone, or backed by a document that is never disposed.
+                return this;
+            }
+
             return _parent.CloneElement<ConfigurePresetsItemsV3>(_idx);
         }
 

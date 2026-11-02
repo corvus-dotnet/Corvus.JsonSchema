@@ -1763,6 +1763,86 @@ public readonly partial struct PreCommitHooksSchema
                 return result;
             }
 
+            /// <summary>
+            /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+            /// as its value, and then does the same inside each property whose own type has properties.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// This changes the data. Reading an absent property already gives its default without it; this method writes
+            /// the defaults into the document as additional properties, so that they are there when the document is sent
+            /// to a system that does not apply the schema's defaults itself.
+            /// </para>
+            /// <para>
+            /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+            /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+            /// as it is.
+            /// </para>
+            /// </remarks>
+            public void ApplyDefaults()
+            {
+                CheckValidInstance();
+                if (ValueKind != JsonValueKind.Object)
+                {
+                    return;
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AlwaysRunUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetAlwaysRun(Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.AlwaysRunEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ArgsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetArgs(Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalLiArray.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DescriptionUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetDescription(Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.DescriptionEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExcludeUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetExclude(Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalExcludeFilesThatWereMatchedByFiles.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FailFastUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetFailFast(Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.FailFastEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FilesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetFiles(Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalThePatternOfFilesToRunOn.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LanguageVersionUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetLanguageVersion(Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.LanguageVersionEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MinimumPreCommitVersionUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetMinimumPreCommitVersion(Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.MinimumPreCommitVersionEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PassFilenamesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetPassFilenames(Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalIfFalseNoFilenamesWillBePassedToTheHook.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RequireSerialUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetRequireSerial(Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.RequireSerialEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VerboseUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetVerbose(Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.VerboseEntity.DefaultInstance);
+                }
+            }
+
             /// <inheritdoc/>
             public void WriteTo(Utf8JsonWriter writer)
             {

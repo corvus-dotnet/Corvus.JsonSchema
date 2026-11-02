@@ -343,6 +343,12 @@ public readonly partial struct StylecopSchema
                     public AllowedHungarianPrefixesEntity Clone()
                     {
                         CheckValidInstance();
+                        if (!_parent.IsDisposable)
+                        {
+                            // Already a clone, or backed by a document that is never disposed.
+                            return this;
+                        }
+
                         return _parent.CloneElement<AllowedHungarianPrefixesEntity>(_idx);
                     }
 

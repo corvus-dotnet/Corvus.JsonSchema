@@ -73,6 +73,7 @@ public static class Formatting
         "_parent",
         "_idx",
         "_documentVersion",
+        "ApplyDefaults",
         "ArrayBuilder",
         "AsJsonElement",
         "Assert",

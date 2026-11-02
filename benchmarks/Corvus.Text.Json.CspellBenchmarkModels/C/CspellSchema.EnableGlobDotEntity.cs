@@ -317,6 +317,12 @@ public readonly partial struct CspellSchema
         public EnableGlobDotEntity Clone()
         {
             CheckValidInstance();
+            if (!_parent.IsDisposable)
+            {
+                // Already a clone, or backed by a document that is never disposed.
+                return this;
+            }
+
             return _parent.CloneElement<EnableGlobDotEntity>(_idx);
         }
 

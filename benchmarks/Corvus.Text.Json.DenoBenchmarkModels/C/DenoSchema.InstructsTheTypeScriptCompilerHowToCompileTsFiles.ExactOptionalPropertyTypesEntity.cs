@@ -316,6 +316,12 @@ public readonly partial struct DenoSchema
             public ExactOptionalPropertyTypesEntity Clone()
             {
                 CheckValidInstance();
+                if (!_parent.IsDisposable)
+                {
+                    // Already a clone, or backed by a document that is never disposed.
+                    return this;
+                }
+
                 return _parent.CloneElement<ExactOptionalPropertyTypesEntity>(_idx);
             }
 

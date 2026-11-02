@@ -318,6 +318,12 @@ public readonly partial struct Ui5ManifestSchema
                 public AllowAddingObjectsFromAppScreenToCollectionEntity Clone()
                 {
                     CheckValidInstance();
+                    if (!_parent.IsDisposable)
+                    {
+                        // Already a clone, or backed by a document that is never disposed.
+                        return this;
+                    }
+
                     return _parent.CloneElement<AllowAddingObjectsFromAppScreenToCollectionEntity>(_idx);
                 }
 

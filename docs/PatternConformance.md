@@ -17,14 +17,15 @@ refuses, how each limits a match, and where a port still differs from ECMA-262. 
   error unless the two groups are in separate alternatives. `\p{WSpace}` is not a property name ECMA-262 lists.
   `Katakana_Or_Hiragana` is a Script value that no character has. The properties are those of Unicode 17.
 - **Limits.** A schema and an instance can both come from outside, so a pattern has limits of size, refused as too
-  large when the schema is compiled and never as not valid, and a match has a limit of time, 1 second by default.
+  large when the schema is compiled and never as not valid, and a match has a limit of time, 1 second by default (in
+  .NET generated code, the limit the generator is given).
 
 ## The ports
 
 | Port | How a pattern is matched | What is refused that is valid ECMA-262 | The limit of a match | Match-limit hits on the dataset |
 |---|---|---|---|---|
-| .NET (V5) | [Corvus.Regex.Ecma262](https://corvus-oss.org/Corvus.Regex.Ecma262/), its own ECMA-262 engine over UTF-8, and the evaluator's own matchers for a few shapes where they are faster. Generated code carries the library's compiled matchers. With `--regexEngine DotNet`, generated code holds .NET `Regex` through a translation from the parse tree | Nothing, apart from the library's limits of size | `RegexMatchTimeout`, 1 second, which throws .NET's `RegexMatchTimeoutException`, and the library's cap on backtracking memory | 0 |
-| .NET (V4 generated code) | Corvus.Regex.Ecma262's compiled matchers, as V5 generated code. With `--regexEngine DotNet`, .NET `Regex` through the same translation | Nothing, apart from the limits of size | A match timeout of 1 second in the generated code, which throws .NET's `RegexMatchTimeoutException` | 0 |
+| .NET (V5) | [Corvus.Regex.Ecma262](https://corvus-oss.org/Corvus.Regex.Ecma262/), its own ECMA-262 engine over UTF-8, and the evaluator's own matchers for a few shapes where they are faster. Generated code carries the library's compiled matchers. With `--regexEngine DotNet`, generated code holds .NET `Regex` through a translation from the parse tree | Nothing, apart from the library's limits of size | `RegexMatchTimeout`, 1 second by default, which throws .NET's `RegexMatchTimeoutException`, and the library's cap on backtracking memory. Generated code takes the limit the generator is given (`--regexMatchTimeout`, `CorvusTextJsonRegexMatchTimeout`), or none (-1) | 0 |
+| .NET (V4 generated code) | Corvus.Regex.Ecma262's compiled matchers, as V5 generated code. With `--regexEngine DotNet`, .NET `Regex` through the same translation | Nothing, apart from the limits of size | A match timeout of 1 second by default in the generated code, which throws .NET's `RegexMatchTimeoutException`. The generator sets another (`--regexMatchTimeout`, `CorvusJsonSchemaRegexMatchTimeout`), or none (-1) | 0 |
 | Rust, and the C library, C++, Python (Rust-backed), Ruby, PHP, R, Swift, Fortran and Perl (XS) built on it | Its own ECMA-262 engine, and the `regex` crate for patterns it proves linear | Nothing, apart from the limits of size | 1 second, as an error | 0 |
 | Go | Its own ECMA-262 engine, and the standard library's `regexp` for patterns it proves linear | Nothing, apart from the limits of size | 1 second, as an error | 0 |
 | Object Pascal | Its own ECMA-262 engine | Nothing, apart from the limits of size | 1 second, as an exception | 0 |
@@ -52,13 +53,19 @@ answers. Each is a decision recorded here, with an issue where there is work to 
 - **Draft 2019-09 and draft 2020-12 read the grammar of ECMAScript 2020,** the edition they cite, so a modifier group
   such as `(?i:a)` or a duplicate group name is refused under them, as today's grammar accepts it under the other
   dialects. `RegexEdition` (and the generators' `--regexEdition`) chooses another.
-- **A JSON string with a lone surrogate throws.** The parser accepts an instance string that holds the escape of half
-  of a surrogate pair, such as `"\ud800"`, and `pattern`, `minLength` and `maxLength` then throw
-  `InvalidOperationException` (in V4 generated code too). Every other port refuses such a document when it parses
-  it, or reports it as not valid. The 46,438 texts of the dataset's `lone-surrogates.jsonl` all throw
+- **A string that is not well-formed text is not valid against a keyword that reads it.** The parser accepts an
+  instance string that holds the escape of half of a surrogate pair, such as `"\ud800"`, or bytes that are not
+  UTF-8. Such text is checked only when a keyword reads it. A keyword that reads its characters (`pattern`,
+  `minLength`, `maxLength`, an asserted `format` or `contentMediaType`, and the same keywords applied to a property's
+  name) reports it as not valid, so a lone surrogate never matches a pattern. A keyword that compares it (`const`,
+  `enum`, `uniqueItems`, and the names of `properties`) finds it equal only to the same text. Nothing throws. Text
+  the parser found all ASCII is not checked again, and other text is checked once by a keyword that reads its
+  characters. Most other ports refuse such a document when they parse it. Of the 68,770 texts of the dataset's
+  `lone-surrogates.jsonl`, none throws, and the 11,517 that V8 matches are reported as not valid, where the ports
+  that refuse them at parse give no answer (run on 2026-11-02). In V4 generated code, a keyword that reads such a
+  string reports the value as not valid too, and a keyword that looks up a property by name can report an object
+  with such a name as not valid, because System.Text.Json unescapes the names it compares
   ([#1021](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1021)).
-- **`idn-email` has a limit of 320 bytes on the whole address.** The Rust crate has no limit on the address as a
-  whole. The host name of the address has the limit of 253 characters as A-labels in both ([#1029](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1029)).
 - **.NET Framework and a large count, with the DotNet engine.** .NET Framework's `Regex` makes a string of the count
   of a repetition of one character when it is constructed, so `^a{100000000}$` costs some 200 MB there, and a count
   no string can reach is written as a part that never matches. .NET does neither, and nor does Corvus.Regex.Ecma262.
@@ -97,5 +104,5 @@ answers. Each is a decision recorded here, with an issue where there is work to 
 
 - **No limit of a match.** A `RegExp` match cannot be interrupted, so a pattern that backtracks without end, on a
   text made for it, does not return. The answers are those of the host engine, which are V8's on Node and in Chrome.
-  A port of the ECMA-262 engine, which would give a limit and the same answers on every host, is to follow
-  ([#1026](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1026)).
+  This is a decision: `pattern` and `patternProperties` stay with the host's `RegExp`, and a port of the ECMA-262
+  engine to TypeScript is not planned ([#1026](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1026)).

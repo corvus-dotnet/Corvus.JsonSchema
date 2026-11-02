@@ -1475,6 +1475,110 @@ public readonly partial struct LazygitSchema
                 return result;
             }
 
+            /// <summary>
+            /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+            /// as its value, and then does the same inside each property whose own type has properties.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// This changes the data. Reading an absent property already gives its default without it; this method writes
+            /// the defaults into the document as additional properties, so that they are there when the document is sent
+            /// to a system that does not apply the schema's defaults itself.
+            /// </para>
+            /// <para>
+            /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+            /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+            /// as it is.
+            /// </para>
+            /// </remarks>
+            public void ApplyDefaults()
+            {
+                CheckValidInstance();
+                if (ValueKind != JsonValueKind.Object)
+                {
+                    return;
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AllBranchesLogCmdValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetAllBranchesLogCmdValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AutoFetchValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetAutoFetchValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AutoRefreshValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetAutoRefreshValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BranchLogCmdValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetBranchLogCmdValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DiffContextSizeValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetDiffContextSizeValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DisableForcePushingValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetDisableForcePushingValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FetchAllValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetFetchAllValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MainBranchesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetMainBranches(Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OverrideGpgValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetOverrideGpgValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ParseEmojiValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetParseEmojiValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SkipHookPrefixValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSkipHookPrefixValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.DefaultInstance);
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CommitValueUtf8, out Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Mutable __corvusCommitValue))
+                {
+                    __corvusCommitValue.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LogValueUtf8, out Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Mutable __corvusLogValue))
+                {
+                    __corvusLogValue.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MergingValueUtf8, out Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Mutable __corvusMergingValue))
+                {
+                    __corvusMergingValue.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PagingValueUtf8, out Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Mutable __corvusPagingValue))
+                {
+                    __corvusPagingValue.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+            }
+
             /// <inheritdoc/>
             public void WriteTo(Utf8JsonWriter writer)
             {

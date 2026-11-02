@@ -405,6 +405,12 @@ public readonly partial struct GeoJsonSchema
                         public GeoJsonGeometryCollection Clone()
                         {
                             CheckValidInstance();
+                            if (!_parent.IsDisposable)
+                            {
+                                // Already a clone, or backed by a document that is never disposed.
+                                return this;
+                            }
+
                             return _parent.CloneElement<GeoJsonGeometryCollection>(_idx);
                         }
 
