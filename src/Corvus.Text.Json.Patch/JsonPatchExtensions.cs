@@ -49,6 +49,54 @@ public static class JsonPatchExtensions
     }
 
     /// <summary>
+    /// Validates an RFC 6902 JSON Patch document against its schema, and if valid,
+    /// tries to apply it to a mutable element of a generated type.
+    /// </summary>
+    /// <typeparam name="T">The generated mutable type (for example <c>MySchema.Mutable</c>).</typeparam>
+    /// <param name="target">The mutable element to patch. On return it refers to the patched value.</param>
+    /// <param name="patch">The patch document to validate and apply.</param>
+    /// <returns><see langword="true"/> if the patch document is valid and all operations
+    /// were applied successfully; otherwise, <see langword="false"/>.</returns>
+    /// <remarks>
+    /// The patch is applied to the element's document as <see cref="TryValidateAndApplyPatch(ref JsonElement.Mutable, in JsonPatchDocument)"/>
+    /// applies it. The result is not validated against the schema of <typeparamref name="T"/>; call
+    /// <c>EvaluateSchema()</c> on it for that.
+    /// </remarks>
+    public static bool TryValidateAndApplyPatch<T>(this ref T target, in JsonPatchDocument patch)
+        where T : struct, IMutableJsonElement<T>
+    {
+        if (!patch.EvaluateSchema())
+        {
+            return false;
+        }
+
+        return TryApplyPatch(ref target, in patch);
+    }
+
+    /// <summary>
+    /// Tries to apply an RFC 6902 JSON Patch document to a mutable element of a generated type.
+    /// </summary>
+    /// <typeparam name="T">The generated mutable type (for example <c>MySchema.Mutable</c>).</typeparam>
+    /// <param name="target">The mutable element to patch. On return it refers to the patched value.</param>
+    /// <param name="patch">The patch document to apply.</param>
+    /// <returns><see langword="true"/> if all operations were applied successfully; otherwise, <see langword="false"/>.</returns>
+    /// <remarks>
+    /// The patch is applied to the element's document as <see cref="TryApplyPatch(ref JsonElement.Mutable, in JsonPatchDocument)"/>
+    /// applies it, with the same assumption that the patch document is valid. The result is not validated against
+    /// the schema of <typeparamref name="T"/>; call <c>EvaluateSchema()</c> on it for that.
+    /// </remarks>
+    public static bool TryApplyPatch<T>(this ref T target, in JsonPatchDocument patch)
+        where T : struct, IMutableJsonElement<T>
+    {
+        JsonElement.Mutable element = JsonElement.Mutable.From(in target);
+        bool applied = TryApplyPatch(ref element, in patch);
+
+        // A patch at the root can replace the value, so the element is made again from where the patch left it.
+        target = Rewrap<T, JsonElement.Mutable>(in element);
+        return applied;
+    }
+
+    /// <summary>
     /// Tries to apply an RFC 6902 JSON Patch document to a mutable JSON element.
     /// </summary>
     /// <param name="target">The mutable root element to patch.</param>
@@ -1216,7 +1264,7 @@ public static class JsonPatchExtensions
         mutableDoc.ReplaceRootAndDispose(ref cvb);
 
         // Re-acquire the root element after replacement.
-        target = ((JsonDocumentBuilder<JsonElement.Mutable>)mutableDoc).RootElement;
+        target = RootOf(mutableDoc);
     }
 
     private static bool IsAppendToken(ReadOnlySpan<byte> segment)
@@ -1284,5 +1332,34 @@ public static class JsonPatchExtensions
             }
         }
 #endif
+    }
+
+    private static T Rewrap<T, TSource>(in TSource source)
+        where T : struct, IJsonElement<T>
+        where TSource : struct, IJsonElement
+    {
+        // The constraint reads the explicitly implemented members without boxing.
+#if NET
+        return T.CreateInstance(source.ParentDocument, source.ParentDocumentIndex);
+#else
+        return JsonElementHelpers.CreateInstance<T>(source.ParentDocument, source.ParentDocumentIndex);
+#endif
+    }
+
+    private static JsonElement.Mutable RootOf(IMutableJsonDocument document)
+    {
+        // The root of a builder is its first row, whatever the type of its root element (a generated type's builder
+        // is not a JsonDocumentBuilder<JsonElement.Mutable>).
+        return CreateRoot<JsonElement.Mutable>(document);
+
+        static T CreateRoot<T>(IMutableJsonDocument document)
+            where T : struct, IJsonElement<T>
+        {
+#if NET
+            return T.CreateInstance(document, 0);
+#else
+            return JsonElementHelpers.CreateInstance<T>(document, 0);
+#endif
+        }
     }
 }

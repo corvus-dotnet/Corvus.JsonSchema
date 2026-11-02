@@ -86,6 +86,19 @@ bool success = root.TryApplyPatch(patch);
 
 > **Note:** If an operation fails partway through, earlier operations in the patch will already have been applied. The document is left in a partially-patched state. If you need atomic all-or-nothing semantics, take a snapshot before applying (see [JsonDocumentBuilder](JsonDocumentBuilder.md) for snapshot/restore).
 
+### Patching a generated type
+
+`TryApplyPatch` and `TryValidateAndApplyPatch` also take the mutable element of a generated type. The element refers to the patched value afterwards, even when the patch replaces the root:
+
+```csharp
+using JsonDocumentBuilder<Person.Mutable> builder = person.CreateBuilder(workspace);
+Person.Mutable root = builder.RootElement;
+
+bool success = root.TryValidateAndApplyPatch(parsedPatch);
+```
+
+The result is not validated against the type's schema. Call `EvaluateSchema()` on it for that.
+
 ## Building Patches with PatchBuilder
 
 The `PatchBuilder` provides a fluent API for constructing patch documents programmatically. Create one by calling `BeginPatch(workspace)` on any mutable element, chain operations, then call `GetPatchAndDispose()` to finalize:
