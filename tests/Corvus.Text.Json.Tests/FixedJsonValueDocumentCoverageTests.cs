@@ -1341,4 +1341,56 @@ public class FixedJsonValueDocumentCoverageTests
         Assert.IsTrue(fixedDoc.RootElement.Equals(parsed.RootElement));
         Assert.IsTrue(parsed.RootElement.Equals(fixedDoc.RootElement));
     }
+
+    // https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1045
+    // A builder that takes a fixed string must know its text carries escapes, or it writes them out escaped again.
+    [TestMethod]
+    [DataRow("\"say \\\"hi\\\"\"", "say \"hi\"")]
+    [DataRow("\"C:\\\\temp\"", "C:\\temp")]
+    [DataRow("\"line1\\nline2\"", "line1\nline2")]
+    [DataRow("\"\\u00F8\"", "\u00F8")]
+    [DataRow("\"plain\"", "plain")]
+    public void AnEscapedFixedString_KeepsItsValue_WhenAddedToABuilder(string quotedText, string expected)
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement value = RegisteredFixedString(workspace, quotedText);
+
+        using var builder = JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, """{"items":[0]}""");
+        builder.RootElement.SetProperty("x", value);
+        Assert.IsTrue(builder.RootElement.TryGetProperty("items", out JsonElement.Mutable items));
+        items.AddItem(value);
+        items.SetItem(0, value);
+
+        Assert.IsTrue(builder.RootElement.TryGetProperty("x", out JsonElement.Mutable x));
+        Assert.AreEqual(expected, x.GetString());
+        Assert.AreEqual(expected, items[0].GetString());
+        Assert.AreEqual(expected, items[1].GetString());
+
+        using System.Text.Json.JsonDocument written = System.Text.Json.JsonDocument.Parse(builder.RootElement.ToString());
+        Assert.AreEqual(expected, written.RootElement.GetProperty("x").GetString());
+        Assert.AreEqual(expected, written.RootElement.GetProperty("items")[0].GetString());
+        Assert.AreEqual(expected, written.RootElement.GetProperty("items")[1].GetString());
+    }
+
+    [TestMethod]
+    [DataRow("\"say \\\"hi\\\"\"", "say \"hi\"")]
+    [DataRow("\"\\u00F8\"", "\u00F8")]
+    public void AnEscapedFixedString_KeepsItsValue_InABuilderMadeFromIt(string quotedText, string expected)
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement value = RegisteredFixedString(workspace, quotedText);
+
+        using JsonDocumentBuilder<JsonElement.Mutable> builder = value.CreateBuilder(workspace);
+
+        Assert.AreEqual(expected, builder.RootElement.GetString());
+        using System.Text.Json.JsonDocument written = System.Text.Json.JsonDocument.Parse(builder.RootElement.GetRawText());
+        Assert.AreEqual(expected, written.RootElement.GetString());
+    }
+
+    private static JsonElement RegisteredFixedString(JsonWorkspace workspace, string quotedText)
+    {
+        FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForStringFromSpan(Encoding.UTF8.GetBytes(quotedText));
+        workspace.RegisterDocument(doc);
+        return doc.RootElement;
+    }
 }
