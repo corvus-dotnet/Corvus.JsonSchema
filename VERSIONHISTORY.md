@@ -1,5 +1,30 @@
 # Version History
 
+## V5.8.2
+
+V5.8.2 stops validation throwing on a string that is not well-formed text, lets a generation set the match limit of its regular expressions, and gives generated types `ApplyDefaults()`, read-only collections for arrays and JSON Patch support. It also fixes a number of smaller issues from the backlog.
+
+### Bug fixes
+
+- **A string that is not well-formed text is not valid, and never makes validation throw.** The parser accepts a string that holds the escape of half of a surrogate pair, such as `"\ud800"`, or bytes that are not UTF-8, and such text is checked only when it is read, so documents that are never read pay nothing. `pattern`, `minLength`, `maxLength`, `enum`, `const`, an asserted `format` and the keywords applied to property names threw `InvalidOperationException` for it, in the runtime evaluator, in V5 generated types and in V4 generated code. A keyword that reads the string's characters now reports it as not valid, so a lone surrogate never matches a pattern. A keyword that compares it (`const`, `enum`, `uniqueItems`, property names) finds it equal only to the same text, and `JsonElement` equality does the same rather than throwing. Text the parser found all ASCII is not checked again. Other text is checked once, with a vectorised UTF-8 check, by a keyword that reads its characters. In V4 generated code a keyword that looks up a property by name can report an object with such a name as not valid, because System.Text.Json unescapes the names it compares. A debug assertion that fired when an escaped string was compared with a shorter one is corrected. See [#1021](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1021).
+- **Generated `Clone()` returns the instance when it is already a clone,** as its documentation says. It copied every time. See [#927](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/927).
+- **The V4 source generator tools give each file a hint name that carries a hash of its namespace,** so a generator that generates more than once no longer fails on two types of the same name in different namespaces. `Foo.g.cs` becomes `Foo.1a2b3c4d.g.cs`. See [#651](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/651).
+- **`email` and `idn-email` have no limit on the local part or on the whole address,** as in the other ports. The only limit is the domain's. See [#1029](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1029).
+- **JSON Patch and JSON Merge Patch can replace the root of a generated type's document.** Replacing the root threw `InvalidCastException` when the builder was not a `JsonDocumentBuilder<JsonElement.Mutable>`.
+- **`corvusjson jsonschema --help` renders again.** The description of `--nativeEnums` was read as markup.
+
+### New features
+
+- **The code generators set the match limit of the regular expressions they write.** `--regexMatchTimeout` (CLI), `regexMatchTimeout` (`generator-config.json`), `CorvusTextJsonRegexMatchTimeout` (V5 source generator) and `CorvusJsonSchemaRegexMatchTimeout` (V4 source generator) take a positive number of milliseconds, or -1 for none. The default stays 1,000. See [#1022](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1022).
+- **Generated mutable types have `ApplyDefaults()`.** It adds each absent property that has a schema default to the document, with the default as its value, and does the same inside each property whose type has properties of its own. It changes the data, for sending to systems that do not apply the schema's defaults themselves. See [#953](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/953).
+- **JSON Patch applies to the mutable element of a generated type.** `TryApplyPatch` and `TryValidateAndApplyPatch` have generic overloads for any `MySchema.Mutable`. See [#943](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/943).
+- **Generated array types are read-only collections of their items.** A type whose only core type is array, and which is not a tuple, implements `IReadOnlyCollection<T>` of its item type, and its public `GetEnumerator()` lets `foreach` run over it without allocating on .NET (on .NET Framework it allocates what `EnumerateArray()` does). See [#1049](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1049).
+
+### Other changes
+
+- The TypeScript and Rust test suite runners check the 73 leap-second cases, and the documents say which exclusions each runner makes. See [#988](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/988) and [#987](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/987).
+- The regular expression translator pages describe where the translation is still used since V5.8.0, and the pattern conformance page records that TypeScript keeps the host's `RegExp` ([#1026](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1026)).
+
 ## V5.8.1
 
 V5.8.1 fixes a property lookup that could go stale in a `JsonDocumentBuilder`, and a JSONata string that was escaped twice when it was placed in an object or array. It also brings the JSONata implementation up to date with the official test suite and fixes the cases where it answered differently.
