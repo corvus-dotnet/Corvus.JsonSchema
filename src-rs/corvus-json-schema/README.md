@@ -183,9 +183,9 @@ cargo test
 This runs:
 - **`tests/suite.rs`:** the full [JSON-Schema-Test-Suite](https://github.com/json-schema-org/JSON-Schema-Test-Suite)
   from the repository's submodule, covering required and optional tests plus `optional/format` with format asserted.
-  Every case runs fail-fast and through a collector at each level, and the verdicts must agree. Exclusions match the
-  C# runner: `draft4/optional/zeroTerminatedFloats.json` and leap seconds in the format run. Use `SUITE_DRAFT` and
-  `SUITE_FILTER` to narrow the run.
+  Every case runs fail-fast and through a collector at each level, and the verdicts must agree. The one exclusion is
+  `draft4/optional/zeroTerminatedFloats.json`, and no failure is ignored: the 7,966 other cases all pass, the
+  leap-second cases of the format run among them. Use `SUITE_DRAFT` and `SUITE_FILTER` to narrow the run.
 - **`tests/annotations.rs`:** the suite's annotation tests.
 - **`tests/results.rs`:** the results-collection expectations shared with the C# and TypeScript evaluators.
 - **`tests/metaschemas.rs`:** checks that `src/metaschemas.rs` matches `src/Corvus.Text.Json/metaschema`.

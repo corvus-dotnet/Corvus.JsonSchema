@@ -6,8 +6,8 @@ Corvus.Text.Json V5 standalone evaluator (`Corvus.Text.Json.RuntimeEvaluator`, s
 validates parsed JSON values (`JSON.parse` output) against it.
 
 - **Conformant**: passes all 7,966 tests of the JSON-Schema-Test-Suite (required, optional and `optional/format`,
-  every draft), with the same single exclusion as the C# runner (`draft4/optional/zeroTerminatedFloats.json`, which
-  `JSON.parse` cannot express).
+  every draft), with one exclusion (`draft4/optional/zeroTerminatedFloats.json`, whose `1.0` `JSON.parse` reads as
+  `1`) and no failure ignored.
 - **Fast**: see [Performance](#performance).
 - **Results and annotations**: evaluate with a results collector at the Basic, Detailed or Verbose level for the
   same rows (locations, messages, order) as the C# `JsonSchemaResultsCollector`, and annotations as
