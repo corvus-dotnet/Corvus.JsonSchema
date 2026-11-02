@@ -103,7 +103,10 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, IStreamingL
     internal const string ProgramClassName = "CorvusJsonSchemaProgram";
 
     /// <summary>Gets the regular expressions of this generation, each written once (see <see cref="SharedRegularExpressions"/>).</summary>
-    internal SharedRegularExpressions SharedRegularExpressions => this.sharedRegularExpressions ??= new(options.DefaultNamespace);
+    internal SharedRegularExpressions SharedRegularExpressions => this.sharedRegularExpressions ??= new(options.DefaultNamespace, options.RegexMatchTimeoutMilliseconds);
+
+    /// <summary>Gets the limit, in milliseconds, on one match of a regular expression of the generated code, or -1 for none.</summary>
+    internal int RegexMatchTimeoutMilliseconds => options.RegexMatchTimeoutMilliseconds;
 
     /// <summary>Gets the fully qualified reference to the program class for use in generated code.</summary>
     internal string ProgramClassReference => options.DefaultNamespace.Length == 0 ? "global::" + ProgramClassName : "global::" + options.DefaultNamespace + "." + ProgramClassName;
@@ -511,7 +514,8 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, IStreamingL
                 image,
                 options.RegexEngine == GeneratedRegexEngine.Ecma262 ? options.RegexEdition : null,
                 options.RegexEngine == GeneratedRegexEngine.Ecma262 ? options.RegexUnicodeVersion : GeneratedRegexUnicodeVersion.Default,
-                regex => this.SharedRegularExpressions.Reference(regex.Pattern, regex.Unicode, regex.Edition, regex.UnicodeVersion)));
+                regex => this.SharedRegularExpressions.Reference(regex.Pattern, regex.Unicode, regex.Edition, regex.UnicodeVersion),
+                options.RegexMatchTimeoutMilliseconds));
         }
 
         // Last, as the types and the program have now asked for every regular expression they refer to.
@@ -1141,6 +1145,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, IStreamingL
     /// <param name="regexEngine">The engine the regular expressions of generated code are written for (see <see cref="GeneratedRegexEngine"/>). Defaults to <see cref="GeneratedRegexEngine.Ecma262"/>.</param>
     /// <param name="regexEdition">The edition of the grammar every pattern is read with, or <see langword="null"/> (the default) for the dialect's: ECMAScript 2020 for draft 2019-09 and draft 2020-12, today's for the others. For <see cref="GeneratedRegexEngine.Ecma262"/> only.</param>
     /// <param name="regexUnicodeVersion">The version of Unicode every pattern is read with. For <see cref="GeneratedRegexEngine.Ecma262"/> only.</param>
+    /// <param name="regexMatchTimeoutMilliseconds">The limit, in milliseconds, on one match of a regular expression of generated code that is not proved to match in time proportional to the text, or -1 for none. Defaults to 1,000 (1 second).</param>
     public class Options(
         string defaultNamespace,
         NamedType[]? namedTypes = null,
@@ -1165,9 +1170,15 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, IStreamingL
         bool storeFilesAsStrings = false,
         GeneratedRegexEngine regexEngine = GeneratedRegexEngine.Ecma262,
         GeneratedRegexEdition? regexEdition = null,
-        GeneratedRegexUnicodeVersion regexUnicodeVersion = GeneratedRegexUnicodeVersion.Default)
+        GeneratedRegexUnicodeVersion regexUnicodeVersion = GeneratedRegexUnicodeVersion.Default,
+        int regexMatchTimeoutMilliseconds = CodeGenerationExtensions.DefaultRegexMatchTimeoutMilliseconds)
     {
         internal bool EmitUnions { get; } = emitUnions;
+
+        /// <summary>Gets the limit, in milliseconds, on one match of a regular expression of generated code, or -1 for none.</summary>
+        internal int RegexMatchTimeoutMilliseconds { get; } = regexMatchTimeoutMilliseconds == global::System.Threading.Timeout.Infinite || regexMatchTimeoutMilliseconds > 0
+            ? regexMatchTimeoutMilliseconds
+            : throw new ArgumentOutOfRangeException(nameof(regexMatchTimeoutMilliseconds), regexMatchTimeoutMilliseconds, "The match timeout is a positive number of milliseconds, or -1 for none.");
 
         /// <summary>Gets the engine the regular expressions of generated code are written for.</summary>
         internal GeneratedRegexEngine RegexEngine { get; } = regexEngine;

@@ -795,17 +795,17 @@ main-docs:
       - {index: 1, language: bash, lines: [19, 22]}
       - {index: 2, language: bash, lines: [30, 34]}
       - {index: 3, language: bash, lines: [44, 46]}
-      - {index: 4, language: bash, lines: [81, 100]}
-      - {index: 5, language: bash, lines: [106, 108]}
-      - {index: 6, language: json, lines: [112, 148]}
-      - {index: 7, language: bash, lines: [212, 214]}
-      - {index: 8, language: bash, lines: [222, 224]}
-      - {index: 9, language: bash, lines: [230, 232]}
-      - {index: 10, language: json, lines: [264, 274]}
-      - {index: 11, language: ini, lines: [300, 307]}
-      - {index: 12, language: bash, lines: [340, 345]}
-      - {index: 13, language: json, lines: [365, 374]}
-      - {index: 14, language: bash, lines: [403, 415]}
+      - {index: 4, language: bash, lines: [82, 101]}
+      - {index: 5, language: bash, lines: [107, 109]}
+      - {index: 6, language: json, lines: [113, 149]}
+      - {index: 7, language: bash, lines: [213, 215]}
+      - {index: 8, language: bash, lines: [223, 225]}
+      - {index: 9, language: bash, lines: [231, 233]}
+      - {index: 10, language: json, lines: [265, 275]}
+      - {index: 11, language: ini, lines: [301, 308]}
+      - {index: 12, language: bash, lines: [341, 346]}
+      - {index: 13, language: json, lines: [366, 375]}
+      - {index: 14, language: bash, lines: [404, 416]}
   - path: "docs/CodeSampleCatalog.md"
     blocks:
       - {index: 0, language: powershell, lines: [13, 26]}
@@ -1561,10 +1561,10 @@ main-docs:
       - {index: 7, language: xml, lines: [114, 123]}
       - {index: 8, language: xml, lines: [127, 131]}
       - {index: 9, language: xml, lines: [139, 146]}
-      - {index: 10, language: xml, lines: [194, 198]}
-      - {index: 11, language: , lines: [202, 207]}
-      - {index: 12, language: ini, lines: [226, 233]}
-      - {index: 13, language: ini, lines: [235, 242]}
+      - {index: 10, language: xml, lines: [195, 199]}
+      - {index: 11, language: , lines: [203, 208]}
+      - {index: 12, language: ini, lines: [227, 234]}
+      - {index: 13, language: ini, lines: [236, 243]}
   - path: "docs/StandaloneEvaluatorInternals.md"
     blocks:
       - {index: 0, language: csharp, lines: [66, 73], category: compilable, verified: false}

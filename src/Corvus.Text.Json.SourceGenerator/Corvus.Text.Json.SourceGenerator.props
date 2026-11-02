@@ -15,5 +15,6 @@
     <CompilerVisibleProperty Include="CorvusTextJsonRegexEngine" />
     <CompilerVisibleProperty Include="CorvusTextJsonRegexEdition" />
     <CompilerVisibleProperty Include="CorvusTextJsonRegexUnicodeVersion" />
+    <CompilerVisibleProperty Include="CorvusTextJsonRegexMatchTimeout" />
   </ItemGroup>
 </Project>

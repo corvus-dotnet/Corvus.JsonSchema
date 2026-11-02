@@ -397,6 +397,42 @@ public class GenerateCommandTests : IDisposable
     }
 
     [TestMethod]
+    [DataRow("V5", "250", "global::System.TimeSpan.FromMilliseconds(250)")]
+    [DataRow("V5", "-1", "global::System.Text.RegularExpressions.Regex.InfiniteMatchTimeout")]
+    [DataRow("V4", "250", "global::System.TimeSpan.FromMilliseconds(250)")]
+    public async Task Generate_WithARegexMatchTimeout_WritesItIntoTheGeneratedCode(string engine, string matchTimeout, string expected)
+    {
+        // https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1022
+        string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "regex-table-library.json");
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync(
+            $"jsonschema \"{schema}\" --rootNamespace T --outputPath \"{_outputDir}\" --engine {engine} --regexMatchTimeout {matchTimeout}");
+
+        Assert.AreEqual(0, result.ExitCode, result.StandardError);
+        string code = ReadAllGeneratedCode(_outputDir);
+        StringAssert.Contains(code, expected);
+        Assert.IsFalse(code.Contains("FromMilliseconds(1000)"), "The default timeout is not written when the options give another.");
+        if (engine == "V5")
+        {
+            StringAssert.Contains(code, $"RegexMatchTimeout = {expected},");
+        }
+    }
+
+    [TestMethod]
+    [DataRow("0")]
+    [DataRow("-2")]
+    public async Task Generate_WithARegexMatchTimeoutThatIsNotPositiveOrMinusOne_IsRefused(string matchTimeout)
+    {
+        string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "regex-table-library.json");
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync(
+            $"jsonschema \"{schema}\" --rootNamespace T --outputPath \"{_outputDir}\" --regexMatchTimeout {matchTimeout}");
+
+        Assert.AreNotEqual(0, result.ExitCode);
+        StringAssert.Contains(result.StandardOutput + result.StandardError, "regexMatchTimeout");
+    }
+
+    [TestMethod]
     public async Task Generate_FormatModeDisable_DisablesFormatEvenForDraft07()
     {
         // A bare '--formatMode disable' (the '*' wildcard) disables format assertion for ALL drafts,

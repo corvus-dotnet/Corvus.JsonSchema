@@ -158,7 +158,35 @@ public class V4SourceGeneratorRegexPatternTests
         Assert.IsFalse(code.Contains("Regex CreatePattern", StringComparison.Ordinal));
     }
 
-    private static GeneratorRunResult Run(string schema, string? engine = null)
+    [TestMethod]
+    [DataRow("250", "global::System.TimeSpan.FromMilliseconds(250)")]
+    [DataRow("-1", "global::System.Text.RegularExpressions.Regex.InfiniteMatchTimeout")]
+    public void EmittedCode_TakesTheTimeoutTheBuildSets(string matchTimeout, string expectedTimeout)
+    {
+        // CorvusJsonSchemaRegexMatchTimeout sets the timeout of the expressions generated code constructs, or none (-1).
+        GeneratorRunResult result = Run("""
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "object",
+              "properties": { "code": { "type": "string", "pattern": "^(a|aa)+$" } }
+            }
+            """,
+            "DotNet",
+            matchTimeout);
+
+        Assert.IsNull(result.Exception, $"The generator threw: {result.Exception}");
+        string[] lines =
+        [
+            .. result.GeneratedSources
+                .SelectMany(s => s.SourceText.ToString().Split('\n'))
+                .Select(l => l.Trim())
+                .Where(l => l.Contains("Regex Create", StringComparison.Ordinal) && l.Contains("=> new(", StringComparison.Ordinal))
+        ];
+
+        CollectionAssert.AreEqual(new[] { $"private static Regex CreatePattern() => new(\"^(?:a|aa)+\\\\z\", RegexOptions.Compiled, {expectedTimeout});" }, lines, string.Join("\n", lines));
+    }
+
+    private static GeneratorRunResult Run(string schema, string? engine = null, string? matchTimeout = null)
     {
         IEnumerable<MetadataReference> references = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!)
             .Split(Path.PathSeparator)
@@ -174,7 +202,7 @@ public class V4SourceGeneratorRegexPatternTests
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
             [new V4SourceGenerator::Corvus.Json.SourceGenerator.IncrementalSourceGenerator().AsSourceGenerator()],
             additionalTexts: [new InMemoryAdditionalText(Path.Combine(TestDirectory, SchemaFileName), schema)],
-            optionsProvider: engine is null ? null : RegexEngineOptions.ForV4(engine));
+            optionsProvider: engine is null ? null : RegexEngineOptions.ForV4(engine, matchTimeout));
 
         driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out ImmutableArray<Diagnostic> _);
         return driver.GetRunResult().Results[0];

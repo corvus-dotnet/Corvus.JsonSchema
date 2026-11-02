@@ -154,7 +154,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                 : FormatAssertionModeParser.ParseSpecification(generationSource.FormatModeSpecification, ';', ','),
             regexEngine: generationSource.RegexEngine,
             regexEdition: generationSource.RegexEdition,
-            regexUnicodeVersion: generationSource.RegexUnicodeVersion);
+            regexUnicodeVersion: generationSource.RegexUnicodeVersion,
+            regexMatchTimeoutMilliseconds: generationSource.RegexMatchTimeoutMilliseconds);
 
         var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
 
@@ -373,6 +374,16 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             };
         }
 
+        int regexMatchTimeoutMilliseconds = Corvus.Json.CodeGeneration.CSharp.ValidationCodeGeneratorExtensions.DefaultRegexMatchTimeoutMilliseconds;
+        if (source.GlobalOptions.TryGetValue("build_property.CorvusJsonSchemaRegexMatchTimeout", out string? regexMatchTimeoutName) && regexMatchTimeoutName.Length > 0)
+        {
+            if (!int.TryParse(regexMatchTimeoutName, System.Globalization.NumberStyles.AllowLeadingSign, System.Globalization.CultureInfo.InvariantCulture, out regexMatchTimeoutMilliseconds) ||
+                (regexMatchTimeoutMilliseconds != -1 && regexMatchTimeoutMilliseconds <= 0))
+            {
+                throw new InvalidOperationException($"Invalid build property value for 'CorvusJsonSchemaRegexMatchTimeout': '{regexMatchTimeoutName}'. Expected a positive number of milliseconds, or -1 for no limit.");
+            }
+        }
+
         return new(
             fallbackVocabulary,
             optionalAsNullable,
@@ -386,7 +397,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             formatModeSpecification,
             regexEngine,
             regexEdition,
-            regexUnicodeVersion);
+            regexUnicodeVersion,
+            regexMatchTimeoutMilliseconds);
     }
 
     private static CompoundDocumentResolver BuildDocumentResolver(ImmutableArray<AdditionalText> source, CancellationToken token)
@@ -542,6 +554,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         public GeneratedRegexEdition? RegexEdition { get; } = right.RegexEdition;
 
         public GeneratedRegexUnicodeVersion RegexUnicodeVersion { get; } = right.RegexUnicodeVersion;
+
+        public int RegexMatchTimeoutMilliseconds { get; } = right.RegexMatchTimeoutMilliseconds;
     }
 
     private readonly struct TypesToGenerate(ImmutableArray<GenerationSpecification> left, GenerationContext right)
@@ -575,6 +589,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         public GeneratedRegexEdition? RegexEdition { get; } = right.RegexEdition;
 
         public GeneratedRegexUnicodeVersion RegexUnicodeVersion { get; } = right.RegexUnicodeVersion;
+
+        public int RegexMatchTimeoutMilliseconds { get; } = right.RegexMatchTimeoutMilliseconds;
     }
 
     private readonly struct GlobalOptions(
@@ -590,7 +606,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         string? formatModeSpecification,
         GeneratedRegexEngine regexEngine,
         GeneratedRegexEdition? regexEdition,
-        GeneratedRegexUnicodeVersion regexUnicodeVersion)
+        GeneratedRegexUnicodeVersion regexUnicodeVersion,
+        int regexMatchTimeoutMilliseconds)
     {
         public IVocabulary FallbackVocabulary { get; } = fallbackVocabulary;
 
@@ -617,5 +634,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         public GeneratedRegexEdition? RegexEdition { get; } = regexEdition;
 
         public GeneratedRegexUnicodeVersion RegexUnicodeVersion { get; } = regexUnicodeVersion;
+
+        public int RegexMatchTimeoutMilliseconds { get; } = regexMatchTimeoutMilliseconds;
     }
 }

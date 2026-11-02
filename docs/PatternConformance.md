@@ -17,14 +17,15 @@ refuses, how each limits a match, and where a port still differs from ECMA-262. 
   error unless the two groups are in separate alternatives. `\p{WSpace}` is not a property name ECMA-262 lists.
   `Katakana_Or_Hiragana` is a Script value that no character has. The properties are those of Unicode 17.
 - **Limits.** A schema and an instance can both come from outside, so a pattern has limits of size, refused as too
-  large when the schema is compiled and never as not valid, and a match has a limit of time, 1 second by default.
+  large when the schema is compiled and never as not valid, and a match has a limit of time, 1 second by default (in
+  .NET generated code, the limit the generator is given).
 
 ## The ports
 
 | Port | How a pattern is matched | What is refused that is valid ECMA-262 | The limit of a match | Match-limit hits on the dataset |
 |---|---|---|---|---|
-| .NET (V5) | [Corvus.Regex.Ecma262](https://corvus-oss.org/Corvus.Regex.Ecma262/), its own ECMA-262 engine over UTF-8, and the evaluator's own matchers for a few shapes where they are faster. Generated code carries the library's compiled matchers. With `--regexEngine DotNet`, generated code holds .NET `Regex` through a translation from the parse tree | Nothing, apart from the library's limits of size | `RegexMatchTimeout`, 1 second, which throws .NET's `RegexMatchTimeoutException`, and the library's cap on backtracking memory | 0 |
-| .NET (V4 generated code) | Corvus.Regex.Ecma262's compiled matchers, as V5 generated code. With `--regexEngine DotNet`, .NET `Regex` through the same translation | Nothing, apart from the limits of size | A match timeout of 1 second in the generated code, which throws .NET's `RegexMatchTimeoutException` | 0 |
+| .NET (V5) | [Corvus.Regex.Ecma262](https://corvus-oss.org/Corvus.Regex.Ecma262/), its own ECMA-262 engine over UTF-8, and the evaluator's own matchers for a few shapes where they are faster. Generated code carries the library's compiled matchers. With `--regexEngine DotNet`, generated code holds .NET `Regex` through a translation from the parse tree | Nothing, apart from the library's limits of size | `RegexMatchTimeout`, 1 second by default, which throws .NET's `RegexMatchTimeoutException`, and the library's cap on backtracking memory. Generated code takes the limit the generator is given (`--regexMatchTimeout`, `CorvusTextJsonRegexMatchTimeout`), or none (-1) | 0 |
+| .NET (V4 generated code) | Corvus.Regex.Ecma262's compiled matchers, as V5 generated code. With `--regexEngine DotNet`, .NET `Regex` through the same translation | Nothing, apart from the limits of size | A match timeout of 1 second by default in the generated code, which throws .NET's `RegexMatchTimeoutException`. The generator sets another (`--regexMatchTimeout`, `CorvusJsonSchemaRegexMatchTimeout`), or none (-1) | 0 |
 | Rust, and the C library, C++, Python (Rust-backed), Ruby, PHP, R, Swift, Fortran and Perl (XS) built on it | Its own ECMA-262 engine, and the `regex` crate for patterns it proves linear | Nothing, apart from the limits of size | 1 second, as an error | 0 |
 | Go | Its own ECMA-262 engine, and the standard library's `regexp` for patterns it proves linear | Nothing, apart from the limits of size | 1 second, as an error | 0 |
 | Object Pascal | Its own ECMA-262 engine | Nothing, apart from the limits of size | 1 second, as an exception | 0 |
