@@ -361,7 +361,7 @@ public readonly partial struct JsonElement
         /// </remarks>
         private Source(double value)
         {
-            SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (v, buffer, out written) => Utf8Formatter.TryFormat(v, buffer, out written));
+            SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (v, buffer, out written) => RoundTripNumberFormatter.TryFormat(v, buffer, out written));
             _kind = Kind.NumericSimpleType;
         }
 
@@ -397,7 +397,7 @@ public readonly partial struct JsonElement
         /// </remarks>
         private Source(float value)
         {
-            SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (v, buffer, out written) => Utf8Formatter.TryFormat(v, buffer, out written));
+            SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (v, buffer, out written) => RoundTripNumberFormatter.TryFormat(v, buffer, out written));
             _kind = Kind.NumericSimpleType;
         }
 

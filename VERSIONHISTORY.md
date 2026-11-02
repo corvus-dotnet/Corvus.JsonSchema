@@ -1,5 +1,26 @@
 # Version History
 
+## V5.8.1
+
+V5.8.1 fixes a property lookup that could go stale in a `JsonDocumentBuilder`, and a JSONata string that was escaped twice when it was placed in an object or array. It also brings the JSONata implementation up to date with the official test suite and fixes the cases where it answered differently.
+
+### Bug fixes
+
+- **Comparing objects no longer builds a property map on a builder's element.** Deep equality of two objects whose properties are in a different order built a property map on the first object, even when it belonged to a `JsonDocumentBuilder`. The map holds row positions, so once rows before the object were removed or inserted, a lookup through it could miss, return another value, or throw `ArgumentOutOfRangeException`. Mutable `Remove(in item)` and `Replace(in item, ...)` compare this way. A builder's element is now compared by scanning its properties, and a property map is built only for an immutable document. See [#1044](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1044).
+- **A computed string keeps its value when it is added to a builder.** A string made by JSONata (by `&`, `$uppercase`, `$join` or `$string`, for example) from text that held an escape such as `\"`, `\\`, `\n` or `\u00F8` was escaped again when it was placed in an object or array constructor, so `say "hi"` became `say \"hi\"`. The builder did not know that the string's text carried escapes. The same applied to any such string added to a `JsonDocumentBuilder`. See [#1045](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1045).
+- **`$toMillis` reads a timestamp with no offset as UTC on every machine.** Its fast path read such a timestamp in the machine's own time zone, so `$toMillis("2017-10-30")` answered differently outside UTC.
+- **`$round` rounds to any number of decimal places.** It rounded to at most 15, so `$round(6.022e-23, 24)` was `0`. It now moves the decimal point in the number's text, as jsonata-js does, and `$round(6.022e-23, 24)` is `6e-23`.
+- **A group-by over a join groups the whole tuple stream.** With focus bindings at more than one level (`loans@$L.books@$B`), the value of each group was evaluated per outer tuple and the results merged, so `$B.title[]` gave an array of arrays. The value is now evaluated once per group, with each variable bound to its values in all of the group's tuples, and a join with no tuples gives `{}`.
+- **`$contains`, `$split` and `$replace` give undefined when the pattern is undefined,** as they do when the string is. They threw T0410.
+- **`$pad` refuses to add more than 10 million characters** with D2016, as jsonata-js does (and as the range operator refuses with D2014).
+- **On .NET Framework, a double or float added to a builder keeps every digit it needs.** `Utf8Formatter` there writes 15 significant digits for a double and 7 for a float, so a value set with `SetProperty`, `AddItem` or `AddProperty` could read back as a different number: 90.57000000000001 became 90.57, and `double.MaxValue` became a value that overflows. Such a value is now written with the shortest text that reads back as the same number, as on .NET. JSONata's `$sum` and `$average` over a path showed it.
+- **On .NET Framework, a JSONata number is written in its shortest form,** as on .NET and in JavaScript (`90.57000000000001`, where it was `90.570000000000007`).
+
+### Other changes
+
+- The JSONata test suite is updated to the current jsonata-js (2.2.2 and later fixes), with 1,691 cases, and both the runtime evaluator and generated code pass every one. Its runners now compare numbers exactly, as the suite's own runner does. They allowed a difference of up to 10, which hid the `$round` failure.
+- The JSONata test suite failures reported in [#1045](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1045) (`function-tomillis/case003`, `function-round/case016` and `function-contains/case007`) are fixed.
+
 ## V5.8.0
 
 V5.8.0 matches `pattern` and `patternProperties` with [Corvus.Regex.Ecma262](https://corvus-oss.org/Corvus.Regex.Ecma262/), an ECMA-262 regular expression engine for .NET that matches UTF-8 with no transcoding, in the runtime evaluator, the Validator, V5 generated code and V4 generated code. A pattern with no backreference now matches in time proportional to the pattern's size times the text, so the patterns that backtracked until the timeout stopped them now answer at once. Generated code carries each pattern as the library's compiled matcher, with the compiled regular expression as data, so nothing is parsed or built when a pattern is first used. It is a minor version because generated code changes shape (see Breaking changes), and an option restores the old shape.

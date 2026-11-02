@@ -6,7 +6,7 @@
 
 `Corvus.Text.Json.Jsonata` implements [JSONata](https://jsonata.org/) for the Corvus.Text.Json document model — a high-performance query and transformation language that evaluates JSONata expressions against JSON data with zero-allocation evaluation, compiled delegate trees, and pooled workspace memory.
 
-[JSONata](https://jsonata.org/) is an expressive, Turing-complete functional query and transformation language for JSON. It supports path navigation, predicate filtering, higher-order functions (`$map`, `$filter`, `$reduce`, `$sort`), object construction, string manipulation, arithmetic, regular expressions, and user-defined functions. The Corvus implementation passes **all 1,665** tests in the official [JSONata test suite](https://github.com/jsonata-js/jsonata) (100% conformance). Two upstream test cases involve lone UTF-16 surrogates (`\uD800`) that cannot be threaded through .NET's string-based lexer; these are verified by dedicated unit tests that exercise the D3140 validation directly (see [Conformance](#conformance)).
+[JSONata](https://jsonata.org/) is an expressive, Turing-complete functional query and transformation language for JSON. It supports path navigation, predicate filtering, higher-order functions (`$map`, `$filter`, `$reduce`, `$sort`), object construction, string manipulation, arithmetic, regular expressions, and user-defined functions. The Corvus implementation passes **all 1,691** tests in the official [JSONata test suite](https://github.com/jsonata-js/jsonata) (100% conformance). Two upstream test cases involve lone UTF-16 surrogates (`\uD800`) that cannot be threaded through .NET's string-based lexer; these are verified by dedicated unit tests that exercise the D3140 validation directly (see [Conformance](#conformance)).
 
 Three evaluation modes are available:
 
@@ -24,10 +24,10 @@ The source generator and CLI tool produce optimized static C# that eliminates de
 
 ## Conformance
 
-![JSONata Runtime Conformance](https://img.shields.io/badge/JSONata_Runtime-1665%2F1665_(100%25)-brightgreen)
-![JSONata CodeGen Conformance](https://img.shields.io/badge/JSONata_CodeGen-1665%2F1665_(100%25)-brightgreen)
+![JSONata Runtime Conformance](https://img.shields.io/badge/JSONata_Runtime-1691%2F1691_(100%25)-brightgreen)
+![JSONata CodeGen Conformance](https://img.shields.io/badge/JSONata_CodeGen-1691%2F1691_(100%25)-brightgreen)
 
-Both the runtime evaluator and the code generation pipeline pass all **1,665** official JSONata test suite cases (100% conformance) on .NET 10.0. The runtime evaluator also passes on .NET Framework 4.8.1.
+Both the runtime evaluator and the code generation pipeline pass all **1,691** official JSONata test suite cases (100% conformance) on .NET 10.0. The runtime evaluator also passes on .NET Framework 4.8.1.
 
 The code generation pipeline compiles each expression to optimized static C#. Tests that require runtime-only features (variable bindings, custom recursion depth, execution timeout) are validated through the 5-parameter overload which delegates to the runtime evaluator.
 
@@ -707,7 +707,7 @@ The implementation supports the full set of [JSONata built-in functions](https:/
 | `$now([picture[, timezone]])` | Current timestamp |
 | `$millis()` | Current time in milliseconds |
 | `$fromMillis(ms[, picture[, timezone]])` | Convert milliseconds to timestamp |
-| `$toMillis(str[, picture])` | Convert timestamp to milliseconds |
+| `$toMillis(str[, picture])` | Convert timestamp to milliseconds (a timestamp with no offset is UTC) |
 
 ### Language features
 
@@ -813,7 +813,7 @@ The Corvus JSONata implementation is designed for high-throughput scenarios wher
 | JSON document model | `Corvus.Text.Json` (zero-copy, pooled) | Custom `JToken`, `System.Text.Json`, Newtonsoft |
 | Memory model | Pooled (`JsonWorkspace`, `ArrayPool`) | GC-allocated |
 | Zero-allocation hot path | Yes (with workspace) | No |
-| Conformance (official suite) | 1,665 / 1,665 (100%) | 1,370 passed, 287 skipped ([badge](https://github.com/mikhail-barg/jsonata.net.native)) |
+| Conformance (official suite) | 1,691 / 1,691 (100%) | 1,370 passed, 287 skipped ([badge](https://github.com/mikhail-barg/jsonata.net.native)) |
 | .NET Framework support | net10.0+, netstandard2.0/2.1 | net6.0+ |
 | Variable bindings | Supported | Supported |
 | Custom function bindings | `JsonataBinding.FromFunction()` (interpreted) | Via API |
@@ -1044,7 +1044,7 @@ Code-gen eliminates all allocation for simple let-bindings by keeping intermedia
 | $toMillis | `$toMillis("2021-04-07T22:00:00.000Z")` | 280 ns | 214 ns | 763 ns | 0 B | 0 B | 1,376 B |
 | $fromMillis | `$fromMillis(1617836400000)` | 535 ns | 322 ns | 826 ns | 0 B | 0 B | 1,568 B |
 
-`$toMillis` uses a zero-alloc fast path via `TryGetDateTimeOffset` that parses directly from the UTF-8 backing — **2.7× faster** for runtime, **3.6× faster** for code-gen with zero allocation (vs 1,376 B for native). `$millis` is the only scenario where native is slightly faster (due to evaluator framework overhead for a trivial function), but Corvus achieves zero allocation. `$now` and `$fromMillis` now achieve **zero allocation** for both runtime and code-gen.
+`$toMillis` uses a zero-alloc fast path that parses directly from the UTF-8 backing — **2.7× faster** for runtime, **3.6× faster** for code-gen with zero allocation (vs 1,376 B for native). `$millis` is the only scenario where native is slightly faster (due to evaluator framework overhead for a trivial function), but Corvus achieves zero allocation. `$now` and `$fromMillis` now achieve **zero allocation** for both runtime and code-gen.
 
 ##### Aggregation functions
 

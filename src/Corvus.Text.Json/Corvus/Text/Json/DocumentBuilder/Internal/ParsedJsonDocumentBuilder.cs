@@ -631,7 +631,7 @@ public sealed class ParsedJsonDocumentBuilder : JsonDocument, IMutableJsonDocume
         CheckNotDisposed();
         BeginValueToken(JsonConstants.MaximumFormatSingleLength);
         int start = _textPos;
-        bool success = Utf8Formatter.TryFormat(value, _text.AsSpan(_textPos), out int written);
+        bool success = RoundTripNumberFormatter.TryFormat(value, _text.AsSpan(_textPos), out int written);
         Debug.Assert(success);
         _textPos += written;
         PushPair(start, written);
@@ -645,7 +645,7 @@ public sealed class ParsedJsonDocumentBuilder : JsonDocument, IMutableJsonDocume
         CheckNotDisposed();
         BeginValueToken(JsonConstants.MaximumFormatDoubleLength);
         int start = _textPos;
-        bool success = Utf8Formatter.TryFormat(value, _text.AsSpan(_textPos), out int written);
+        bool success = RoundTripNumberFormatter.TryFormat(value, _text.AsSpan(_textPos), out int written);
         Debug.Assert(success);
         _textPos += written;
         PushPair(start, written);

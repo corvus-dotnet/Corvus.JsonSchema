@@ -319,6 +319,7 @@
     <Compile Include="Corvus\Text\Json\Internal\JsonElementHelpers.Uri.cs" />
     <Compile Include="Corvus\Text\Json\Internal\JsonElementTensorHelpers.cs" />
     <Compile Include="Corvus\Text\Json\Internal\JsonElementHelpers.DeepEquals.cs" />
+    <Compile Include="Corvus\Text\Json\Internal\RoundTripNumberFormatter.cs" />
     <Compile Include="Corvus\Text\Json\Document\JsonElement.cs" />
     <Compile Include="Corvus\Text\Json\Document\JsonElement.Parse.cs" />
     <Compile Include="Corvus\Text\Json\Document\JsonElement.SourceLocation.cs" />

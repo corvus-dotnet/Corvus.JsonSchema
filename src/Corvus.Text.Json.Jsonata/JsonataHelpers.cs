@@ -103,8 +103,8 @@ internal static class JsonataHelpers
         }
 #else
         // On netstandard2.0 / .NET Framework, Utf8Formatter uses G17 which produces
-        // non-shortest representations (e.g. 39.4 → "39.399999999999999"). Use "R"
-        // format via ToString which produces the shortest roundtrip form, then transcode.
+        // non-shortest representations (e.g. 39.4 → "39.399999999999999"). Use the
+        // shortest round-trip form (see FormatRoundtrip), then transcode.
         int bytesWritten = FormatDoubleRoundtrip(value, buffer);
 #endif
 
@@ -717,7 +717,7 @@ internal static class JsonataHelpers
     /// </summary>
     private static int FormatDoubleRoundtrip(double value, Span<byte> destination)
     {
-        string text = value.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+        string text = FormatRoundtrip(value);
 
         // All digits, '.', '-', 'E', '+' are ASCII — direct byte cast
         if (text.Length > destination.Length)
@@ -733,6 +733,43 @@ internal static class JsonataHelpers
         return text.Length;
     }
 #endif
+
+    /// <summary>
+    /// Formats a number as the shortest text that parses back to the same number.
+    /// </summary>
+    /// <remarks>
+    /// On .NET this is the "R" format. On .NET Framework, "R" gives 17 digits where fewer read back
+    /// (90.57000000000001 is formatted as "90.570000000000007"), and is documented not to round-trip in some cases, so
+    /// the general formats are tried with more digits in turn and the first that parses back is used. Every normal double is told apart by 15 digits, so when its shortest form has
+    /// 15 digits or fewer, the 15 digit form is that form. A subnormal double has fewer significant digits, so for one
+    /// the forms are tried from 1 digit.
+    /// </remarks>
+    /// <param name="value">The number.</param>
+    /// <returns>The shortest round-trip text, in the invariant culture.</returns>
+    internal static string FormatRoundtrip(double value)
+    {
+#if NET
+        return value.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+#else
+        if (double.IsNaN(value) || double.IsInfinity(value))
+        {
+            return value.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        int first = Math.Abs(value) < 2.2250738585072014E-308 ? 1 : 15;
+        for (int precision = first; precision < 17; precision++)
+        {
+            string candidate = value.ToString("G" + precision.ToString(System.Globalization.CultureInfo.InvariantCulture), System.Globalization.CultureInfo.InvariantCulture);
+            if (double.TryParse(candidate, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double parsed)
+                && parsed == value)
+            {
+                return candidate;
+            }
+        }
+
+        return value.ToString("G17", System.Globalization.CultureInfo.InvariantCulture);
+#endif
+    }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static void ThrowFormatFailed()

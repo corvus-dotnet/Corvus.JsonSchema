@@ -92,6 +92,8 @@
     <Compile Include="MigrationEquivalenceTests\UnionEquivalenceTests.cs" />
     <Compile Include="MigrationEquivalenceTests\ValidationEquivalenceTests.cs" />
     <Compile Include="DescendantPropertyEnumeratorTests.cs" />
+    <Compile Include="BuilderNumberFormattingTests.cs" />
+    <Compile Include="DoubleParsingTests.cs" />
     <Compile Include="DummyDocument.cs" />
     <Compile Include="DummyResultsCollector.cs" />
     <Compile Include="JsonDocumentBuilderComplexObjectTests.cs" />
