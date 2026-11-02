@@ -65,6 +65,7 @@
     <Compile Include="Corvus\Text\Json\RuntimeEvaluator\CodeGeneration\NodeValidator.cs" />
     <Compile Include="Corvus\Text\Json\RuntimeEvaluator\CodeGeneration\SchemaLowering.cs" />
     <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Compilation\AsciiChar.cs" />
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Compilation\EcmaRegexCodeUnits.cs" />
     <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Compilation\Elements.cs" />
     <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Compilation\FusedObjects.cs" />
     <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Compilation\Metaschemas.cs" />

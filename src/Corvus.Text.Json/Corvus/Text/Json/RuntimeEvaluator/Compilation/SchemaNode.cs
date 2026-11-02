@@ -414,8 +414,8 @@ internal sealed class PatternMatcher
 
         // A pattern that only the grammar with no u flag accepts is matched by UTF-16 code unit, and the matchers here
         // match by code point. They give the same answers unless the pattern can tell a character beyond the Basic
-        // Multilingual Plane from two characters (see EcmaRegexTranslator.CodeUnitsCanChangeTheAnswer).
-        if (!unicode && Corvus.Text.Json.CodeGeneration.EcmaRegexTranslator.CodeUnitsCanChangeTheAnswer(ecmaPattern))
+        // Multilingual Plane from two characters (see EcmaRegexCodeUnits.CanChangeTheAnswer).
+        if (!unicode && EcmaRegexCodeUnits.CanChangeTheAnswer(ecmaPattern))
         {
             return CreateRegex(ecmaPattern, translation, options, patternIndex);
         }
@@ -428,8 +428,8 @@ internal sealed class PatternMatcher
 
         // A pattern that only the grammar with no u flag accepts is matched by UTF-16 code unit, and the matchers here
         // match by code point. They give the same answers unless the pattern can tell a character beyond the Basic
-        // Multilingual Plane from two characters (see EcmaRegexTranslator.CodeUnitsCanChangeTheAnswer).
-        if ((translation.Flags & EcmaRegexFlags.Unicode) == 0 && Corvus.Text.Json.CodeGeneration.EcmaRegexTranslator.CodeUnitsCanChangeTheAnswer(ecmaPattern))
+        // Multilingual Plane from two characters (see EcmaRegexCodeUnits.CanChangeTheAnswer).
+        if ((translation.Flags & EcmaRegexFlags.Unicode) == 0 && EcmaRegexCodeUnits.CanChangeTheAnswer(ecmaPattern))
         {
             return CreateRegex(ecmaPattern, translation, options, patternIndex);
         }
@@ -673,9 +673,9 @@ internal sealed class PatternMatcher
 
         // A pattern proved to match in time proportional to the text has no timeout: the timeout makes .NET's
         // engines check the clock as they match, which costs such a pattern up to half its time again, and bounds
-        // nothing a linear match does not bound (see EcmaRegexTranslator.IsLinear).
+        // nothing a linear match does not bound (see EcmaRegexLinearity.IsLinear).
         TimeSpan timeout = options.RegexMatchTimeout != Regex.InfiniteMatchTimeout
-            && Corvus.Text.Json.CodeGeneration.EcmaRegexTranslator.IsLinear(ecmaPattern)
+            && Corvus.Text.Json.CodeGeneration.EcmaRegexLinearity.IsLinear(ecmaPattern)
             ? Regex.InfiniteMatchTimeout
             : options.RegexMatchTimeout;
 

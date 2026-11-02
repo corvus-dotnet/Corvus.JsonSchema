@@ -10,7 +10,7 @@ using Corvus.Text.Json.CodeGeneration;
 namespace Corvus.Text.Json.CodeGenerator.Tests;
 
 /// <summary>
-/// The proof that a pattern matches in time proportional to the text (<see cref="EcmaRegexTranslator.IsLinear"/>),
+/// The proof that a pattern matches in time proportional to the text (<see cref="EcmaRegexLinearity.IsLinear"/>),
 /// which lets the evaluator and generated code match it with no timeout. A pattern the proof accepts wrongly would
 /// let a schema or an instance from outside keep a match running, so the proof is tested by what it accepts and
 /// refuses, and by timing every pattern it accepts against texts made to be slow for it.
@@ -69,16 +69,16 @@ public class EcmaRegexLinearityTests
     [DataRow("(", false)]
     public void TheProofAcceptsAndRefuses(string pattern, bool expected)
     {
-        Assert.AreEqual(expected, EcmaRegexTranslator.IsLinear(pattern), pattern);
+        Assert.AreEqual(expected, EcmaRegexLinearity.IsLinear(pattern), pattern);
     }
 
     /// <summary>Parts with no repetition that can match in many ways together are refused.</summary>
     [TestMethod]
     public void ManyWaysWithoutARepetitionAreRefused()
     {
-        Assert.IsTrue(EcmaRegexTranslator.IsLinear("^" + string.Concat(Enumerable.Repeat("(a|b)", 8)) + "$"));
-        Assert.IsFalse(EcmaRegexTranslator.IsLinear("^" + string.Concat(Enumerable.Repeat("(a|b)", 9)) + "$"));
-        Assert.IsFalse(EcmaRegexTranslator.IsLinear(string.Join("|", Enumerable.Repeat("a", 257))));
+        Assert.IsTrue(EcmaRegexLinearity.IsLinear("^" + string.Concat(Enumerable.Repeat("(a|b)", 8)) + "$"));
+        Assert.IsFalse(EcmaRegexLinearity.IsLinear("^" + string.Concat(Enumerable.Repeat("(a|b)", 9)) + "$"));
+        Assert.IsFalse(EcmaRegexLinearity.IsLinear(string.Join("|", Enumerable.Repeat("a", 257))));
     }
 
     /// <summary>
@@ -90,7 +90,7 @@ public class EcmaRegexLinearityTests
     public void EveryPatternProvedLinearMatchesHostileTextsQuickly()
     {
         int timed = 0;
-        foreach (string pattern in Patterns().Where(EcmaRegexTranslator.IsLinear))
+        foreach (string pattern in Patterns().Where(EcmaRegexLinearity.IsLinear))
         {
             string translated = EcmaRegexTranslator.TranslateOrFallback(pattern);
             foreach (RegexOptions options in new[] { RegexOptions.CultureInvariant | RegexOptions.Compiled, RegexOptions.CultureInvariant })
@@ -118,7 +118,7 @@ public class EcmaRegexLinearityTests
     [DataRow(@"^(\w+\s?)*$")]
     public void TheHostileTextsAreSlowForAPatternThatIsNotLinear(string pattern)
     {
-        Assert.IsFalse(EcmaRegexTranslator.IsLinear(pattern));
+        Assert.IsFalse(EcmaRegexLinearity.IsLinear(pattern));
         Regex regex = new(EcmaRegexTranslator.TranslateOrFallback(pattern), RegexOptions.CultureInvariant, TimeSpan.FromSeconds(2));
         bool slow = false;
         foreach (string text in HostileTexts(pattern))
@@ -174,7 +174,7 @@ public class EcmaRegexLinearityTests
 
         int linear = 0;
         var slow = new System.Collections.Concurrent.ConcurrentBag<string>();
-        Parallel.ForEach(patterns.Where(EcmaRegexTranslator.IsLinear), new ParallelOptions { MaxDegreeOfParallelism = 4 }, pattern =>
+        Parallel.ForEach(patterns.Where(EcmaRegexLinearity.IsLinear), new ParallelOptions { MaxDegreeOfParallelism = 4 }, pattern =>
         {
             Interlocked.Increment(ref linear);
             Regex regex = new(EcmaRegexTranslator.TranslateOrFallback(pattern), RegexOptions.CultureInvariant, TimeSpan.FromSeconds(5));

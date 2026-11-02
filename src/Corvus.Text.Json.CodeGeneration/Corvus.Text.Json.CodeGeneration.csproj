@@ -33,6 +33,7 @@
     <Compile Include="EcmaRegexUnicode.cs" />
     <Compile Include="EcmaRegexUnicodeData.cs" />
     <Compile Include="EcmaRegexTranslator.cs" />
+    <Compile Include="EcmaRegexLinearity.cs" />
     <Compile Include="RuntimeProgramGenerator.cs" />
     <Compile Include="SchemaProgramCompiler.cs" />
     <Compile Include="CodeGenerationMode.cs" />

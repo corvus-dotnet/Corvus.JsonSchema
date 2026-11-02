@@ -56,7 +56,7 @@ internal static partial class CodeGenerationExtensions
     /// match throws <see cref="System.Text.RegularExpressions.RegexMatchTimeoutException"/> to the caller of the
     /// generated code. This is the one place the generator holds the default. The runtime evaluator has the same
     /// default for the expressions it constructs, in <c>JsonSchemaEvaluatorOptions.DefaultRegexMatchTimeout</c>.
-    /// A pattern that <c>EcmaRegexTranslator.IsLinear</c> proves linear has no timeout, in generated code and in
+    /// A pattern that <c>EcmaRegexLinearity.IsLinear</c> proves linear has no timeout, in generated code and in
     /// the evaluator.
     /// </remarks>
     internal const int DefaultRegexMatchTimeoutMilliseconds = 1_000;
@@ -408,11 +408,11 @@ internal static partial class CodeGenerationExtensions
         string memberName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: index?.ToString(CultureInfo.InvariantCulture));
 
         // Every form carries the generation's match timeout (1 second unless the options say otherwise), but for a
-        // pattern proved to match in time proportional to the text, which has none (see EcmaRegexTranslator.IsLinear).
+        // pattern proved to match in time proportional to the text, which has none (see EcmaRegexLinearity.IsLinear).
         // The timeout makes .NET's engines check the clock as they match, which costs that pattern up to half its time
         // again.
         int matchTimeout = ((CSharpLanguageProvider)generator.LanguageProvider).RegexMatchTimeoutMilliseconds;
-        bool unlimited = matchTimeout == global::System.Threading.Timeout.Infinite || EcmaRegexTranslator.IsLinear(value);
+        bool unlimited = matchTimeout == global::System.Threading.Timeout.Infinite || EcmaRegexLinearity.IsLinear(value);
         string timeout = unlimited
             ? "global::System.Text.RegularExpressions.Regex.InfiniteMatchTimeout"
             : "global::System.TimeSpan.FromMilliseconds(" + matchTimeout.ToString(CultureInfo.InvariantCulture) + ")";

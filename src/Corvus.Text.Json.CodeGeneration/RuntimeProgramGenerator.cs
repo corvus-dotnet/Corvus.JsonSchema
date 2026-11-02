@@ -584,7 +584,7 @@ internal static class RuntimeProgramGenerator
     /// Each has the generation's match timeout (1 second by default, see
     /// <see cref="CodeGenerationExtensions.DefaultRegexMatchTimeoutMilliseconds"/>): the attribute carries it, and the
     /// options the program is loaded with carry it for the evaluator's own. A pattern proved linear
-    /// (<see cref="EcmaRegexTranslator.IsLinear"/>) has none, in both.
+    /// (<see cref="EcmaRegexLinearity.IsLinear"/>) has none, in both.
     /// A program from a Roslyn source generator carries no patterns (generators do not chain, so the regex generator
     /// would never implement the methods) and the evaluator constructs every expression on first use.
     /// </summary>
@@ -637,7 +637,7 @@ internal static class RuntimeProgramGenerator
                 if (!image.DotNetPatterns[i].StartsWith(EcmaRegexTranslator.InterpretedMarker, StringComparison.Ordinal))
                 {
                     // A pattern proved to match in time proportional to the text has no timeout, as in the evaluator.
-                    bool linear = image.EcmaPatterns.Count == image.DotNetPatterns.Count && EcmaRegexTranslator.IsLinear(image.EcmaPatterns[i]);
+                    bool linear = image.EcmaPatterns.Count == image.DotNetPatterns.Count && EcmaRegexLinearity.IsLinear(image.EcmaPatterns[i]);
                     string timeout = linear || regexMatchTimeoutMilliseconds == global::System.Threading.Timeout.Infinite
                         ? "global::System.Threading.Timeout.Infinite"
                         : regexMatchTimeoutMilliseconds.ToString(System.Globalization.CultureInfo.InvariantCulture);

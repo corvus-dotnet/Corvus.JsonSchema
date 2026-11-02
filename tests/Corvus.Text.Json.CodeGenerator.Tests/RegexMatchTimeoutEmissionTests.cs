@@ -58,7 +58,7 @@ public class RegexMatchTimeoutEmissionTests
         }
         """;
 
-    // Both patterns are proved to match in time proportional to the text (EcmaRegexTranslator.IsLinear), and neither
+    // Both patterns are proved to match in time proportional to the text (EcmaRegexLinearity.IsLinear), and neither
     // is one the emitter or the evaluator matches without a regular expression.
     private const string LinearSchema =
         """

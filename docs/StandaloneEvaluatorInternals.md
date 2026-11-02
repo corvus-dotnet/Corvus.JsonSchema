@@ -47,7 +47,7 @@ emits one `CorvusJsonSchemaProgram` class in the default namespace:
   compiled matcher carries it, and the options the program is loaded with set `RegexMatchTimeout` to the same
   value, for a pattern the evaluator compiles itself. A match that runs for longer throws
   `RegexMatchTimeoutException` to the caller. With the DotNet engine each `[GeneratedRegex]` carries the timeout
-  too, except for a pattern `EcmaRegexTranslator.IsLinear` proves linear.
+  too, except for a pattern `EcmaRegexLinearity.IsLinear` proves linear.
 - **Patterns.** Every pattern is read as the runtime evaluator reads it: with the grammar of the `u` flag, or failing
   that with none, in the edition of the type's dialect (ECMAScript 2020 for draft 2019-09 and draft 2020-12) unless
   `--regexEdition` says otherwise. A pattern that is not a valid ECMA-262 regular expression stops the generation:

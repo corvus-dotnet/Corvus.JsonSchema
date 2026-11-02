@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Text.RegularExpressions;
 using Corvus.Text.Json.RuntimeEvaluator;
 using Corvus.Text.Json.Tests.EcmaPatterns;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -10,7 +11,8 @@ namespace Corvus.Text.Json.RuntimeEvaluator.Tests.Unit;
 
 /// <summary>
 /// The <c>pattern</c> keyword answers as V8 does for the patterns of <see cref="EcmaPatternCases"/>, with compiled
-/// regular expressions, with interpreted ones, and in generated code.
+/// regular expressions, with interpreted ones, in generated code, and with .NET regular expressions of
+/// <see cref="JsonSchemaEvaluator.ToDotNetPattern"/> supplied as a program emitted ahead of time supplies them.
 /// </summary>
 [TestClass]
 public class EcmaPatternSemanticsTests
@@ -26,12 +28,19 @@ public class EcmaPatternSemanticsTests
 
         /// <summary>The schema is compiled to IL before its first evaluation.</summary>
         GeneratedCode,
+
+        /// <summary>
+        /// <see cref="JsonSchemaEvaluatorOptions.RegexProvider"/> supplies a .NET regular expression of the pattern
+        /// <see cref="JsonSchemaEvaluator.ToDotNetPattern"/> gives, as a program emitted ahead of time does.
+        /// </summary>
+        DotNetPattern,
     }
 
     [TestMethod]
     [DataRow(Engine.CompiledRegex)]
     [DataRow(Engine.InterpretedRegex)]
     [DataRow(Engine.GeneratedCode)]
+    [DataRow(Engine.DotNetPattern)]
     public void PatternsWrittenFromTheTreeAnswerAsV8(Engine engine)
     {
         AssertCases(EcmaPatternCases.WrittenFromTheTree, engine);
@@ -41,6 +50,7 @@ public class EcmaPatternSemanticsTests
     [DataRow(Engine.CompiledRegex)]
     [DataRow(Engine.InterpretedRegex)]
     [DataRow(Engine.GeneratedCode)]
+    [DataRow(Engine.DotNetPattern)]
     public void PatternsWithBackreferencesAnswerAsV8(Engine engine)
     {
         AssertCases(EcmaPatternCases.Backreferences, engine);
@@ -50,6 +60,7 @@ public class EcmaPatternSemanticsTests
     [DataRow(Engine.CompiledRegex)]
     [DataRow(Engine.InterpretedRegex)]
     [DataRow(Engine.GeneratedCode)]
+    [DataRow(Engine.DotNetPattern)]
     public void PatternsWithEmptyIterationsAnswerAsV8(Engine engine)
     {
         AssertCases(EcmaPatternCases.EmptyIterations, engine);
@@ -59,6 +70,7 @@ public class EcmaPatternSemanticsTests
     [DataRow(Engine.CompiledRegex)]
     [DataRow(Engine.InterpretedRegex)]
     [DataRow(Engine.GeneratedCode)]
+    [DataRow(Engine.DotNetPattern)]
     public void PatternsThatFaultedTheEngineAnswerAsV8(Engine engine)
     {
         AssertCases(EcmaPatternCases.EngineFaults, engine);
@@ -68,6 +80,7 @@ public class EcmaPatternSemanticsTests
     [DataRow(Engine.CompiledRegex)]
     [DataRow(Engine.InterpretedRegex)]
     [DataRow(Engine.GeneratedCode)]
+    [DataRow(Engine.DotNetPattern)]
     public void PatternsWithACaseInsensitiveBackreferenceAnswerAsV8(Engine engine)
     {
         AssertCases(EcmaPatternCases.CaseInsensitiveBackreferences, engine);
@@ -82,6 +95,7 @@ public class EcmaPatternSemanticsTests
     [DataRow(Engine.CompiledRegex)]
     [DataRow(Engine.InterpretedRegex)]
     [DataRow(Engine.GeneratedCode)]
+    [DataRow(Engine.DotNetPattern)]
     public void PatternsWithACaseInsensitiveBackreferenceToItsOwnGroupAnswerAsV8(Engine engine)
     {
         Exception? failure = null;
@@ -111,6 +125,7 @@ public class EcmaPatternSemanticsTests
     [DataRow(Engine.CompiledRegex)]
     [DataRow(Engine.InterpretedRegex)]
     [DataRow(Engine.GeneratedCode)]
+    [DataRow(Engine.DotNetPattern)]
     public void PatternsWithABackreferenceToAGroupThatIsNotSetAnswerAsV8(Engine engine)
     {
         AssertCases(EcmaPatternCases.BackreferencesToGroupsThatAreNotSet, engine);
@@ -120,6 +135,7 @@ public class EcmaPatternSemanticsTests
     [DataRow(Engine.CompiledRegex)]
     [DataRow(Engine.InterpretedRegex)]
     [DataRow(Engine.GeneratedCode)]
+    [DataRow(Engine.DotNetPattern)]
     public void PatternsWithARepeatedBackreferenceAnswerAsV8(Engine engine)
     {
         AssertCases(EcmaPatternCases.RepeatedBackreferences, engine);
@@ -129,6 +145,7 @@ public class EcmaPatternSemanticsTests
     [DataRow(Engine.CompiledRegex)]
     [DataRow(Engine.InterpretedRegex)]
     [DataRow(Engine.GeneratedCode)]
+    [DataRow(Engine.DotNetPattern)]
     public void PatternsWithAGroupThatCapturesTheEmptyStringAnswerAsV8(Engine engine)
     {
         AssertCases(EcmaPatternCases.GroupsThatCaptureTheEmptyString, engine);
@@ -145,6 +162,7 @@ public class EcmaPatternSemanticsTests
     [DataRow(Engine.CompiledRegex)]
     [DataRow(Engine.InterpretedRegex)]
     [DataRow(Engine.GeneratedCode)]
+    [DataRow(Engine.DotNetPattern)]
     public void ALongTextIsAnsweredWithinTheDefaultLimitWhereAGroupCapturesTheEmptyString(Engine engine)
     {
         const int Half = 50_000;
@@ -171,6 +189,7 @@ public class EcmaPatternSemanticsTests
             RegexEdition = Corvus.Ecma262.RegularExpressions.RegexEdition.Current,
             CompileRegularExpressions = engine != Engine.InterpretedRegex,
             CodeGeneration = engine == Engine.GeneratedCode ? JsonSchemaCodeGeneration.Eager : JsonSchemaCodeGeneration.Disabled,
+            RegexProvider = engine == Engine.DotNetPattern ? DotNetRegexes(JsonSchemaEvaluatorOptions.DefaultRegexMatchTimeout) : null,
         };
 
         foreach ((string pattern, string matches, string fails) in cases)
@@ -185,6 +204,7 @@ public class EcmaPatternSemanticsTests
     [DataRow(Engine.CompiledRegex)]
     [DataRow(Engine.InterpretedRegex)]
     [DataRow(Engine.GeneratedCode)]
+    [DataRow(Engine.DotNetPattern)]
     public void PatternsWithTheSameTermTwiceAnswerAsV8(Engine engine)
     {
         AssertCases(EcmaPatternCases.TheSameTermTwice, engine);
@@ -194,6 +214,7 @@ public class EcmaPatternSemanticsTests
     [DataRow(Engine.CompiledRegex)]
     [DataRow(Engine.InterpretedRegex)]
     [DataRow(Engine.GeneratedCode)]
+    [DataRow(Engine.DotNetPattern)]
     public void PatternsWithTheScriptOfNoCharacterAnswerAsEcma262Says(Engine engine)
     {
         AssertCases(EcmaPatternCases.ScriptOfNoCharacter, engine);
@@ -203,6 +224,7 @@ public class EcmaPatternSemanticsTests
     [DataRow(Engine.CompiledRegex)]
     [DataRow(Engine.InterpretedRegex)]
     [DataRow(Engine.GeneratedCode)]
+    [DataRow(Engine.DotNetPattern)]
     public void PatternsWithAPartThatNeverMatchesAnswerAsV8(Engine engine)
     {
         AssertCases(EcmaPatternCases.PartsThatNeverMatch, engine);
@@ -219,6 +241,7 @@ public class EcmaPatternSemanticsTests
     [DataRow(Engine.CompiledRegex)]
     [DataRow(Engine.InterpretedRegex)]
     [DataRow(Engine.GeneratedCode)]
+    [DataRow(Engine.DotNetPattern)]
     public void PatternsTheCompiledEngineDoesNotReturnFromAnswerAsV8(Engine engine)
     {
         (string Pattern, string[] Matches, string[] Fails)[] cases =
@@ -246,6 +269,7 @@ public class EcmaPatternSemanticsTests
             CompileRegularExpressions = engine != Engine.InterpretedRegex,
             CodeGeneration = engine == Engine.GeneratedCode ? JsonSchemaCodeGeneration.Eager : JsonSchemaCodeGeneration.Disabled,
             RegexMatchTimeout = TimeSpan.FromSeconds(5),
+            RegexProvider = engine == Engine.DotNetPattern ? DotNetRegexes(TimeSpan.FromSeconds(5)) : null,
         };
 
         var failures = new List<string>();
@@ -293,5 +317,16 @@ public class EcmaPatternSemanticsTests
         {
             Assert.Fail($"{failures.Count} wrong answers in {wrongPatterns} of {cases.Length} patterns. The first of them:\n{string.Join("\n", failures.Take(25))}");
         }
+    }
+
+    /// <summary>
+    /// A provider of the .NET regular expression of each pattern, from <see cref="JsonSchemaEvaluator.ToDotNetPattern"/>,
+    /// constructed as its documentation says the evaluator constructs its own, for .NET's interpreted engine.
+    /// </summary>
+    /// <param name="timeout">The timeout of each regular expression.</param>
+    /// <returns>The provider.</returns>
+    private static JsonSchemaRegexProvider DotNetRegexes(TimeSpan timeout)
+    {
+        return (_, ecmaPattern) => new Regex(JsonSchemaEvaluator.ToDotNetPattern(ecmaPattern), RegexOptions.CultureInvariant, timeout);
     }
 }

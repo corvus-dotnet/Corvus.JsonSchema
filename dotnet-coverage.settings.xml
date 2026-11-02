@@ -73,6 +73,11 @@
              TextSegmentationUtility, etc.) — compiled only on netstandard2.0/net481
              via #if !NET8_0_OR_GREATER. Same rationale as other polyfill exclusions. -->
         <Source>.*\\Internal\\Unicode\\.*</Source>
+        <!-- The Corvus.Regex.Ecma262 emitter, compiled into the code generators from the
+             Corvus.Regex.Ecma262.CodeGeneration.Sources package. It is the regex library's code, tested and
+             measured in its own repository; each generator calls only the part that emits, and the matching
+             engine the files also hold is never run here. -->
+        <Source>.*\\corvus\.regex\.ecma262\.codegeneration\.sources\\.*</Source>
       </Exclude>
     </Sources>
   </CodeCoverage>
