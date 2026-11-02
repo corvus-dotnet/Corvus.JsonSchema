@@ -385,6 +385,12 @@ public readonly partial struct OpenapiSchema
                 public RequiredSchemeAndType Clone()
                 {
                     CheckValidInstance();
+                    if (!_parent.IsDisposable)
+                    {
+                        // Already a clone, or backed by a document that is never disposed.
+                        return this;
+                    }
+
                     return _parent.CloneElement<RequiredSchemeAndType>(_idx);
                 }
 

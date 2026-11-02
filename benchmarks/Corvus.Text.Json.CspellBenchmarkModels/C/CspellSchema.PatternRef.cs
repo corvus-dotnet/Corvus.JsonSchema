@@ -345,6 +345,12 @@ public readonly partial struct CspellSchema
         public PatternRef Clone()
         {
             CheckValidInstance();
+            if (!_parent.IsDisposable)
+            {
+                // Already a clone, or backed by a document that is never disposed.
+                return this;
+            }
+
             return _parent.CloneElement<PatternRef>(_idx);
         }
 

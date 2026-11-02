@@ -320,6 +320,12 @@ public readonly partial struct ClangFormatSchema
             public ClangFormat38StyleOfAligningConsecutiveDeclarations Clone()
             {
                 CheckValidInstance();
+                if (!_parent.IsDisposable)
+                {
+                    // Already a clone, or backed by a document that is never disposed.
+                    return this;
+                }
+
                 return _parent.CloneElement<ClangFormat38StyleOfAligningConsecutiveDeclarations>(_idx);
             }
 

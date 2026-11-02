@@ -369,6 +369,12 @@ public readonly partial struct ImageStyle
     public ImageStyle Clone()
     {
         CheckValidInstance();
+        if (!_parent.IsDisposable)
+        {
+            // Already a clone, or backed by a document that is never disposed.
+            return this;
+        }
+
         return _parent.CloneElement<ImageStyle>(_idx);
     }
 

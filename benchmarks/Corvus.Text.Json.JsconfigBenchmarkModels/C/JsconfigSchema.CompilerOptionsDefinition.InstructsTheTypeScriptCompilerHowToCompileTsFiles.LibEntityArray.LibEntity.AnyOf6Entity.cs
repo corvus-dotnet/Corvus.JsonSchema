@@ -321,6 +321,12 @@ public readonly partial struct JsconfigSchema
                         public AnyOf6Entity Clone()
                         {
                             CheckValidInstance();
+                            if (!_parent.IsDisposable)
+                            {
+                                // Already a clone, or backed by a document that is never disposed.
+                                return this;
+                            }
+
                             return _parent.CloneElement<AnyOf6Entity>(_idx);
                         }
 

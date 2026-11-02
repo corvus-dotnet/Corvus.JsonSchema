@@ -466,6 +466,12 @@ public readonly partial struct JasmineSchema
             public SeedEntity Clone()
             {
                 CheckValidInstance();
+                if (!_parent.IsDisposable)
+                {
+                    // Already a clone, or backed by a document that is never disposed.
+                    return this;
+                }
+
                 return _parent.CloneElement<SeedEntity>(_idx);
             }
 

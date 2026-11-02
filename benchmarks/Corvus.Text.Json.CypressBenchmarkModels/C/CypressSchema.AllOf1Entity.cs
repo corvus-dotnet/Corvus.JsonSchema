@@ -381,6 +381,12 @@ public readonly partial struct CypressSchema
         public AllOf1Entity Clone()
         {
             CheckValidInstance();
+            if (!_parent.IsDisposable)
+            {
+                // Already a clone, or backed by a document that is never disposed.
+                return this;
+            }
+
             return _parent.CloneElement<AllOf1Entity>(_idx);
         }
 

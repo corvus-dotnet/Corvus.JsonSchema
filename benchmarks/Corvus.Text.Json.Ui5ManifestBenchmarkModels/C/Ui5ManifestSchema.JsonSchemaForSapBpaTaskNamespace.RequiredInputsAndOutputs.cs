@@ -383,6 +383,12 @@ public readonly partial struct Ui5ManifestSchema
             public RequiredInputsAndOutputs Clone()
             {
                 CheckValidInstance();
+                if (!_parent.IsDisposable)
+                {
+                    // Already a clone, or backed by a document that is never disposed.
+                    return this;
+                }
+
                 return _parent.CloneElement<RequiredInputsAndOutputs>(_idx);
             }
 

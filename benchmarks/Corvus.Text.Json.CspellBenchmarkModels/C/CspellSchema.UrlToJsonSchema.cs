@@ -326,6 +326,12 @@ public readonly partial struct CspellSchema
         public UrlToJsonSchema Clone()
         {
             CheckValidInstance();
+            if (!_parent.IsDisposable)
+            {
+                // Already a clone, or backed by a document that is never disposed.
+                return this;
+            }
+
             return _parent.CloneElement<UrlToJsonSchema>(_idx);
         }
 

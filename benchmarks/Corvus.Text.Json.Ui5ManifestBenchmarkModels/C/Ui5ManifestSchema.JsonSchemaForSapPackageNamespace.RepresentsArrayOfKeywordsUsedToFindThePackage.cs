@@ -383,6 +383,12 @@ public readonly partial struct Ui5ManifestSchema
             public RepresentsArrayOfKeywordsUsedToFindThePackage Clone()
             {
                 CheckValidInstance();
+                if (!_parent.IsDisposable)
+                {
+                    // Already a clone, or backed by a document that is never disposed.
+                    return this;
+                }
+
                 return _parent.CloneElement<RepresentsArrayOfKeywordsUsedToFindThePackage>(_idx);
             }
 

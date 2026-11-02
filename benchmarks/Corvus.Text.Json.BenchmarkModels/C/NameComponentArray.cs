@@ -285,6 +285,12 @@ public readonly partial struct NameComponentArray
     public NameComponentArray Clone()
     {
         CheckValidInstance();
+        if (!_parent.IsDisposable)
+        {
+            // Already a clone, or backed by a document that is never disposed.
+            return this;
+        }
+
         return _parent.CloneElement<NameComponentArray>(_idx);
     }
 

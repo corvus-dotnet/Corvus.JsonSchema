@@ -314,6 +314,12 @@ public readonly partial struct JshintrcSchema
         public CurlyEntity Clone()
         {
             CheckValidInstance();
+            if (!_parent.IsDisposable)
+            {
+                // Already a clone, or backed by a document that is never disposed.
+                return this;
+            }
+
             return _parent.CloneElement<CurlyEntity>(_idx);
         }
 

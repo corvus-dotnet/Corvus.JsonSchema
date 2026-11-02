@@ -358,6 +358,12 @@ public readonly partial struct AuthCardButton
     public AuthCardButton Clone()
     {
         CheckValidInstance();
+        if (!_parent.IsDisposable)
+        {
+            // Already a clone, or backed by a document that is never disposed.
+            return this;
+        }
+
         return _parent.CloneElement<AuthCardButton>(_idx);
     }
 

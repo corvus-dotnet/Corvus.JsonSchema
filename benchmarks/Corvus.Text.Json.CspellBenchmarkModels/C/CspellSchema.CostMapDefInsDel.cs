@@ -425,6 +425,12 @@ public readonly partial struct CspellSchema
         public CostMapDefInsDel Clone()
         {
             CheckValidInstance();
+            if (!_parent.IsDisposable)
+            {
+                // Already a clone, or backed by a document that is never disposed.
+                return this;
+            }
+
             return _parent.CloneElement<CostMapDefInsDel>(_idx);
         }
 

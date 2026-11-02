@@ -306,6 +306,12 @@ public readonly partial struct CmakePresetsSchema
         public WorkflowPresetsV6 Clone()
         {
             CheckValidInstance();
+            if (!_parent.IsDisposable)
+            {
+                // Already a clone, or backed by a document that is never disposed.
+                return this;
+            }
+
             return _parent.CloneElement<WorkflowPresetsV6>(_idx);
         }
 

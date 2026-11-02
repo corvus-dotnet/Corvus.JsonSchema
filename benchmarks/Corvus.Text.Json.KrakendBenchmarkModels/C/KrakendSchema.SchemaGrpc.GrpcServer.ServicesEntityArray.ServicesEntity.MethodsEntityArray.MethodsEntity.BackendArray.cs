@@ -305,6 +305,12 @@ public readonly partial struct KrakendSchema
                                 public BackendArray Clone()
                                 {
                                     CheckValidInstance();
+                                    if (!_parent.IsDisposable)
+                                    {
+                                        // Already a clone, or backed by a document that is never disposed.
+                                        return this;
+                                    }
+
                                     return _parent.CloneElement<BackendArray>(_idx);
                                 }
 

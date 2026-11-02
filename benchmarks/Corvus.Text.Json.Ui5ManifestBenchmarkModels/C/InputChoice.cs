@@ -337,6 +337,12 @@ public readonly partial struct InputChoice
     public InputChoice Clone()
     {
         CheckValidInstance();
+        if (!_parent.IsDisposable)
+        {
+            // Already a clone, or backed by a document that is never disposed.
+            return this;
+        }
+
         return _parent.CloneElement<InputChoice>(_idx);
     }
 

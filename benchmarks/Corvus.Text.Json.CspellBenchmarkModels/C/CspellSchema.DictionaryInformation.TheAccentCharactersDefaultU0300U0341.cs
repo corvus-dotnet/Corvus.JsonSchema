@@ -374,6 +374,12 @@ public readonly partial struct CspellSchema
             public TheAccentCharactersDefaultU0300U0341 Clone()
             {
                 CheckValidInstance();
+                if (!_parent.IsDisposable)
+                {
+                    // Already a clone, or backed by a document that is never disposed.
+                    return this;
+                }
+
                 return _parent.CloneElement<TheAccentCharactersDefaultU0300U0341>(_idx);
             }
 

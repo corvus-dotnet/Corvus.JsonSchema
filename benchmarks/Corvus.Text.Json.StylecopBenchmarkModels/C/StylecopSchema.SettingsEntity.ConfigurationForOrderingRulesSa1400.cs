@@ -294,6 +294,12 @@ public readonly partial struct StylecopSchema
             public ConfigurationForOrderingRulesSa1400 Clone()
             {
                 CheckValidInstance();
+                if (!_parent.IsDisposable)
+                {
+                    // Already a clone, or backed by a document that is never disposed.
+                    return this;
+                }
+
                 return _parent.CloneElement<ConfigurationForOrderingRulesSa1400>(_idx);
             }
 

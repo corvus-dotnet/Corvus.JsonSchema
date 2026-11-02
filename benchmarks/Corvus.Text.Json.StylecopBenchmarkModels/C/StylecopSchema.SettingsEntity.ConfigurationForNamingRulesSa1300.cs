@@ -378,6 +378,12 @@ public readonly partial struct StylecopSchema
             public ConfigurationForNamingRulesSa1300 Clone()
             {
                 CheckValidInstance();
+                if (!_parent.IsDisposable)
+                {
+                    // Already a clone, or backed by a document that is never disposed.
+                    return this;
+                }
+
                 return _parent.CloneElement<ConfigurationForNamingRulesSa1300>(_idx);
             }
 

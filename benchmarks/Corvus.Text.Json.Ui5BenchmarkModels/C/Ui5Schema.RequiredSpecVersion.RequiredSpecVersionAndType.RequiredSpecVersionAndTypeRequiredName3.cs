@@ -323,6 +323,12 @@ public readonly partial struct Ui5Schema
                 public RequiredSpecVersionAndTypeRequiredName3 Clone()
                 {
                     CheckValidInstance();
+                    if (!_parent.IsDisposable)
+                    {
+                        // Already a clone, or backed by a document that is never disposed.
+                        return this;
+                    }
+
                     return _parent.CloneElement<RequiredSpecVersionAndTypeRequiredName3>(_idx);
                 }
 

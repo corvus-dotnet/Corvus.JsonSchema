@@ -316,6 +316,12 @@ public readonly partial struct DenoSchema
             public EnableExperimentalSupportForTc39Stage2DraftDecorators Clone()
             {
                 CheckValidInstance();
+                if (!_parent.IsDisposable)
+                {
+                    // Already a clone, or backed by a document that is never disposed.
+                    return this;
+                }
+
                 return _parent.CloneElement<EnableExperimentalSupportForTc39Stage2DraftDecorators>(_idx);
             }
 

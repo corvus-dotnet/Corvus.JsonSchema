@@ -306,6 +306,12 @@ public readonly partial struct CmakePresetsSchema
         public BuildPresetsV2 Clone()
         {
             CheckValidInstance();
+            if (!_parent.IsDisposable)
+            {
+                // Already a clone, or backed by a document that is never disposed.
+                return this;
+            }
+
             return _parent.CloneElement<BuildPresetsV2>(_idx);
         }
 

@@ -299,6 +299,12 @@ public readonly partial struct CmakePresetsSchema
                     public Type1EntityArray Clone()
                     {
                         CheckValidInstance();
+                        if (!_parent.IsDisposable)
+                        {
+                            // Already a clone, or backed by a document that is never disposed.
+                            return this;
+                        }
+
                         return _parent.CloneElement<Type1EntityArray>(_idx);
                     }
 

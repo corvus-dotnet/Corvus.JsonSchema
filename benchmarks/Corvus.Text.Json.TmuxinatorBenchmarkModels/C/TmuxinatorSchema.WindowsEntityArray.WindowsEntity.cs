@@ -422,6 +422,12 @@ public readonly partial struct TmuxinatorSchema
             public WindowsEntity Clone()
             {
                 CheckValidInstance();
+                if (!_parent.IsDisposable)
+                {
+                    // Already a clone, or backed by a document that is never disposed.
+                    return this;
+                }
+
                 return _parent.CloneElement<WindowsEntity>(_idx);
             }
 
