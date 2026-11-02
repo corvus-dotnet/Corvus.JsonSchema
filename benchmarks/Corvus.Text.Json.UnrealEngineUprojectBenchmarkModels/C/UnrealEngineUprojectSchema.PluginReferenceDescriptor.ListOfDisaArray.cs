@@ -28,11 +28,13 @@ public readonly partial struct UnrealEngineUprojectSchema
         public readonly partial struct ListOfDisaArray
 #if NET8_0_OR_GREATER
             : IJsonElement<ListOfDisaArray>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.UnrealEngineUprojectBenchmark.Current.JsonString>,
               IFormattable,
               ISpanFormattable,
               IUtf8SpanFormattable
 #else
             : IJsonElement<ListOfDisaArray>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.UnrealEngineUprojectBenchmark.Current.JsonString>,
               IFormattable
 #endif
         {
@@ -81,6 +83,21 @@ public readonly partial struct UnrealEngineUprojectSchema
                 CheckValidInstance();
                 return EnumeratorCreator.CreateArrayEnumerator<Corvus.UnrealEngineUprojectBenchmark.Current.JsonString>(_parent, _idx);
             }
+
+            /// <summary>
+            /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+            /// </summary>
+            /// <returns>The enumerator.</returns>
+            public ArrayEnumerator<Corvus.UnrealEngineUprojectBenchmark.Current.JsonString> GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.Generic.IEnumerator<Corvus.UnrealEngineUprojectBenchmark.Current.JsonString> global::System.Collections.Generic.IEnumerable<Corvus.UnrealEngineUprojectBenchmark.Current.JsonString>.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            int global::System.Collections.Generic.IReadOnlyCollection<Corvus.UnrealEngineUprojectBenchmark.Current.JsonString>.Count => GetArrayLength();
 
             /// <inheritdoc/>
             public JsonValueKind ValueKind => TokenType.ToValueKind();

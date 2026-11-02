@@ -26,11 +26,13 @@ public readonly partial struct GitpodConfigurationSchema
     public readonly partial struct RequiredUrlArray
 #if NET8_0_OR_GREATER
         : IJsonElement<RequiredUrlArray>,
+          global::System.Collections.Generic.IReadOnlyCollection<Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.RequiredUrl>,
           IFormattable,
           ISpanFormattable,
           IUtf8SpanFormattable
 #else
         : IJsonElement<RequiredUrlArray>,
+          global::System.Collections.Generic.IReadOnlyCollection<Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.RequiredUrl>,
           IFormattable
 #endif
     {
@@ -79,6 +81,21 @@ public readonly partial struct GitpodConfigurationSchema
             CheckValidInstance();
             return EnumeratorCreator.CreateArrayEnumerator<Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.RequiredUrl>(_parent, _idx);
         }
+
+        /// <summary>
+        /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+        /// </summary>
+        /// <returns>The enumerator.</returns>
+        public ArrayEnumerator<Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.RequiredUrl> GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        global::System.Collections.Generic.IEnumerator<Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.RequiredUrl> global::System.Collections.Generic.IEnumerable<Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.RequiredUrl>.GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        int global::System.Collections.Generic.IReadOnlyCollection<Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.RequiredUrl>.Count => GetArrayLength();
 
         /// <inheritdoc/>
         public JsonValueKind ValueKind => TokenType.ToValueKind();

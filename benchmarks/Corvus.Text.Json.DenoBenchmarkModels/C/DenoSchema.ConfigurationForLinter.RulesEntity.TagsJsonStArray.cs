@@ -30,11 +30,13 @@ public readonly partial struct DenoSchema
             public readonly partial struct TagsJsonStArray
 #if NET8_0_OR_GREATER
                 : IJsonElement<TagsJsonStArray>,
+                  global::System.Collections.Generic.IReadOnlyCollection<Corvus.DenoBenchmark.Current.JsonString>,
                   IFormattable,
                   ISpanFormattable,
                   IUtf8SpanFormattable
 #else
                 : IJsonElement<TagsJsonStArray>,
+                  global::System.Collections.Generic.IReadOnlyCollection<Corvus.DenoBenchmark.Current.JsonString>,
                   IFormattable
 #endif
             {
@@ -98,6 +100,21 @@ public readonly partial struct DenoSchema
                     CheckValidInstance();
                     return EnumeratorCreator.CreateArrayEnumerator<Corvus.DenoBenchmark.Current.JsonString>(_parent, _idx);
                 }
+
+                /// <summary>
+                /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+                /// </summary>
+                /// <returns>The enumerator.</returns>
+                public ArrayEnumerator<Corvus.DenoBenchmark.Current.JsonString> GetEnumerator() => EnumerateArray();
+
+                /// <inheritdoc/>
+                global::System.Collections.Generic.IEnumerator<Corvus.DenoBenchmark.Current.JsonString> global::System.Collections.Generic.IEnumerable<Corvus.DenoBenchmark.Current.JsonString>.GetEnumerator() => EnumerateArray();
+
+                /// <inheritdoc/>
+                global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+                /// <inheritdoc/>
+                int global::System.Collections.Generic.IReadOnlyCollection<Corvus.DenoBenchmark.Current.JsonString>.Count => GetArrayLength();
 
                 /// <inheritdoc/>
                 public JsonValueKind ValueKind => TokenType.ToValueKind();

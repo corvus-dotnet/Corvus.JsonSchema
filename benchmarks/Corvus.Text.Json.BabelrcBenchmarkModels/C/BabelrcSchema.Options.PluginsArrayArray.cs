@@ -28,11 +28,13 @@ public readonly partial struct BabelrcSchema
         public readonly partial struct PluginsArrayArray
 #if NET8_0_OR_GREATER
             : IJsonElement<PluginsArrayArray>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.PluginsArray>,
               IFormattable,
               ISpanFormattable,
               IUtf8SpanFormattable
 #else
             : IJsonElement<PluginsArrayArray>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.PluginsArray>,
               IFormattable
 #endif
         {
@@ -81,6 +83,21 @@ public readonly partial struct BabelrcSchema
                 CheckValidInstance();
                 return EnumeratorCreator.CreateArrayEnumerator<Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.PluginsArray>(_parent, _idx);
             }
+
+            /// <summary>
+            /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+            /// </summary>
+            /// <returns>The enumerator.</returns>
+            public ArrayEnumerator<Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.PluginsArray> GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.Generic.IEnumerator<Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.PluginsArray> global::System.Collections.Generic.IEnumerable<Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.PluginsArray>.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            int global::System.Collections.Generic.IReadOnlyCollection<Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.PluginsArray>.Count => GetArrayLength();
 
             /// <inheritdoc/>
             public JsonValueKind ValueKind => TokenType.ToValueKind();

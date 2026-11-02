@@ -28,11 +28,13 @@ public readonly partial struct FabricModSchema
         public readonly partial struct JsonStringArray
 #if NET8_0_OR_GREATER
             : IJsonElement<JsonStringArray>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.FabricModBenchmark.Current.JsonString>,
               IFormattable,
               ISpanFormattable,
               IUtf8SpanFormattable
 #else
             : IJsonElement<JsonStringArray>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.FabricModBenchmark.Current.JsonString>,
               IFormattable
 #endif
         {
@@ -81,6 +83,21 @@ public readonly partial struct FabricModSchema
                 CheckValidInstance();
                 return EnumeratorCreator.CreateArrayEnumerator<Corvus.FabricModBenchmark.Current.JsonString>(_parent, _idx);
             }
+
+            /// <summary>
+            /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+            /// </summary>
+            /// <returns>The enumerator.</returns>
+            public ArrayEnumerator<Corvus.FabricModBenchmark.Current.JsonString> GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.Generic.IEnumerator<Corvus.FabricModBenchmark.Current.JsonString> global::System.Collections.Generic.IEnumerable<Corvus.FabricModBenchmark.Current.JsonString>.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            int global::System.Collections.Generic.IReadOnlyCollection<Corvus.FabricModBenchmark.Current.JsonString>.Count => GetArrayLength();
 
             /// <inheritdoc/>
             public JsonValueKind ValueKind => TokenType.ToValueKind();

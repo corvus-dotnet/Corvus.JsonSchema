@@ -29,11 +29,13 @@ public readonly partial struct HelmChartLockSchema
     public readonly partial struct RequiredNameAndRepositoryAndVersionArray
 #if NET8_0_OR_GREATER
         : IJsonElement<RequiredNameAndRepositoryAndVersionArray>,
+          global::System.Collections.Generic.IReadOnlyCollection<Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.RequiredNameAndRepositoryAndVersion>,
           IFormattable,
           ISpanFormattable,
           IUtf8SpanFormattable
 #else
         : IJsonElement<RequiredNameAndRepositoryAndVersionArray>,
+          global::System.Collections.Generic.IReadOnlyCollection<Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.RequiredNameAndRepositoryAndVersion>,
           IFormattable
 #endif
     {
@@ -82,6 +84,21 @@ public readonly partial struct HelmChartLockSchema
             CheckValidInstance();
             return EnumeratorCreator.CreateArrayEnumerator<Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.RequiredNameAndRepositoryAndVersion>(_parent, _idx);
         }
+
+        /// <summary>
+        /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+        /// </summary>
+        /// <returns>The enumerator.</returns>
+        public ArrayEnumerator<Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.RequiredNameAndRepositoryAndVersion> GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        global::System.Collections.Generic.IEnumerator<Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.RequiredNameAndRepositoryAndVersion> global::System.Collections.Generic.IEnumerable<Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.RequiredNameAndRepositoryAndVersion>.GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        int global::System.Collections.Generic.IReadOnlyCollection<Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.RequiredNameAndRepositoryAndVersion>.Count => GetArrayLength();
 
         /// <inheritdoc/>
         public JsonValueKind ValueKind => TokenType.ToValueKind();

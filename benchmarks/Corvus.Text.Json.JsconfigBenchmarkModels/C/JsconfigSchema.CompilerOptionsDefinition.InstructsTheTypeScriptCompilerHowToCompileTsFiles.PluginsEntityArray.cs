@@ -30,11 +30,13 @@ public readonly partial struct JsconfigSchema
             public readonly partial struct PluginsEntityArray
 #if NET8_0_OR_GREATER
                 : IJsonElement<PluginsEntityArray>,
+                  global::System.Collections.Generic.IReadOnlyCollection<Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PluginsEntityArray.PluginsEntity>,
                   IFormattable,
                   ISpanFormattable,
                   IUtf8SpanFormattable
 #else
                 : IJsonElement<PluginsEntityArray>,
+                  global::System.Collections.Generic.IReadOnlyCollection<Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PluginsEntityArray.PluginsEntity>,
                   IFormattable
 #endif
             {
@@ -83,6 +85,21 @@ public readonly partial struct JsconfigSchema
                     CheckValidInstance();
                     return EnumeratorCreator.CreateArrayEnumerator<Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PluginsEntityArray.PluginsEntity>(_parent, _idx);
                 }
+
+                /// <summary>
+                /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+                /// </summary>
+                /// <returns>The enumerator.</returns>
+                public ArrayEnumerator<Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PluginsEntityArray.PluginsEntity> GetEnumerator() => EnumerateArray();
+
+                /// <inheritdoc/>
+                global::System.Collections.Generic.IEnumerator<Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PluginsEntityArray.PluginsEntity> global::System.Collections.Generic.IEnumerable<Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PluginsEntityArray.PluginsEntity>.GetEnumerator() => EnumerateArray();
+
+                /// <inheritdoc/>
+                global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+                /// <inheritdoc/>
+                int global::System.Collections.Generic.IReadOnlyCollection<Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PluginsEntityArray.PluginsEntity>.Count => GetArrayLength();
 
                 /// <inheritdoc/>
                 public JsonValueKind ValueKind => TokenType.ToValueKind();

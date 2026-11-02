@@ -26,11 +26,13 @@ public readonly partial struct CmakePresetsSchema
     public readonly partial struct BuildPresetsItemsV3
 #if NET8_0_OR_GREATER
         : IJsonElement<BuildPresetsItemsV3>,
+          global::System.Collections.Generic.IReadOnlyCollection<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.BuildPresetsItemsV3.BuildPresetsItemsV3Entity>,
           IFormattable,
           ISpanFormattable,
           IUtf8SpanFormattable
 #else
         : IJsonElement<BuildPresetsItemsV3>,
+          global::System.Collections.Generic.IReadOnlyCollection<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.BuildPresetsItemsV3.BuildPresetsItemsV3Entity>,
           IFormattable
 #endif
     {
@@ -79,6 +81,21 @@ public readonly partial struct CmakePresetsSchema
             CheckValidInstance();
             return EnumeratorCreator.CreateArrayEnumerator<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.BuildPresetsItemsV3.BuildPresetsItemsV3Entity>(_parent, _idx);
         }
+
+        /// <summary>
+        /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+        /// </summary>
+        /// <returns>The enumerator.</returns>
+        public ArrayEnumerator<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.BuildPresetsItemsV3.BuildPresetsItemsV3Entity> GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        global::System.Collections.Generic.IEnumerator<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.BuildPresetsItemsV3.BuildPresetsItemsV3Entity> global::System.Collections.Generic.IEnumerable<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.BuildPresetsItemsV3.BuildPresetsItemsV3Entity>.GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        int global::System.Collections.Generic.IReadOnlyCollection<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.BuildPresetsItemsV3.BuildPresetsItemsV3Entity>.Count => GetArrayLength();
 
         /// <inheritdoc/>
         public JsonValueKind ValueKind => TokenType.ToValueKind();

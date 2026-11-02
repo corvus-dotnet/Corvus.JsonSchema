@@ -54,6 +54,7 @@ public sealed class CorePartial : ICodeFileBuilder
                         typeDeclaration.DotnetTypeName(),
                         interfaces: [
                             typeDeclaration.GetIJsonElementInterface(forMutable: false),
+                            typeDeclaration.GetReadOnlyCollectionInterface(),
                             "IFormattable",
                             new("ISpanFormattable", FrameworkType.Net80OrGreater),
                             new("IUtf8SpanFormattable", FrameworkType.Net80OrGreater),
@@ -84,6 +85,7 @@ public sealed class CorePartial : ICodeFileBuilder
                         .AppendGetArrayLength(typeDeclaration)
                         .AppendGetPropertyCount(typeDeclaration)
                         .AppendEnumerateArray(typeDeclaration)
+                        .AppendReadOnlyCollectionImplementation(typeDeclaration)
                         .AppendEnumerateObject(typeDeclaration)
                         .AppendValueKindProperty()
                         .AppendTokenTypeProperty()

@@ -18,11 +18,13 @@ namespace Petstore.EndToEnd.Client.Models;
 public readonly partial struct GetPetsBatchByIdsIds
 #if NET8_0_OR_GREATER
     : IJsonElement<GetPetsBatchByIdsIds>,
+      global::System.Collections.Generic.IReadOnlyCollection<Petstore.EndToEnd.Client.Models.JsonInt64>,
       IFormattable,
       ISpanFormattable,
       IUtf8SpanFormattable
 #else
     : IJsonElement<GetPetsBatchByIdsIds>,
+      global::System.Collections.Generic.IReadOnlyCollection<Petstore.EndToEnd.Client.Models.JsonInt64>,
       IFormattable
 #endif
 {
@@ -99,6 +101,21 @@ public readonly partial struct GetPetsBatchByIdsIds
         CheckValidInstance();
         return EnumeratorCreator.CreateArrayEnumerator<Petstore.EndToEnd.Client.Models.JsonInt64>(_parent, _idx);
     }
+
+    /// <summary>
+    /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+    /// </summary>
+    /// <returns>The enumerator.</returns>
+    public ArrayEnumerator<Petstore.EndToEnd.Client.Models.JsonInt64> GetEnumerator() => EnumerateArray();
+
+    /// <inheritdoc/>
+    global::System.Collections.Generic.IEnumerator<Petstore.EndToEnd.Client.Models.JsonInt64> global::System.Collections.Generic.IEnumerable<Petstore.EndToEnd.Client.Models.JsonInt64>.GetEnumerator() => EnumerateArray();
+
+    /// <inheritdoc/>
+    global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+    /// <inheritdoc/>
+    int global::System.Collections.Generic.IReadOnlyCollection<Petstore.EndToEnd.Client.Models.JsonInt64>.Count => GetArrayLength();
 
     /// <inheritdoc/>
     public JsonValueKind ValueKind => TokenType.ToValueKind();

@@ -18,11 +18,13 @@ namespace Corvus.ClassicBenchmark.Current;
 public readonly partial struct JsonArray
 #if NET8_0_OR_GREATER
     : IJsonElement<JsonArray>,
+      global::System.Collections.Generic.IReadOnlyCollection<Corvus.ClassicBenchmark.Current.Person>,
       IFormattable,
       ISpanFormattable,
       IUtf8SpanFormattable
 #else
     : IJsonElement<JsonArray>,
+      global::System.Collections.Generic.IReadOnlyCollection<Corvus.ClassicBenchmark.Current.Person>,
       IFormattable
 #endif
 {
@@ -71,6 +73,21 @@ public readonly partial struct JsonArray
         CheckValidInstance();
         return EnumeratorCreator.CreateArrayEnumerator<Corvus.ClassicBenchmark.Current.Person>(_parent, _idx);
     }
+
+    /// <summary>
+    /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+    /// </summary>
+    /// <returns>The enumerator.</returns>
+    public ArrayEnumerator<Corvus.ClassicBenchmark.Current.Person> GetEnumerator() => EnumerateArray();
+
+    /// <inheritdoc/>
+    global::System.Collections.Generic.IEnumerator<Corvus.ClassicBenchmark.Current.Person> global::System.Collections.Generic.IEnumerable<Corvus.ClassicBenchmark.Current.Person>.GetEnumerator() => EnumerateArray();
+
+    /// <inheritdoc/>
+    global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+    /// <inheritdoc/>
+    int global::System.Collections.Generic.IReadOnlyCollection<Corvus.ClassicBenchmark.Current.Person>.Count => GetArrayLength();
 
     /// <inheritdoc/>
     public JsonValueKind ValueKind => TokenType.ToValueKind();

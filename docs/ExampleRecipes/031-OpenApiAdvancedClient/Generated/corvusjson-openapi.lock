@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-11-02T13:52:54.1234681\u002B00:00",
+  "generatedAt": "2026-11-02T14:19:02.8467637\u002B00:00",
   "generatedFiles": [
     "ListPetsRequest.cs",
     "ListPetsResponse.cs",
@@ -135,7 +135,7 @@
     "Models/PostPetsByPetIdPhotosBody.JsonSchema.cs",
     "Models/CorvusJsonSchemaProgram.cs"
   ],
-  "generatorVersion": "1.0.0\u002B0f599ea8f89a49107832ea07f5aef9108f1cd6c5",
+  "generatorVersion": "1.0.0\u002B02df2404c37dc719afab3e9c70ade02ebafa22d5",
   "includePaths": [],
   "rootNamespace": "Petstore.Extended",
   "specFileHash": "27f81b7eb15fe66d4e3b2ffb3572a80fe7e0c6b564966f8b785c7496c1631ff8",

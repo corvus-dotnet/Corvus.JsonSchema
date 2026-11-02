@@ -28,11 +28,13 @@ public readonly partial struct PulumiSchema
         public readonly partial struct PluginsForResArray
 #if NET8_0_OR_GREATER
             : IJsonElement<PluginsForResArray>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.PulumiBenchmark.Current.PulumiSchema.PluginOptions>,
               IFormattable,
               ISpanFormattable,
               IUtf8SpanFormattable
 #else
             : IJsonElement<PluginsForResArray>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.PulumiBenchmark.Current.PulumiSchema.PluginOptions>,
               IFormattable
 #endif
         {
@@ -81,6 +83,21 @@ public readonly partial struct PulumiSchema
                 CheckValidInstance();
                 return EnumeratorCreator.CreateArrayEnumerator<Corvus.PulumiBenchmark.Current.PulumiSchema.PluginOptions>(_parent, _idx);
             }
+
+            /// <summary>
+            /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+            /// </summary>
+            /// <returns>The enumerator.</returns>
+            public ArrayEnumerator<Corvus.PulumiBenchmark.Current.PulumiSchema.PluginOptions> GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.Generic.IEnumerator<Corvus.PulumiBenchmark.Current.PulumiSchema.PluginOptions> global::System.Collections.Generic.IEnumerable<Corvus.PulumiBenchmark.Current.PulumiSchema.PluginOptions>.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            int global::System.Collections.Generic.IReadOnlyCollection<Corvus.PulumiBenchmark.Current.PulumiSchema.PluginOptions>.Count => GetArrayLength();
 
             /// <inheritdoc/>
             public JsonValueKind ValueKind => TokenType.ToValueKind();

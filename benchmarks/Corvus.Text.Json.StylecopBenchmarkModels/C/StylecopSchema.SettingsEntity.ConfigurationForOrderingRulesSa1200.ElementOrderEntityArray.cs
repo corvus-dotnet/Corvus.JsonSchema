@@ -44,11 +44,13 @@ public readonly partial struct StylecopSchema
             public readonly partial struct ElementOrderEntityArray
 #if NET8_0_OR_GREATER
                 : IJsonElement<ElementOrderEntityArray>,
+                  global::System.Collections.Generic.IReadOnlyCollection<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity>,
                   IFormattable,
                   ISpanFormattable,
                   IUtf8SpanFormattable
 #else
                 : IJsonElement<ElementOrderEntityArray>,
+                  global::System.Collections.Generic.IReadOnlyCollection<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity>,
                   IFormattable
 #endif
             {
@@ -98,6 +100,21 @@ public readonly partial struct StylecopSchema
                     CheckValidInstance();
                     return EnumeratorCreator.CreateArrayEnumerator<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity>(_parent, _idx);
                 }
+
+                /// <summary>
+                /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+                /// </summary>
+                /// <returns>The enumerator.</returns>
+                public ArrayEnumerator<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity> GetEnumerator() => EnumerateArray();
+
+                /// <inheritdoc/>
+                global::System.Collections.Generic.IEnumerator<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity> global::System.Collections.Generic.IEnumerable<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity>.GetEnumerator() => EnumerateArray();
+
+                /// <inheritdoc/>
+                global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+                /// <inheritdoc/>
+                int global::System.Collections.Generic.IReadOnlyCollection<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.ElementOrderEntity>.Count => GetArrayLength();
 
                 /// <inheritdoc/>
                 public JsonValueKind ValueKind => TokenType.ToValueKind();

@@ -41,11 +41,13 @@ public readonly partial struct LazygitSchema
                             public readonly partial struct AnOptionArray
 #if NET8_0_OR_GREATER
                                 : IJsonElement<AnOptionArray>,
+                                  global::System.Collections.Generic.IReadOnlyCollection<Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.RequiredKeyAndTitleAndType.AllOf2Entity.RequiredOptions.AnOptionArray.AnOption>,
                                   IFormattable,
                                   ISpanFormattable,
                                   IUtf8SpanFormattable
 #else
                                 : IJsonElement<AnOptionArray>,
+                                  global::System.Collections.Generic.IReadOnlyCollection<Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.RequiredKeyAndTitleAndType.AllOf2Entity.RequiredOptions.AnOptionArray.AnOption>,
                                   IFormattable
 #endif
                             {
@@ -94,6 +96,21 @@ public readonly partial struct LazygitSchema
                                     CheckValidInstance();
                                     return EnumeratorCreator.CreateArrayEnumerator<Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.RequiredKeyAndTitleAndType.AllOf2Entity.RequiredOptions.AnOptionArray.AnOption>(_parent, _idx);
                                 }
+
+                                /// <summary>
+                                /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+                                /// </summary>
+                                /// <returns>The enumerator.</returns>
+                                public ArrayEnumerator<Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.RequiredKeyAndTitleAndType.AllOf2Entity.RequiredOptions.AnOptionArray.AnOption> GetEnumerator() => EnumerateArray();
+
+                                /// <inheritdoc/>
+                                global::System.Collections.Generic.IEnumerator<Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.RequiredKeyAndTitleAndType.AllOf2Entity.RequiredOptions.AnOptionArray.AnOption> global::System.Collections.Generic.IEnumerable<Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.RequiredKeyAndTitleAndType.AllOf2Entity.RequiredOptions.AnOptionArray.AnOption>.GetEnumerator() => EnumerateArray();
+
+                                /// <inheritdoc/>
+                                global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+                                /// <inheritdoc/>
+                                int global::System.Collections.Generic.IReadOnlyCollection<Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.RequiredKeyAndTitleAndType.AllOf2Entity.RequiredOptions.AnOptionArray.AnOption>.Count => GetArrayLength();
 
                                 /// <inheritdoc/>
                                 public JsonValueKind ValueKind => TokenType.ToValueKind();

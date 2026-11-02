@@ -26,11 +26,13 @@ public readonly partial struct UnrealEngineUprojectSchema
     public readonly partial struct ModuleDescriptorArray
 #if NET8_0_OR_GREATER
         : IJsonElement<ModuleDescriptorArray>,
+          global::System.Collections.Generic.IReadOnlyCollection<Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor>,
           IFormattable,
           ISpanFormattable,
           IUtf8SpanFormattable
 #else
         : IJsonElement<ModuleDescriptorArray>,
+          global::System.Collections.Generic.IReadOnlyCollection<Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor>,
           IFormattable
 #endif
     {
@@ -79,6 +81,21 @@ public readonly partial struct UnrealEngineUprojectSchema
             CheckValidInstance();
             return EnumeratorCreator.CreateArrayEnumerator<Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor>(_parent, _idx);
         }
+
+        /// <summary>
+        /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+        /// </summary>
+        /// <returns>The enumerator.</returns>
+        public ArrayEnumerator<Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor> GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        global::System.Collections.Generic.IEnumerator<Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor> global::System.Collections.Generic.IEnumerable<Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor>.GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        int global::System.Collections.Generic.IReadOnlyCollection<Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor>.Count => GetArrayLength();
 
         /// <inheritdoc/>
         public JsonValueKind ValueKind => TokenType.ToValueKind();

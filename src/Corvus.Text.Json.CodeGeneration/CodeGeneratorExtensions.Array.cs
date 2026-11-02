@@ -750,29 +750,9 @@ internal static partial class CodeGeneratorExtensions
             return generator;
         }
 
-        string fqdtn;
-
-        if (typeDeclaration.ArrayItemsType() is ArrayItemsTypeDeclaration itemsType)
+        if (!TryGetArrayItemsTypeName(typeDeclaration, out string fqdtn))
         {
-            if (itemsType.ReducedType == WellKnownTypeDeclarations.JsonNotAny)
-            {
-                return generator;
-            }
-
-            fqdtn = itemsType.ReducedType.FullyQualifiedDotnetTypeName();
-        }
-        else if (typeDeclaration.ExplicitUnevaluatedItemsType() is ArrayItemsTypeDeclaration unevaluatedItemsType)
-        {
-            if (unevaluatedItemsType.ReducedType == WellKnownTypeDeclarations.JsonNotAny)
-            {
-                return generator;
-            }
-
-            fqdtn = unevaluatedItemsType.ReducedType.FullyQualifiedDotnetTypeName();
-        }
-        else
-        {
-            fqdtn = WellKnownTypeDeclarations.JsonAny.DotnetTypeName();
+            return generator;
         }
 
         if (forMutable)
@@ -791,6 +771,86 @@ internal static partial class CodeGeneratorExtensions
                 .AppendLineIndent("return EnumeratorCreator.CreateArrayEnumerator<", fqdtn, ">(_parent, _idx);")
             .PopIndent()
             .AppendLineIndent("}");
+    }
+
+    /// <summary>
+    /// Gets the type of the items <c>EnumerateArray()</c> gives, or <see langword="false"/> when the items cannot be
+    /// anything (a <c>false</c> items schema).
+    /// </summary>
+    private static bool TryGetArrayItemsTypeName(TypeDeclaration typeDeclaration, out string fqdtn)
+    {
+        if (typeDeclaration.ArrayItemsType() is ArrayItemsTypeDeclaration itemsType)
+        {
+            fqdtn = itemsType.ReducedType.FullyQualifiedDotnetTypeName();
+            return itemsType.ReducedType != WellKnownTypeDeclarations.JsonNotAny;
+        }
+
+        if (typeDeclaration.ExplicitUnevaluatedItemsType() is ArrayItemsTypeDeclaration unevaluatedItemsType)
+        {
+            fqdtn = unevaluatedItemsType.ReducedType.FullyQualifiedDotnetTypeName();
+            return unevaluatedItemsType.ReducedType != WellKnownTypeDeclarations.JsonNotAny;
+        }
+
+        fqdtn = WellKnownTypeDeclarations.JsonAny.DotnetTypeName();
+        return true;
+    }
+
+    /// <summary>
+    /// Gets the type of the items of a pure array type, whose only core type is <c>array</c> and which is not a tuple,
+    /// or <see langword="null"/> for any other type. Such a type is a read-only collection of its items.
+    /// </summary>
+    private static string? PureArrayItemsTypeName(TypeDeclaration typeDeclaration)
+    {
+        return typeDeclaration.ImpliedCoreTypes() == CoreTypes.Array &&
+            typeDeclaration.TupleType() is null &&
+            TryGetArrayItemsTypeName(typeDeclaration, out string fqdtn)
+            ? fqdtn
+            : null;
+    }
+
+    /// <summary>
+    /// Gets the <c>IReadOnlyCollection&lt;T&gt;</c> interface of a pure array type, or nothing for any other type.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <returns>The interface to declare, or <see cref="ConditionalCodeSpecification.DoNotEmit"/>.</returns>
+    public static ConditionalCodeSpecification GetReadOnlyCollectionInterface(this TypeDeclaration typeDeclaration)
+    {
+        return PureArrayItemsTypeName(typeDeclaration) is string itemsType
+            ? "global::System.Collections.Generic.IReadOnlyCollection<" + itemsType + ">"
+            : ConditionalCodeSpecification.DoNotEmit;
+    }
+
+    /// <summary>
+    /// Appends the members of <c>IReadOnlyCollection&lt;T&gt;</c> for a pure array type, and a <c>GetEnumerator()</c>
+    /// that returns the array enumerator, so that <c>foreach</c> over the value does not allocate.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to emit the members.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendReadOnlyCollectionImplementation(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (generator.IsCancellationRequested || PureArrayItemsTypeName(typeDeclaration) is not string itemsType)
+        {
+            return generator;
+        }
+
+        return generator
+            .ReserveNameIfNotReserved("GetEnumerator")
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent("/// <returns>The enumerator.</returns>")
+            .AppendLineIndent("public ArrayEnumerator<", itemsType, "> GetEnumerator() => EnumerateArray();")
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <inheritdoc/>")
+            .AppendLineIndent("global::System.Collections.Generic.IEnumerator<", itemsType, "> global::System.Collections.Generic.IEnumerable<", itemsType, ">.GetEnumerator() => EnumerateArray();")
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <inheritdoc/>")
+            .AppendLineIndent("global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();")
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <inheritdoc/>")
+            .AppendLineIndent("int global::System.Collections.Generic.IReadOnlyCollection<", itemsType, ">.Count => GetArrayLength();");
     }
 
     /// <summary>

@@ -21,11 +21,13 @@ public readonly partial struct Pet
     public readonly partial struct JsonStringArray
 #if NET8_0_OR_GREATER
         : IJsonElement<JsonStringArray>,
+          global::System.Collections.Generic.IReadOnlyCollection<Petstore.Extended.Models.JsonString>,
           IFormattable,
           ISpanFormattable,
           IUtf8SpanFormattable
 #else
         : IJsonElement<JsonStringArray>,
+          global::System.Collections.Generic.IReadOnlyCollection<Petstore.Extended.Models.JsonString>,
           IFormattable
 #endif
     {
@@ -74,6 +76,21 @@ public readonly partial struct Pet
             CheckValidInstance();
             return EnumeratorCreator.CreateArrayEnumerator<Petstore.Extended.Models.JsonString>(_parent, _idx);
         }
+
+        /// <summary>
+        /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+        /// </summary>
+        /// <returns>The enumerator.</returns>
+        public ArrayEnumerator<Petstore.Extended.Models.JsonString> GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        global::System.Collections.Generic.IEnumerator<Petstore.Extended.Models.JsonString> global::System.Collections.Generic.IEnumerable<Petstore.Extended.Models.JsonString>.GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        int global::System.Collections.Generic.IReadOnlyCollection<Petstore.Extended.Models.JsonString>.Count => GetArrayLength();
 
         /// <inheritdoc/>
         public JsonValueKind ValueKind => TokenType.ToValueKind();

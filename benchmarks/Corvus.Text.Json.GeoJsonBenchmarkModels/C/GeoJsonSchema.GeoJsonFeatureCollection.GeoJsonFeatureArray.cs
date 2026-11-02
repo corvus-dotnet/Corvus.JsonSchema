@@ -23,11 +23,13 @@ public readonly partial struct GeoJsonSchema
         public readonly partial struct GeoJsonFeatureArray
 #if NET8_0_OR_GREATER
             : IJsonElement<GeoJsonFeatureArray>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature>,
               IFormattable,
               ISpanFormattable,
               IUtf8SpanFormattable
 #else
             : IJsonElement<GeoJsonFeatureArray>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature>,
               IFormattable
 #endif
         {
@@ -76,6 +78,21 @@ public readonly partial struct GeoJsonSchema
                 CheckValidInstance();
                 return EnumeratorCreator.CreateArrayEnumerator<Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature>(_parent, _idx);
             }
+
+            /// <summary>
+            /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+            /// </summary>
+            /// <returns>The enumerator.</returns>
+            public ArrayEnumerator<Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature> GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.Generic.IEnumerator<Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature> global::System.Collections.Generic.IEnumerable<Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature>.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            int global::System.Collections.Generic.IReadOnlyCollection<Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.GeoJsonFeatureArray.GeoJsonFeature>.Count => GetArrayLength();
 
             /// <inheritdoc/>
             public JsonValueKind ValueKind => TokenType.ToValueKind();

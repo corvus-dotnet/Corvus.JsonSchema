@@ -21,11 +21,13 @@ public readonly partial struct PreCommitHooksSchema
     public readonly partial struct Stages
 #if NET8_0_OR_GREATER
         : IJsonElement<Stages>,
+          global::System.Collections.Generic.IReadOnlyCollection<Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stage>,
           IFormattable,
           ISpanFormattable,
           IUtf8SpanFormattable
 #else
         : IJsonElement<Stages>,
+          global::System.Collections.Generic.IReadOnlyCollection<Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stage>,
           IFormattable
 #endif
     {
@@ -74,6 +76,21 @@ public readonly partial struct PreCommitHooksSchema
             CheckValidInstance();
             return EnumeratorCreator.CreateArrayEnumerator<Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stage>(_parent, _idx);
         }
+
+        /// <summary>
+        /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+        /// </summary>
+        /// <returns>The enumerator.</returns>
+        public ArrayEnumerator<Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stage> GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        global::System.Collections.Generic.IEnumerator<Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stage> global::System.Collections.Generic.IEnumerable<Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stage>.GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        int global::System.Collections.Generic.IReadOnlyCollection<Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stage>.Count => GetArrayLength();
 
         /// <inheritdoc/>
         public JsonValueKind ValueKind => TokenType.ToValueKind();

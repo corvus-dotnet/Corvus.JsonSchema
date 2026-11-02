@@ -26,11 +26,13 @@ public readonly partial struct Authentication
     public readonly partial struct AuthCardButtonArray
 #if NET8_0_OR_GREATER
         : IJsonElement<AuthCardButtonArray>,
+          global::System.Collections.Generic.IReadOnlyCollection<Corvus.Ui5ManifestBenchmark.Current.AuthCardButton>,
           IFormattable,
           ISpanFormattable,
           IUtf8SpanFormattable
 #else
         : IJsonElement<AuthCardButtonArray>,
+          global::System.Collections.Generic.IReadOnlyCollection<Corvus.Ui5ManifestBenchmark.Current.AuthCardButton>,
           IFormattable
 #endif
     {
@@ -79,6 +81,21 @@ public readonly partial struct Authentication
             CheckValidInstance();
             return EnumeratorCreator.CreateArrayEnumerator<Corvus.Ui5ManifestBenchmark.Current.AuthCardButton>(_parent, _idx);
         }
+
+        /// <summary>
+        /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+        /// </summary>
+        /// <returns>The enumerator.</returns>
+        public ArrayEnumerator<Corvus.Ui5ManifestBenchmark.Current.AuthCardButton> GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        global::System.Collections.Generic.IEnumerator<Corvus.Ui5ManifestBenchmark.Current.AuthCardButton> global::System.Collections.Generic.IEnumerable<Corvus.Ui5ManifestBenchmark.Current.AuthCardButton>.GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        int global::System.Collections.Generic.IReadOnlyCollection<Corvus.Ui5ManifestBenchmark.Current.AuthCardButton>.Count => GetArrayLength();
 
         /// <inheritdoc/>
         public JsonValueKind ValueKind => TokenType.ToValueKind();

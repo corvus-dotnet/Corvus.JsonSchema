@@ -36,11 +36,13 @@ public readonly partial struct JasmineSchema
         public readonly partial struct SpecFilesJArray
 #if NET8_0_OR_GREATER
             : IJsonElement<SpecFilesJArray>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.JasmineBenchmark.Current.JsonString>,
               IFormattable,
               ISpanFormattable,
               IUtf8SpanFormattable
 #else
             : IJsonElement<SpecFilesJArray>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.JasmineBenchmark.Current.JsonString>,
               IFormattable
 #endif
         {
@@ -90,6 +92,21 @@ public readonly partial struct JasmineSchema
                 CheckValidInstance();
                 return EnumeratorCreator.CreateArrayEnumerator<Corvus.JasmineBenchmark.Current.JsonString>(_parent, _idx);
             }
+
+            /// <summary>
+            /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+            /// </summary>
+            /// <returns>The enumerator.</returns>
+            public ArrayEnumerator<Corvus.JasmineBenchmark.Current.JsonString> GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.Generic.IEnumerator<Corvus.JasmineBenchmark.Current.JsonString> global::System.Collections.Generic.IEnumerable<Corvus.JasmineBenchmark.Current.JsonString>.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            int global::System.Collections.Generic.IReadOnlyCollection<Corvus.JasmineBenchmark.Current.JsonString>.Count => GetArrayLength();
 
             /// <inheritdoc/>
             public JsonValueKind ValueKind => TokenType.ToValueKind();

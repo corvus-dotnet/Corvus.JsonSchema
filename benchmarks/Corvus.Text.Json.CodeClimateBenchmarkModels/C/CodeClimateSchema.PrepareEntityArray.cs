@@ -21,11 +21,13 @@ public readonly partial struct CodeClimateSchema
     public readonly partial struct PrepareEntityArray
 #if NET8_0_OR_GREATER
         : IJsonElement<PrepareEntityArray>,
+          global::System.Collections.Generic.IReadOnlyCollection<Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.PrepareEntityArray.PrepareEntity>,
           IFormattable,
           ISpanFormattable,
           IUtf8SpanFormattable
 #else
         : IJsonElement<PrepareEntityArray>,
+          global::System.Collections.Generic.IReadOnlyCollection<Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.PrepareEntityArray.PrepareEntity>,
           IFormattable
 #endif
     {
@@ -74,6 +76,21 @@ public readonly partial struct CodeClimateSchema
             CheckValidInstance();
             return EnumeratorCreator.CreateArrayEnumerator<Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.PrepareEntityArray.PrepareEntity>(_parent, _idx);
         }
+
+        /// <summary>
+        /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+        /// </summary>
+        /// <returns>The enumerator.</returns>
+        public ArrayEnumerator<Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.PrepareEntityArray.PrepareEntity> GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        global::System.Collections.Generic.IEnumerator<Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.PrepareEntityArray.PrepareEntity> global::System.Collections.Generic.IEnumerable<Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.PrepareEntityArray.PrepareEntity>.GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        int global::System.Collections.Generic.IReadOnlyCollection<Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.PrepareEntityArray.PrepareEntity>.Count => GetArrayLength();
 
         /// <inheritdoc/>
         public JsonValueKind ValueKind => TokenType.ToValueKind();

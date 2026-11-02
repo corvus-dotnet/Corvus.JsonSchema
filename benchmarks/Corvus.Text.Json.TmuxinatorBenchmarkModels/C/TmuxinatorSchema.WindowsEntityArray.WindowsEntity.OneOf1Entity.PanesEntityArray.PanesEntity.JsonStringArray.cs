@@ -31,11 +31,13 @@ public readonly partial struct TmuxinatorSchema
                         public readonly partial struct JsonStringArray
 #if NET8_0_OR_GREATER
                             : IJsonElement<JsonStringArray>,
+                              global::System.Collections.Generic.IReadOnlyCollection<Corvus.TmuxinatorBenchmark.Current.JsonString>,
                               IFormattable,
                               ISpanFormattable,
                               IUtf8SpanFormattable
 #else
                             : IJsonElement<JsonStringArray>,
+                              global::System.Collections.Generic.IReadOnlyCollection<Corvus.TmuxinatorBenchmark.Current.JsonString>,
                               IFormattable
 #endif
                         {
@@ -84,6 +86,21 @@ public readonly partial struct TmuxinatorSchema
                                 CheckValidInstance();
                                 return EnumeratorCreator.CreateArrayEnumerator<Corvus.TmuxinatorBenchmark.Current.JsonString>(_parent, _idx);
                             }
+
+                            /// <summary>
+                            /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+                            /// </summary>
+                            /// <returns>The enumerator.</returns>
+                            public ArrayEnumerator<Corvus.TmuxinatorBenchmark.Current.JsonString> GetEnumerator() => EnumerateArray();
+
+                            /// <inheritdoc/>
+                            global::System.Collections.Generic.IEnumerator<Corvus.TmuxinatorBenchmark.Current.JsonString> global::System.Collections.Generic.IEnumerable<Corvus.TmuxinatorBenchmark.Current.JsonString>.GetEnumerator() => EnumerateArray();
+
+                            /// <inheritdoc/>
+                            global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+                            /// <inheritdoc/>
+                            int global::System.Collections.Generic.IReadOnlyCollection<Corvus.TmuxinatorBenchmark.Current.JsonString>.Count => GetArrayLength();
 
                             /// <inheritdoc/>
                             public JsonValueKind ValueKind => TokenType.ToValueKind();

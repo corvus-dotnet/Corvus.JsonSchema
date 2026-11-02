@@ -37,6 +37,25 @@ DateTimeOffset when = element.GetDateTimeOffset();
 To read a string value's bytes without allocating a managed `string`, use `element.GetUtf8String()` (see the UTF-8
 section of [Performance Techniques](./PerformanceTechniques.md)).
 
+### Arrays
+
+`EnumerateArray()` gives the items of any array-valued type. A **pure array** type, one whose only type is `array`
+and which is not a tuple (`prefixItems`), is also an `IReadOnlyCollection<T>` of its item type, so it can be handed
+to an API that takes a collection, and `foreach` works on the value itself:
+
+```csharp
+foreach (Order.LineItem item in order.LineItems)
+{
+    // ...
+}
+
+int count = order.LineItems.Count();          // LINQ, through IReadOnlyCollection<Order.LineItem>
+IReadOnlyCollection<Order.LineItem> all = order.LineItems;
+```
+
+`foreach` over the value uses its own enumerator and does not allocate. LINQ and the interface box the value and its
+enumerator, as they do for any struct.
+
 ### Discriminated unions: `Match`, or a `switch`
 
 A `oneOf` schema generates a union. Read it with the generated `Match<TResult>(...)` (or the `IsX` / `AsX`

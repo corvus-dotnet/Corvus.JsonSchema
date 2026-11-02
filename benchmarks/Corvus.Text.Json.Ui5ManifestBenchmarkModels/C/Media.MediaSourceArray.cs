@@ -26,11 +26,13 @@ public readonly partial struct Media
     public readonly partial struct MediaSourceArray
 #if NET8_0_OR_GREATER
         : IJsonElement<MediaSourceArray>,
+          global::System.Collections.Generic.IReadOnlyCollection<Corvus.Ui5ManifestBenchmark.Current.MediaSource>,
           IFormattable,
           ISpanFormattable,
           IUtf8SpanFormattable
 #else
         : IJsonElement<MediaSourceArray>,
+          global::System.Collections.Generic.IReadOnlyCollection<Corvus.Ui5ManifestBenchmark.Current.MediaSource>,
           IFormattable
 #endif
     {
@@ -79,6 +81,21 @@ public readonly partial struct Media
             CheckValidInstance();
             return EnumeratorCreator.CreateArrayEnumerator<Corvus.Ui5ManifestBenchmark.Current.MediaSource>(_parent, _idx);
         }
+
+        /// <summary>
+        /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+        /// </summary>
+        /// <returns>The enumerator.</returns>
+        public ArrayEnumerator<Corvus.Ui5ManifestBenchmark.Current.MediaSource> GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        global::System.Collections.Generic.IEnumerator<Corvus.Ui5ManifestBenchmark.Current.MediaSource> global::System.Collections.Generic.IEnumerable<Corvus.Ui5ManifestBenchmark.Current.MediaSource>.GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        int global::System.Collections.Generic.IReadOnlyCollection<Corvus.Ui5ManifestBenchmark.Current.MediaSource>.Count => GetArrayLength();
 
         /// <inheritdoc/>
         public JsonValueKind ValueKind => TokenType.ToValueKind();

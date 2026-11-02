@@ -21,11 +21,13 @@ public readonly partial struct AnsibleMetaSchema
     public readonly partial struct Platforms
 #if NET8_0_OR_GREATER
         : IJsonElement<Platforms>,
+          global::System.Collections.Generic.IReadOnlyCollection<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.PlatformsEntity>,
           IFormattable,
           ISpanFormattable,
           IUtf8SpanFormattable
 #else
         : IJsonElement<Platforms>,
+          global::System.Collections.Generic.IReadOnlyCollection<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.PlatformsEntity>,
           IFormattable
 #endif
     {
@@ -74,6 +76,21 @@ public readonly partial struct AnsibleMetaSchema
             CheckValidInstance();
             return EnumeratorCreator.CreateArrayEnumerator<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.PlatformsEntity>(_parent, _idx);
         }
+
+        /// <summary>
+        /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+        /// </summary>
+        /// <returns>The enumerator.</returns>
+        public ArrayEnumerator<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.PlatformsEntity> GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        global::System.Collections.Generic.IEnumerator<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.PlatformsEntity> global::System.Collections.Generic.IEnumerable<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.PlatformsEntity>.GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+        /// <inheritdoc/>
+        int global::System.Collections.Generic.IReadOnlyCollection<Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.PlatformsEntity>.Count => GetArrayLength();
 
         /// <inheritdoc/>
         public JsonValueKind ValueKind => TokenType.ToValueKind();

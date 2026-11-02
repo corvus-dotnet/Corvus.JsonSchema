@@ -34,11 +34,13 @@ public readonly partial struct CmakePresetsSchema
                     public readonly partial struct AStringRepresentingThePathToOneSourceFileToBeTracedArray
 #if NET8_0_OR_GREATER
                         : IJsonElement<AStringRepresentingThePathToOneSourceFileToBeTracedArray>,
+                          global::System.Collections.Generic.IReadOnlyCollection<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.AStringRepresentingThePathToOneSourceFileToBeTraced>,
                           IFormattable,
                           ISpanFormattable,
                           IUtf8SpanFormattable
 #else
                         : IJsonElement<AStringRepresentingThePathToOneSourceFileToBeTracedArray>,
+                          global::System.Collections.Generic.IReadOnlyCollection<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.AStringRepresentingThePathToOneSourceFileToBeTraced>,
                           IFormattable
 #endif
                     {
@@ -87,6 +89,21 @@ public readonly partial struct CmakePresetsSchema
                             CheckValidInstance();
                             return EnumeratorCreator.CreateArrayEnumerator<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.AStringRepresentingThePathToOneSourceFileToBeTraced>(_parent, _idx);
                         }
+
+                        /// <summary>
+                        /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+                        /// </summary>
+                        /// <returns>The enumerator.</returns>
+                        public ArrayEnumerator<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.AStringRepresentingThePathToOneSourceFileToBeTraced> GetEnumerator() => EnumerateArray();
+
+                        /// <inheritdoc/>
+                        global::System.Collections.Generic.IEnumerator<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.AStringRepresentingThePathToOneSourceFileToBeTraced> global::System.Collections.Generic.IEnumerable<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.AStringRepresentingThePathToOneSourceFileToBeTraced>.GetEnumerator() => EnumerateArray();
+
+                        /// <inheritdoc/>
+                        global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+                        /// <inheritdoc/>
+                        int global::System.Collections.Generic.IReadOnlyCollection<Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.AStringRepresentingThePathToOneSourceFileToBeTraced>.Count => GetArrayLength();
 
                         /// <inheritdoc/>
                         public JsonValueKind ValueKind => TokenType.ToValueKind();

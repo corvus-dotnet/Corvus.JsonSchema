@@ -23,11 +23,13 @@ public readonly partial struct Cql2Schema
         public readonly partial struct CoordinatesArray2Array
 #if NET8_0_OR_GREATER
             : IJsonElement<CoordinatesArray2Array>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.CoordinatesArray2Array.ItemsArrayArray>,
               IFormattable,
               ISpanFormattable,
               IUtf8SpanFormattable
 #else
             : IJsonElement<CoordinatesArray2Array>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.CoordinatesArray2Array.ItemsArrayArray>,
               IFormattable
 #endif
         {
@@ -100,6 +102,21 @@ public readonly partial struct Cql2Schema
                 CheckValidInstance();
                 return EnumeratorCreator.CreateArrayEnumerator<Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.CoordinatesArray2Array.ItemsArrayArray>(_parent, _idx);
             }
+
+            /// <summary>
+            /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+            /// </summary>
+            /// <returns>The enumerator.</returns>
+            public ArrayEnumerator<Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.CoordinatesArray2Array.ItemsArrayArray> GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.Generic.IEnumerator<Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.CoordinatesArray2Array.ItemsArrayArray> global::System.Collections.Generic.IEnumerable<Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.CoordinatesArray2Array.ItemsArrayArray>.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            int global::System.Collections.Generic.IReadOnlyCollection<Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.CoordinatesArray2Array.ItemsArrayArray>.Count => GetArrayLength();
 
             /// <inheritdoc/>
             public JsonValueKind ValueKind => TokenType.ToValueKind();

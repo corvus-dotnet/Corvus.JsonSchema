@@ -38,11 +38,13 @@ public readonly partial struct StylecopSchema
             public readonly partial struct AllowedHungarianPrefixesEntityArray
 #if NET8_0_OR_GREATER
                 : IJsonElement<AllowedHungarianPrefixesEntityArray>,
+                  global::System.Collections.Generic.IReadOnlyCollection<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedHungarianPrefixesEntityArray.AllowedHungarianPrefixesEntity>,
                   IFormattable,
                   ISpanFormattable,
                   IUtf8SpanFormattable
 #else
                 : IJsonElement<AllowedHungarianPrefixesEntityArray>,
+                  global::System.Collections.Generic.IReadOnlyCollection<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedHungarianPrefixesEntityArray.AllowedHungarianPrefixesEntity>,
                   IFormattable
 #endif
             {
@@ -92,6 +94,21 @@ public readonly partial struct StylecopSchema
                     CheckValidInstance();
                     return EnumeratorCreator.CreateArrayEnumerator<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedHungarianPrefixesEntityArray.AllowedHungarianPrefixesEntity>(_parent, _idx);
                 }
+
+                /// <summary>
+                /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+                /// </summary>
+                /// <returns>The enumerator.</returns>
+                public ArrayEnumerator<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedHungarianPrefixesEntityArray.AllowedHungarianPrefixesEntity> GetEnumerator() => EnumerateArray();
+
+                /// <inheritdoc/>
+                global::System.Collections.Generic.IEnumerator<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedHungarianPrefixesEntityArray.AllowedHungarianPrefixesEntity> global::System.Collections.Generic.IEnumerable<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedHungarianPrefixesEntityArray.AllowedHungarianPrefixesEntity>.GetEnumerator() => EnumerateArray();
+
+                /// <inheritdoc/>
+                global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+                /// <inheritdoc/>
+                int global::System.Collections.Generic.IReadOnlyCollection<Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedHungarianPrefixesEntityArray.AllowedHungarianPrefixesEntity>.Count => GetArrayLength();
 
                 /// <inheritdoc/>
                 public JsonValueKind ValueKind => TokenType.ToValueKind();

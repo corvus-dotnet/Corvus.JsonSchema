@@ -23,11 +23,13 @@ public readonly partial struct Draft04Schema
         public readonly partial struct SimpleTypesArray
 #if NET8_0_OR_GREATER
             : IJsonElement<SimpleTypesArray>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.Draft04Benchmark.Current.Draft04Schema.SimpleTypes>,
               IFormattable,
               ISpanFormattable,
               IUtf8SpanFormattable
 #else
             : IJsonElement<SimpleTypesArray>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.Draft04Benchmark.Current.Draft04Schema.SimpleTypes>,
               IFormattable
 #endif
         {
@@ -76,6 +78,21 @@ public readonly partial struct Draft04Schema
                 CheckValidInstance();
                 return EnumeratorCreator.CreateArrayEnumerator<Corvus.Draft04Benchmark.Current.Draft04Schema.SimpleTypes>(_parent, _idx);
             }
+
+            /// <summary>
+            /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+            /// </summary>
+            /// <returns>The enumerator.</returns>
+            public ArrayEnumerator<Corvus.Draft04Benchmark.Current.Draft04Schema.SimpleTypes> GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.Generic.IEnumerator<Corvus.Draft04Benchmark.Current.Draft04Schema.SimpleTypes> global::System.Collections.Generic.IEnumerable<Corvus.Draft04Benchmark.Current.Draft04Schema.SimpleTypes>.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            int global::System.Collections.Generic.IReadOnlyCollection<Corvus.Draft04Benchmark.Current.Draft04Schema.SimpleTypes>.Count => GetArrayLength();
 
             /// <inheritdoc/>
             public JsonValueKind ValueKind => TokenType.ToValueKind();

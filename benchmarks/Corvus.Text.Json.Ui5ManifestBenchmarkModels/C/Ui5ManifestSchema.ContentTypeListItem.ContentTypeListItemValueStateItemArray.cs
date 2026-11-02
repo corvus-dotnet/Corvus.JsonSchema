@@ -28,11 +28,13 @@ public readonly partial struct Ui5ManifestSchema
         public readonly partial struct ContentTypeListItemValueStateItemArray
 #if NET8_0_OR_GREATER
             : IJsonElement<ContentTypeListItemValueStateItemArray>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItemValueStateItem>,
               IFormattable,
               ISpanFormattable,
               IUtf8SpanFormattable
 #else
             : IJsonElement<ContentTypeListItemValueStateItemArray>,
+              global::System.Collections.Generic.IReadOnlyCollection<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItemValueStateItem>,
               IFormattable
 #endif
         {
@@ -81,6 +83,21 @@ public readonly partial struct Ui5ManifestSchema
                 CheckValidInstance();
                 return EnumeratorCreator.CreateArrayEnumerator<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItemValueStateItem>(_parent, _idx);
             }
+
+            /// <summary>
+            /// Gets an enumerator over the items of the array, for <c>foreach</c>. It does not allocate.
+            /// </summary>
+            /// <returns>The enumerator.</returns>
+            public ArrayEnumerator<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItemValueStateItem> GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.Generic.IEnumerator<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItemValueStateItem> global::System.Collections.Generic.IEnumerable<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItemValueStateItem>.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() => EnumerateArray();
+
+            /// <inheritdoc/>
+            int global::System.Collections.Generic.IReadOnlyCollection<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItemValueStateItem>.Count => GetArrayLength();
 
             /// <inheritdoc/>
             public JsonValueKind ValueKind => TokenType.ToValueKind();
