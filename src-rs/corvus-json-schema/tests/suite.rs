@@ -128,10 +128,6 @@ impl Runner {
                         .unwrap_or_else(|_| Err("panic during evaluation".into())),
                 };
                 if actual.as_ref() != Ok(&expected) {
-                    // Leap seconds are skipped in the format run, as in the C# runner.
-                    if assert_format && test_description.to_lowercase().contains("leap second") {
-                        continue;
-                    }
                     file_failed += 1;
                     self.failures.push(format!(
                         "{label} [{description}] {test_description}: expected {expected}, got {}",
