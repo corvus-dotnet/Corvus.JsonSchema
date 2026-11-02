@@ -1,11 +1,20 @@
 # ECMAScript Regex Translator
 
-> **Scope.** Since V5 and V4 match patterns with Corvus.Regex.Ecma262, the translator is used only where .NET's
-> `Regex` is still wanted: V5 and V4 generated code under `--regexEngine DotNet` (MSBuild
-> `CorvusTextJsonRegexEngine=DotNet`, or `CorvusJsonSchemaRegexEngine=DotNet` for V4), and
-> `JsonSchemaEvaluator.ToDotNetPattern`. The runtime evaluator and the default
-> generated code take their answers, validity included, from the library; see
-> [RuntimeEvaluator.md](./RuntimeEvaluator.md#patterns).
+> **Scope.** Since V5.8.0 the runtime evaluator and the default generated code (V5 and V4) match patterns with
+> [Corvus.Regex.Ecma262](https://corvus-oss.org/Corvus.Regex.Ecma262/), and take from it which patterns are valid,
+> the limits of size and the limit of a match (see [RuntimeEvaluator.md](./RuntimeEvaluator.md#patterns) and
+> [Patterns across the ports](./PatternConformance.md)). The translator is used only where .NET's `Regex` is still
+> wanted:
+>
+> - generated code under `--regexEngine DotNet` (MSBuild `CorvusTextJsonRegexEngine=DotNet`, or
+>   `CorvusJsonSchemaRegexEngine=DotNet` for V4), including the `[GeneratedRegex]` table of a program generated for
+>   that engine;
+> - `JsonSchemaEvaluator.ToDotNetPattern`.
+>
+> What this page says of validity, limits, costs and the limit of a match is about those uses. The runtime evaluator
+> does not match with a translation. It reads one analysis of the translator's, whether a pattern read without the
+> `u` flag can tell a character beyond the Basic Multilingual Plane from two (`CodeUnitsCanChangeTheAnswer`), to
+> choose between a matcher of its own and the library.
 
 Translation of ECMA-262 regular expressions to .NET regular expression patterns with the same meaning, and the
 check that a pattern is a valid ECMA-262 regular expression at all.
@@ -15,10 +24,12 @@ JSON Schema's `pattern` and `patternProperties` keywords are ECMA-262 regular ex
 translator writes a .NET pattern with the ECMA-262 meaning for the code that still matches with .NET's `Regex` (see
 the scope note above).
 
-The answers are tested against V8. The
-[ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data) records what V8
-says about 79,221 patterns and 2,066,549 texts, and the translation gives V8's answer for every one of them in
-.NET's compiled and interpreted engines.
+The answers are tested against V8. When the translation was the evaluator's (until V5.8.0), it gave V8's answer for
+each of the 79,221 patterns and 2,066,549 texts that the
+[ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data) then held, in .NET's
+compiled and interpreted engines (the run of 17 October 2026). The data has grown since, and it is Corvus.Regex.Ecma262
+that is run over it now. The translator's own tests check a set of cases chosen from it (`EcmaPatternCases`) in both of
+.NET's engines.
 
 ## What It Does
 
@@ -51,7 +62,7 @@ says about 79,221 patterns and 2,066,549 texts, and the translation gives V8's a
 using Corvus.Text.Json.CodeGeneration;
 using System.Text.RegularExpressions;
 
-// Either grammar: the form the evaluator and the generators use.
+// Either grammar: the form generated code uses under the DotNet engine.
 if (EcmaRegexTranslator.TryTranslate(@"^\d{4}-\d{2}$", out string? dotNetPattern, out string? error))
 {
     Regex regex = new(dotNetPattern!, RegexOptions.CultureInvariant);
@@ -64,7 +75,7 @@ else
 ```
 
 `EcmaRegexTranslator` is internal. Outside the library, `JsonSchemaEvaluator.ToDotNetPattern` gives the translation
-the evaluator constructs for a pattern.
+of a pattern.
 
 ## API Reference
 
@@ -111,19 +122,23 @@ internal static class EcmaRegexTranslator
 
 ## Where An Invalid Pattern Is Refused
 
+The runtime evaluator, `Corvus.Text.Json.Validator` and the generators under the default engine refuse a pattern that
+is not valid by Corvus.Regex.Ecma262's reading of it (see [RuntimeEvaluator.md](./RuntimeEvaluator.md#patterns)). Where
+the translator is used, it refuses the pattern itself:
+
 | Consumer | What happens |
 |---|---|
-| Runtime evaluator (`JsonSchemaEvaluator.Compile`, `CompileFromUri`, `ForEntryPoint`, `FromProgramImage`) | `JsonSchemaCompilationException` when the schema is compiled. The message names the pattern and says what is wrong and where. |
-| `Corvus.Text.Json.Validator` | The same exception, from the `JsonSchema.From*` method that compiles the schema. |
-| CLI code generator and Roslyn source generator | Generation stops with `InvalidOperationException` (the source generator reports it as its `CRV1001` diagnostic). No code is emitted that would fail when it first validates. |
-| V4 code generator (`--engine V4`, `Corvus.Json.SourceGenerator`, `Corvus.Json.Validator`) | The same as the V5 generators: generation stops with `InvalidOperationException`, which its source generator reports as `CRV1001`, with the library's account of what is wrong (or the translator's, under the DotNet engine). |
+| CLI code generator and Roslyn source generator, with `--regexEngine DotNet` | Generation stops with `InvalidOperationException` (the source generator reports it as its `CRV1001` diagnostic), with the translator's account of what is wrong and where. No code is emitted that would fail when it first validates. |
+| V4 code generator (`--engine V4`, `Corvus.Json.SourceGenerator`), with the DotNet engine | The same: generation stops with `InvalidOperationException`, which its source generator reports as `CRV1001`. |
+| `JsonSchemaEvaluator.ToDotNetPattern` | Returns the pattern itself, untranslated. It does not say that the pattern is not valid: check it first if that matters. |
 
 ## Limits On The Size Of A Pattern
 
 A schema may come from outside, and so may its patterns. No pattern is to make the translator, or .NET when it
 constructs a regular expression from the translation, run for long or hold much memory. So a pattern has limits of
-size (`EcmaRegexLimits`), and a pattern over one of them is refused when the schema is compiled or the code is
-generated. The limits are fixed. None of them is an option.
+size (`EcmaRegexLimits`), and a pattern over one of them is refused when code is generated for the DotNet engine,
+or by `ToDotNetPattern`. The limits are fixed. None of them is an option. (Under the default engine the limits of
+size are Corvus.Regex.Ecma262's, which has its own.)
 
 | Limit | Value | What it bounds | The message ends |
 |---|---|---|---|
@@ -146,11 +161,10 @@ it is valid. A pattern that nests too deep and is also not valid is refused as t
 
 | Consumer | What happens |
 |---|---|
-| Runtime evaluator (`JsonSchemaEvaluator.Compile`, `CompileFromUri`, `ForEntryPoint`, `FromProgramImage`, `ToDotNetPattern`) | `JsonSchemaCompilationException` when the schema is compiled, with that message. |
-| `Corvus.Text.Json.Validator` | The same exception, from the `JsonSchema.From*` method that compiles the schema. |
-| CLI code generator | Generation stops with an exception whose message names the keyword too: `The pattern '...' of the keyword 'pattern' is a valid ECMA-262 regular expression, and is too large. ...`. Its type derives from `InvalidOperationException`, the type of the error of a pattern that is not valid. |
-| Roslyn source generator | The diagnostic `CRV1003`, with that message. A pattern that is not valid is `CRV1001`. |
-| V4 code generator (`--engine V4`, `Corvus.Json.SourceGenerator`) | The same as the V5 generators: the exception, and `CRV1003` from its source generator. |
+| `JsonSchemaEvaluator.ToDotNetPattern` | `JsonSchemaCompilationException`, with that message. |
+| CLI code generator, with `--regexEngine DotNet` | Generation stops with an exception whose message names the keyword too: `The pattern '...' of the keyword 'pattern' is a valid ECMA-262 regular expression, and is too large. ...`. Its type derives from `InvalidOperationException`, the type of the error of a pattern that is not valid. |
+| Roslyn source generator, with `CorvusTextJsonRegexEngine=DotNet` | The diagnostic `CRV1003`, with that message. A pattern that is not valid is `CRV1001`. |
+| V4 code generator (`--engine V4`, `Corvus.Json.SourceGenerator`), with the DotNet engine | The same as the V5 generators: the exception, and `CRV1003` from its source generator. |
 
 ### What an ordinary pattern can meet
 
@@ -206,8 +220,8 @@ a pattern that is too large, or in `RegexMatchTimeoutException`:
 
 The eight larger patterns, and forty more of up to a megabyte, are translated or refused in at most 0.31 seconds,
 and what is accepted of the eight is constructed in at most 45 ms and keeps at most 6.8 MB. At the limits themselves, .NET keeps about 11 bytes for each character
-of a translation it interprets, so a translation of 1,048,576 characters keeps about 11 MB for as long as an
-evaluator holds it.
+of a translation it interprets, so a translation of 1,048,576 characters keeps about 11 MB for as long as the
+regular expression is held.
 
 A pattern that is over no limit is translated in the steps it takes. The most that a pattern of the
 [ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data) takes is 180,606
@@ -216,13 +230,9 @@ steps and a translation of 946,581 characters, for a pattern with six case-insen
 
 ## Costs
 
-The translation runs once for each distinct pattern, when a schema is compiled or code is generated. Nothing of it
-runs when an instance is matched. The runtime evaluator keeps each pattern's translation and regular expression for
-the life of the process, so a pattern that many schemas share is read once. What it keeps is bounded, as a process
-may compile schemas from outside for as long as it runs: at most 4,096 patterns and 1,048,576 characters of patterns
-and translations, with no pattern or translation longer than 32,768 characters among them. Past either bound
-everything kept is let go, and a pattern met again is read again. An evaluator keeps its own regular expressions
-for as long as it lives, whatever is let go.
+The translation runs once for each distinct pattern, when code is generated for the DotNet engine (or when
+`ToDotNetPattern` is called). Nothing of it runs when an instance is matched: generated code holds the translation
+as a `[GeneratedRegex]`, or constructs its regular expression from it once, when the type first validates.
 
 A translation is usually a little longer than the pattern. It is much longer for a `\p{...}` property with members
 beyond the Basic Multilingual Plane, which are written out as surrogate pairs (`\p{L}` is about 4,200 characters).
@@ -247,12 +257,12 @@ pwsh src/Corvus.Text.Json.CodeGeneration/gen-ecma-unicode-data.ps1 -RegressTable
   and the translation is under a thousand characters. For a group that can capture any letter (`(.)`, `(\p{L}+)`)
   it is every class there is, and the translation is about 160,000 characters. .NET's compiled engine would take
   one to three seconds to compile that at the first match, so a translation longer than 32,768 characters
-  (`EcmaRegexTranslator.LongestCompiledTranslation`) is interpreted, by the evaluator whatever
-  `CompileRegularExpressions` says and by generated types where they construct the expression. .NET constructs it
-  for the interpreter in 10 to 50 milliseconds. Each character compared costs a walk to the end of the input and
+  (`EcmaRegexTranslator.LongestCompiledTranslation`) is interpreted: generated types construct it without
+  `RegexOptions.Compiled` and give it no `[GeneratedRegex]` form. .NET constructs it for the interpreter in 10 to 50
+  milliseconds. Each character compared costs a walk to the end of the input and
   back.
-- **The engine.** Two kinds of translation are run by .NET's interpreted engine whatever
-  `CompileRegularExpressions` says, and have no compiled form in generated code: one longer than 32,768 characters
+- **The engine.** Two kinds of translation are run by .NET's interpreted engine, and have no compiled form in
+  generated code: one longer than 32,768 characters
   (above), and one that keeps a lazy repetition of a group, which starts with `(?#interpreted)`. The compiled engine
   does not always return from a match of the second kind
   (see [the translations](./EcmaRegexTranslations.md#repetitions)). Only a pattern with a lazy repetition of a group
@@ -262,16 +272,19 @@ pwsh src/Corvus.Text.Json.CodeGeneration/gen-ecma-unicode-data.ps1 -RegressTable
   it runs. The most the probe above provoked in the second a match is given is 195 MB for the whole process, 160 MB
   of it the match: a repetition over 110 groups that a backreference reads, on 80,000 characters, in the
   interpreted engine. .NET has no limit on the memory of a match. Where neither the schema nor the instance is
-  trusted, set a shorter `RegexMatchTimeout`, bound the length of the instance, or give the process a memory limit.
+  trusted, generate with a shorter match limit (`--regexMatchTimeout`), bound the length of the instance, or give the
+  process a memory limit.
 - **Code that was generated before the match limit has none.** The limit is written into generated code when it
   is generated, so code generated by an earlier version has none until it is generated again.
 - **Time.** ECMA-262 does not say how long a match may take, and a backtracking engine can take very long. The
-  evaluator's match limit (`JsonSchemaEvaluatorOptions.RegexMatchTimeout`, 1 second unless it is set) bounds it,
+  match limit written into generated code (1 second unless the generator is given another with
+  `--regexMatchTimeout`, or `CorvusTextJsonRegexMatchTimeout` and `CorvusJsonSchemaRegexMatchTimeout`) bounds it,
   and a match that reaches it throws `RegexMatchTimeoutException` and gives no answer. V8 answers every text of
   the ECMA-262 regular expression test data in under 250,000 backtracks. One of its 98,839 patterns is at the
   limit here: `^a{2}?(((?!)|((|a){2,}(|a)\B|){2,3}?){2,3}.{3}a{2})\4`, whose hardest text takes V8 238,314
-  backtracks. It repeats, several deep, a body that matches the empty string in more than one way, and .NET goes
-  through every way where V8 does too, at many times the cost of a step. The compiled engine takes about 0.7
+  backtracks (figures from the runs of the test data when the translation was the evaluator's). It repeats, several
+  deep, a body that matches the empty string in more than one way, and .NET goes through every way where V8 does
+  too, at many times the cost of a step. The compiled engine takes about 0.7
   seconds for that text and the interpreted one about 1.8 (with a load of 2 to 4 on the machine), most of it the
   unsetting of a group when each iteration starts and the written-out `\B`. So the interpreted engine meets the
   limit, and the compiled one meets it on a busy machine: in two runs of the test data with a load of 5 to 7 the

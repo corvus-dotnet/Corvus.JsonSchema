@@ -497,9 +497,9 @@ such an expression. After a repetition whose iterations hold a lookbehind and ca
 lazy repetition of a group in a lookbehind: `(?:x*\B){2}(?<=((?:ab)*?)\1)$` never answers for `-a`, and neither
 does a pattern of the ECMA-262 regular expression test data. The interpreted engine answers both. No rewriting
 takes a lazy repetition with no highest count out of a pattern, so the engine is chosen instead
-(`EcmaRegexTranslator.IsForCompiledEngine`): the evaluator constructs a marked translation without
-`RegexOptions.Compiled` whatever its options say, and generated code gives it no `[GeneratedRegex]` form, because
-the regular expression generator writes the algorithm of the compiled engine.
+(`EcmaRegexTranslator.IsForCompiledEngine`): generated code constructs a marked translation without
+`RegexOptions.Compiled` and gives it no `[GeneratedRegex]` form, because the regular expression generator writes the
+algorithm of the compiled engine.
 
 ## Lookarounds
 
