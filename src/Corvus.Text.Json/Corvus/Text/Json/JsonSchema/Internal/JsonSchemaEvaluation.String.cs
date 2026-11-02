@@ -189,9 +189,9 @@ public static partial class JsonSchemaEvaluation
 
         try
         {
-            JsonReaderHelper.TryGetTextFromUtf8(value, transcodedValue, out int written);
-
-            if (!regularExpression.IsMatch(transcodedValue.Slice(0, written)))
+            // Text that is not UTF-8 matches no pattern.
+            if (!JsonReaderHelper.TryGetTextFromUtf8(value, transcodedValue, out int written) ||
+                !regularExpression.IsMatch(transcodedValue.Slice(0, written)))
             {
                 context.EvaluatedKeyword(false, originalExpressionString, messageProvider: ExpectedStringMatchesRegularExpression, keyword);
                 return false;
@@ -209,8 +209,8 @@ public static partial class JsonSchemaEvaluation
         }
 #else
         // We pay for a conversion to string because netstandard does not support regular expressions
-        // from Span<char>
-        if (!regularExpression.IsMatch(JsonReaderHelper.GetTextFromUtf8(value)))
+        // from Span<char>. Text that is not UTF-8 matches no pattern.
+        if (!JsonWriterHelper.IsValidUtf8String(value) || !regularExpression.IsMatch(JsonReaderHelper.GetTextFromUtf8(value)))
         {
             context.EvaluatedKeyword(false, originalExpressionString, messageProvider: ExpectedStringMatchesRegularExpression, keyword);
             return false;
@@ -238,9 +238,9 @@ public static partial class JsonSchemaEvaluation
 
         try
         {
-            JsonReaderHelper.TryGetTextFromUtf8(value, transcodedValue, out int written);
-
-            return regularExpression.IsMatch(transcodedValue.Slice(0, written));
+            // Text that is not UTF-8 matches no pattern.
+            return JsonReaderHelper.TryGetTextFromUtf8(value, transcodedValue, out int written) &&
+                regularExpression.IsMatch(transcodedValue.Slice(0, written));
         }
         finally
         {
@@ -251,8 +251,8 @@ public static partial class JsonSchemaEvaluation
         }
 #else
         // We pay for a conversion to string because netstandard does not support regular expressions
-        // from Span<char>
-        return regularExpression.IsMatch(JsonReaderHelper.GetTextFromUtf8(value));
+        // from Span<char>. Text that is not UTF-8 matches no pattern.
+        return JsonWriterHelper.IsValidUtf8String(value) && regularExpression.IsMatch(JsonReaderHelper.GetTextFromUtf8(value));
 #endif
     }
 

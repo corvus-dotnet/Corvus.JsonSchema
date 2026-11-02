@@ -53,10 +53,18 @@ answers. Each is a decision recorded here, with an issue where there is work to 
 - **Draft 2019-09 and draft 2020-12 read the grammar of ECMAScript 2020,** the edition they cite, so a modifier group
   such as `(?i:a)` or a duplicate group name is refused under them, as today's grammar accepts it under the other
   dialects. `RegexEdition` (and the generators' `--regexEdition`) chooses another.
-- **A JSON string with a lone surrogate throws.** The parser accepts an instance string that holds the escape of half
-  of a surrogate pair, such as `"\ud800"`, and `pattern`, `minLength` and `maxLength` then throw
-  `InvalidOperationException` (in V4 generated code too). Every other port refuses such a document when it parses
-  it, or reports it as not valid. The 46,438 texts of the dataset's `lone-surrogates.jsonl` all throw
+- **A string that is not well-formed text is not valid against a keyword that reads it.** The parser accepts an
+  instance string that holds the escape of half of a surrogate pair, such as `"\ud800"`, or bytes that are not
+  UTF-8. Such text is checked only when a keyword reads it. A keyword that reads its characters (`pattern`,
+  `minLength`, `maxLength`, an asserted `format` or `contentMediaType`, and the same keywords applied to a property's
+  name) reports it as not valid, so a lone surrogate never matches a pattern. A keyword that compares it (`const`,
+  `enum`, `uniqueItems`, and the names of `properties`) finds it equal only to the same text. Nothing throws. Text
+  the parser found all ASCII is not checked again, and other text is checked once by a keyword that reads its
+  characters. Most other ports refuse such a document when they parse it. Of the 68,770 texts of the dataset's
+  `lone-surrogates.jsonl`, none throws, and the 11,517 that V8 matches are reported as not valid, where the ports
+  that refuse them at parse give no answer (run on 2026-11-02). In V4 generated code, a keyword that reads such a
+  string reports the value as not valid too, and a keyword that looks up a property by name can report an object
+  with such a name as not valid, because System.Text.Json unescapes the names it compares
   ([#1021](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1021)).
 - **.NET Framework and a large count, with the DotNet engine.** .NET Framework's `Regex` makes a string of the count
   of a repetition of one character when it is constructed, so `^a{100000000}$` costs some 200 MB there, and a count

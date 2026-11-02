@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "code": { "type": "string", "pattern": "^[a-zé]+$", "maxLength": 4 },
+    "kind": { "enum": [ "a", "b" ] }
+  },
+  "propertyNames": { "maxLength": 8 }
+}

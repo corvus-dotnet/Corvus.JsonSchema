@@ -395,6 +395,13 @@ internal static partial class Evaluator
             : LengthWithin(raw, minLength, maxLength);
     }
 
+    /// <summary>
+    /// Whether a string value's text, unescaped and not all ASCII, is UTF-8 (see <see cref="IsUtf8"/>): for the values
+    /// whose byte length decides their length.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    internal static bool GenIsUtf8(ref EvaluationState state, IJsonDocument doc, int index) => IsUtf8(default(RawAccess).RawValue(ref state, doc, index, out _));
+
     /// <summary>Whether a property's name is a given name, for the names generated code does not compare by words (escaped, or at the very end of the text).</summary>
     [MethodImpl(MethodImplOptions.NoInlining)]
     internal static bool GenNameEquals(ref EvaluationState state, IJsonDocument doc, int valueIndex, byte[] name)
@@ -437,11 +444,11 @@ internal static partial class Evaluator
         ReadOnlySpan<byte> raw = default(RawAccess).RawValue(ref state, doc, index, out bool escaped);
         if (!escaped)
         {
-            return matcher.IsMatch(raw);
+            return matcher.IsMatch(raw, default(RawAccess).IsAsciiText(ref state, doc, index));
         }
 
         using UnescapedUtf8JsonString text = StringValue<RawAccess>(ref state, doc, index);
-        return matcher.IsMatch(text.Span);
+        return matcher.IsMatch(text.Span, knownUtf8: false);
     }
 
     /// <summary>Whether a value is a string in a set.</summary>

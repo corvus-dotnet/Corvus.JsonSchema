@@ -288,16 +288,16 @@ internal readonly struct RawAccess : IDocumentAccess
 
     public UnescapedUtf8JsonString GetString(ref EvaluationState state, IJsonDocument doc, int index)
     {
-        // Escaped strings are rare: unescape through the document; otherwise wrap the raw text without renting.
+        // Escaped strings are rare: unescape out of line; otherwise wrap the raw text without renting.
         return this.IsEscaped(ref state, doc, index)
-            ? doc.GetUtf8JsonString(index, JsonTokenType.String)
+            ? EscapedText.Unescape(this.RawValue(ref state, doc, index, out _))
             : new UnescapedUtf8JsonString(this.RawValueMemory(ref state, doc, index));
     }
 
     public UnescapedUtf8JsonString GetPropertyName(ref EvaluationState state, IJsonDocument doc, int valueIndex)
     {
         return this.IsEscaped(ref state, doc, valueIndex - RowSize)
-            ? doc.GetPropertyNameUnescaped(valueIndex)
+            ? EscapedText.Unescape(this.RawValue(ref state, doc, valueIndex - RowSize, out _))
             : new UnescapedUtf8JsonString(this.RawValueMemory(ref state, doc, valueIndex - RowSize));
     }
 
@@ -371,9 +371,45 @@ internal readonly struct InterfaceAccess : IDocumentAccess
 
     public int NextIndexUnchecked(ref EvaluationState state, IJsonDocument doc, int index) => this.NextIndex(ref state, doc, index);
 
-    public UnescapedUtf8JsonString GetString(ref EvaluationState state, IJsonDocument doc, int index) => doc.GetUtf8JsonString(index, JsonTokenType.String);
+    public UnescapedUtf8JsonString GetString(ref EvaluationState state, IJsonDocument doc, int index) => EscapedText.GetString(doc, index);
 
-    public UnescapedUtf8JsonString GetPropertyName(ref EvaluationState state, IJsonDocument doc, int valueIndex) => doc.GetPropertyNameUnescaped(valueIndex);
+    public UnescapedUtf8JsonString GetPropertyName(ref EvaluationState state, IJsonDocument doc, int valueIndex) => EscapedText.GetPropertyName(doc, valueIndex);
+}
+
+/// <summary>
+/// The unescaping of a string's text for its keywords. The parser accepts an escape of half of a surrogate pair with
+/// no other half (such as <c>\ud800</c>), and the document's own unescaping throws for one. Here it is read as its
+/// generalized UTF-8 bytes, which are not UTF-8, so that a keyword reads it as it reads the same bytes raw: those
+/// that read characters report the string not valid, and those that compare text find it equal to no well-formed
+/// text (https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1021). Well-formed text unescapes as it does
+/// through the document.
+/// </summary>
+internal static class EscapedText
+{
+    /// <summary>Gets the text of a string value through the document interface.</summary>
+    public static UnescapedUtf8JsonString GetString(IJsonDocument doc, int index)
+    {
+        return doc.ValueIsEscaped(index, isPropertyName: false)
+            ? Unescape(doc.GetRawSimpleValue(index, includeQuotes: false).Span)
+            : doc.GetUtf8JsonString(index, JsonTokenType.String);
+    }
+
+    /// <summary>Gets a property's name, for the index of its value, through the document interface.</summary>
+    public static UnescapedUtf8JsonString GetPropertyName(IJsonDocument doc, int valueIndex)
+    {
+        return doc.ValueIsEscaped(valueIndex, isPropertyName: true)
+            ? Unescape(doc.GetPropertyNameRaw(valueIndex, includeQuotes: false).Span)
+            : doc.GetPropertyNameUnescaped(valueIndex);
+    }
+
+    /// <summary>Unescapes a string's raw text, which has at least one escape, into a rented buffer.</summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    public static UnescapedUtf8JsonString Unescape(ReadOnlySpan<byte> raw)
+    {
+        byte[] rented = ArrayPool<byte>.Shared.Rent(raw.Length);
+        JsonReaderHelper.UnescapeToGeneralizedUtf8(raw, rented, out int written);
+        return new UnescapedUtf8JsonString(rented.AsMemory(0, written), rented);
+    }
 }
 
 /// <summary>
@@ -505,7 +541,7 @@ internal static class Providers
             return System.Buffers.Text.Utf8Formatter.TryFormat(ctx.ItemIndex, buffer, out written);
         }
 
-        using UnescapedUtf8JsonString name = ctx.Document!.GetPropertyNameUnescaped(ctx.PropertyValueIndex);
+        using UnescapedUtf8JsonString name = EscapedText.GetPropertyName(ctx.Document!, ctx.PropertyValueIndex);
         return Utf8JsonPointer.TryEncodeSegment(name.Span, buffer, out written);
     };
 

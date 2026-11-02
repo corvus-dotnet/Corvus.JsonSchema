@@ -93,6 +93,7 @@
     <Compile Include="MigrationEquivalenceTests\ValidationEquivalenceTests.cs" />
     <Compile Include="DescendantPropertyEnumeratorTests.cs" />
     <Compile Include="GeneratedApplyDefaultsTests.cs" />
+    <Compile Include="GeneratedMalformedTextTests.cs" />
     <Compile Include="GeneratedArrayCollectionTests.cs" />
     <Compile Include="GeneratedCloneTests.cs" />
     <Compile Include="BuilderNumberFormattingTests.cs" />

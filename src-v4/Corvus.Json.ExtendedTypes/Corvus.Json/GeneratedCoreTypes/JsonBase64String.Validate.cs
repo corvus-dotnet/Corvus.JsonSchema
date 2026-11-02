@@ -23,7 +23,14 @@ public readonly partial struct JsonBase64String
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
         ValidationContext result = validationContext;
-        result =  Corvus.Json.Validate.TypeBase64String(this, result, level);
+        try
+        {
+            result =  Corvus.Json.Validate.TypeBase64String(this, result, level);
+        }
+        catch (global::System.InvalidOperationException) when (Corvus.Json.Validate.IsNotWellFormedText(this))
+        {
+            result = Corvus.Json.Validate.TextIsNotWellFormed(result, level);
+        }
         return result;
     }
 }

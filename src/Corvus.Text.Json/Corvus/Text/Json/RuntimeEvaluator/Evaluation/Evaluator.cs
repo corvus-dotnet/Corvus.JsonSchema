@@ -216,6 +216,14 @@ internal static partial class Evaluator
         return default(TAccess).GetString(ref state, doc, index);
     }
 
+    /// <summary>Whether the parser found a property's name, for the index of its value, unescaped and all ASCII.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool NameIsAscii<TAccess>(ref EvaluationState state, IJsonDocument doc, int valueIndex)
+        where TAccess : struct, IDocumentAccess
+    {
+        return default(TAccess).IsAsciiText(ref state, doc, valueIndex - RowSize);
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static UnescapedUtf8JsonString PropertyName<TAccess>(ref EvaluationState state, IJsonDocument doc, int valueIndex)
         where TAccess : struct, IDocumentAccess
@@ -1291,11 +1299,11 @@ internal static partial class Evaluator
         ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRawUnchecked(ref state, doc, valueIndex, out bool escaped);
         if (!escaped)
         {
-            return matcher.IsMatch(raw);
+            return matcher.IsMatch(raw, NameIsAscii<TAccess>(ref state, doc, valueIndex));
         }
 
         using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
-        return matcher.IsMatch(name.Span);
+        return matcher.IsMatch(name.Span, knownUtf8: false);
     }
 
     /// <summary>A value against an in-place resolution: a token-type test, a string set or const, or the child.</summary>
@@ -1368,16 +1376,17 @@ internal static partial class Evaluator
             return EscapedStringLengthWithin<TAccess>(entry.MinLength, entry.MaxLength, ref state, doc, index);
         }
 
-        int bytes = raw.Length;
-        if ((entry.MaxLength < 0 || bytes <= entry.MaxLength) && (entry.MinLength < 0 || ((bytes + 3) >> 2) >= entry.MinLength))
-        {
-            return true;
-        }
-
         // An unescaped string the parser found all ASCII has one character to a byte: its length is exact.
+        int bytes = raw.Length;
         if (default(TAccess).IsAsciiText(ref state, doc, index))
         {
             return (entry.MaxLength < 0 || bytes <= entry.MaxLength) && (entry.MinLength < 0 || bytes >= entry.MinLength);
+        }
+
+        // Other text is within the bounds when its byte length decides it, and it is UTF-8 (see IsUtf8).
+        if ((entry.MaxLength < 0 || bytes <= entry.MaxLength) && (entry.MinLength < 0 || ((bytes + 3) >> 2) >= entry.MinLength))
+        {
+            return IsUtf8(raw);
         }
 
         return LengthWithin(raw, entry.MinLength, entry.MaxLength);
@@ -1391,7 +1400,10 @@ internal static partial class Evaluator
         return LengthWithin(s.Span, minLength, maxLength);
     }
 
-    /// <summary>Whether a string's length in runes is within the bounds (-1 for an absent bound).</summary>
+    /// <summary>
+    /// Whether a string's length in runes is within the bounds (-1 for an absent bound). Text that is not UTF-8 is not
+    /// (see <see cref="IsUtf8"/>).
+    /// </summary>
     private static bool LengthWithin(ReadOnlySpan<byte> value, int minLength, int maxLength)
     {
         int bytes = value.Length;
@@ -1400,8 +1412,37 @@ internal static partial class Evaluator
             return false;
         }
 
-        int runes = JsonElementHelpers.CountRunes(value);
-        return (minLength < 0 || runes >= minLength) && (maxLength < 0 || runes <= maxLength);
+        int runes = RuneCountIfUtf8(value);
+        return runes >= 0 && (minLength < 0 || runes >= minLength) && (maxLength < 0 || runes <= maxLength);
+    }
+
+    /// <summary>The number of runes in text, or -1 when it is not UTF-8.</summary>
+    private static int RuneCountIfUtf8(ReadOnlySpan<byte> value)
+    {
+        return IsUtf8(value) ? RuneCountOfUtf8(value) : -1;
+    }
+
+    /// <summary>The number of runes in text that is UTF-8: one for each byte that does not continue a sequence.</summary>
+    private static int RuneCountOfUtf8(ReadOnlySpan<byte> value)
+    {
+#if NET
+        // Most text is ASCII (escaped text is not flagged as such), checked vectorised.
+        if (System.Text.Ascii.IsValid(value))
+        {
+            return value.Length;
+        }
+#endif
+
+        int continuation = 0;
+        foreach (byte b in value)
+        {
+            if ((b & 0xC0) == 0x80)
+            {
+                continuation++;
+            }
+        }
+
+        return value.Length - continuation;
     }
 
     /// <summary>The name lookup for an escaped property name, out of line: escapes are rare and the loop is register-bound.</summary>
@@ -1548,7 +1589,7 @@ internal static partial class Evaluator
         FusedAbsentPattern[] absent = f.AbsentPatterns;
         for (int p = 0; p < absent.Length; p++)
         {
-            if (!failed[absent[p].Condition] && absent[p].Matcher.IsMatch(nameSpan))
+            if (!failed[absent[p].Condition] && absent[p].Matcher.IsMatch(nameSpan, NameIsAscii<TAccess>(ref state, doc, valueIndex)))
             {
                 failed[absent[p].Condition] = true;
             }
@@ -1617,30 +1658,30 @@ internal static partial class Evaluator
                 ReadOnlySpan<byte> raw = default(TAccess).RawValue(ref state, doc, valueIndex, out bool escaped);
                 if (!escaped)
                 {
-                    TestValueKey(entry, Discriminator.StringTag, raw, failed);
+                    TestValueKey(entry, Discriminator.StringTag, raw, default(TAccess).IsAsciiText(ref state, doc, valueIndex), failed);
                     return;
                 }
 
                 using UnescapedUtf8JsonString text = StringValue<TAccess>(ref state, doc, valueIndex);
-                TestValueKey(entry, Discriminator.StringTag, text.Span, failed);
+                TestValueKey(entry, Discriminator.StringTag, text.Span, ascii: false, failed);
                 return;
             }
 
             case JsonTokenType.True:
-                TestValueKey(entry, Discriminator.BooleanTag, "true"u8, failed);
+                TestValueKey(entry, Discriminator.BooleanTag, "true"u8, ascii: true, failed);
                 return;
             case JsonTokenType.False:
-                TestValueKey(entry, Discriminator.BooleanTag, "false"u8, failed);
+                TestValueKey(entry, Discriminator.BooleanTag, "false"u8, ascii: true, failed);
                 return;
             case JsonTokenType.Null:
-                TestValueKey(entry, Discriminator.NullTag, "null"u8, failed);
+                TestValueKey(entry, Discriminator.NullTag, "null"u8, ascii: true, failed);
                 return;
             case JsonTokenType.Number:
             {
                 ReadOnlySpan<byte> rawNumber = default(TAccess).RawValue(ref state, doc, valueIndex);
                 if (IsCanonicalInteger(rawNumber))
                 {
-                    TestValueKey(entry, Discriminator.NumberTag, rawNumber, failed);
+                    TestValueKey(entry, Discriminator.NumberTag, rawNumber, ascii: true, failed);
                     return;
                 }
 
@@ -1684,7 +1725,7 @@ internal static partial class Evaluator
     }
 
     /// <summary>One lookup of the tagged value decides every keyed test; the pattern tests run on the string.</summary>
-    private static void TestValueKey(FusedEntry entry, byte tag, ReadOnlySpan<byte> value, Span<bool> failed)
+    private static void TestValueKey(FusedEntry entry, byte tag, ReadOnlySpan<byte> value, bool ascii, Span<bool> failed)
     {
         FusedValueTest[] keyed = entry.KeyedTests;
         if (keyed.Length > 0)
@@ -1716,7 +1757,7 @@ internal static partial class Evaluator
         for (int t = 0; t < patterns.Length; t++)
         {
             FusedValueTest test = patterns[t];
-            bool passes = tag == Discriminator.StringTag ? test.Pattern!.IsMatch(value) : !test.RequiresString;
+            bool passes = tag == Discriminator.StringTag ? test.Pattern!.IsMatch(value, ascii) : !test.RequiresString;
             if (!passes)
             {
                 failed[test.Condition] = true;
@@ -1748,7 +1789,7 @@ internal static partial class Evaluator
             for (int p = 0; p < patterns.Length; p++)
             {
                 PatternPropertyEntry pattern = patterns[p];
-                if (pattern.Matcher.IsMatch(name))
+                if (pattern.Matcher.IsMatch(name, NameIsAscii<TAccess>(ref state, doc, valueIndex)))
                 {
                     covered = true;
                     SchemaNode target = nodes[pattern.Schema.FastNode];
@@ -2176,7 +2217,7 @@ internal static partial class Evaluator
             for (int p = 0; p < patternProperties.Length; p++)
             {
                 PatternPropertyEntry pp = patternProperties[p];
-                if (pp.Matcher.IsMatch(name))
+                if (pp.Matcher.IsMatch(name, NameIsAscii<TAccess>(ref state, doc, valueIndex)))
                 {
                     matched = true;
                     if (!EvalChildFast<TAccess>(state.Nodes[pp.Schema.FastNode], doc, valueIndex, ref state))
@@ -2904,6 +2945,10 @@ internal static partial class Evaluator
     {
         bool ok = true;
 
+        // Text that is not UTF-8 fails every keyword that reads its characters (see EscapedText); text the parser
+        // found all ASCII is UTF-8, and is not checked.
+        bool wellFormed = ascii || !ReadsCharacters(node) || IsUtf8(value);
+
         if (node.MinLength >= 0 || node.MaxLength >= 0)
         {
             // A rune is one to four bytes, so the byte length bounds the rune count both ways; only values inside
@@ -2913,7 +2958,7 @@ internal static partial class Evaluator
             if (node.MinLength >= 0)
             {
                 bool m;
-                if (byteLength < node.MinLength)
+                if (!wellFormed || byteLength < node.MinLength)
                 {
                     m = false;
                 }
@@ -2925,7 +2970,7 @@ internal static partial class Evaluator
                 {
                     if (runeCount < 0)
                     {
-                        runeCount = JsonElementHelpers.CountRunes(value);
+                        runeCount = RuneCountOfUtf8(value);
                     }
 
                     m = runeCount >= node.MinLength;
@@ -2950,7 +2995,11 @@ internal static partial class Evaluator
             if (node.MaxLength >= 0)
             {
                 bool m;
-                if (byteLength <= node.MaxLength)
+                if (!wellFormed)
+                {
+                    m = false;
+                }
+                else if (byteLength <= node.MaxLength)
                 {
                     m = true;
                 }
@@ -2962,7 +3011,7 @@ internal static partial class Evaluator
                 {
                     if (runeCount < 0)
                     {
-                        runeCount = JsonElementHelpers.CountRunes(value);
+                        runeCount = RuneCountOfUtf8(value);
                     }
 
                     m = runeCount <= node.MaxLength;
@@ -2987,7 +3036,7 @@ internal static partial class Evaluator
 
         if (node.Pattern is PatternMatcher pattern)
         {
-            bool m = pattern.IsMatch(value);
+            bool m = wellFormed && pattern.IsMatch(value, knownUtf8: true);
             if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedKeyword(m, pattern.Source, JsonSchemaEvaluation.ExpectedStringMatchesRegularExpression, "pattern"u8);
@@ -3006,7 +3055,7 @@ internal static partial class Evaluator
 
         if (node.AssertFormat && node.Format != FormatKind.None && !FormatKinds.IsNumeric(node.Format))
         {
-            bool m = MatchesFormat(node.Format, node.Dialect, value, ref state);
+            bool m = wellFormed && MatchesFormat(node.Format, node.Dialect, value, ref state);
             if (node.WarnFormat)
             {
                 if (default(TMode).Collecting)
@@ -3035,7 +3084,7 @@ internal static partial class Evaluator
         if (node.AssertContent)
         {
             JsonSchemaContext scratch = default;
-            bool m = node.Content switch
+            bool m = wellFormed && node.Content switch
             {
                 ContentKind.Base64 => JsonSchemaEvaluation.MatchBase64String(value, ContentEncodingKeyword, ref scratch),
                 ContentKind.Json => JsonSchemaEvaluation.MatchJsonContent(value, ContentMediaTypeKeyword, ref scratch),
@@ -3069,6 +3118,20 @@ internal static partial class Evaluator
 
         return ok;
     }
+
+    /// <summary>Whether a string node has a keyword that reads the string's characters.</summary>
+    private static bool ReadsCharacters(SchemaNode node) =>
+        node.MinLength >= 0 || node.MaxLength >= 0 || node.Pattern is not null || node.AssertContent
+        || (node.AssertFormat && node.Format != FormatKind.None);
+
+    /// <summary>
+    /// Whether text is UTF-8. The parser accepts any bytes in a string, and an escape of half of a surrogate pair reads
+    /// as bytes that are not UTF-8 (see <see cref="EscapedText"/>): a keyword that reads the characters of such text
+    /// reports it not valid (https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1021). Out of line: only text
+    /// that is not all ASCII is checked.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    internal static bool IsUtf8(scoped ReadOnlySpan<byte> value) => JsonWriterHelper.IsValidUtf8String(value);
 
     private static bool MatchesFormat(FormatKind format, JsonSchemaDialect dialect, scoped ReadOnlySpan<byte> value, ref EvaluationState state)
     {
@@ -3339,7 +3402,7 @@ internal static partial class Evaluator
                     for (int p = 0; p < patternProperties.Length; p++)
                     {
                         PatternPropertyEntry pp = patternProperties[p];
-                        if (pp.Matcher.IsMatch(nameSpan))
+                        if (pp.Matcher.IsMatch(nameSpan, NameIsAscii<TAccess>(ref state, doc, valueIndex)))
                         {
                             matched = true;
                             MarkEvaluated(evaluated, propertyIndex);

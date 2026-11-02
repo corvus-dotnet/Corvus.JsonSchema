@@ -54,9 +54,47 @@ internal static partial class JsonReaderHelper
     }
 
     /// <summary>
+    /// Unescapes text that may hold an escape of half of a surrogate pair with no other half (such as <c>\ud800</c>),
+    /// which the parser accepts. Such a code unit is written as its generalized UTF-8 bytes (<c>\ud800</c> as
+    /// <c>ED A0 80</c>), which are not UTF-8, so the result reads as the same text with those bytes raw would. Every
+    /// other escape is unescaped as <see cref="Unescape(ReadOnlySpan{byte}, Span{byte}, out int)"/> does it.
+    /// </summary>
+    /// <param name="source">The escaped text, with at least one escape.</param>
+    /// <param name="destination">The destination, at least as long as <paramref name="source"/>.</param>
+    /// <param name="written">The number of bytes written.</param>
+    internal static void UnescapeToGeneralizedUtf8(ReadOnlySpan<byte> source, Span<byte> destination, out int written)
+    {
+        Debug.Assert(destination.Length >= source.Length);
+
+        int idx = source.IndexOf(JsonConstants.BackSlash);
+        Debug.Assert(idx >= 0);
+
+        bool result = TryUnescape(source, destination, idx, out written, generalizeLoneSurrogates: true);
+        Debug.Assert(result);
+    }
+
+    /// <summary>
+    /// <see cref="UnescapeToGeneralizedUtf8(ReadOnlySpan{byte}, Span{byte}, out int)"/>, given the index of the first
+    /// escape.
+    /// </summary>
+    /// <param name="source">The escaped text.</param>
+    /// <param name="destination">The destination, at least as long as <paramref name="source"/>.</param>
+    /// <param name="idx">The index of the first backslash in <paramref name="source"/>.</param>
+    /// <param name="written">The number of bytes written.</param>
+    internal static void UnescapeToGeneralizedUtf8(ReadOnlySpan<byte> source, Span<byte> destination, int idx, out int written)
+    {
+        Debug.Assert(idx >= 0 && idx < source.Length);
+        Debug.Assert(source[idx] == JsonConstants.BackSlash);
+        Debug.Assert(destination.Length >= source.Length);
+
+        bool result = TryUnescape(source, destination, idx, out written, generalizeLoneSurrogates: true);
+        Debug.Assert(result);
+    }
+
+    /// <summary>
     /// Used when writing to buffers not guaranteed to fit the unescaped result.
     /// </summary>
-    private static bool TryUnescape(ReadOnlySpan<byte> source, Span<byte> destination, int idx, out int written)
+    private static bool TryUnescape(ReadOnlySpan<byte> source, Span<byte> destination, int idx, out int written, bool generalizeLoneSurrogates = false)
     {
         Debug.Assert(idx >= 0 && idx < source.Length);
         Debug.Assert(source[idx] == JsonConstants.BackSlash);
@@ -129,6 +167,12 @@ internal static partial class JsonReaderHelper
                         // The first hex value cannot be a low surrogate.
                         if (scalar >= JsonConstants.LowSurrogateStartValue)
                         {
+                            if (generalizeLoneSurrogates)
+                            {
+                                WriteGeneralizedUtf8(scalar, destination, ref written);
+                                break;
+                            }
+
                             ThrowHelper.ThrowInvalidOperationException_ReadInvalidUTF16(scalar);
                         }
 
@@ -137,6 +181,12 @@ internal static partial class JsonReaderHelper
                         // We must have a low surrogate following a high surrogate.
                         if (source.Length < idx + 7 || source[idx + 1] != '\\' || source[idx + 2] != 'u')
                         {
+                            if (generalizeLoneSurrogates)
+                            {
+                                WriteGeneralizedUtf8(scalar, destination, ref written);
+                                break;
+                            }
+
                             ThrowHelper.ThrowInvalidOperationException_ReadIncompleteUTF16();
                         }
 
@@ -145,13 +195,21 @@ internal static partial class JsonReaderHelper
                         result = Utf8Parser.TryParse(source.Slice(idx + 3, 4), out int lowSurrogate, out bytesConsumed, 'x');
                         Debug.Assert(result);
                         Debug.Assert(bytesConsumed == 4);
-                        idx += 6;
 
                         // If the first hex value is a high surrogate, the next one must be a low surrogate.
                         if (!JsonHelpers.IsInRangeInclusive((uint)lowSurrogate, JsonConstants.LowSurrogateStartValue, JsonConstants.LowSurrogateEndValue))
                         {
+                            if (generalizeLoneSurrogates)
+                            {
+                                // The next escape is not consumed: it is unescaped on its own (it may begin a pair).
+                                WriteGeneralizedUtf8(scalar, destination, ref written);
+                                break;
+                            }
+
                             ThrowHelper.ThrowInvalidOperationException_ReadInvalidUTF16(lowSurrogate);
                         }
+
+                        idx += 6;
 
                         // To find the unicode scalar:
                         // (0x400 * (High surrogate - 0xD800)) + Low surrogate - 0xDC00 + 0x10000
@@ -230,5 +288,16 @@ internal static partial class JsonReaderHelper
 
     DestinationTooShort:
         return false;
+    }
+
+    /// <summary>
+    /// Writes a lone surrogate code unit as the three bytes UTF-8 would give it as a scalar (generalized UTF-8). The
+    /// destination always has room: the escape it replaces is six bytes.
+    /// </summary>
+    private static void WriteGeneralizedUtf8(int codeUnit, Span<byte> destination, ref int written)
+    {
+        destination[written++] = (byte)(0xE0 | (codeUnit >> 12));
+        destination[written++] = (byte)(0x80 | ((codeUnit >> 6) & 0x3F));
+        destination[written++] = (byte)(0x80 | (codeUnit & 0x3F));
     }
 }
