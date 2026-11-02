@@ -1210,7 +1210,7 @@ public abstract partial class JsonDocument
 
         offset += 4;
 
-        bool success = Utf8Formatter.TryFormat(value, _valueBacking.AsSpan(offset), out length);
+        bool success = RoundTripNumberFormatter.TryFormat(value, _valueBacking.AsSpan(offset), out length);
         Debug.Assert(success);
         offset += length;
 
@@ -1234,7 +1234,7 @@ public abstract partial class JsonDocument
 
         offset += 4;
 
-        bool success = Utf8Formatter.TryFormat(value, _valueBacking.AsSpan(offset), out length);
+        bool success = RoundTripNumberFormatter.TryFormat(value, _valueBacking.AsSpan(offset), out length);
         Debug.Assert(success);
         offset += length;
 

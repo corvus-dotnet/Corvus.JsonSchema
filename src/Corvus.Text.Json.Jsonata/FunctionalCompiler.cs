@@ -420,7 +420,7 @@ internal static class FunctionalCompiler
         switch (node)
         {
             case NumberNode num:
-                return num.Value.ToString("R", CultureInfo.InvariantCulture);
+                return JsonataHelpers.FormatRoundtrip(num.Value);
 
             case StringNode str:
                 return $"\"{EscapeJsonStringContent(str.Value)}\"";
@@ -431,7 +431,7 @@ internal static class FunctionalCompiler
             case UnaryNode { Operator: "-" } u:
                 if (u.Expression is NumberNode inner)
                 {
-                    return (-inner.Value).ToString("R", CultureInfo.InvariantCulture);
+                    return JsonataHelpers.FormatRoundtrip(-inner.Value);
                 }
 
                 return $"-{SerializeConstantJson(u.Expression)}";
@@ -2292,6 +2292,10 @@ internal static class FunctionalCompiler
 
         return (in JsonElement input, Environment env) =>
         {
+            // The groups of a group-by over a tuple stream (focus-bound steps). The outermost focus step owns
+            // them, the innermost adds each tuple, and the values are evaluated once every tuple is grouped.
+            FocusTupleGroups? focusTupleGroups = null;
+
             return EvalPathFrom(new Sequence(input), 0, env);
 
             Sequence EvalPathFrom(Sequence initial, int startStep, Environment env)
@@ -3062,6 +3066,29 @@ internal static class FunctionalCompiler
             // and remaining steps evaluate from the parent context (this step's input).
             Sequence EvalFocusStep(Sequence parentContext, int stepIdx, Environment env)
             {
+                // A group-by over a tuple stream groups the whole stream, as jsonata-js does: the value expressions
+                // are evaluated only when all of the grouping has been performed, and an empty stream gives {}.
+                if (groupByPairs is null || focusTupleGroups is not null)
+                {
+                    return EvalFocusStepCore(parentContext, stepIdx, env);
+                }
+
+                var groups = new FocusTupleGroups();
+                focusTupleGroups = groups;
+                try
+                {
+                    EvalFocusStepCore(parentContext, stepIdx, env);
+                }
+                finally
+                {
+                    focusTupleGroups = null;
+                }
+
+                return BuildFocusTupleGroupByResult(groups, groupByPairs, env);
+            }
+
+            Sequence EvalFocusStepCore(Sequence parentContext, int stepIdx, Environment env)
+            {
                 var step = steps[stepIdx];
                 var focusVar = focusVars[stepIdx]!;
                 var indexVar = indexVars[stepIdx];
@@ -3261,13 +3288,26 @@ internal static class FunctionalCompiler
                 bool applyGroupByHere = hasGroupBy && !hasInnerFocus;
                 bool mergeInnerGroupBy = hasGroupBy && hasInnerFocus;
 
-                // Phase 1 data for focus-aware group-by:
-                // Collect focus elements per group key so we can re-bind the focus
-                // variable to a sequence when evaluating the value expression.
-                List<string>? focusGroupKeys = applyGroupByHere ? new() : null;
-                Dictionary<string, (List<JsonElement> FocusElements, List<JsonElement> ContextElements, int PairIndex)>? focusGroupData =
-                    applyGroupByHere ? new() : null;
-                var mergeObjects = default(SequenceBuilder);
+                // The variables each tuple binds: the focus and index variables of this step and the steps before it.
+                string[]? tupleVariables = null;
+                if (applyGroupByHere)
+                {
+                    var names = new List<string>();
+                    for (int k = 0; k <= stepIdx; k++)
+                    {
+                        if (focusVars[k] is string f)
+                        {
+                            names.Add(f);
+                        }
+
+                        if (indexVars[k] is string ix)
+                        {
+                            names.Add(ix);
+                        }
+                    }
+
+                    tupleVariables = names.ToArray();
+                }
 
                 // Apply stages as a BATCH to all focus elements at once.
                 // This ensures numeric index predicates (e.g. [1]) see the full
@@ -3399,19 +3439,13 @@ internal static class FunctionalCompiler
 
                     if (applyGroupByHere)
                     {
-                        // Phase 1: evaluate key, collect focus element per group.
-                        // Value expression is deferred to Phase 2 so it sees the
-                        // full sequence of focus elements for each group.
-                        AccumulateFocusGroupKey(subResult, groupByPairs!, focusGroupKeys!, focusGroupData!, env, el);
+                        // Evaluate the key of each tuple and add the tuple to its group. The value expression
+                        // waits until every tuple is grouped (see EvalFocusStep).
+                        AccumulateFocusTuple(subResult, groupByPairs!, focusTupleGroups!, tupleVariables!, env);
                     }
                     else if (mergeInnerGroupBy)
                     {
-                        // Inner focus handled group-by — collect objects for merging
-                        for (int j = 0; j < subResult.Count; j++)
-                        {
-                            mergeObjects.Add(subResult[j]);
-                        }
-
+                        // The innermost focus step added this iteration's tuples to the groups.
                         subResult.ReturnBackingArray();
                     }
                     else
@@ -3421,17 +3455,11 @@ internal static class FunctionalCompiler
                     }
                 }
 
-                if (applyGroupByHere && focusGroupKeys!.Count > 0)
+                if (hasGroupBy)
                 {
-                    // Phase 2: For each group, re-bind focus variable to the
-                    // sequence of all matching elements and evaluate value once.
-                    return BuildFocusGroupByResult(
-                        focusGroupKeys!, focusGroupData!, groupByPairs!, env, focusVar);
-                }
-
-                if (mergeInnerGroupBy && mergeObjects.Count > 0)
-                {
-                    return MergeGroupedObjects(ref mergeObjects, env);
+                    // The tuples are in the groups, which the outermost focus step turns into the result.
+                    resultBuilder.ReturnArray();
+                    return Sequence.Undefined;
                 }
 
                 return resultBuilder.ToSequence();
@@ -4718,19 +4746,15 @@ internal static class FunctionalCompiler
     }
 
     /// <summary>
-    /// Phase 1 of focus-aware group-by: evaluates the KEY expression per-element and
-    /// stores both the focus element and the sub-result element under the group key.
-    /// The VALUE expression is NOT evaluated here — it is deferred to
-    /// <see cref="BuildFocusGroupByResult"/> so that the focus variable can be re-bound
-    /// to the full sequence of matching elements for the group.
+    /// Evaluates the key of each tuple that ends in <paramref name="subResult"/> and adds the tuple, its context
+    /// element and the values of its variables, to the group for that key.
     /// </summary>
-    private static void AccumulateFocusGroupKey(
+    private static void AccumulateFocusTuple(
         Sequence subResult,
         (ExpressionEvaluator Key, ExpressionEvaluator Value)[] pairs,
-        List<string> groupKeys,
-        Dictionary<string, (List<JsonElement> FocusElements, List<JsonElement> ContextElements, int PairIndex)> groupData,
-        Environment env,
-        JsonElement focusElement)
+        FocusTupleGroups groups,
+        string[] tupleVariables,
+        Environment env)
     {
         // Extract context elements from subResult for key evaluation
         var contextElements = default(SequenceBuilder);
@@ -4756,6 +4780,9 @@ internal static class FunctionalCompiler
                 contextElements.Add(subResult[i]);
             }
         }
+
+        groups.Variables ??= tupleVariables;
+        JsonElement[]? bindings = null;
 
         for (int ei = 0; ei < contextElements.Count; ei++)
         {
@@ -4784,71 +4811,93 @@ internal static class FunctionalCompiler
                     keyStr = CoerceElementToString(keySeq.FirstOrDefault);
                 }
 
-                if (!groupData.TryGetValue(keyStr, out var entry))
+                if (!groups.Groups.TryGetValue(keyStr, out var group))
                 {
-                    entry = ([], [], pairIdx);
-                    groupData[keyStr] = entry;
-                    groupKeys.Add(keyStr);
+                    group = new FocusTupleGroups.Group(pairIdx);
+                    groups.Groups[keyStr] = group;
+                    groups.Keys.Add(keyStr);
+                }
+                else if (group.PairIndex != pairIdx)
+                {
+                    throw new JsonataException(
+                        "D1009",
+                        SR.Format(SR.D1009_MultipleKeyDefinitionsEvaluateToSameKey, keyStr),
+                        0);
                 }
 
-                entry.FocusElements.Add(focusElement);
-                entry.ContextElements.Add(element);
+                bindings ??= SnapshotTupleVariables(tupleVariables, env);
+                group.Contexts.Add(element);
+                group.Bindings.Add(bindings);
             }
         }
     }
 
-    /// <summary>
-    /// Phase 2 of focus-aware group-by: for each group, re-binds the focus variable
-    /// to a <see cref="Sequence"/> of all matching focus elements, builds the context
-    /// from all matching sub-result elements, then evaluates the value expression once.
-    /// This gives the value expression access to the full set of matching elements
-    /// (e.g. <c>$join($c.Phone.number, ', ')</c> sees ALL phone numbers from all
-    /// matching contacts, not just one contact at a time).
-    /// </summary>
-    private static Sequence BuildFocusGroupByResult(
-        List<string> groupKeys,
-        Dictionary<string, (List<JsonElement> FocusElements, List<JsonElement> ContextElements, int PairIndex)> groupData,
-        (ExpressionEvaluator Key, ExpressionEvaluator Value)[] pairs,
-        Environment env,
-        string focusVar)
+    private static JsonElement[] SnapshotTupleVariables(string[] tupleVariables, Environment env)
     {
-        JsonDocumentBuilder<JsonElement.Mutable> objDoc = JsonElement.CreateObjectBuilder(env.Workspace, groupKeys.Count);
-        JsonElement.Mutable objRoot = objDoc.RootElement;
-
-        foreach (var key in groupKeys)
+        var values = new JsonElement[tupleVariables.Length];
+        for (int v = 0; v < tupleVariables.Length; v++)
         {
-            var (focusElements, contextElements, pairIndex) = groupData[key];
-            var valueEval = pairs[pairIndex].Value;
-
-            // Re-bind focus variable to the full sequence of matching focus elements
-            if (focusElements.Count == 1)
+            if (env.TryLookup(tupleVariables[v], out Sequence value) && !value.IsUndefined)
             {
-                env.Bind(focusVar, new Sequence(focusElements[0]));
+                values[v] = value.IsSingleton ? value.FirstOrDefault : JsonataHelpers.ArrayFromSequence(value, env.Workspace);
             }
-            else
+        }
+
+        return values;
+    }
+
+    /// <summary>
+    /// Builds the object of a group-by over a tuple stream. For each group, every tuple variable is bound to the
+    /// sequence of its values in the group's tuples and the context is the sequence of their context elements (as
+    /// jsonata-js reduces the tuples of a group), and the value expression is evaluated once. With no tuples, the
+    /// result is <c>{}</c>.
+    /// </summary>
+    private static Sequence BuildFocusTupleGroupByResult(
+        FocusTupleGroups groups,
+        (ExpressionEvaluator Key, ExpressionEvaluator Value)[] pairs,
+        Environment env)
+    {
+        JsonDocumentBuilder<JsonElement.Mutable> objDoc = JsonElement.CreateObjectBuilder(env.Workspace, groups.Keys.Count);
+        JsonElement.Mutable objRoot = objDoc.RootElement;
+        string[] variables = groups.Variables ?? [];
+
+        foreach (var key in groups.Keys)
+        {
+            FocusTupleGroups.Group group = groups.Groups[key];
+
+            for (int v = 0; v < variables.Length; v++)
             {
                 // Use a pooled array so the env can safely return it on cleanup.
-                var focusArr = ArrayPool<JsonElement>.Shared.Rent(focusElements.Count);
-                for (int fe = 0; fe < focusElements.Count; fe++)
+                var values = ArrayPool<JsonElement>.Shared.Rent(group.Bindings.Count);
+                int count = 0;
+                foreach (JsonElement[] tuple in group.Bindings)
                 {
-                    focusArr[fe] = focusElements[fe];
+                    if (tuple[v].ValueKind != JsonValueKind.Undefined)
+                    {
+                        values[count++] = tuple[v];
+                    }
                 }
 
-                env.Bind(focusVar, new Sequence(focusArr, focusElements.Count));
+                if (count == 1)
+                {
+                    env.Bind(variables[v], new Sequence(values[0]));
+                    ArrayPool<JsonElement>.Shared.Return(values);
+                }
+                else if (count > 1)
+                {
+                    env.Bind(variables[v], new Sequence(values, count));
+                }
+                else
+                {
+                    ArrayPool<JsonElement>.Shared.Return(values);
+                }
             }
 
-            // Build context from sub-result elements for the value expression
-            JsonElement context;
-            if (contextElements.Count == 1)
-            {
-                context = contextElements[0];
-            }
-            else
-            {
-                context = JsonataHelpers.ArrayFromList(contextElements, env.Workspace);
-            }
+            JsonElement context = group.Contexts.Count == 1
+                ? group.Contexts[0]
+                : JsonataHelpers.ArrayFromList(group.Contexts, env.Workspace);
 
-            var valSeq = valueEval(context, env);
+            var valSeq = pairs[group.PairIndex].Value(context, env);
             if (valSeq.IsUndefined)
             {
                 continue;
@@ -4868,54 +4917,30 @@ internal static class FunctionalCompiler
     }
 
     /// <summary>
-    /// Merges multiple grouped objects (from nested focus binding iterations)
-    /// into a single object. Same-key values are collected into arrays.
+    /// The groups of a group-by over a tuple stream, in the order their keys were first seen.
     /// </summary>
-    private static Sequence MergeGroupedObjects(ref SequenceBuilder objects, Environment env)
+    private sealed class FocusTupleGroups
     {
-        var keys = new List<string>();
-        var merged = new Dictionary<string, List<JsonElement>>();
+        public List<string> Keys { get; } = [];
 
-        for (int o = 0; o < objects.Count; o++)
+        public Dictionary<string, Group> Groups { get; } = [];
+
+        /// <summary>
+        /// Gets or sets the names of the variables each tuple binds, in the order of its values.
+        /// </summary>
+        public string[]? Variables { get; set; }
+
+        /// <summary>
+        /// A group: the pair whose key made it, and the context element and variable values of each tuple.
+        /// </summary>
+        public sealed class Group(int pairIndex)
         {
-            var obj = objects[o];
-            if (obj.ValueKind != JsonValueKind.Object)
-            {
-                continue;
-            }
+            public int PairIndex { get; } = pairIndex;
 
-            foreach (var prop in obj.EnumerateObject())
-            {
-                if (!merged.TryGetValue(prop.Name, out var values))
-                {
-                    values = [];
-                    merged[prop.Name] = values;
-                    keys.Add(prop.Name);
-                }
+            public List<JsonElement> Contexts { get; } = [];
 
-                values.Add(prop.Value);
-            }
+            public List<JsonElement[]> Bindings { get; } = [];
         }
-
-        objects.ReturnArray();
-
-        JsonDocumentBuilder<JsonElement.Mutable> objDoc = JsonElement.CreateObjectBuilder(env.Workspace, keys.Count);
-        JsonElement.Mutable objRoot = objDoc.RootElement;
-
-        foreach (var key in keys)
-        {
-            var values = merged[key];
-            if (values.Count == 1)
-            {
-                objRoot.SetProperty(key, values[0]);
-            }
-            else
-            {
-                objRoot.SetProperty(key, JsonataHelpers.ArrayFromList(values, env.Workspace));
-            }
-        }
-
-        return new Sequence((JsonElement)objRoot);
     }
 
     private static Sequence ApplyGroupBy(

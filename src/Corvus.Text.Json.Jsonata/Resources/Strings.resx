@@ -98,6 +98,9 @@
   <data name="D2014_RangeExpressionGeneratesTooManyResults" xml:space="preserve">
     <value>Range expression generates too many results</value>
   </data>
+  <data name="D2016_PadStringTooLong" xml:space="preserve">
+    <value>The size of the string requested by the $pad function must not exceed 1e7. Attempted to allocate {0}.</value>
+  </data>
   <data name="D3001_AStringCannotBeGeneratedFromThisValue" xml:space="preserve">
     <value>A string cannot be generated from this value</value>
   </data>

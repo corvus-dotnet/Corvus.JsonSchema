@@ -297,9 +297,10 @@ public class JsonataTestSuiteRunner
     {
         if (expected.ValueKind == JsonValueKind.Number && actual.ValueKind == JsonValueKind.Number)
         {
+            // The suite's own runner compares with deep equality, so numbers must be equal exactly.
             double e = expected.GetDouble();
             double a = actual.GetDouble();
-            Assert.AreEqual(e, a, 10);
+            Assert.AreEqual(e, a, $"expected {expected.GetRawText()}, actual {actual.GetRawText()}");
             return;
         }
 

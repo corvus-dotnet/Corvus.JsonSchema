@@ -3750,20 +3750,7 @@ public static class JsonataCodeGenHelpers
             throw new JsonataException("T0410", SR.T0410_MathFunctionArgumentMustBeANumber, 0);
         }
 
-        double result;
-        if (precision < 0)
-        {
-            double factor = Math.Pow(10, -precision);
-            result = Math.Round(num / factor, MidpointRounding.ToEven) * factor;
-        }
-        else
-        {
-            decimal decValue = (decimal)num;
-            decimal rounded = Math.Round(decValue, Math.Min(precision, 15), MidpointRounding.ToEven);
-            result = (double)rounded;
-        }
-
-        return JsonataHelpers.NumberFromDouble(result, workspace);
+        return JsonataHelpers.NumberFromDouble(BuiltInFunctions.RoundHalfToEven(num, precision), workspace);
     }
 
     /// <summary>
@@ -4090,7 +4077,13 @@ public static class JsonataCodeGenHelpers
             throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionContainsMustBeAString, 0);
         }
 
-        if (search.IsNullOrUndefined() || search.ValueKind != JsonValueKind.String)
+        // An undefined pattern gives undefined, as an undefined string does (jsonata-js #809).
+        if (search.IsUndefined())
+        {
+            return default;
+        }
+
+        if (search.ValueKind != JsonValueKind.String)
         {
             throw new JsonataException("T0410", SR.T0410_Argument2OfFunctionContainsMustBeAStringOrRegex, 0);
         }
@@ -4113,7 +4106,13 @@ public static class JsonataCodeGenHelpers
             throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionSplitIsNotOfTheCorrectType, 0);
         }
 
-        if (separator.IsUndefined() || separator.ValueKind != JsonValueKind.String)
+        // An undefined separator gives undefined, as an undefined string does (jsonata-js #831).
+        if (separator.IsUndefined())
+        {
+            return default;
+        }
+
+        if (separator.ValueKind != JsonValueKind.String)
         {
             throw new JsonataException("T0410", SR.T0410_Argument2OfFunctionSplitIsNotOfTheCorrectType, 0);
         }
@@ -4464,6 +4463,7 @@ public static class JsonataCodeGenHelpers
         }
 
         int cpLen = CountCodePoints(inputSpan);
+        BuiltInFunctions.ThrowIfPadTooLong(widthNum, cpLen);
         int absWidth = Math.Abs(width);
         int padNeeded = absWidth - cpLen;
         if (padNeeded <= 0)
@@ -6108,7 +6108,13 @@ public static class JsonataCodeGenHelpers
             throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionReplaceIsNotOfTheCorrectType, 0);
         }
 
-        if (pattern.IsUndefined() || pattern.ValueKind != JsonValueKind.String)
+        // An undefined pattern gives undefined, as an undefined string does (jsonata-js #831).
+        if (pattern.IsUndefined())
+        {
+            return default;
+        }
+
+        if (pattern.ValueKind != JsonValueKind.String)
         {
             throw new JsonataException("T0410", SR.T0410_Argument2OfFunctionReplaceIsNotOfTheCorrectType, 0);
         }
@@ -7411,9 +7417,9 @@ public static class JsonataCodeGenHelpers
         if (pictureElement.ValueKind == JsonValueKind.Undefined)
         {
             // Fast path: parse directly from UTF-8 backing (zero-alloc for standard ISO 8601)
-            if (input.ValueKind == JsonValueKind.String && input.TryGetDateTimeOffset(out var dto))
+            if (BuiltInFunctions.TryGetIso8601UnixMilliseconds(input, out long millis))
             {
-                return JsonataHelpers.NumberFromDouble(dto.ToUnixTimeMilliseconds(), workspace);
+                return JsonataHelpers.NumberFromDouble(millis, workspace);
             }
 
             string str = FunctionalCompiler.CoerceElementToString(input);

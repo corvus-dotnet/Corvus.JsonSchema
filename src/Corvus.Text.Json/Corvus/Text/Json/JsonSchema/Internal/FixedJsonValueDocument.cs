@@ -336,14 +336,14 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManaged
     {
         Debug.Assert(index == 0);
         int workspaceDocumentIndex = workspace.GetDocumentIndex(this);
-        db.AppendExternal(_tokenType, 0, _rawValue.Length, workspaceDocumentIndex);
+        db.AppendExternal(_tokenType, 0, ExternalRowSizeOrLength(), workspaceDocumentIndex);
     }
 
     int IJsonDocument.WriteElementToMetadataDb(int index, JsonWorkspace workspace, ref MetadataDb db, int writePosition)
     {
         Debug.Assert(index == 0);
         int workspaceDocumentIndex = workspace.GetDocumentIndex(this);
-        db.WriteRowAt(writePosition, new DbRow(_tokenType, 0, _rawValue.Length, workspaceDocumentIndex));
+        db.WriteRowAt(writePosition, new DbRow(_tokenType, 0, ExternalRowSizeOrLength(), workspaceDocumentIndex));
         return 1;
     }
 
@@ -351,7 +351,7 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManaged
     {
         var db = MetadataDb.CreateRented(DbRow.Size, false);
         int workspaceDocumentIndex = workspace.GetDocumentIndex(this);
-        db.AppendExternal(_tokenType, 0, _rawValue.Length, workspaceDocumentIndex);
+        db.AppendExternal(_tokenType, 0, ExternalRowSizeOrLength(), workspaceDocumentIndex);
         return db.TakeOwnership(out rentedBacking);
     }
 
@@ -1165,6 +1165,21 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManaged
         // string keyword, deep equality), so it has to be what the text holds, decided the way this document's own
         // string accessors decide it. In JSON text a backslash is only ever the start of an escape.
         return _tokenType == JsonTokenType.String && _rawValue.Span.IndexOf((byte)'\\') >= 0;
+    }
+
+    /// <summary>
+    /// Gets the size or length for the row that refers to this value from another document.
+    /// </summary>
+    /// <remarks>
+    /// The row's sign bit says the string's text carries escapes, as it does for a row copied from a parsed document.
+    /// Without it the other document reads the escaped text as the value, so a builder writes the escapes out
+    /// escaped again (#1045).
+    /// </remarks>
+    private int ExternalRowSizeOrLength()
+    {
+        return ((IJsonDocument)this).ValueIsEscaped(0, isPropertyName: false)
+            ? _rawValue.Length | int.MinValue
+            : _rawValue.Length;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

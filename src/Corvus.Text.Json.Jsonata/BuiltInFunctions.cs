@@ -1358,6 +1358,12 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
+            // An undefined separator gives undefined, as an undefined string does (jsonata-js #831).
+            if (sepSeq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
             // Validate separator is a string or regex
             if (!sepSeq.IsRegex)
             {
@@ -1442,6 +1448,12 @@ internal static class BuiltInFunctions
                 throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionContainsMustBeAString, 0);
             }
 
+            // An undefined pattern gives undefined, as an undefined string does (jsonata-js #809).
+            if (searchSeq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
             using UnescapedUtf16JsonString strUtf16 = strSeq.FirstOrDefault.GetUtf16String();
             ReadOnlySpan<char> strSpan = strUtf16.Span;
 
@@ -1466,7 +1478,7 @@ internal static class BuiltInFunctions
             }
 
             string? str = strSeq.FirstOrDefault.GetString();
-            if (str is null)
+            if (str is null || searchSeq.IsUndefined)
             {
                 return Sequence.Undefined;
             }
@@ -1564,23 +1576,89 @@ internal static class BuiltInFunctions
                 }
             }
 
-            double result;
-            if (precision < 0)
-            {
-                double factor = Math.Pow(10, -precision);
-                result = Math.Round(num / factor, MidpointRounding.ToEven) * factor;
-            }
-            else
-            {
-                // Use decimal arithmetic for precise banker's rounding,
-                // avoiding IEEE 754 double representation errors.
-                decimal decValue = (decimal)num;
-                decimal rounded = Math.Round(decValue, Math.Min(precision, 15), MidpointRounding.ToEven);
-                result = (double)rounded;
-            }
-
-            return Sequence.FromDouble(result, env.Workspace);
+            return Sequence.FromDouble(RoundHalfToEven(num, precision), env.Workspace);
         };
+    }
+
+    /// <summary>
+    /// Rounds a number to <paramref name="precision"/> decimal places (a negative precision rounds to the left of the
+    /// decimal point), half to even, as <c>$round</c> does.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is the jsonata-js algorithm. The decimal point is moved by rewriting the exponent of the number's shortest
+    /// round-trip text, which is exact where multiplying by a power of ten is not, the number is rounded to an integer,
+    /// and the point is moved back the same way. It holds at any precision: <c>$round(6.022e-23, 24)</c> is
+    /// <c>6e-23</c>.
+    /// </para>
+    /// </remarks>
+    /// <param name="number">The number to round.</param>
+    /// <param name="precision">The number of decimal places.</param>
+    /// <returns>The rounded number.</returns>
+    internal static double RoundHalfToEven(double number, int precision)
+    {
+        double shifted = precision == 0 ? number : ShiftDecimalPoint(number, precision);
+        if (double.IsInfinity(shifted))
+        {
+            // The number has fewer decimal places than the precision asks for, so it is its own rounding.
+            return number;
+        }
+
+        double result = Math.Round(shifted, MidpointRounding.ToEven);
+        if (precision != 0)
+        {
+            result = ShiftDecimalPoint(result, -precision);
+        }
+
+        // -0 is 0.
+        return result == 0 ? 0 : result;
+    }
+
+    /// <summary>
+    /// Multiplies a number by 10^<paramref name="places"/> exactly, by adding to the exponent of its shortest
+    /// round-trip text and parsing the result.
+    /// </summary>
+    private static double ShiftDecimalPoint(double number, int places)
+    {
+        if (number == 0 || double.IsNaN(number) || double.IsInfinity(number))
+        {
+            return number;
+        }
+
+#if NET
+        Span<char> text = stackalloc char[64];
+        if (!number.TryFormat(text, out int written, "R", CultureInfo.InvariantCulture))
+        {
+            return number;
+        }
+
+        ReadOnlySpan<char> formatted = text.Slice(0, written);
+#else
+        ReadOnlySpan<char> formatted = JsonataHelpers.FormatRoundtrip(number).AsSpan();
+#endif
+        int e = formatted.IndexOfAny('E', 'e');
+        ReadOnlySpan<char> mantissa = e < 0 ? formatted : formatted.Slice(0, e);
+        long exponent = places;
+        if (e >= 0)
+        {
+#if NET
+            exponent += long.Parse(formatted.Slice(e + 1), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture);
+#else
+            exponent += long.Parse(formatted.Slice(e + 1).ToString(), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture);
+#endif
+        }
+
+#if NET
+        Span<char> shifted = stackalloc char[96];
+        mantissa.CopyTo(shifted);
+        int length = mantissa.Length;
+        shifted[length++] = 'E';
+        exponent.TryFormat(shifted.Slice(length), out int exponentLength, default, CultureInfo.InvariantCulture);
+        length += exponentLength;
+        return double.Parse(shifted.Slice(0, length), NumberStyles.Float, CultureInfo.InvariantCulture);
+#else
+        return double.Parse(mantissa.ToString() + "E" + exponent.ToString(CultureInfo.InvariantCulture), NumberStyles.Float, CultureInfo.InvariantCulture);
+#endif
     }
 
     private static ExpressionEvaluator CompilePower(ExpressionEvaluator[] args)
@@ -3127,6 +3205,22 @@ internal static class BuiltInFunctions
     }
 
     // --- String functions: pad, match, replace ---
+
+    /// <summary>
+    /// Throws D2016 when <c>$pad</c> would add more than 1e7 characters, the limit jsonata-js sets on the
+    /// string it builds (as D2014 limits the range operator).
+    /// </summary>
+    /// <param name="width">The width argument, before it is truncated to an integer.</param>
+    /// <param name="codePointLength">The number of code points in the string to pad.</param>
+    internal static void ThrowIfPadTooLong(double width, int codePointLength)
+    {
+        double padLength = Math.Abs(Math.Truncate(width)) - codePointLength;
+        if (padLength > 1e7)
+        {
+            throw new JsonataException("D2016", SR.Format(SR.D2016_PadStringTooLong, padLength.ToString("R", CultureInfo.InvariantCulture)), 0);
+        }
+    }
+
     private static ExpressionEvaluator CompilePad(ExpressionEvaluator[] args)
     {
         if (args.Length < 2 || args.Length > 3)
@@ -3169,6 +3263,7 @@ internal static class BuiltInFunctions
             }
 
             int cpLen = CountCodePoints(str);
+            ThrowIfPadTooLong(widthNum, cpLen);
             int absWidth = Math.Abs(width);
             int padNeeded = absWidth - cpLen;
             if (padNeeded <= 0)
@@ -3534,6 +3629,12 @@ internal static class BuiltInFunctions
             if (strSeq.IsLambda || strSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
             {
                 throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionReplaceIsNotOfTheCorrectType, 0);
+            }
+
+            // An undefined pattern gives undefined, as an undefined string does (jsonata-js #831).
+            if (patSeq.IsUndefined)
+            {
+                return Sequence.Undefined;
             }
 
             // Validate pattern is a string or regex
@@ -5894,6 +5995,48 @@ internal static class BuiltInFunctions
 #endif
 
     /// <summary>
+    /// Reads an ISO 8601 string element as milliseconds since the Unix epoch, without allocating.
+    /// </summary>
+    /// <remarks>
+    /// A timestamp with no offset is read as UTC, as <see cref="ParseIso8601ToMillis"/> reads it, so the answer does
+    /// not depend on the time zone of the machine. (Reading the element as a <see cref="DateTimeOffset"/> takes such
+    /// a timestamp to be in local time.)
+    /// </remarks>
+    /// <param name="element">The element.</param>
+    /// <param name="millis">The milliseconds since the epoch, when the element is an ISO 8601 string.</param>
+    /// <returns><see langword="true"/> when the element is a string this could read.</returns>
+    internal static bool TryGetIso8601UnixMilliseconds(in JsonElement element, out long millis)
+    {
+        if (element.ValueKind == JsonValueKind.String)
+        {
+            bool hasOffset;
+            using (UnescapedUtf8JsonString utf8 = element.GetUtf8String())
+            {
+                ReadOnlySpan<byte> text = utf8.Span;
+                int time = text.IndexOf((byte)'T');
+                hasOffset = time >= 0 && text.Slice(time).IndexOfAny((byte)'Z', (byte)'+', (byte)'-') >= 0;
+            }
+
+            if (hasOffset)
+            {
+                if (element.TryGetDateTimeOffset(out DateTimeOffset withOffset))
+                {
+                    millis = withOffset.ToUnixTimeMilliseconds();
+                    return true;
+                }
+            }
+            else if (element.TryGetDateTime(out DateTime clockTime))
+            {
+                millis = new DateTimeOffset(clockTime.Ticks, TimeSpan.Zero).ToUnixTimeMilliseconds();
+                return true;
+            }
+        }
+
+        millis = 0;
+        return false;
+    }
+
+    /// <summary>
     /// Parse a string as strict ISO 8601 date/time or throw D3110 for invalid format.
     /// </summary>
     internal static Sequence ParseIso8601ToMillis(string str, JsonWorkspace workspace)
@@ -5934,9 +6077,9 @@ internal static class BuiltInFunctions
             if (pictureArg == null)
             {
                 // Fast path: parse directly from UTF-8 backing (zero-alloc for standard ISO 8601)
-                if (el.ValueKind == JsonValueKind.String && el.TryGetDateTimeOffset(out var dto))
+                if (TryGetIso8601UnixMilliseconds(el, out long millis))
                 {
-                    return Sequence.FromDouble(dto.ToUnixTimeMilliseconds(), env.Workspace);
+                    return Sequence.FromDouble(millis, env.Workspace);
                 }
 
                 if (el.ValueKind != JsonValueKind.String)

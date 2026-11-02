@@ -301,7 +301,13 @@ public static partial class JsonElementHelpers
         // in the first instance. This differs from the System.Text.Json.JsonElement implementation, which supports duplicate
         // property names, if they are in order.
         // Note that this is because we *do not* support duplicate property names in our JSON Schema implementation.
-        element1ParentDocument.EnsurePropertyMap(element1ParentDocumentIndex);
+        // A property map is built only on an immutable document. A builder keeps a map it is given, and the map
+        // goes stale when rows are later inserted or removed before the object, so we do not build one behind the
+        // caller's back. Without a map, the lookup below scans the object's properties.
+        if (element1ParentDocument.IsImmutable)
+        {
+            element1ParentDocument.EnsurePropertyMap(element1ParentDocumentIndex);
+        }
 
         Span<byte> buffer = stackalloc byte[JsonConstants.StackallocByteThreshold];
 
