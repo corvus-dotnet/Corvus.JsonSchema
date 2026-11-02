@@ -8276,6 +8276,87 @@ public class JsonDocumentBuilderTests
         Assert.AreEqual(2, root.GetArrayLength());
     }
 
+    [TestMethod]
+    public void Remove_OfAnObjectWithItsPropertiesInAnotherOrder_LeavesLookupsRightAfterRowsShift()
+    {
+        // https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1044
+        // Comparing objects whose properties are in another order used to build a property map on the
+        // builder's element. The map held absolute row indices, so it went stale when rows before the
+        // element were removed, and a lookup missed once later rows reused the vacated space.
+        using var workspace = JsonWorkspace.Create();
+        using var builderDoc = JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, ShiftingRowsJson);
+
+        using var itemDoc = ParsedJsonDocument<JsonElement>.Parse("""{ "alphaProp": 5, "bravoProp": 6 }""");
+        Assert.IsTrue(ShiftingRowsItems(builderDoc).Remove(itemDoc.RootElement));
+
+        ShiftRowsAndReuseThem(builderDoc);
+
+        Assert.IsTrue(ShiftingRowsItems(builderDoc)[0].TryGetProperty("alphaProp", out JsonElement.Mutable value));
+        Assert.AreEqual("4", value.GetRawText());
+        Assert.IsTrue(ShiftingRowsItems(builderDoc)[0].TryGetProperty("bravoProp", out value));
+        Assert.AreEqual("3", value.GetRawText());
+    }
+
+    [TestMethod]
+    public void Replace_OfAnObjectWithItsPropertiesInAnotherOrder_LeavesLookupsRightAfterRowsShift()
+    {
+        // https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1044
+        using var workspace = JsonWorkspace.Create();
+        using var builderDoc = JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, ShiftingRowsJson);
+
+        using var itemDoc = ParsedJsonDocument<JsonElement>.Parse("""{ "alphaProp": 5, "bravoProp": 6 }""");
+        using var replacementDoc = ParsedJsonDocument<JsonElement>.Parse("7");
+        Assert.IsTrue(ShiftingRowsItems(builderDoc).Replace(itemDoc.RootElement, replacementDoc.RootElement));
+
+        ShiftRowsAndReuseThem(builderDoc);
+
+        Assert.IsTrue(ShiftingRowsItems(builderDoc)[0].TryGetProperty("alphaProp", out JsonElement.Mutable value));
+        Assert.AreEqual("4", value.GetRawText());
+    }
+
+    [TestMethod]
+    public void DeepEquals_OnABuilderElement_LeavesLookupsRightAfterRowsShift()
+    {
+        // https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1044
+        using var workspace = JsonWorkspace.Create();
+        using var builderDoc = JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, ShiftingRowsJson);
+
+        using var otherDoc = ParsedJsonDocument<JsonElement>.Parse("""{ "alphaProp": 4, "bravoProp": 3 }""");
+        Assert.IsTrue(JsonElementHelpers.DeepEquals(ShiftingRowsItems(builderDoc)[0], otherDoc.RootElement));
+
+        ShiftRowsAndReuseThem(builderDoc);
+
+        Assert.IsTrue(ShiftingRowsItems(builderDoc)[0].TryGetProperty("alphaProp", out JsonElement.Mutable value));
+        Assert.AreEqual("4", value.GetRawText());
+        Assert.IsTrue(JsonElementHelpers.DeepEquals(ShiftingRowsItems(builderDoc)[0], otherDoc.RootElement));
+    }
+
+    private const string ShiftingRowsJson = """
+        {
+            "padding": [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]],
+            "items": [
+                { "bravoProp": 3, "alphaProp": 4 },
+                { "alphaProp": 5, "bravoProp": 6 }
+            ]
+        }
+        """;
+
+    private static JsonElement.Mutable ShiftingRowsItems(JsonDocumentBuilder<JsonElement.Mutable> builderDoc)
+    {
+        Assert.IsTrue(builderDoc.RootElement.TryGetProperty("items", out JsonElement.Mutable items));
+        return items;
+    }
+
+    private static void ShiftRowsAndReuseThem(JsonDocumentBuilder<JsonElement.Mutable> builderDoc)
+    {
+        // Removing rows before "items" moves its objects up; appending reuses the rows they vacated.
+        Assert.IsTrue(builderDoc.RootElement.TryGetProperty("padding", out JsonElement.Mutable padding));
+        padding.RemoveAt(0);
+
+        using var tail = ParsedJsonDocument<JsonElement>.Parse("[11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]");
+        builderDoc.RootElement.SetProperty("tail", tail.RootElement);
+    }
+
     #endregion
 
     #region Replace Tests
