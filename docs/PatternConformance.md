@@ -96,5 +96,5 @@ answers. Each is a decision recorded here, with an issue where there is work to 
 
 - **No limit of a match.** A `RegExp` match cannot be interrupted, so a pattern that backtracks without end, on a
   text made for it, does not return. The answers are those of the host engine, which are V8's on Node and in Chrome.
-  A port of the ECMA-262 engine, which would give a limit and the same answers on every host, is to follow
-  ([#1026](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1026)).
+  This is a decision: `pattern` and `patternProperties` stay with the host's `RegExp`, and a port of the ECMA-262
+  engine to TypeScript is not planned ([#1026](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1026)).
