@@ -174,6 +174,7 @@
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)EcmaRegexUnicode.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)EcmaRegexUnicodeData.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)EcmaRegexTranslator.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
+    <Compile Include="$(CorvusTextJsonCodeGenerationPath)EcmaRegexLinearity.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)RuntimeProgramGenerator.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)SchemaProgramCompiler.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
   </ItemGroup>

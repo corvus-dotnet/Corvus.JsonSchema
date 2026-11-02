@@ -12,9 +12,9 @@
 > - `JsonSchemaEvaluator.ToDotNetPattern`.
 >
 > What this page says of validity, limits, costs and the limit of a match is about those uses. The runtime evaluator
-> does not match with a translation. It reads one analysis of the translator's, whether a pattern read without the
-> `u` flag can tell a character beyond the Basic Multilingual Plane from two (`CodeUnitsCanChangeTheAnswer`), to
-> choose between a matcher of its own and the library.
+> does not match with a translation. It reads one analysis of the translator's parse tree, whether a pattern read
+> without the `u` flag can tell a character beyond the Basic Multilingual Plane from two
+> (`EcmaRegexCodeUnits.CanChangeTheAnswer`), to choose between a matcher of its own and the library.
 
 Translation of ECMA-262 regular expressions to .NET regular expression patterns with the same meaning, and the
 check that a pattern is a valid ECMA-262 regular expression at all.

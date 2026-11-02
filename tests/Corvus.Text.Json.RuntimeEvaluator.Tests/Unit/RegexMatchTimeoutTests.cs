@@ -163,7 +163,7 @@ public class RegexMatchTimeoutTests
     }
 
     /// <summary>
-    /// A pattern proved to match in time proportional to the text (EcmaRegexTranslator.IsLinear) has no timeout: a
+    /// A pattern proved to match in time proportional to the text (EcmaRegexLinearity.IsLinear) has no timeout: a
     /// match of a text of four million characters runs for longer than a timeout of a millisecond in the interpreted
     /// engine, and returns its answer. (The compiled engine can finish this one within the millisecond, so only the
     /// interpreted case would throw if the expression had the timeout.) The pattern is not one the evaluator matches

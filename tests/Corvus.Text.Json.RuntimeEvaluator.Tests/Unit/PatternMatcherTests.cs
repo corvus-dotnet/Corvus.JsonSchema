@@ -438,7 +438,7 @@ public class PatternMatcherTests
     /// A pattern valid only without the u flag (here by the identity escape <c>\&amp;</c>) is matched by UTF-16 code
     /// unit. It needs the regular expression only where that can change an answer: a dot or negated class that is not
     /// the body of a <c>*</c> or <c>+</c>, a set with some surrogates and not others, or a surrogate written in the
-    /// pattern (see EcmaRegexTranslator.CodeUnitsCanChangeTheAnswer).
+    /// pattern (see EcmaRegexCodeUnits.CanChangeTheAnswer).
     /// </summary>
     /// <param name="pattern">The pattern.</param>
     /// <param name="usesRegex">Whether it needs the regular expression.</param>
@@ -460,7 +460,7 @@ public class PatternMatcherTests
     [DataRow(@"^\&[\0-\uffff]+$", true)]
     public void APatternValidOnlyWithoutTheUFlagNeedsARegularExpressionOnlyWhereCodeUnitsMatter(string pattern, bool usesRegex)
     {
-        Assert.AreEqual(usesRegex, Corvus.Text.Json.CodeGeneration.EcmaRegexTranslator.CodeUnitsCanChangeTheAnswer(pattern), pattern);
+        Assert.AreEqual(usesRegex, EcmaRegexCodeUnits.CanChangeTheAnswer(pattern), pattern);
         if (!usesRegex)
         {
             // Whether a shape takes it is the matcher's business; the code units no longer force the expression.
