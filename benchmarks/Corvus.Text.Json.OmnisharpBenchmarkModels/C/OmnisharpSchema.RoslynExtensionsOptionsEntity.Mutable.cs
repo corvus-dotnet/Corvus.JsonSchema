@@ -497,6 +497,51 @@ public readonly partial struct OmnisharpSchema
                 return result;
             }
 
+            /// <summary>
+            /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+            /// as its value, and then does the same inside each property whose own type has properties.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// This changes the data. Reading an absent property already gives its default without it; this method writes
+            /// the defaults into the document as additional properties, so that they are there when the document is sent
+            /// to a system that does not apply the schema's defaults itself.
+            /// </para>
+            /// <para>
+            /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+            /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+            /// as it is.
+            /// </para>
+            /// </remarks>
+            public void ApplyDefaults()
+            {
+                CheckValidInstance();
+                if (ValueKind != JsonValueKind.Object)
+                {
+                    return;
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DocumentAnalysisTimeoutMsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetDocumentAnalysisTimeoutMs(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.DocumentAnalysisTimeoutMsEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnableAnalyzersSupportUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetEnableAnalyzersSupport(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.IfSetToFalseOnlyRefactoringsAreAvailable.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnableDecompilationSupportUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetEnableDecompilationSupport(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.EnableDecompilationSupportEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LocationPathsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetLocationPaths(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.LocationPathsArray.DefaultInstance);
+                }
+            }
+
             /// <inheritdoc/>
             public void WriteTo(Utf8JsonWriter writer)
             {

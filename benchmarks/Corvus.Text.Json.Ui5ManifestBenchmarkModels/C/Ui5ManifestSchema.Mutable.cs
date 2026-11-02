@@ -3387,6 +3387,187 @@ public readonly partial struct Ui5ManifestSchema
             return result;
         }
 
+        /// <summary>
+        /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+        /// as its value, and then does the same inside each property whose own type has properties.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This changes the data. Reading an absent property already gives its default without it; this method writes
+        /// the defaults into the document as additional properties, so that they are there when the document is sent
+        /// to a system that does not apply the schema's defaults itself.
+        /// </para>
+        /// <para>
+        /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+        /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+        /// as it is.
+        /// </para>
+        /// </remarks>
+        public void ApplyDefaults()
+        {
+            CheckValidInstance();
+            if (ValueKind != JsonValueKind.Object)
+            {
+                return;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapApfUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.Mutable __corvusSapApf))
+            {
+                __corvusSapApf.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapAppUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.Mutable __corvusSapApp))
+            {
+                __corvusSapApp.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapArtifactUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapArtifactNamespace.Mutable __corvusSapArtifact))
+            {
+                __corvusSapArtifact.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapBpaTaskUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.Mutable __corvusSapBpaTask))
+            {
+                __corvusSapBpaTask.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapCardUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.Mutable __corvusSapCard))
+            {
+                __corvusSapCard.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapCloudUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudNamespace.Mutable __corvusSapCloud))
+            {
+                __corvusSapCloud.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapCopilotUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCopilotNamespace.Mutable __corvusSapCopilot))
+            {
+                __corvusSapCopilot.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapFioriUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.Mutable __corvusSapFiori))
+            {
+                __corvusSapFiori.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapFlpUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.Mutable __corvusSapFlp))
+            {
+                __corvusSapFlp.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapGuiUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapGuiNamespace.Mutable __corvusSapGui))
+            {
+                __corvusSapGui.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapInsightsUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.Mutable __corvusSapInsights))
+            {
+                __corvusSapInsights.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapIntegrationUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapIntegrationNamespace.Mutable __corvusSapIntegration))
+            {
+                __corvusSapIntegration.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapMobileUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMobileNamespace.Mutable __corvusSapMobile))
+            {
+                __corvusSapMobile.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapOvpUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.Mutable __corvusSapOvp))
+            {
+                __corvusSapOvp.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapPackageUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.Mutable __corvusSapPackage))
+            {
+                __corvusSapPackage.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapPlatformAbapUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformAbapNamespace.Mutable __corvusSapPlatformAbap))
+            {
+                __corvusSapPlatformAbap.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapPlatformCfUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformCfNamespace.Mutable __corvusSapPlatformCf))
+            {
+                __corvusSapPlatformCf.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapPlatformHcpUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.Mutable __corvusSapPlatformHcp))
+            {
+                __corvusSapPlatformHcp.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapPlatformMobilecardsUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformMobilecardsNamespace.Mutable __corvusSapPlatformMobilecards))
+            {
+                __corvusSapPlatformMobilecards.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapPlatformSfsfUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformSfsfNamespace.Mutable __corvusSapPlatformSfsf))
+            {
+                __corvusSapPlatformSfsf.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapUiUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.Mutable __corvusSapUi))
+            {
+                __corvusSapUi.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapUiGenericAppUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.Mutable __corvusSapUiGenericApp))
+            {
+                __corvusSapUiGenericApp.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapUi5Utf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.Mutable __corvusSapUi5))
+            {
+                __corvusSapUi5.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapUrlUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUrlNamespace.Mutable __corvusSapUrl))
+            {
+                __corvusSapUrl.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapWcfUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapWcfNamespace.Mutable __corvusSapWcf))
+            {
+                __corvusSapWcf.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapWdaUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapWdaNamespace.Mutable __corvusSapWda))
+            {
+                __corvusSapWda.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+        }
+
         /// <inheritdoc/>
         public void WriteTo(Utf8JsonWriter writer)
         {

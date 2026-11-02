@@ -1971,6 +1971,71 @@ public readonly partial struct Ui5ManifestSchema
                 _documentVersion = _parent.Version;
             }
 
+            /// <summary>
+            /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+            /// as its value, and then does the same inside each property whose own type has properties.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// This changes the data. Reading an absent property already gives its default without it; this method writes
+            /// the defaults into the document as additional properties, so that they are there when the document is sent
+            /// to a system that does not apply the schema's defaults itself.
+            /// </para>
+            /// <para>
+            /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+            /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+            /// as it is.
+            /// </para>
+            /// </remarks>
+            public void ApplyDefaults()
+            {
+                CheckValidInstance();
+                if (ValueKind != JsonValueKind.Object)
+                {
+                    return;
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.I18nUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetI18n(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.I18nEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OfflineUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetOffline(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.OfflineEntity.DefaultInstance);
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ApplicationVersionUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsMandatoryVersionOfTheApp.Mutable __corvusApplicationVersion))
+                {
+                    __corvusApplicationVersion.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CrossNavigationUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsCrossNavigationForInboundAndOutboundTargets.Mutable __corvusCrossNavigation))
+                {
+                    __corvusCrossNavigation.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DestinationUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsASystemAlias.Mutable __corvusDestination))
+                {
+                    __corvusDestination.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SourceTemplateUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsTheTemplateFromWhichTheAppWasGenerated.Mutable __corvusSourceTemplate))
+                {
+                    __corvusSourceTemplate.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsArrayOfKeywords.Mutable __corvusTags))
+                {
+                    __corvusTags.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+            }
+
             /// <inheritdoc/>
             public void WriteTo(Utf8JsonWriter writer)
             {

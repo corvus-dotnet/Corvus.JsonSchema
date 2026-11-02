@@ -1121,6 +1121,77 @@ public readonly partial struct KrakendSchema
                 return result;
             }
 
+            /// <summary>
+            /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+            /// as its value, and then does the same inside each property whose own type has properties.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// This changes the data. Reading an absent property already gives its default without it; this method writes
+            /// the defaults into the document as additional properties, so that they are there when the document is sent
+            /// to a system that does not apply the schema's defaults itself.
+            /// </para>
+            /// <para>
+            /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+            /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+            /// as it is.
+            /// </para>
+            /// </remarks>
+            public void ApplyDefaults()
+            {
+                CheckValidInstance();
+                if (ValueKind != JsonValueKind.Object)
+                {
+                    return;
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DisableQueryParamsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetDisableQueryParams(Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.DisableQueryParameters.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OutputDurationAsStringUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetOutputDurationAsString(Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputDurationTypesAsString.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OutputEnumAsStringUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetOutputEnumAsString(Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputEnumTypesAsString.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OutputRemoveUnsetValuesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetOutputRemoveUnsetValues(Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputRemovesUnsetValues.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OutputTimestampAsStringUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetOutputTimestampAsString(Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputTimestampsTypesAsString.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RequestNamingConventionValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetRequestNamingConventionValue(Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.RequestNamingConvention.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ResponseNamingConventionValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetResponseNamingConventionValue(Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.ResponseNamingConvention.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UseRequestBodyUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetUseRequestBody(Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.UseBody.DefaultInstance);
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ClientTlsValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Mutable __corvusClientTlsValue))
+                {
+                    __corvusClientTlsValue.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+            }
+
             /// <inheritdoc/>
             public void WriteTo(Utf8JsonWriter writer)
             {

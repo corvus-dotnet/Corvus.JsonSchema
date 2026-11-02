@@ -2857,6 +2857,91 @@ public readonly partial struct CspellSchema
                 return result;
             }
 
+            /// <summary>
+            /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+            /// as its value, and then does the same inside each property whose own type has properties.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// This changes the data. Reading an absent property already gives its default without it; this method writes
+            /// the defaults into the document as additional properties, so that they are there when the document is sent
+            /// to a system that does not apply the schema's defaults itself.
+            /// </para>
+            /// <para>
+            /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+            /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+            /// as it is.
+            /// </para>
+            /// </remarks>
+            public void ApplyDefaults()
+            {
+                CheckValidInstance();
+                if (ValueKind != JsonValueKind.Object)
+                {
+                    return;
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AllowCompoundWordsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetAllowCompoundWords(Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettings.AllowCompoundWordsEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CaseSensitiveUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetCaseSensitive(Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettings.CaseSensitiveEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnabledUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetEnabled(Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettings.IsTheSpellCheckerEnabled.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LoadDefaultConfigurationUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetLoadDefaultConfiguration(Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettings.LoadDefaultConfigurationEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxDuplicateProblemsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetMaxDuplicateProblems(Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettings.MaxDuplicateProblemsEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxNumberOfProblemsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetMaxNumberOfProblems(Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettings.TheMaximumNumberOfProblemsToReportInAFile.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MinWordLengthUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetMinWordLength(Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettings.MinWordLengthEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NumSuggestionsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNumSuggestions(Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettings.NumberOfSuggestionsToMake.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PnpFilesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetPnpFiles(Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettings.PnpFilesJsArray.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SuggestionNumChangesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSuggestionNumChanges(Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettings.SuggestionNumChangesEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SuggestionsTimeoutUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSuggestionsTimeout(Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettings.SuggestionsTimeoutEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UsePnPUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetUsePnP(Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettings.UsePnPEntity.DefaultInstance);
+                }
+            }
+
             /// <inheritdoc/>
             public void WriteTo(Utf8JsonWriter writer)
             {

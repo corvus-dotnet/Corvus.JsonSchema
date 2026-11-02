@@ -1874,6 +1874,76 @@ public readonly partial struct Ui5ManifestSchema
                     return result;
                 }
 
+                /// <summary>
+                /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+                /// as its value, and then does the same inside each property whose own type has properties.
+                /// </summary>
+                /// <remarks>
+                /// <para>
+                /// This changes the data. Reading an absent property already gives its default without it; this method writes
+                /// the defaults into the document as additional properties, so that they are there when the document is sent
+                /// to a system that does not apply the schema's defaults itself.
+                /// </para>
+                /// <para>
+                /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+                /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+                /// as it is.
+                /// </para>
+                /// </remarks>
+                public void ApplyDefaults()
+                {
+                    CheckValidInstance();
+                    if (ValueKind != JsonValueKind.Object)
+                    {
+                        return;
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FlexExtensionPointEnabledUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetFlexExtensionPointEnabled(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.FlexExtensionPointEnabledEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HandleValidationUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetHandleValidation(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.HandleValidationEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IsCloudDevAdaptationUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetIsCloudDevAdaptation(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.IsCloudDevAdaptationEntity.DefaultInstance);
+                    }
+
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ContentDensitiesUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredCompactAndCozy.Mutable __corvusContentDensities))
+                    {
+                        __corvusContentDensities.ApplyDefaults();
+                        _documentVersion = _parent.Version;
+                    }
+
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DependenciesUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredMinUi5Version.Mutable __corvusDependencies))
+                    {
+                        __corvusDependencies.ApplyDefaults();
+                        _documentVersion = _parent.Version;
+                    }
+
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExtendsUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheExtensionOfAnAdditionalComponent.Mutable __corvusExtends))
+                    {
+                        __corvusExtends.ApplyDefaults();
+                        _documentVersion = _parent.Version;
+                    }
+
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LibraryUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsUi5LibrarySpecificProperties.Mutable __corvusLibrary))
+                    {
+                        __corvusLibrary.ApplyDefaults();
+                        _documentVersion = _parent.Version;
+                    }
+
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ResourcesUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Resource.Mutable __corvusResources))
+                    {
+                        __corvusResources.ApplyDefaults();
+                        _documentVersion = _parent.Version;
+                    }
+                }
+
                 /// <inheritdoc/>
                 public void WriteTo(Utf8JsonWriter writer)
                 {

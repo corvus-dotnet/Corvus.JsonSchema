@@ -1310,6 +1310,88 @@ public readonly partial struct StaleSchema
         }
 
         /// <summary>
+        /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+        /// as its value, and then does the same inside each property whose own type has properties.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This changes the data. Reading an absent property already gives its default without it; this method writes
+        /// the defaults into the document as additional properties, so that they are there when the document is sent
+        /// to a system that does not apply the schema's defaults itself.
+        /// </para>
+        /// <para>
+        /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+        /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+        /// as it is.
+        /// </para>
+        /// </remarks>
+        public void ApplyDefaults()
+        {
+            CheckValidInstance();
+            if (ValueKind != JsonValueKind.Object)
+            {
+                return;
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DaysUntilCloseUtf8, out IJsonDocument? _, out int _))
+            {
+                SetDaysUntilClose(Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilClose.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DaysUntilStaleUtf8, out IJsonDocument? _, out int _))
+            {
+                SetDaysUntilStale(Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilStale.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExemptAssigneesUtf8, out IJsonDocument? _, out int _))
+            {
+                SetExemptAssignees(Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptAssignees.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExemptLabelsUtf8, out IJsonDocument? _, out int _))
+            {
+                SetExemptLabels(Corvus.StaleBenchmark.Current.StaleSchema.Configuration.JsonStringArray.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExemptProjectsUtf8, out IJsonDocument? _, out int _))
+            {
+                SetExemptProjects(Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptProjects.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LimitPerRunUtf8, out IJsonDocument? _, out int _))
+            {
+                SetLimitPerRun(Corvus.StaleBenchmark.Current.StaleSchema.Configuration.LimitPerRun.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MarkCommentUtf8, out IJsonDocument? _, out int _))
+            {
+                SetMarkComment(Corvus.StaleBenchmark.Current.StaleSchema.Configuration.MarkComment.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OnlyLabelsUtf8, out IJsonDocument? _, out int _))
+            {
+                SetOnlyLabels(Corvus.StaleBenchmark.Current.StaleSchema.Configuration.OnlyLJsonSArray.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StaleLabelUtf8, out IJsonDocument? _, out int _))
+            {
+                SetStaleLabel(Corvus.StaleBenchmark.Current.StaleSchema.Configuration.StaleLabel.DefaultInstance);
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IssuesUtf8, out Corvus.StaleBenchmark.Current.StaleSchema.Configuration.Mutable __corvusIssues))
+            {
+                __corvusIssues.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PullsUtf8, out Corvus.StaleBenchmark.Current.StaleSchema.Configuration.Mutable __corvusPulls))
+            {
+                __corvusPulls.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+        }
+
+        /// <summary>
         /// Apply a composed value.
         /// </summary>
         /// <remarks>

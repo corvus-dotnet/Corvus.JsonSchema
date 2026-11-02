@@ -3288,6 +3288,205 @@ public readonly partial struct KrakendSchema
                 return result;
             }
 
+            /// <summary>
+            /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+            /// as its value, and then does the same inside each property whose own type has properties.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// This changes the data. Reading an absent property already gives its default without it; this method writes
+            /// the defaults into the document as additional properties, so that they are there when the document is sent
+            /// to a system that does not apply the schema's defaults itself.
+            /// </para>
+            /// <para>
+            /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+            /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+            /// as it is.
+            /// </para>
+            /// </remarks>
+            public void ApplyDefaults()
+            {
+                CheckValidInstance();
+                if (ValueKind != JsonValueKind.Object)
+                {
+                    return;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AuthClientCredentialsUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.ClientCredentials.Mutable __corvusAuthClientCredentials))
+                {
+                    __corvusAuthClientCredentials.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AuthGcpUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Gcp.Mutable __corvusAuthGcp))
+                {
+                    __corvusAuthGcp.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AuthNtlmUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Ntlm.Mutable __corvusAuthNtlm))
+                {
+                    __corvusAuthNtlm.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BackendAmqpConsumerUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Mutable __corvusBackendAmqpConsumer))
+                {
+                    __corvusBackendAmqpConsumer.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BackendAmqpProducerUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Mutable __corvusBackendAmqpProducer))
+                {
+                    __corvusBackendAmqpProducer.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BackendGraphqlUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Graphql.Mutable __corvusBackendGraphql))
+                {
+                    __corvusBackendGraphql.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BackendGrpcUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.Mutable __corvusBackendGrpc))
+                {
+                    __corvusBackendGrpc.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BackendHttpUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.BackendExtraConfig.Backend1httpEntity.Mutable __corvusBackendHttp))
+                {
+                    __corvusBackendHttp.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BackendHttpClientUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.HttpClient.Mutable __corvusBackendHttpClient))
+                {
+                    __corvusBackendHttpClient.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BackendLambdaUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Lambda.Mutable __corvusBackendLambda))
+                {
+                    __corvusBackendLambda.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BackendPubsubPublisherUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Publisher.Mutable __corvusBackendPubsubPublisher))
+                {
+                    __corvusBackendPubsubPublisher.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BackendPubsubSubscriberUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Subscriber.Mutable __corvusBackendPubsubSubscriber))
+                {
+                    __corvusBackendPubsubSubscriber.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BackendSoapUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Soap.Mutable __corvusBackendSoap))
+                {
+                    __corvusBackendSoap.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BackendStaticFilesystemUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.StaticFilesystem.Mutable __corvusBackendStaticFilesystem))
+                {
+                    __corvusBackendStaticFilesystem.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ModifierBodyGeneratorUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.BodyGenerator.Mutable __corvusModifierBodyGenerator))
+                {
+                    __corvusModifierBodyGenerator.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ModifierJmespathUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Jmespath.Mutable __corvusModifierJmespath))
+                {
+                    __corvusModifierJmespath.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ModifierLuaBackendUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.Mutable __corvusModifierLuaBackend))
+                {
+                    __corvusModifierLuaBackend.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ModifierMartianUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.Mutable __corvusModifierMartian))
+                {
+                    __corvusModifierMartian.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ModifierRequestBodyGeneratorUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.BodyGenerator.Mutable __corvusModifierRequestBodyGenerator))
+                {
+                    __corvusModifierRequestBodyGenerator.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ModifierResponseBodyGeneratorUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.BodyGenerator.Mutable __corvusModifierResponseBodyGenerator))
+                {
+                    __corvusModifierResponseBodyGenerator.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PluginHttpClientValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.PluginHttpClient.Mutable __corvusPluginHttpClientValue))
+                {
+                    __corvusPluginHttpClientValue.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PluginReqRespModifierUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.ReqRespModifier.Mutable __corvusPluginReqRespModifier))
+                {
+                    __corvusPluginReqRespModifier.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ProxyValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Proxy.Mutable __corvusProxyValue))
+                {
+                    __corvusProxyValue.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.QosCircuitBreakerUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.CircuitBreaker.Mutable __corvusQosCircuitBreaker))
+                {
+                    __corvusQosCircuitBreaker.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.QosHttpCacheUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.BackendExtraConfig.BackendCache.Mutable __corvusQosHttpCache))
+                {
+                    __corvusQosHttpCache.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.QosRatelimitProxyUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.RatelimitProxy.Mutable __corvusQosRatelimitProxy))
+                {
+                    __corvusQosRatelimitProxy.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SecurityPoliciesUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.Mutable __corvusSecurityPolicies))
+                {
+                    __corvusSecurityPolicies.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TelemetryOpentelemetryUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.OpentelemetryBackend.Mutable __corvusTelemetryOpentelemetry))
+                {
+                    __corvusTelemetryOpentelemetry.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WorkflowValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.Mutable __corvusWorkflowValue))
+                {
+                    __corvusWorkflowValue.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+            }
+
             /// <inheritdoc/>
             public void WriteTo(Utf8JsonWriter writer)
             {

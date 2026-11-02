@@ -651,6 +651,56 @@ public readonly partial struct Ui5Schema
                                 return result;
                             }
 
+                            /// <summary>
+                            /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+                            /// as its value, and then does the same inside each property whose own type has properties.
+                            /// </summary>
+                            /// <remarks>
+                            /// <para>
+                            /// This changes the data. Reading an absent property already gives its default without it; this method writes
+                            /// the defaults into the document as additional properties, so that they are there when the document is sent
+                            /// to a system that does not apply the schema's defaults itself.
+                            /// </para>
+                            /// <para>
+                            /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+                            /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+                            /// as it is.
+                            /// </para>
+                            /// </remarks>
+                            public void ApplyDefaults()
+                            {
+                                CheckValidInstance();
+                                if (ValueKind != JsonValueKind.Object)
+                                {
+                                    return;
+                                }
+
+                                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DeclareRawModulesUtf8, out IJsonDocument? _, out int _))
+                                {
+                                    SetDeclareRawModules(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.RequiredFiltersAndModeArray.RequiredFiltersAndMode.DeclareRawModulesEntity.DefaultInstance);
+                                }
+
+                                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RendererUtf8, out IJsonDocument? _, out int _))
+                                {
+                                    SetRenderer(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.RequiredFiltersAndModeArray.RequiredFiltersAndMode.RendererEntity.DefaultInstance);
+                                }
+
+                                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ResolveUtf8, out IJsonDocument? _, out int _))
+                                {
+                                    SetResolve(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.RequiredFiltersAndModeArray.RequiredFiltersAndMode.ResolveEntity.DefaultInstance);
+                                }
+
+                                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ResolveConditionalUtf8, out IJsonDocument? _, out int _))
+                                {
+                                    SetResolveConditional(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.RequiredFiltersAndModeArray.RequiredFiltersAndMode.ResolveConditionalEntity.DefaultInstance);
+                                }
+
+                                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SortUtf8, out IJsonDocument? _, out int _))
+                                {
+                                    SetSort(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.RequiredFiltersAndModeArray.RequiredFiltersAndMode.SortEntity.DefaultInstance);
+                                }
+                            }
+
                             /// <inheritdoc/>
                             public void WriteTo(Utf8JsonWriter writer)
                             {

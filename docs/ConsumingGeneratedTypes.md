@@ -94,6 +94,28 @@ If a property declares a non-null `default` in its schema, the generated getter 
 property is absent. So express a server-assigned or optional-with-a-default value in the schema rather than
 hand-writing a null guard at every call site; the generated type carries the default for you.
 
+The getter does not change the document: an absent property stays absent, and a system that reads the JSON
+without the schema does not see the default.
+
+### Writing the defaults into the document: `ApplyDefaults()`
+
+When the JSON goes to a system that does not apply the schema's defaults itself, call `ApplyDefaults()` on the
+mutable element. It **adds additional properties to the document**: each property that is absent and has a
+`default` in the schema is added, with the schema's default as its value. It then does the same inside each
+property whose type has properties of its own, including an object it has just added from a default.
+
+```csharp
+using JsonDocumentBuilder<Order.Mutable> builder = order.CreateBuilder(workspace);
+builder.RootElement.ApplyDefaults();
+
+// The document now holds the defaulted properties, ready to send upstream.
+string json = builder.RootElement.ToString();
+```
+
+A property that is present keeps its value, and a property with no `default` is not added. The items of arrays
+are not visited, and the result is not validated: a default that does not satisfy its schema is written as it
+is. Calling it again changes nothing.
+
 ## Building a value: convert and construct, never compose-then-parse
 
 Do not build a body as a JSON string and `ParseValue` it (an interim string, a parse, and a re-validation).

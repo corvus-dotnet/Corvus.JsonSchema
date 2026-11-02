@@ -1014,6 +1014,76 @@ public readonly partial struct KrakendSchema
                 return result;
             }
 
+            /// <summary>
+            /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+            /// as its value, and then does the same inside each property whose own type has properties.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// This changes the data. Reading an absent property already gives its default without it; this method writes
+            /// the defaults into the document as additional properties, so that they are there when the document is sent
+            /// to a system that does not apply the schema's defaults itself.
+            /// </para>
+            /// <para>
+            /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+            /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+            /// as it is.
+            /// </para>
+            /// </remarks>
+            public void ApplyDefaults()
+            {
+                CheckValidInstance();
+                if (ValueKind != JsonValueKind.Object)
+                {
+                    return;
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AllowCredentialsValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetAllowCredentialsValue(Corvus.KrakendBenchmark.Current.KrakendSchema.Cors.AllowCredentials.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AllowHeadersUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetAllowHeaders(Corvus.KrakendBenchmark.Current.KrakendSchema.Cors.AllowedHeaders.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AllowMethodsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetAllowMethods(Corvus.KrakendBenchmark.Current.KrakendSchema.Cors.AllowMethodsEntityArray.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AllowOriginsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetAllowOrigins(Corvus.KrakendBenchmark.Current.KrakendSchema.Cors.AllowedOrigins.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AllowPrivateNetworkValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetAllowPrivateNetworkValue(Corvus.KrakendBenchmark.Current.KrakendSchema.Cors.AllowPrivateNetwork.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DebugValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetDebugValue(Corvus.KrakendBenchmark.Current.KrakendSchema.Cors.DevelopmentFlag.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExposeHeadersValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetExposeHeadersValue(Corvus.KrakendBenchmark.Current.KrakendSchema.Cors.ExposeHeaders.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OptionsPassthroughValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetOptionsPassthroughValue(Corvus.KrakendBenchmark.Current.KrakendSchema.Cors.OptionsPassthrough.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OptionsSuccessStatusUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetOptionsSuccessStatus(Corvus.KrakendBenchmark.Current.KrakendSchema.Cors.SuccessStatusCodes.DefaultInstance);
+                }
+            }
+
             /// <inheritdoc/>
             public void WriteTo(Utf8JsonWriter writer)
             {

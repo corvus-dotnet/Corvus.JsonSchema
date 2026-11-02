@@ -7660,6 +7660,366 @@ public readonly partial struct JsconfigSchema
                     return result;
                 }
 
+                /// <summary>
+                /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+                /// as its value, and then does the same inside each property whose own type has properties.
+                /// </summary>
+                /// <remarks>
+                /// <para>
+                /// This changes the data. Reading an absent property already gives its default without it; this method writes
+                /// the defaults into the document as additional properties, so that they are there when the document is sent
+                /// to a system that does not apply the schema's defaults itself.
+                /// </para>
+                /// <para>
+                /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+                /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+                /// as it is.
+                /// </para>
+                /// </remarks>
+                public void ApplyDefaults()
+                {
+                    CheckValidInstance();
+                    if (ValueKind != JsonValueKind.Object)
+                    {
+                        return;
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AllowJsUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetAllowJs(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowJsEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AllowUmdGlobalAccessUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetAllowUmdGlobalAccess(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowAccessingUmdGlobalsFromModules.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CheckJsUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetCheckJs(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CompositeUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetComposite(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CompositeEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DeclarationUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetDeclaration(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DeclarationEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DeclarationMapUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetDeclarationMap(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CreateSourcemapsForDTsFiles.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DisableSizeLimitUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetDisableSizeLimit(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableSizeLimitEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DownlevelIterationUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetDownlevelIteration(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DownlevelIterationEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EmitBomUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetEmitBom(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitBomEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EmitDeclarationOnlyUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetEmitDeclarationOnly(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.OnlyOutputDTsFilesAndNotJavaScriptFiles.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EsModuleInteropUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetEsModuleInterop(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EsModuleInteropEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExactOptionalPropertyTypesUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetExactOptionalPropertyTypes(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExtendedDiagnosticsUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetExtendedDiagnostics(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExtendedDiagnosticsEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ForceConsistentCasingInFileNamesUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetForceConsistentCasingInFileNames(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnsureThatCasingIsCorrectInImports.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.GenerateCpuProfileUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetGenerateCpuProfile(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitAV8CpuProfileOfTheCompilerRunForDebugging.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ImportHelpersUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetImportHelpers(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ImportHelpersEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ImportsNotUsedAsValuesUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetImportsNotUsedAsValues(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ImportsNotUsedAsValuesEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.InlineSourceMapUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetInlineSourceMap(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.IncludeSourcemapFilesInsideTheEmittedJavaScript.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.InlineSourcesUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetInlineSources(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.InlineSourcesEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IsolatedModulesUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetIsolatedModules(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.IsolatedModulesEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.JsxFactoryUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetJsxFactory(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.JsxFragmentFactoryUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetJsxFragmentFactory(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.JsxImportSourceUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetJsxImportSource(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxImportSourceEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeyofStringsOnlyUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetKeyofStringsOnly(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.KeyofStringsOnlyEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ListEmittedFilesUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetListEmittedFiles(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrintTheNamesOfEmittedFilesAfterACompilation.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ListFilesUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetListFiles(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrintAllOfTheFilesReadDuringTheCompilation.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxNodeModuleJsDepthUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetMaxNodeModuleJsDepth(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.MaxNodeModuleJsDepthEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ModuleResolutionUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetModuleResolution(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ModuleResolutionEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoEmitUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetNoEmit(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableEmittingFileFromACompilation.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoEmitHelpersUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetNoEmitHelpers(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoEmitHelpersEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoEmitOnErrorUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetNoEmitOnError(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoEmitOnErrorEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoErrorTruncationUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetNoErrorTruncation(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableTruncatingTypesInErrorMessages.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoFallthroughCasesInSwitchUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetNoFallthroughCasesInSwitch(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoFallthroughCasesInSwitchEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoImplicitOverrideUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetNoImplicitOverride(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitOverrideEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoImplicitReturnsUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetNoImplicitReturns(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitReturnsEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoImplicitUseStrictUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetNoImplicitUseStrict(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitUseStrictEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoLibUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetNoLib(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoLibEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoResolveUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetNoResolve(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoResolveEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoStrictGenericChecksUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetNoStrictGenericChecks(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoStrictGenericChecksEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoUnusedLocalsUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetNoUnusedLocals(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenALocalVariablesArenTRead.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoUnusedParametersUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetNoUnusedParameters(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RaiseAnErrorWhenAFunctionParameterIsnTRead.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PreserveConstEnumsUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetPreserveConstEnums(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErasingConstEnumDeclarationsInGeneratedCode.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PreserveSymlinksUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetPreserveSymlinks(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PreserveSymlinksEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PreserveValueImportsUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetPreserveValueImports(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PreserveValueImportsEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PrettyUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetPretty(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrettyEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ReactNamespaceUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetReactNamespace(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ReactNamespaceEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RemoveCommentsUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetRemoveComments(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableEmittingComments.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ResolveJsonModuleUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetResolveJsonModule(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableImportingJsonFiles.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ResolvePackageJsonExportsUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetResolvePackageJsonExports(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ResolvePackageJsonExportsEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ResolvePackageJsonImportsUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetResolvePackageJsonImports(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.UseThePackageJsonImportsFieldWhenResolvingImports.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SkipDefaultLibCheckUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetSkipDefaultLibCheck(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SkipDefaultLibCheckEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SkipLibCheckUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetSkipLibCheck(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SkipTypeCheckingAllDTsFiles.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SourceMapUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetSourceMap(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CreateSourceMapFilesForEmittedJavaScriptFiles.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StrictUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetStrict(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableAllStrictTypeCheckingOptions.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StrictBindCallApplyUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetStrictBindCallApply(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictBindCallApplyEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StrictFunctionTypesUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetStrictFunctionTypes(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictFunctionTypesEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StrictNullChecksUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetStrictNullChecks(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WhenTypeCheckingTakeIntoAccountNullAndUndefined.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StrictPropertyInitializationUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetStrictPropertyInitialization(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictPropertyInitializationEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SuppressExcessPropertyErrorsUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetSuppressExcessPropertyErrors(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SuppressImplicitAnyIndexErrorsUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetSuppressImplicitAnyIndexErrors(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TargetUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetTarget(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TargetEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TraceResolutionUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetTraceResolution(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TraceResolutionEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TsBuildInfoFileUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetTsBuildInfoFile(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TsBuildInfoFileEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UseDefineForClassFieldsUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetUseDefineForClassFields(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitEcmaScriptStandardCompliantClassFields.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UseUnknownInCatchVariablesUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetUseUnknownInCatchVariables(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DefaultCatchClauseVariablesAsUnknownInsteadOfAny.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WatchDirectoryUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetWatchDirectory(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WatchDirectoryEntity.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WatchFileUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetWatchFile(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WatchFileEntity.DefaultInstance);
+                    }
+                }
+
                 /// <inheritdoc/>
                 public void WriteTo(Utf8JsonWriter writer)
                 {

@@ -955,6 +955,73 @@ public readonly partial struct StylecopSchema
                 return result;
             }
 
+            /// <summary>
+            /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+            /// as its value, and then does the same inside each property whose own type has properties.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// This changes the data. Reading an absent property already gives its default without it; this method writes
+            /// the defaults into the document as additional properties, so that they are there when the document is sent
+            /// to a system that does not apply the schema's defaults itself.
+            /// </para>
+            /// <para>
+            /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+            /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+            /// as it is.
+            /// </para>
+            /// </remarks>
+            public void ApplyDefaults()
+            {
+                CheckValidInstance();
+                if (ValueKind != JsonValueKind.Object)
+                {
+                    return;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DocumentationRulesUtf8, out Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.Mutable __corvusDocumentationRules))
+                {
+                    __corvusDocumentationRules.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IndentationUtf8, out Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.Mutable __corvusIndentation))
+                {
+                    __corvusIndentation.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LayoutRulesUtf8, out Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.Mutable __corvusLayoutRules))
+                {
+                    __corvusLayoutRules.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaintainabilityRulesUtf8, out Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.Mutable __corvusMaintainabilityRules))
+                {
+                    __corvusMaintainabilityRules.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NamingRulesUtf8, out Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.Mutable __corvusNamingRules))
+                {
+                    __corvusNamingRules.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OrderingRulesUtf8, out Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.Mutable __corvusOrderingRules))
+                {
+                    __corvusOrderingRules.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ReadabilityRulesUtf8, out Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForReadabilityRulesSa1100.Mutable __corvusReadabilityRules))
+                {
+                    __corvusReadabilityRules.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+            }
+
             /// <inheritdoc/>
             public void WriteTo(Utf8JsonWriter writer)
             {

@@ -823,8 +823,9 @@ main-docs:
       - {index: 2, language: csharp, lines: [45, 50], category: compilable, verified: false}
       - {index: 3, language: csharp, lines: [58, 65], category: compilable, verified: false}
       - {index: 4, language: csharp, lines: [84, 89], category: compilable, verified: false}
-      - {index: 5, language: csharp, lines: [102, 105], category: compilable, verified: false}
-      - {index: 6, language: csharp, lines: [127, 134], category: compilable, verified: false}
+      - {index: 5, language: csharp, lines: [107, 113], category: compilable, verified: false}
+      - {index: 6, language: csharp, lines: [124, 127], category: compilable, verified: false}
+      - {index: 7, language: csharp, lines: [149, 156], category: compilable, verified: false}
   - path: "docs/CrossPlatformDynamicCompilation.md"
     blocks:
       - {index: 0, language: , lines: [56, 59]}

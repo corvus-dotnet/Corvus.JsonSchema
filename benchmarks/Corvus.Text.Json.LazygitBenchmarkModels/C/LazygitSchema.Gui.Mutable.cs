@@ -2246,6 +2246,163 @@ public readonly partial struct LazygitSchema
                 return result;
             }
 
+            /// <summary>
+            /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+            /// as its value, and then does the same inside each property whose own type has properties.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// This changes the data. Reading an absent property already gives its default without it; this method writes
+            /// the defaults into the document as additional properties, so that they are there when the document is sent
+            /// to a system that does not apply the schema's defaults itself.
+            /// </para>
+            /// <para>
+            /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+            /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+            /// as it is.
+            /// </para>
+            /// </remarks>
+            public void ApplyDefaults()
+            {
+                CheckValidInstance();
+                if (ValueKind != JsonValueKind.Object)
+                {
+                    return;
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AnimateExplosionValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetAnimateExplosionValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.AnimateExplosion.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BorderValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetBorderValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Border.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CommandLogSizeValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetCommandLogSizeValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.CommandLogSize.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExpandFocusedSidePanelValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetExpandFocusedSidePanelValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ExpandFocusedSidePanel.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LanguageValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetLanguageValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Language.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MainPanelSplitModeValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetMainPanelSplitModeValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.MainPanelSplitMode.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MouseEventsValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetMouseEventsValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.MouseEvents.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NerdFontsVersionValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetNerdFontsVersionValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.NerdFontsVersion.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ScrollHeightValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetScrollHeightValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ScrollHeight.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ScrollPastBottomValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetScrollPastBottomValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ScrollPastBottom.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ShortTimeFormatValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetShortTimeFormatValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShortTimeFormat.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ShowBottomLineValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetShowBottomLineValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowBottomLine.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ShowBranchCommitHashValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetShowBranchCommitHashValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowBranchCommitHash.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ShowCommandLogValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetShowCommandLogValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowCommandLog.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ShowFileTreeValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetShowFileTreeValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowFileTree.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ShowListFooterValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetShowListFooterValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowListFooter.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ShowRandomTipValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetShowRandomTipValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowRandomTip.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SidePanelWidthValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSidePanelWidthValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SidePanelWidth.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SkipDiscardChangeWarningValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSkipDiscardChangeWarningValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SkipDiscardChangeWarning.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SkipRewordInEditorWarningValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSkipRewordInEditorWarningValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SkipRewordInEditorWarning.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SkipStashWarningValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSkipStashWarningValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SkipStashWarning.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SplitDiffValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetSplitDiffValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SplitDiff.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TimeFormatValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetTimeFormatValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.TimeFormat.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WindowSizeValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetWindowSizeValue(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.WindowSize.DefaultInstance);
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CommitLengthValueUtf8, out Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.CommitLength.Mutable __corvusCommitLengthValue))
+                {
+                    __corvusCommitLengthValue.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ThemeValueUtf8, out Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.Mutable __corvusThemeValue))
+                {
+                    __corvusThemeValue.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+            }
+
             /// <inheritdoc/>
             public void WriteTo(Utf8JsonWriter writer)
             {

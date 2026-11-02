@@ -4901,6 +4901,361 @@ public readonly partial struct JshintrcSchema
             return result;
         }
 
+        /// <summary>
+        /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+        /// as its value, and then does the same inside each property whose own type has properties.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This changes the data. Reading an absent property already gives its default without it; this method writes
+        /// the defaults into the document as additional properties, so that they are there when the document is sent
+        /// to a system that does not apply the schema's defaults itself.
+        /// </para>
+        /// <para>
+        /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+        /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+        /// as it is.
+        /// </para>
+        /// </remarks>
+        public void ApplyDefaults()
+        {
+            CheckValidInstance();
+            if (ValueKind != JsonValueKind.Object)
+            {
+                return;
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AsiUtf8, out IJsonDocument? _, out int _))
+            {
+                SetAsi(Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutMissingSemicolons.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BitwiseUtf8, out IJsonDocument? _, out int _))
+            {
+                SetBitwise(Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitTheUseOfBitwiseOperatorsEtc.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BossUtf8, out IJsonDocument? _, out int _))
+            {
+                SetBoss(Corvus.JshintrcBenchmark.Current.JshintrcSchema.BossEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BrowserUtf8, out IJsonDocument? _, out int _))
+            {
+                SetBrowser(Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWebBrowserWindowDocumentEtc.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BrowserifyUtf8, out IJsonDocument? _, out int _))
+            {
+                SetBrowserify(Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentBrowserify.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CouchUtf8, out IJsonDocument? _, out int _))
+            {
+                SetCouch(Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentCouchDb.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CurlyUtf8, out IJsonDocument? _, out int _))
+            {
+                SetCurly(Corvus.JshintrcBenchmark.Current.JshintrcSchema.CurlyEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DebugValueUtf8, out IJsonDocument? _, out int _))
+            {
+                SetDebugValue(Corvus.JshintrcBenchmark.Current.JshintrcSchema.DebugEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DevelUtf8, out IJsonDocument? _, out int _))
+            {
+                SetDevel(Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDevelopmentDebuggingAlertConfirmEtc.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DojoUtf8, out IJsonDocument? _, out int _))
+            {
+                SetDojo(Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDojoToolkit.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ElisionUtf8, out IJsonDocument? _, out int _))
+            {
+                SetElision(Corvus.JshintrcBenchmark.Current.JshintrcSchema.ElisionEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EqeqeqUtf8, out IJsonDocument? _, out int _))
+            {
+                SetEqeqeq(Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAndInFavorOfAnd.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EqnullUtf8, out IJsonDocument? _, out int _))
+            {
+                SetEqnull(Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutNullComparisons.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EsversionUtf8, out IJsonDocument? _, out int _))
+            {
+                SetEsversion(Corvus.JshintrcBenchmark.Current.JshintrcSchema.TheEcmaScriptVersionToWhichTheCodeMustAdhere.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EvilUtf8, out IJsonDocument? _, out int _))
+            {
+                SetEvil(Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheUseOfEval.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExprUtf8, out IJsonDocument? _, out int _))
+            {
+                SetExpr(Corvus.JshintrcBenchmark.Current.JshintrcSchema.ExprEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ForinUtf8, out IJsonDocument? _, out int _))
+            {
+                SetForin(Corvus.JshintrcBenchmark.Current.JshintrcSchema.ForinEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FreezeValueUtf8, out IJsonDocument? _, out int _))
+            {
+                SetFreezeValue(Corvus.JshintrcBenchmark.Current.JshintrcSchema.FreezeEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FuncscopeUtf8, out IJsonDocument? _, out int _))
+            {
+                SetFuncscope(Corvus.JshintrcBenchmark.Current.JshintrcSchema.FuncscopeEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FuturehostileUtf8, out IJsonDocument? _, out int _))
+            {
+                SetFuturehostile(Corvus.JshintrcBenchmark.Current.JshintrcSchema.FuturehostileEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IteratorUtf8, out IJsonDocument? _, out int _))
+            {
+                SetIterator(Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheIteratorProperty.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.JasmineUtf8, out IJsonDocument? _, out int _))
+            {
+                SetJasmine(Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentJasmineUnitTestingFramework.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.JqueryUtf8, out IJsonDocument? _, out int _))
+            {
+                SetJquery(Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentJQuery.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LastsemicUtf8, out IJsonDocument? _, out int _))
+            {
+                SetLastsemic(Corvus.JshintrcBenchmark.Current.JshintrcSchema.LastsemicEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LatedefUtf8, out IJsonDocument? _, out int _))
+            {
+                SetLatedef(Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAVariableBeforeItWasDefined.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LeanswitchUtf8, out IJsonDocument? _, out int _))
+            {
+                SetLeanswitch(Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsUnnecessaryClausesWithinSwitchStatements.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LoopfuncUtf8, out IJsonDocument? _, out int _))
+            {
+                SetLoopfunc(Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutFunctionsInsideOfLoops.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxcomplexityUtf8, out IJsonDocument? _, out int _))
+            {
+                SetMaxcomplexity(Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxCyclomaticComplexityPerFunction.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxdepthUtf8, out IJsonDocument? _, out int _))
+            {
+                SetMaxdepth(Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxDepthOfNestedBlocks.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxerrUtf8, out IJsonDocument? _, out int _))
+            {
+                SetMaxerr(Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxstatementsUtf8, out IJsonDocument? _, out int _))
+            {
+                SetMaxstatements(Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxNumberStatementsPerFunction.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MochaUtf8, out IJsonDocument? _, out int _))
+            {
+                SetMocha(Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentMochaUnitTestingFramework.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ModuleUtf8, out IJsonDocument? _, out int _))
+            {
+                SetModule(Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentEs6Module.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MootoolsUtf8, out IJsonDocument? _, out int _))
+            {
+                SetMootools(Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentMooTools.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MozUtf8, out IJsonDocument? _, out int _))
+            {
+                SetMoz(Corvus.JshintrcBenchmark.Current.JshintrcSchema.TellsJsHintThatYourCodeUsesMozillaJavaScriptExtensions.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoargUtf8, out IJsonDocument? _, out int _))
+            {
+                SetNoarg(Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfArgumentsCallerAndArgumentsCallee.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NocommaUtf8, out IJsonDocument? _, out int _))
+            {
+                SetNocomma(Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfTheCommaOperator.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NodeUtf8, out IJsonDocument? _, out int _))
+            {
+                SetNode(Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentNodeJs.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NonbspUtf8, out IJsonDocument? _, out int _))
+            {
+                SetNonbsp(Corvus.JshintrcBenchmark.Current.JshintrcSchema.WarnsAboutNonBreakingWhitespaceCharacters.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NonewUtf8, out IJsonDocument? _, out int _))
+            {
+                SetNonew(Corvus.JshintrcBenchmark.Current.JshintrcSchema.NonewEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NonstandardUtf8, out IJsonDocument? _, out int _))
+            {
+                SetNonstandard(Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWidelyAdoptedGlobalsEscapeUnescapeEtc.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoreturnawaitUtf8, out IJsonDocument? _, out int _))
+            {
+                SetNoreturnawait(Corvus.JshintrcBenchmark.Current.JshintrcSchema.NoreturnawaitEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NotypeofUtf8, out IJsonDocument? _, out int _))
+            {
+                SetNotypeof(Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutInvalidTypeofOperatorValues.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NoyieldUtf8, out IJsonDocument? _, out int _))
+            {
+                SetNoyield(Corvus.JshintrcBenchmark.Current.JshintrcSchema.NoyieldEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PhantomUtf8, out IJsonDocument? _, out int _))
+            {
+                SetPhantom(Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentPhantomJsRuntimeEnvironment.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PlusplusUtf8, out IJsonDocument? _, out int _))
+            {
+                SetPlusplus(Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfAnd.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ProtoUtf8, out IJsonDocument? _, out int _))
+            {
+                SetProto(Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheProtoProperty.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PrototypejsUtf8, out IJsonDocument? _, out int _))
+            {
+                SetPrototypejs(Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentPrototypeJavaScriptFramework.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RegexpuUtf8, out IJsonDocument? _, out int _))
+            {
+                SetRegexpu(Corvus.JshintrcBenchmark.Current.JshintrcSchema.RegexpuEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RhinoUtf8, out IJsonDocument? _, out int _))
+            {
+                SetRhino(Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentRhino.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ScripturlUtf8, out IJsonDocument? _, out int _))
+            {
+                SetScripturl(Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheUseOfScriptTargetedUrLs.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ShadowUtf8, out IJsonDocument? _, out int _))
+            {
+                SetShadow(Corvus.JshintrcBenchmark.Current.JshintrcSchema.ShadowEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ShelljsUtf8, out IJsonDocument? _, out int _))
+            {
+                SetShelljs(Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDefinesGlobalsExposedByTheShellJsLibrary.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SingleGroupsUtf8, out IJsonDocument? _, out int _))
+            {
+                SetSingleGroups(Corvus.JshintrcBenchmark.Current.JshintrcSchema.SingleGroupsEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StrictUtf8, out IJsonDocument? _, out int _))
+            {
+                SetStrict(Corvus.JshintrcBenchmark.Current.JshintrcSchema.RequiresAllCodeToRunInEs5StrictMode.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SupernewUtf8, out IJsonDocument? _, out int _))
+            {
+                SetSupernew(Corvus.JshintrcBenchmark.Current.JshintrcSchema.SupernewEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TrailingcommaUtf8, out IJsonDocument? _, out int _))
+            {
+                SetTrailingcomma(Corvus.JshintrcBenchmark.Current.JshintrcSchema.TrailingcommaEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TypedUtf8, out IJsonDocument? _, out int _))
+            {
+                SetTyped(Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentDefinesGlobalsForTypedArrayConstructors.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UndefUtf8, out IJsonDocument? _, out int _))
+            {
+                SetUndef(Corvus.JshintrcBenchmark.Current.JshintrcSchema.ProhibitsTheUseOfExplicitlyUndeclaredVariables.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UnusedUtf8, out IJsonDocument? _, out int _))
+            {
+                SetUnused(Corvus.JshintrcBenchmark.Current.JshintrcSchema.WarnsWhenYouDefineAndNeverUseYourVariables.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ValidthisUtf8, out IJsonDocument? _, out int _))
+            {
+                SetValidthis(Corvus.JshintrcBenchmark.Current.JshintrcSchema.ValidthisEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VarstmtUtf8, out IJsonDocument? _, out int _))
+            {
+                SetVarstmt(Corvus.JshintrcBenchmark.Current.JshintrcSchema.VarstmtEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WithstmtUtf8, out IJsonDocument? _, out int _))
+            {
+                SetWithstmt(Corvus.JshintrcBenchmark.Current.JshintrcSchema.SuppressesWarningsAboutTheUseOfTheWithStatement.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WorkerUtf8, out IJsonDocument? _, out int _))
+            {
+                SetWorker(Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWebWorkers.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WshUtf8, out IJsonDocument? _, out int _))
+            {
+                SetWsh(Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWindowsScriptingHost.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.YuiUtf8, out IJsonDocument? _, out int _))
+            {
+                SetYui(Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentYahooUserInterface.DefaultInstance);
+            }
+        }
+
         /// <inheritdoc/>
         public void WriteTo(Utf8JsonWriter writer)
         {

@@ -2246,6 +2246,71 @@ public readonly partial struct KrakendSchema
             }
 
             /// <summary>
+            /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+            /// as its value, and then does the same inside each property whose own type has properties.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// This changes the data. Reading an absent property already gives its default without it; this method writes
+            /// the defaults into the document as additional properties, so that they are there when the document is sent
+            /// to a system that does not apply the schema's defaults itself.
+            /// </para>
+            /// <para>
+            /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+            /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+            /// as it is.
+            /// </para>
+            /// </remarks>
+            public void ApplyDefaults()
+            {
+                CheckValidInstance();
+                if (ValueKind != JsonValueKind.Object)
+                {
+                    return;
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AlgUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetAlg(Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Algorithm.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AuthHeaderNameUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetAuthHeaderName(Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.AuthorizationHeader.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CacheValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetCacheValue(Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Cache.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CacheDurationValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetCacheDurationValue(Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.CacheDuration.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CipherSuitesUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetCipherSuites(Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ObjectInArrayArray.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DisableJwkSecurityValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetDisableJwkSecurityValue(Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DisableJwkSecurity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OperationDebugUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetOperationDebug(Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DebugEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ScopesMatcherValueUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetScopesMatcherValue(Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ScopesMatcher.DefaultInstance);
+                }
+            }
+
+            /// <summary>
             /// Apply a composed value.
             /// </summary>
             /// <remarks>

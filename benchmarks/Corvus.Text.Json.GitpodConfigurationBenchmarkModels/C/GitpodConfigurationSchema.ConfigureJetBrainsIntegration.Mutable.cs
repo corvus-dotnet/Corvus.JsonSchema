@@ -1057,6 +1057,79 @@ public readonly partial struct GitpodConfigurationSchema
                 return result;
             }
 
+            /// <summary>
+            /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+            /// as its value, and then does the same inside each property whose own type has properties.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// This changes the data. Reading an absent property already gives its default without it; this method writes
+            /// the defaults into the document as additional properties, so that they are there when the document is sent
+            /// to a system that does not apply the schema's defaults itself.
+            /// </para>
+            /// <para>
+            /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+            /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+            /// as it is.
+            /// </para>
+            /// </remarks>
+            public void ApplyDefaults()
+            {
+                CheckValidInstance();
+                if (ValueKind != JsonValueKind.Object)
+                {
+                    return;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ClionUtf8, out Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Mutable __corvusClion))
+                {
+                    __corvusClion.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.GolandUtf8, out Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Mutable __corvusGoland))
+                {
+                    __corvusGoland.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IntellijUtf8, out Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Mutable __corvusIntellij))
+                {
+                    __corvusIntellij.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PhpstormUtf8, out Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Mutable __corvusPhpstorm))
+                {
+                    __corvusPhpstorm.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PycharmUtf8, out Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Mutable __corvusPycharm))
+                {
+                    __corvusPycharm.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RiderUtf8, out Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Mutable __corvusRider))
+                {
+                    __corvusRider.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RubymineUtf8, out Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Mutable __corvusRubymine))
+                {
+                    __corvusRubymine.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WebstormUtf8, out Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Mutable __corvusWebstorm))
+                {
+                    __corvusWebstorm.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+            }
+
             /// <inheritdoc/>
             public void WriteTo(Utf8JsonWriter writer)
             {

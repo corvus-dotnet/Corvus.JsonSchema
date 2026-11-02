@@ -2757,6 +2757,88 @@ public readonly partial struct Ui5ManifestSchema
                 return result;
             }
 
+            /// <summary>
+            /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+            /// as its value, and then does the same inside each property whose own type has properties.
+            /// </summary>
+            /// <remarks>
+            /// <para>
+            /// This changes the data. Reading an absent property already gives its default without it; this method writes
+            /// the defaults into the document as additional properties, so that they are there when the document is sent
+            /// to a system that does not apply the schema's defaults itself.
+            /// </para>
+            /// <para>
+            /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+            /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+            /// as it is.
+            /// </para>
+            /// </remarks>
+            public void ApplyDefaults()
+            {
+                CheckValidInstance();
+                if (ValueKind != JsonValueKind.Object)
+                {
+                    return;
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnableAddToInsightsUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetEnableAddToInsights(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.EnableAddToInsightsEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnableLocaleCurrencyFormattingUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetEnableLocaleCurrencyFormatting(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.EnableLocaleCurrencyFormattingEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IgnoreSapTextUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetIgnoreSapText(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.IgnoreSapTextEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ImageSupportedUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetImageSupported(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.FlagForEnablingImagesInACondensedListCard.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ShowFilterInHeaderUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetShowFilterInHeader(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowFilterInHeaderEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ShowLabelTextUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetShowLabelText(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowLabelTextEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ShowLineItemDetailUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetShowLineItemDetail(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.FlagForShowLineItemDetailInListAndTableCard.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ShowRefreshUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetShowRefresh(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowRefreshEntity.DefaultInstance);
+                }
+
+                if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ShowSortingInHeaderUtf8, out IJsonDocument? _, out int _))
+                {
+                    SetShowSortingInHeader(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowSortingInHeaderEntity.DefaultInstance);
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ChartPropertiesUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ChartPropertiesEntity.Mutable __corvusChartProperties))
+                {
+                    __corvusChartProperties.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ObjectStreamCardsSettingsUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.Mutable __corvusObjectStreamCardsSettings))
+                {
+                    __corvusObjectStreamCardsSettings.ApplyDefaults();
+                    _documentVersion = _parent.Version;
+                }
+            }
+
             /// <inheritdoc/>
             public void WriteTo(Utf8JsonWriter writer)
             {

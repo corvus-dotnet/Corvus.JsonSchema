@@ -880,6 +880,67 @@ public readonly partial struct LazygitSchema
                     return result;
                 }
 
+                /// <summary>
+                /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+                /// as its value, and then does the same inside each property whose own type has properties.
+                /// </summary>
+                /// <remarks>
+                /// <para>
+                /// This changes the data. Reading an absent property already gives its default without it; this method writes
+                /// the defaults into the document as additional properties, so that they are there when the document is sent
+                /// to a system that does not apply the schema's defaults itself.
+                /// </para>
+                /// <para>
+                /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+                /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+                /// as it is.
+                /// </para>
+                /// </remarks>
+                public void ApplyDefaults()
+                {
+                    CheckValidInstance();
+                    if (ValueKind != JsonValueKind.Object)
+                    {
+                        return;
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CommandValueUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetCommandValue(Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Command.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DescriptionValueUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetDescriptionValue(Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Description.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LoadingTextValueUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetLoadingTextValue(Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.LoadingText.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ShowOutputValueUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetShowOutputValue(Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.ShowOutput.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StreamValueUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetStreamValue(Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Stream.DefaultInstance);
+                    }
+
+                    if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SubprocessValueUtf8, out IJsonDocument? _, out int _))
+                    {
+                        SetSubprocessValue(Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Subprocess.DefaultInstance);
+                    }
+
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AfterValueUtf8, out Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.After.Mutable __corvusAfterValue))
+                    {
+                        __corvusAfterValue.ApplyDefaults();
+                        _documentVersion = _parent.Version;
+                    }
+                }
+
                 /// <inheritdoc/>
                 public void WriteTo(Utf8JsonWriter writer)
                 {

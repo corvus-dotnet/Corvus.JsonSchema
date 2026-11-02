@@ -1140,6 +1140,92 @@ public readonly partial struct JasmineSchema
         }
 
         /// <summary>
+        /// Adds to the document each property that is absent and has a <c>default</c> in the schema, with that default
+        /// as its value, and then does the same inside each property whose own type has properties.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This changes the data. Reading an absent property already gives its default without it; this method writes
+        /// the defaults into the document as additional properties, so that they are there when the document is sent
+        /// to a system that does not apply the schema's defaults itself.
+        /// </para>
+        /// <para>
+        /// A property that is present keeps its value. Does nothing when the value is not an object. The items of
+        /// arrays are not visited. The result is not validated: a default that does not satisfy its schema is written
+        /// as it is.
+        /// </para>
+        /// </remarks>
+        public void ApplyDefaults()
+        {
+            CheckValidInstance();
+            if (ValueKind != JsonValueKind.Object)
+            {
+                return;
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AutoCleanClosureUtf8, out IJsonDocument? _, out int _))
+            {
+                SetAutoCleanClosure(Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.AutoCleanClosureEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FailSpecWithNoExpectationsUtf8, out IJsonDocument? _, out int _))
+            {
+                SetFailSpecWithNoExpectations(Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.FailSpecWithNoExpectationsEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HelpersUtf8, out IJsonDocument? _, out int _))
+            {
+                SetHelpers(Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HideDisbaledUtf8, out IJsonDocument? _, out int _))
+            {
+                SetHideDisbaled(Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.HideDisbaledEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RandomUtf8, out IJsonDocument? _, out int _))
+            {
+                SetRandom(Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToRandomizeSpecExecutionOrder.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SeedUtf8, out IJsonDocument? _, out int _))
+            {
+                SetSeed(Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.SeedEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpecDirUtf8, out IJsonDocument? _, out int _))
+            {
+                SetSpecDir(Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SpecFilesUtf8, out IJsonDocument? _, out int _))
+            {
+                SetSpecFiles(Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StopOnSpecFailureUtf8, out IJsonDocument? _, out int _))
+            {
+                SetStopOnSpecFailure(Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.StopOnSpecFailureEntity.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StopSpecOnExpectationFailureUtf8, out IJsonDocument? _, out int _))
+            {
+                SetStopSpecOnExpectationFailure(Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToCauseSpecsToOnlyHaveOneExpectationFailure.DefaultInstance);
+            }
+
+            if (!_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VerboseDepricationUtf8, out IJsonDocument? _, out int _))
+            {
+                SetVerboseDeprication(Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.VerboseDepricationEntity.DefaultInstance);
+            }
+
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvUtf8, out Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.Mutable __corvusEnv))
+            {
+                __corvusEnv.ApplyDefaults();
+                _documentVersion = _parent.Version;
+            }
+        }
+
+        /// <summary>
         /// Apply a composed value.
         /// </summary>
         /// <remarks>
