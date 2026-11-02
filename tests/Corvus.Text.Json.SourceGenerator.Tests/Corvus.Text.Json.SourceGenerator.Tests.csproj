@@ -20,6 +20,9 @@
     <!-- The V4 source generator, for the tests of the text it emits. It declares the same type names as the V5 one,
          so it is referenced under an alias and its types are named only through it. -->
     <ProjectReference Include="..\..\src-v4\Corvus.Json.SourceGenerator\Corvus.Json.SourceGenerator.csproj" ReferenceOutputAssembly="true" Aliases="V4SourceGenerator" />
+    <!-- The V4 tools for writing a source generator, for the test of the hint names they give. Their assembly carries
+         private copies of the same types, so it is referenced under an alias too. -->
+    <ProjectReference Include="..\..\src-v4\Corvus.Json.SourceGeneratorTools\Corvus.Json.SourceGeneratorTools.csproj" Aliases="V4Tools" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
     <PackageReference Include="Microsoft.Bcl.HashCode" />
   </ItemGroup>
@@ -31,10 +34,12 @@
        assemblies to every project that references it (GetDependencyTargetPaths), so that analyzer hosts can load them
        next to the generator. This project runs on net10.0, where the framework's version 10 assemblies are the ones
        that load, so the generator's copies are dropped before reference resolution. Keeping them made
-       ResolveAssemblyReference see two primary references of different versions to each (MSB3243). -->
+       ResolveAssemblyReference see two primary references of different versions to each (MSB3243). The V4 generator
+       hands over its private Microsoft.Bcl.Memory the same way, which the V4 tools' package reference also brings at
+       the central version, so the generator's copy is dropped too. -->
   <Target Name="RemoveGeneratorPrivateSystemTextJson" AfterTargets="ResolveProjectReferences">
     <ItemGroup>
-      <_ResolvedProjectReferencePaths Remove="@(_ResolvedProjectReferencePaths)" Condition="'%(Filename)' == 'System.Text.Json' or '%(Filename)' == 'System.Text.Encodings.Web'" />
+      <_ResolvedProjectReferencePaths Remove="@(_ResolvedProjectReferencePaths)" Condition="'%(Filename)' == 'System.Text.Json' or '%(Filename)' == 'System.Text.Encodings.Web' or '%(Filename)' == 'Microsoft.Bcl.Memory'" />
     </ItemGroup>
   </Target>
   <!-- On net481 produce an empty assembly. -->
