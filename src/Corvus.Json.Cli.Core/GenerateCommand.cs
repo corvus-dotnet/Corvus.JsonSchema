@@ -97,7 +97,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         public OptionalAsNullable OptionalAsNullable { get; init; }
 
         [CommandOption("--nativeEnums")]
-        [Description("Controls emission of native C# enums on generated types (V5 engine only). StringEnums emits a nested enum for pure string-enum schemas; FlagsObjects emits a nested [Flags] enum for objects whose declared properties are all boolean; All (the default) emits both; None emits neither.")]
+        [Description("Controls emission of native C# enums on generated types (V5 engine only). StringEnums emits a nested enum for pure string-enum schemas; FlagsObjects emits a nested [[Flags]] enum for objects whose declared properties are all boolean; All (the default) emits both; None emits neither.")]
         [DefaultValue(NativeEnums.All)]
         public NativeEnums NativeEnums { get; init; }
 
