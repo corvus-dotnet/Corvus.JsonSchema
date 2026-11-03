@@ -1,6 +1,18 @@
 # Version History
 
-## V5.8.3
+## V5.8.4
+
+V5.8.4 is the first release published to NuGet.org since V5.8.0, and it publishes with NuGet.org Trusted Publishing. V5.8.1, V5.8.2 and V5.8.3 were tagged, and have GitHub releases, but their packages were never published to NuGet.org: the API key the release build used had expired, so each tag build's push was refused. Those versions are skipped on NuGet.org. V5.8.4 has no changes of its own beyond how it is published, so it ships everything in the three, which are listed below:
+
+- **V5.8.3:** every `format` check follows the grammar the format names, as the JSON-Schema-Test-Suite now tests it (`date-time`, `time`, `duration`, `email`, `idn-email`, `idn-hostname` with the UTS #46 mapping, `ipv6`, the URI and IRI formats, which the `Utf8Uri` types also check, and `uri-template`), and V4 uses V5's format checks. V4 writes an offset as `+01:00`, never `+01`, and treats `format` as an annotation by default in draft 2019-09.
+- **V5.8.2:** a string that is not well-formed text is not valid and never makes validation throw; the code generators set the match limit of the regular expressions they write; generated mutable types have `ApplyDefaults()`; JSON Patch applies to a generated type's mutable element; generated array types are read-only collections of their items; and smaller fixes from the backlog.
+- **V5.8.1:** a property lookup that could go stale in a `JsonDocumentBuilder`, and a JSONata string escaped twice in an object or array, are fixed, and JSONata is brought up to date with the official test suite.
+
+### Other changes
+
+- **Releases publish to NuGet.org with Trusted Publishing.** The `Publish` job of `build.yml` exchanges a GitHub Actions OIDC token for a NuGet.org key that is valid for an hour, through ZeroFailed.Build.DotNet, so no long-lived key is stored and none can expire. The policy on nuget.org belongs to the `corvus-dotnet` organisation. [docs/ReleaseProcess.md](docs/ReleaseProcess.md) describes the setup.
+
+## V5.8.3 (not published to NuGet.org; shipped in V5.8.4)
 
 V5.8.3 makes every `format` check read the grammar the format names, as the JSON-Schema-Test-Suite now tests it, and makes the V4 engine use the same checks as V5.
 
@@ -11,7 +23,7 @@ V5.8.3 makes every `format` check read the grammar the format names, as the JSON
 - **V4 writes an offset with hours and minutes.** `JsonDateTime` and `JsonTime` wrote an offset of whole hours as `+01`, which is not RFC 3339. They write `+01:00`. Issue [#597](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/597) made `+01` valid in V4.3.7; it is not valid again, as RFC 3339 and the test suite require.
 - **In V4, `format` is an annotation by default in draft 2019-09.** A schema without `$schema` asserted `format` in draft 2019-09, because the draft's format vocabulary used the assertion form of the keyword. It now uses the annotation form, as draft 2020-12 and V5 do. Generation with `alwaysAssertFormat` (the default) still asserts it.
 
-## V5.8.2
+## V5.8.2 (not published to NuGet.org; shipped in V5.8.4)
 
 V5.8.2 stops validation throwing on a string that is not well-formed text, lets a generation set the match limit of its regular expressions, and gives generated types `ApplyDefaults()`, read-only collections for arrays and JSON Patch support. It also fixes a number of smaller issues from the backlog.
 
@@ -36,7 +48,7 @@ V5.8.2 stops validation throwing on a string that is not well-formed text, lets 
 - The TypeScript and Rust test suite runners check the 73 leap-second cases, and the documents say which exclusions each runner makes. See [#988](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/988) and [#987](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/987).
 - The regular expression translator pages describe where the translation is still used since V5.8.0, and the pattern conformance page records that TypeScript keeps the host's `RegExp` ([#1026](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1026)).
 
-## V5.8.1
+## V5.8.1 (not published to NuGet.org; shipped in V5.8.4)
 
 V5.8.1 fixes a property lookup that could go stale in a `JsonDocumentBuilder`, and a JSONata string that was escaped twice when it was placed in an object or array. It also brings the JSONata implementation up to date with the official test suite and fixes the cases where it answered differently.
 
