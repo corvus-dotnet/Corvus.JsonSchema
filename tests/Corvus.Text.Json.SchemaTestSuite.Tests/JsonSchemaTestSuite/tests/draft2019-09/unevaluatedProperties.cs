@@ -34,7 +34,7 @@ public class SuiteUnevaluatedPropertiesTrue
     [TestMethod]
     public void TestWithUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -46,9 +46,9 @@ public class SuiteUnevaluatedPropertiesTrue
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"unevaluatedProperties\": true\n        }",
+                "{\n                \"type\": \"object\",\n                \"unevaluatedProperties\": true\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -88,14 +88,14 @@ public class SuiteUnevaluatedPropertiesSchema
     [TestMethod]
     public void TestWithValidUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithInvalidUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"fo\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"fo\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -107,9 +107,9 @@ public class SuiteUnevaluatedPropertiesSchema
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"unevaluatedProperties\": {\n                \"type\": \"string\",\n                \"minLength\": 3\n            }\n        }",
+                "{\n                \"type\": \"object\",\n                \"unevaluatedProperties\": {\n                    \"type\": \"string\",\n                    \"minLength\": 3\n                }\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -149,7 +149,7 @@ public class SuiteUnevaluatedPropertiesFalse
     [TestMethod]
     public void TestWithUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -161,9 +161,9 @@ public class SuiteUnevaluatedPropertiesFalse
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -196,14 +196,14 @@ public class SuiteUnevaluatedPropertiesWithAdjacentProperties
     [TestMethod]
     public void TestWithNoUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -215,9 +215,9 @@ public class SuiteUnevaluatedPropertiesWithAdjacentProperties
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -250,14 +250,14 @@ public class SuiteUnevaluatedPropertiesWithAdjacentPatternProperties
     [TestMethod]
     public void TestWithNoUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -269,9 +269,9 @@ public class SuiteUnevaluatedPropertiesWithAdjacentPatternProperties
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"patternProperties\": {\n                \"^foo\": { \"type\": \"string\" }\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"patternProperties\": {\n                    \"^foo\": { \"type\": \"string\" }\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -304,14 +304,14 @@ public class SuiteUnevaluatedPropertiesWithAdjacentBoolAdditionalProperties
     [TestMethod]
     public void TestWithNoAdditionalProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithAdditionalProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -323,9 +323,9 @@ public class SuiteUnevaluatedPropertiesWithAdjacentBoolAdditionalProperties
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"additionalProperties\": true,\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"additionalProperties\": true,\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -358,14 +358,14 @@ public class SuiteUnevaluatedPropertiesWithAdjacentNonBoolAdditionalProperties
     [TestMethod]
     public void TestWithNoAdditionalProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithAdditionalProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -377,9 +377,9 @@ public class SuiteUnevaluatedPropertiesWithAdjacentNonBoolAdditionalProperties
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"additionalProperties\": {\"type\": \"string\"},\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"additionalProperties\": { \"type\": \"string\" },\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -412,14 +412,14 @@ public class SuiteUnevaluatedPropertiesWithNestedProperties
     [TestMethod]
     public void TestWithNoAdditionalProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithAdditionalProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\",\n                    \"baz\": \"baz\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\", \"baz\": \"baz\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -431,9 +431,9 @@ public class SuiteUnevaluatedPropertiesWithNestedProperties
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"allOf\": [\n                {\n                    \"properties\": {\n                        \"bar\": { \"type\": \"string\" }\n                    }\n                }\n            ],\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"allOf\": [\n                    {\n                        \"properties\": {\n                            \"bar\": { \"type\": \"string\" }\n                        }\n                    }\n                ],\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -466,14 +466,14 @@ public class SuiteUnevaluatedPropertiesWithNestedPatternProperties
     [TestMethod]
     public void TestWithNoAdditionalProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithAdditionalProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\",\n                    \"baz\": \"baz\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\", \"baz\": \"baz\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -485,9 +485,9 @@ public class SuiteUnevaluatedPropertiesWithNestedPatternProperties
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"allOf\": [\n              {\n                  \"patternProperties\": {\n                      \"^bar\": { \"type\": \"string\" }\n                  }\n              }\n            ],\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"allOf\": [\n                {\n                    \"patternProperties\": {\n                        \"^bar\": { \"type\": \"string\" }\n                    }\n                }\n                ],\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -520,14 +520,14 @@ public class SuiteUnevaluatedPropertiesWithNestedAdditionalProperties
     [TestMethod]
     public void TestWithNoAdditionalProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithAdditionalProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -539,9 +539,9 @@ public class SuiteUnevaluatedPropertiesWithNestedAdditionalProperties
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"allOf\": [\n                {\n                    \"additionalProperties\": true\n                }\n            ],\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"allOf\": [{ \"additionalProperties\": true }],\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -574,14 +574,14 @@ public class SuiteUnevaluatedPropertiesWithNestedUnevaluatedProperties
     [TestMethod]
     public void TestWithNoNestedUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithNestedUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -593,9 +593,9 @@ public class SuiteUnevaluatedPropertiesWithNestedUnevaluatedProperties
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"allOf\": [\n                {\n                    \"unevaluatedProperties\": true\n                }\n            ],\n            \"unevaluatedProperties\": {\n                \"type\": \"string\",\n                \"maxLength\": 2\n            }\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"allOf\": [{ \"unevaluatedProperties\": true }],\n                \"unevaluatedProperties\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 2\n                }\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -628,28 +628,28 @@ public class SuiteUnevaluatedPropertiesWithAnyOf
     [TestMethod]
     public void TestWhenOneMatchesAndHasNoUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWhenOneMatchesAndHasUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\",\n                    \"baz\": \"not-baz\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\", \"baz\": \"not-baz\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWhenTwoMatchAndHasNoUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\",\n                    \"baz\": \"baz\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\", \"baz\": \"baz\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWhenTwoMatchAndHasUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\",\n                    \"baz\": \"baz\",\n                    \"quux\": \"not-quux\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\", \"baz\": \"baz\", \"quux\": \"not-quux\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -661,9 +661,9 @@ public class SuiteUnevaluatedPropertiesWithAnyOf
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"anyOf\": [\n                {\n                    \"properties\": {\n                        \"bar\": { \"const\": \"bar\" }\n                    },\n                    \"required\": [\"bar\"]\n                },\n                {\n                    \"properties\": {\n                        \"baz\": { \"const\": \"baz\" }\n                    },\n                    \"required\": [\"baz\"]\n                },\n                {\n                    \"properties\": {\n                        \"quux\": { \"const\": \"quux\" }\n                    },\n                    \"required\": [\"quux\"]\n                }\n            ],\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"anyOf\": [\n                    {\n                        \"properties\": {\n                            \"bar\": { \"const\": \"bar\" }\n                        },\n                        \"required\": [\"bar\"]\n                    },\n                    {\n                        \"properties\": {\n                            \"baz\": { \"const\": \"baz\" }\n                        },\n                        \"required\": [\"baz\"]\n                    },\n                    {\n                        \"properties\": {\n                            \"quux\": { \"const\": \"quux\" }\n                        },\n                        \"required\": [\"quux\"]\n                    }\n                ],\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -696,14 +696,14 @@ public class SuiteUnevaluatedPropertiesWithOneOf
     [TestMethod]
     public void TestWithNoUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\",\n                    \"quux\": \"quux\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\", \"quux\": \"quux\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -715,9 +715,9 @@ public class SuiteUnevaluatedPropertiesWithOneOf
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"oneOf\": [\n                {\n                    \"properties\": {\n                        \"bar\": { \"const\": \"bar\" }\n                    },\n                    \"required\": [\"bar\"]\n                },\n                {\n                    \"properties\": {\n                        \"baz\": { \"const\": \"baz\" }\n                    },\n                    \"required\": [\"baz\"]\n                }\n            ],\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"oneOf\": [\n                    {\n                        \"properties\": {\n                            \"bar\": { \"const\": \"bar\" }\n                        },\n                        \"required\": [\"bar\"]\n                    },\n                    {\n                        \"properties\": {\n                            \"baz\": { \"const\": \"baz\" }\n                        },\n                        \"required\": [\"baz\"]\n                    }\n                ],\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -750,7 +750,7 @@ public class SuiteUnevaluatedPropertiesWithNot
     [TestMethod]
     public void TestWithUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -762,9 +762,9 @@ public class SuiteUnevaluatedPropertiesWithNot
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"not\": {\n                \"not\": {\n                    \"properties\": {\n                        \"bar\": { \"const\": \"bar\" }\n                    },\n                    \"required\": [\"bar\"]\n                }\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"not\": {\n                    \"not\": {\n                        \"properties\": {\n                            \"bar\": { \"const\": \"bar\" }\n                        },\n                        \"required\": [\"bar\"]\n                    }\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -797,28 +797,28 @@ public class SuiteUnevaluatedPropertiesWithIfThenElse
     [TestMethod]
     public void TestWhenIfIsTrueAndHasNoUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"then\",\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"then\", \"bar\": \"bar\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWhenIfIsTrueAndHasUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"then\",\n                    \"bar\": \"bar\",\n                    \"baz\": \"baz\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"then\", \"bar\": \"bar\", \"baz\": \"baz\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWhenIfIsFalseAndHasNoUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"baz\": \"baz\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"baz\": \"baz\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWhenIfIsFalseAndHasUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"else\",\n                    \"baz\": \"baz\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"else\", \"baz\": \"baz\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -830,9 +830,9 @@ public class SuiteUnevaluatedPropertiesWithIfThenElse
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"if\": {\n                \"properties\": {\n                    \"foo\": { \"const\": \"then\" }\n                },\n                \"required\": [\"foo\"]\n            },\n            \"then\": {\n                \"properties\": {\n                    \"bar\": { \"type\": \"string\" }\n                },\n                \"required\": [\"bar\"]\n            },\n            \"else\": {\n                \"properties\": {\n                    \"baz\": { \"type\": \"string\" }\n                },\n                \"required\": [\"baz\"]\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"if\": {\n                    \"properties\": {\n                        \"foo\": { \"const\": \"then\" }\n                    },\n                    \"required\": [\"foo\"]\n                },\n                \"then\": {\n                    \"properties\": {\n                        \"bar\": { \"type\": \"string\" }\n                    },\n                    \"required\": [\"bar\"]\n                },\n                \"else\": {\n                    \"properties\": {\n                        \"baz\": { \"type\": \"string\" }\n                    },\n                    \"required\": [\"baz\"]\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -865,28 +865,28 @@ public class SuiteUnevaluatedPropertiesWithIfThenElseThenNotDefined
     [TestMethod]
     public void TestWhenIfIsTrueAndHasNoUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"then\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"then\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWhenIfIsTrueAndHasUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"then\",\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"then\", \"bar\": \"bar\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWhenIfIsFalseAndHasNoUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"baz\": \"baz\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"baz\": \"baz\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWhenIfIsFalseAndHasUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"else\",\n                    \"baz\": \"baz\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"else\", \"baz\": \"baz\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -898,9 +898,9 @@ public class SuiteUnevaluatedPropertiesWithIfThenElseThenNotDefined
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"if\": {\n                \"properties\": {\n                    \"foo\": { \"const\": \"then\" }\n                },\n                \"required\": [\"foo\"]\n            },\n            \"else\": {\n                \"properties\": {\n                    \"baz\": { \"type\": \"string\" }\n                },\n                \"required\": [\"baz\"]\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"if\": {\n                    \"properties\": {\n                        \"foo\": { \"const\": \"then\" }\n                    },\n                    \"required\": [\"foo\"]\n                },\n                \"else\": {\n                    \"properties\": {\n                        \"baz\": { \"type\": \"string\" }\n                    },\n                    \"required\": [\"baz\"]\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -933,28 +933,28 @@ public class SuiteUnevaluatedPropertiesWithIfThenElseElseNotDefined
     [TestMethod]
     public void TestWhenIfIsTrueAndHasNoUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"then\",\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"then\", \"bar\": \"bar\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWhenIfIsTrueAndHasUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"then\",\n                    \"bar\": \"bar\",\n                    \"baz\": \"baz\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"then\", \"bar\": \"bar\", \"baz\": \"baz\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWhenIfIsFalseAndHasNoUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"baz\": \"baz\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"baz\": \"baz\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWhenIfIsFalseAndHasUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"else\",\n                    \"baz\": \"baz\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"else\", \"baz\": \"baz\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -966,9 +966,9 @@ public class SuiteUnevaluatedPropertiesWithIfThenElseElseNotDefined
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"if\": {\n                \"properties\": {\n                    \"foo\": { \"const\": \"then\" }\n                },\n                \"required\": [\"foo\"]\n            },\n            \"then\": {\n                \"properties\": {\n                    \"bar\": { \"type\": \"string\" }\n                },\n                \"required\": [\"bar\"]\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"if\": {\n                    \"properties\": {\n                        \"foo\": { \"const\": \"then\" }\n                    },\n                    \"required\": [\"foo\"]\n                },\n                \"then\": {\n                    \"properties\": {\n                        \"bar\": { \"type\": \"string\" }\n                    },\n                    \"required\": [\"bar\"]\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1001,14 +1001,14 @@ public class SuiteUnevaluatedPropertiesWithDependentSchemas
     [TestMethod]
     public void TestWithNoUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"bar\": \"bar\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -1020,9 +1020,9 @@ public class SuiteUnevaluatedPropertiesWithDependentSchemas
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"dependentSchemas\": {\n                \"foo\": {\n                    \"properties\": {\n                        \"bar\": { \"const\": \"bar\" }\n                    },\n                    \"required\": [\"bar\"]\n                }\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"dependentSchemas\": {\n                    \"foo\": {\n                        \"properties\": {\n                            \"bar\": { \"const\": \"bar\" }\n                        },\n                        \"required\": [\"bar\"]\n                    }\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1055,14 +1055,14 @@ public class SuiteUnevaluatedPropertiesWithBooleanSchemas
     [TestMethod]
     public void TestWithNoUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"bar\": \"bar\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -1074,9 +1074,9 @@ public class SuiteUnevaluatedPropertiesWithBooleanSchemas
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"allOf\": [true],\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"allOf\": [true],\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1109,14 +1109,14 @@ public class SuiteUnevaluatedPropertiesWithRef
     [TestMethod]
     public void TestWithNoUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\",\n                    \"baz\": \"baz\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\", \"baz\": \"baz\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -1128,9 +1128,9 @@ public class SuiteUnevaluatedPropertiesWithRef
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"$ref\": \"#/$defs/bar\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"unevaluatedProperties\": false,\n            \"$defs\": {\n                \"bar\": {\n                    \"properties\": {\n                        \"bar\": { \"type\": \"string\" }\n                    }\n                }\n            }\n        }",
+                "{\n                \"type\": \"object\",\n                \"$ref\": \"#/$defs/bar\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"unevaluatedProperties\": false,\n                \"$defs\": {\n                    \"bar\": {\n                        \"properties\": {\n                            \"bar\": { \"type\": \"string\" }\n                        }\n                    }\n                }\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1163,14 +1163,14 @@ public class SuiteUnevaluatedPropertiesBeforeRef
     [TestMethod]
     public void TestWithNoUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\",\n                    \"baz\": \"baz\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\", \"baz\": \"baz\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -1182,9 +1182,9 @@ public class SuiteUnevaluatedPropertiesBeforeRef
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"unevaluatedProperties\": false,\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"$ref\": \"#/$defs/bar\",\n            \"$defs\": {\n                \"bar\": {\n                    \"properties\": {\n                        \"bar\": { \"type\": \"string\" }\n                    }\n                }\n            }\n        }",
+                "{\n                \"type\": \"object\",\n                \"unevaluatedProperties\": false,\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"$ref\": \"#/$defs/bar\",\n                \"$defs\": {\n                    \"bar\": {\n                        \"properties\": {\n                            \"bar\": { \"type\": \"string\" }\n                        }\n                    }\n                }\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1217,14 +1217,14 @@ public class SuiteUnevaluatedPropertiesWithRecursiveRef
     [TestMethod]
     public void TestWithNoUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"name\": \"a\",\n                    \"node\": 1,\n                    \"branches\": {\n                      \"name\": \"b\",\n                      \"node\": 2\n                    }\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"name\": \"a\", \"node\": 1, \"branches\": { \"name\": \"b\", \"node\": 2 } }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"name\": \"a\",\n                    \"node\": 1,\n                    \"branches\": {\n                      \"foo\": \"b\",\n                      \"node\": 2\n                    }\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"name\": \"a\", \"node\": 1, \"branches\": { \"foo\": \"b\", \"node\": 2 } }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -1236,9 +1236,9 @@ public class SuiteUnevaluatedPropertiesWithRecursiveRef
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$id\": \"https://example.com/unevaluated-properties-with-recursive-ref/extended-tree\",\n\n            \"$recursiveAnchor\": true,\n\n            \"$ref\": \"./tree\",\n            \"properties\": {\n                \"name\": { \"type\": \"string\" }\n            },\n\n            \"$defs\": {\n                \"tree\": {\n                    \"$id\": \"./tree\",\n                    \"$recursiveAnchor\": true,\n\n                    \"type\": \"object\",\n                    \"properties\": {\n                        \"node\": true,\n                        \"branches\": {\n                            \"$comment\": \"unevaluatedProperties comes first so it's more likely to bugs errors with implementations that are sensitive to keyword ordering\",\n                            \"unevaluatedProperties\": false,\n                            \"$recursiveRef\": \"#\"\n                        }\n                    },\n                    \"required\": [\"node\"]\n                }\n            }\n        }",
+                "{\n                \"$id\": \"https://example.com/unevaluated-properties-with-recursive-ref/extended-tree\",\n                \"$recursiveAnchor\": true,\n                \"$ref\": \"./tree\",\n                \"properties\": {\n                    \"name\": { \"type\": \"string\" }\n                },\n                \"$defs\": {\n                    \"tree\": {\n                        \"$id\": \"./tree\",\n                        \"$recursiveAnchor\": true,\n                        \"type\": \"object\",\n                        \"properties\": {\n                            \"node\": true,\n                            \"branches\": {\n                                \"$comment\": \"unevaluatedProperties comes first so it's more likely to bugs errors with implementations that are sensitive to keyword ordering\",\n                                \"unevaluatedProperties\": false,\n                                \"$recursiveRef\": \"#\"\n                            }\n                        },\n                        \"required\": [\"node\"]\n                    }\n                }\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1271,7 +1271,7 @@ public class SuiteUnevaluatedPropertiesCanTSeeInsideCousins
     [TestMethod]
     public void TestAlwaysFails()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": 1\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -1283,9 +1283,9 @@ public class SuiteUnevaluatedPropertiesCanTSeeInsideCousins
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"allOf\": [\n                {\n                    \"properties\": {\n                        \"foo\": true\n                    }\n                },\n                {\n                    \"unevaluatedProperties\": false\n                }\n            ]\n        }",
+                "{\n                \"allOf\": [\n                    {\n                        \"properties\": {\n                            \"foo\": true\n                        }\n                    },\n                    { \"unevaluatedProperties\": false }\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1318,7 +1318,7 @@ public class SuiteUnevaluatedPropertiesCanTSeeInsideCousinsReverseOrder
     [TestMethod]
     public void TestAlwaysFails()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": 1\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -1330,9 +1330,9 @@ public class SuiteUnevaluatedPropertiesCanTSeeInsideCousinsReverseOrder
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"allOf\": [\n                {\n                    \"unevaluatedProperties\": false\n                },\n                {\n                    \"properties\": {\n                        \"foo\": true\n                    }\n                }\n            ]\n        }",
+                "{\n                \"allOf\": [\n                    { \"unevaluatedProperties\": false },\n                    {\n                        \"properties\": {\n                            \"foo\": true\n                        }\n                    }\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1365,14 +1365,14 @@ public class SuiteNestedUnevaluatedPropertiesOuterFalseInnerTruePropertiesOutsid
     [TestMethod]
     public void TestWithNoNestedUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithNestedUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -1384,9 +1384,9 @@ public class SuiteNestedUnevaluatedPropertiesOuterFalseInnerTruePropertiesOutsid
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"allOf\": [\n                {\n                    \"unevaluatedProperties\": true\n                }\n            ],\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"allOf\": [{ \"unevaluatedProperties\": true }],\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1419,14 +1419,14 @@ public class SuiteNestedUnevaluatedPropertiesOuterFalseInnerTruePropertiesInside
     [TestMethod]
     public void TestWithNoNestedUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithNestedUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -1438,9 +1438,9 @@ public class SuiteNestedUnevaluatedPropertiesOuterFalseInnerTruePropertiesInside
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"allOf\": [\n                {\n                    \"properties\": {\n                        \"foo\": { \"type\": \"string\" }\n                    },\n                    \"unevaluatedProperties\": true\n                }\n            ],\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"allOf\": [\n                    {\n                        \"properties\": {\n                            \"foo\": { \"type\": \"string\" }\n                        },\n                        \"unevaluatedProperties\": true\n                    }\n                ],\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1473,14 +1473,14 @@ public class SuiteNestedUnevaluatedPropertiesOuterTrueInnerFalsePropertiesOutsid
     [TestMethod]
     public void TestWithNoNestedUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithNestedUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -1492,9 +1492,9 @@ public class SuiteNestedUnevaluatedPropertiesOuterTrueInnerFalsePropertiesOutsid
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"allOf\": [\n                {\n                    \"unevaluatedProperties\": false\n                }\n            ],\n            \"unevaluatedProperties\": true\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"allOf\": [{ \"unevaluatedProperties\": false }],\n                \"unevaluatedProperties\": true\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1527,14 +1527,14 @@ public class SuiteNestedUnevaluatedPropertiesOuterTrueInnerFalsePropertiesInside
     [TestMethod]
     public void TestWithNoNestedUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithNestedUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -1546,9 +1546,9 @@ public class SuiteNestedUnevaluatedPropertiesOuterTrueInnerFalsePropertiesInside
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"allOf\": [\n                {\n                    \"properties\": {\n                        \"foo\": { \"type\": \"string\" }\n                    },\n                    \"unevaluatedProperties\": false\n                }\n            ],\n            \"unevaluatedProperties\": true\n        }",
+                "{\n                \"type\": \"object\",\n                \"allOf\": [\n                    {\n                        \"properties\": {\n                            \"foo\": { \"type\": \"string\" }\n                        },\n                        \"unevaluatedProperties\": false\n                    }\n                ],\n                \"unevaluatedProperties\": true\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1581,14 +1581,14 @@ public class SuiteCousinUnevaluatedPropertiesTrueAndFalseTrueWithProperties
     [TestMethod]
     public void TestWithNoNestedUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithNestedUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -1600,9 +1600,9 @@ public class SuiteCousinUnevaluatedPropertiesTrueAndFalseTrueWithProperties
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"allOf\": [\n                {\n                    \"properties\": {\n                        \"foo\": { \"type\": \"string\" }\n                    },\n                    \"unevaluatedProperties\": true\n                },\n                {\n                    \"unevaluatedProperties\": false\n                }\n            ]\n        }",
+                "{\n                \"type\": \"object\",\n                \"allOf\": [\n                    {\n                        \"properties\": {\n                            \"foo\": { \"type\": \"string\" }\n                        },\n                        \"unevaluatedProperties\": true\n                    },\n                    { \"unevaluatedProperties\": false }\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1635,14 +1635,14 @@ public class SuiteCousinUnevaluatedPropertiesTrueAndFalseFalseWithProperties
     [TestMethod]
     public void TestWithNoNestedUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithNestedUnevaluatedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -1654,9 +1654,9 @@ public class SuiteCousinUnevaluatedPropertiesTrueAndFalseFalseWithProperties
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"allOf\": [\n                {\n                    \"unevaluatedProperties\": true\n                },\n                {\n                    \"properties\": {\n                        \"foo\": { \"type\": \"string\" }\n                    },\n                    \"unevaluatedProperties\": false\n                }\n            ]\n        }",
+                "{\n                \"type\": \"object\",\n                \"allOf\": [\n                    { \"unevaluatedProperties\": true },\n                    {\n                        \"properties\": {\n                            \"foo\": { \"type\": \"string\" }\n                        },\n                        \"unevaluatedProperties\": false\n                    }\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1689,14 +1689,14 @@ public class SuitePropertyIsEvaluatedInAnUncleSchemaToUnevaluatedProperties
     [TestMethod]
     public void TestNoExtraProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": {\n                        \"bar\": \"test\"\n                    }\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": { \"bar\": \"test\" } }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestUncleKeywordEvaluationIsNotSignificant()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": {\n                        \"bar\": \"test\",\n                        \"faz\": \"test\"\n                    }\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": { \"bar\": \"test\", \"faz\": \"test\" } }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -1708,9 +1708,9 @@ public class SuitePropertyIsEvaluatedInAnUncleSchemaToUnevaluatedProperties
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"foo\": {\n                    \"type\": \"object\",\n                    \"properties\": {\n                        \"bar\": {\n                            \"type\": \"string\"\n                        }\n                    },\n                    \"unevaluatedProperties\": false\n                  }\n            },\n            \"anyOf\": [\n                {\n                    \"properties\": {\n                        \"foo\": {\n                            \"properties\": {\n                                \"faz\": {\n                                    \"type\": \"string\"\n                                }\n                            }\n                        }\n                    }\n                }\n            ]\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": {\n                        \"type\": \"object\",\n                        \"properties\": {\n                            \"bar\": { \"type\": \"string\" }\n                        },\n                        \"unevaluatedProperties\": false\n                    }\n                },\n                \"anyOf\": [\n                    {\n                        \"properties\": {\n                            \"foo\": {\n                                \"properties\": {\n                                    \"faz\": { \"type\": \"string\" }\n                                }\n                            }\n                        }\n                    }\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1743,21 +1743,21 @@ public class SuiteInPlaceApplicatorSiblingsAllOfHasUnevaluated
     [TestMethod]
     public void TestBaseCaseBothPropertiesPresent()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": 1,\n                    \"bar\": 1\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1, \"bar\": 1 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestInPlaceApplicatorSiblingsBarIsMissing()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": 1\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestInPlaceApplicatorSiblingsFooIsMissing()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"bar\": 1\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"bar\": 1 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -1769,9 +1769,9 @@ public class SuiteInPlaceApplicatorSiblingsAllOfHasUnevaluated
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"allOf\": [\n                {\n                    \"properties\": {\n                        \"foo\": true\n                    },\n                    \"unevaluatedProperties\": false\n                }\n            ],\n            \"anyOf\": [\n                {\n                    \"properties\": {\n                        \"bar\": true\n                    }\n                }\n            ]\n        }",
+                "{\n                \"type\": \"object\",\n                \"allOf\": [\n                    {\n                        \"properties\": {\n                            \"foo\": true\n                        },\n                        \"unevaluatedProperties\": false\n                    }\n                ],\n                \"anyOf\": [\n                    {\n                        \"properties\": {\n                            \"bar\": true\n                        }\n                    }\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1804,21 +1804,21 @@ public class SuiteInPlaceApplicatorSiblingsAnyOfHasUnevaluated
     [TestMethod]
     public void TestBaseCaseBothPropertiesPresent()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": 1,\n                    \"bar\": 1\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1, \"bar\": 1 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestInPlaceApplicatorSiblingsBarIsMissing()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": 1\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestInPlaceApplicatorSiblingsFooIsMissing()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"bar\": 1\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"bar\": 1 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -1830,9 +1830,9 @@ public class SuiteInPlaceApplicatorSiblingsAnyOfHasUnevaluated
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"allOf\": [\n                {\n                    \"properties\": {\n                        \"foo\": true\n                    }\n                }\n            ],\n            \"anyOf\": [\n                {\n                    \"properties\": {\n                        \"bar\": true\n                    },\n                    \"unevaluatedProperties\": false\n                }\n            ]\n        }",
+                "{\n                \"type\": \"object\",\n                \"allOf\": [\n                    {\n                        \"properties\": {\n                            \"foo\": true\n                        }\n                    }\n                ],\n                \"anyOf\": [\n                    {\n                        \"properties\": {\n                            \"bar\": true\n                        },\n                        \"unevaluatedProperties\": false\n                    }\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1919,9 +1919,9 @@ public class SuiteUnevaluatedPropertiesSingleCyclicRef
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"x\": { \"$ref\": \"#\" }\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"x\": { \"$ref\": \"#\" }\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -2015,9 +2015,9 @@ public class SuiteUnevaluatedPropertiesRefInsideAllOfOneOf
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$defs\": {\n                \"one\": {\n                    \"properties\": { \"a\": true }\n                },\n                \"two\": {\n                    \"required\": [\"x\"],\n                    \"properties\": { \"x\": true }\n                }\n            },\n            \"allOf\": [\n                { \"$ref\": \"#/$defs/one\" },\n                { \"properties\": { \"b\": true } },\n                {\n                    \"oneOf\": [\n                        { \"$ref\": \"#/$defs/two\" },\n                        {\n                            \"required\": [\"y\"],\n                            \"properties\": { \"y\": true }\n                        }\n                    ]\n                }\n            ],\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"$defs\": {\n                    \"one\": {\n                        \"properties\": {\n                            \"a\": true\n                        }\n                    },\n                    \"two\": {\n                        \"required\": [\"x\"],\n                        \"properties\": {\n                            \"x\": true\n                        }\n                    }\n                },\n                \"allOf\": [\n                    { \"$ref\": \"#/$defs/one\" },\n                    { \"properties\": {\n                            \"b\": true\n                        }\n                    },\n                    {\n                        \"oneOf\": [\n                            { \"$ref\": \"#/$defs/two\" },\n                            {\n                                \"required\": [\"y\"],\n                                \"properties\": {\n                                    \"y\": true\n                                }\n                            }\n                        ]\n                    }\n                ],\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -2202,9 +2202,9 @@ public class SuiteDynamicEvalationInsideNestedRefs
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"$defs\": {\n                \"one\": {\n                    \"oneOf\": [\n                        { \"$ref\": \"#/$defs/two\" },\n                        { \"required\": [\"b\"], \"properties\": { \"b\": true } },\n                        { \"required\": [\"xx\"], \"patternProperties\": { \"x\": true } },\n                        { \"required\": [\"all\"], \"unevaluatedProperties\": true }\n                    ]\n                },\n                \"two\": {\n                    \"oneOf\": [\n                        { \"required\": [\"c\"], \"properties\": { \"c\": true } },\n                        { \"required\": [\"d\"], \"properties\": { \"d\": true } }\n                    ]\n                }\n            },\n            \"oneOf\": [\n                { \"$ref\": \"#/$defs/one\" },\n                { \"required\": [\"a\"], \"properties\": { \"a\": true } }\n            ],\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"$defs\": {\n                    \"one\": {\n                        \"oneOf\": [\n                            { \"$ref\": \"#/$defs/two\" },\n                            { \"required\": [\"b\"], \"properties\": { \"b\": true } },\n                            { \"required\": [\"xx\"], \"patternProperties\": { \"x\": true } },\n                            { \"required\": [\"all\"], \"unevaluatedProperties\": true }\n                        ]\n                    },\n                    \"two\": {\n                        \"oneOf\": [\n                            { \"required\": [\"c\"], \"properties\": { \"c\": true } },\n                            { \"required\": [\"d\"], \"properties\": { \"d\": true } }\n                        ]\n                    }\n                },\n                \"oneOf\": [\n                    { \"$ref\": \"#/$defs/one\" },\n                    { \"required\": [\"a\"], \"properties\": { \"a\": true } }\n                ],\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -2284,9 +2284,9 @@ public class SuiteNonObjectInstancesAreValid
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -2319,7 +2319,7 @@ public class SuiteUnevaluatedPropertiesWithNullValuedInstanceProperties
     [TestMethod]
     public void TestAllowsNullValuedProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": null}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": null }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -2331,9 +2331,9 @@ public class SuiteUnevaluatedPropertiesWithNullValuedInstanceProperties
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"unevaluatedProperties\": {\n                \"type\": \"null\"\n            }\n        }",
+                "{\n                \"unevaluatedProperties\": { \"type\": \"null\" }\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -2366,14 +2366,14 @@ public class SuiteUnevaluatedPropertiesNotAffectedByPropertyNames
     [TestMethod]
     public void TestAllowsOnlyNumberProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"a\": 1}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"a\": 1 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestStringPropertyIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"a\": \"b\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"a\": \"b\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -2385,9 +2385,9 @@ public class SuiteUnevaluatedPropertiesNotAffectedByPropertyNames
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"propertyNames\": {\"maxLength\": 1},\n            \"unevaluatedProperties\": {\n                \"type\": \"number\"\n            }\n        }",
+                "{\n                \"propertyNames\": { \"maxLength\": 1 },\n                \"unevaluatedProperties\": { \"type\": \"number\" }\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -2420,14 +2420,14 @@ public class SuiteUnevaluatedPropertiesCanSeeAnnotationsFromIfWithoutThenAndElse
     [TestMethod]
     public void TestValidInCaseIfIsEvaluated()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": \"a\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"a\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestInvalidInCaseIfIsEvaluated()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"bar\": \"a\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"bar\": \"a\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -2439,9 +2439,9 @@ public class SuiteUnevaluatedPropertiesCanSeeAnnotationsFromIfWithoutThenAndElse
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"if\": {\n                \"patternProperties\": {\n                    \"foo\": {\n                        \"type\": \"string\"\n                    }\n                }\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"if\": {\n                    \"patternProperties\": {\n                        \"foo\": { \"type\": \"string\" }\n                    }\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -2474,21 +2474,21 @@ public class SuiteDependentSchemasWithUnevaluatedProperties
     [TestMethod]
     public void TestUnevaluatedPropertiesDoesnTConsiderDependentSchemas()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": \"\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestUnevaluatedPropertiesDoesnTSeeBarWhenFoo2IsAbsent()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"bar\": \"\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"bar\": \"\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestUnevaluatedPropertiesSeesBarWhenFoo2IsPresent()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo2\": \"\", \"bar\": \"\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo2\": \"\", \"bar\": \"\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -2500,9 +2500,9 @@ public class SuiteDependentSchemasWithUnevaluatedProperties
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\"foo2\": {}},\n            \"dependentSchemas\": {\n                \"foo\" : {},\n                \"foo2\": {\n                    \"properties\": {\n                        \"bar\":{}\n                    }\n                }\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"properties\": {\n                    \"foo2\": {}\n                },\n                \"dependentSchemas\": {\n                    \"foo\" : {},\n                    \"foo2\": {\n                        \"properties\": {\n                            \"bar\":{}\n                        }\n                    }\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -2535,7 +2535,7 @@ public class SuiteEvaluatedPropertiesCollectionNeedsToConsiderInstanceLocation
     [TestMethod]
     public void TestWithAnUnevaluatedPropertyThatExistsAtAnotherLocation()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": { \"bar\": \"foo\" },\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": { \"bar\": \"foo\" }, \"bar\": \"bar\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -2547,9 +2547,9 @@ public class SuiteEvaluatedPropertiesCollectionNeedsToConsiderInstanceLocation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\n                \"foo\": {\n                    \"properties\": {\n                        \"bar\": { \"type\": \"string\" }\n                    }\n                }\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": {\n                        \"properties\": {\n                            \"bar\": { \"type\": \"string\" }\n                        }\n                    }\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -2582,14 +2582,14 @@ public class SuiteEvaluatedPropertiesCollectionNeedsToConsiderInstanceLocationWi
     [TestMethod]
     public void TestWithOnlyTheNestedEvaluatedProperty()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": { \"bar\": \"foo\" }\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                        \"foo\": { \"bar\": \"foo\" }\n                    }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithAnUnevaluatedPropertyThatExistsAtAnotherLocation()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": { \"bar\": \"foo\" },\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                        \"foo\": { \"bar\": \"foo\" },\n                        \"bar\": \"bar\"\n                    }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -2601,9 +2601,9 @@ public class SuiteEvaluatedPropertiesCollectionNeedsToConsiderInstanceLocationWi
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\n                \"foo\": {\n                    \"patternProperties\": {\n                        \"^bar$\": { \"type\": \"string\" }\n                    }\n                }\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": {\n                        \"patternProperties\": {\n                            \"^bar$\": { \"type\": \"string\" }\n                        }\n                    }\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -2636,14 +2636,14 @@ public class SuiteEvaluatedPropertiesCollectionNeedsToConsiderInstanceLocationWi
     [TestMethod]
     public void TestWithOnlyTheNestedEvaluatedProperty()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": { \"bar\": \"foo\" }\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                        \"foo\": { \"bar\": \"foo\" }\n                    }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithAnUnevaluatedPropertyThatExistsAtAnotherLocation()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": { \"bar\": \"foo\" },\n                    \"bar\": \"bar\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                        \"foo\": { \"bar\": \"foo\" },\n                        \"bar\": \"bar\"\n                    }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -2655,9 +2655,9 @@ public class SuiteEvaluatedPropertiesCollectionNeedsToConsiderInstanceLocationWi
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\n                \"foo\": {\n                    \"additionalProperties\": { \"type\": \"string\" }\n                }\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": {\n                        \"additionalProperties\": { \"type\": \"string\" }\n                    }\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,

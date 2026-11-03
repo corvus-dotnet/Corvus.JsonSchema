@@ -11,17 +11,6 @@ namespace Corvus.Text.Json.RuntimeEvaluator.Tests;
 [TestClass]
 public class AnnotationSuiteTests
 {
-    private static readonly string[] CompatOrder = ["3", "4", "6", "7", "2019", "2020"];
-
-    private static string DraftCompat(string draft) => draft switch
-    {
-        "draft4" => "4",
-        "draft6" => "6",
-        "draft7" => "7",
-        "draft2019-09" => "2019",
-        _ => "2020",
-    };
-
     public static IEnumerable<object[]> Files()
     {
         string dir = Path.Combine(SuiteRunner.SuiteRoot, "annotations", "tests");
@@ -43,16 +32,18 @@ public class AnnotationSuiteTests
         var failures = new StringBuilder();
         int total = 0;
         int failed = 0;
-        string draftCompat = DraftCompat(draft);
-        JsonSchemaEvaluatorOptions options = SuiteRunner.OptionsFor(draft, assertFormat: false);
+        int release = SuiteRunner.ReleaseFor(draft);
 
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(File.ReadAllBytes(file));
         foreach (JsonElement group in doc.RootElement.GetProperty("suite").EnumerateArray())
         {
-            if (group.TryGetProperty("compatibility", out JsonElement compat) && !IsCompatible(draftCompat, compat.GetString()!))
+            string? compatibility = group.TryGetProperty("compatibility", out JsonElement compat) ? compat.GetString() : null;
+            if (!TestUtilities.JsonSchemaTestSuite.SuiteCompatibility.IsCompatible(compatibility, release))
             {
                 continue;
             }
+
+            JsonSchemaEvaluatorOptions options = SuiteRunner.OptionsFor(draft, assertFormat: false, SuiteRunner.ResolverFor(group));
 
             string groupDescription = group.GetProperty("description").GetString()!;
             using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(Encoding.UTF8.GetBytes(group.GetProperty("schema").GetRawText()), options);
@@ -103,18 +94,5 @@ public class AnnotationSuiteTests
         {
             Assert.Fail($"{failed}/{total} annotation assertions failed in {name}:\n{failures}");
         }
-    }
-
-    private static bool IsCompatible(string draftCompat, string suiteCompat)
-    {
-        int draftLevel = Array.IndexOf(CompatOrder, draftCompat);
-        if (suiteCompat.StartsWith("<=", StringComparison.Ordinal))
-        {
-            int max = Array.IndexOf(CompatOrder, suiteCompat[2..]);
-            return max >= 0 && draftLevel <= max;
-        }
-
-        int min = Array.IndexOf(CompatOrder, suiteCompat);
-        return min >= 0 && draftLevel >= min;
     }
 }

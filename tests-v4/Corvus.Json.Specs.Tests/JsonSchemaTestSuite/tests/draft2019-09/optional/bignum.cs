@@ -14,19 +14,21 @@ namespace JsonSchemaTestSuite.Draft201909.Optional.Bignum;
 public class SuiteInteger
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -46,7 +48,7 @@ public class SuiteInteger
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -56,8 +58,8 @@ public class SuiteInteger
         {
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\bignum.json",
-                "#/0/schema",
+                "optional/bignum.json",
+                "#/tests/0/schema",
                 "JsonSchemaTestSuiteDraft201909OptionalBignum",
                 "Integer",
                 validateFormat: false,
@@ -65,10 +67,9 @@ public class SuiteInteger
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -78,19 +79,21 @@ public class SuiteInteger
 public class SuiteNumber
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -110,7 +113,7 @@ public class SuiteNumber
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -120,8 +123,8 @@ public class SuiteNumber
         {
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\bignum.json",
-                "#/1/schema",
+                "optional/bignum.json",
+                "#/tests/1/schema",
                 "JsonSchemaTestSuiteDraft201909OptionalBignum",
                 "Number",
                 validateFormat: false,
@@ -129,10 +132,9 @@ public class SuiteNumber
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -142,19 +144,21 @@ public class SuiteNumber
 public class SuiteString
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -166,7 +170,7 @@ public class SuiteString
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -176,8 +180,8 @@ public class SuiteString
         {
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\bignum.json",
-                "#/2/schema",
+                "optional/bignum.json",
+                "#/tests/2/schema",
                 "JsonSchemaTestSuiteDraft201909OptionalBignum",
                 "String",
                 validateFormat: false,
@@ -185,10 +189,9 @@ public class SuiteString
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -198,19 +201,21 @@ public class SuiteString
 public class SuiteMaximumIntegerComparison
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -222,7 +227,15 @@ public class SuiteMaximumIntegerComparison
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    [TestMethod]
+    public void TestJustAboveTheMaximumIsInvalid()
+    {
+        using var doc = JsonDocument.Parse("18446744073709551616");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -232,8 +245,8 @@ public class SuiteMaximumIntegerComparison
         {
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\bignum.json",
-                "#/3/schema",
+                "optional/bignum.json",
+                "#/tests/3/schema",
                 "JsonSchemaTestSuiteDraft201909OptionalBignum",
                 "MaximumIntegerComparison",
                 validateFormat: false,
@@ -241,10 +254,9 @@ public class SuiteMaximumIntegerComparison
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -254,20 +266,30 @@ public class SuiteMaximumIntegerComparison
 public class SuiteFloatComparisonWithHighPrecision
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
+    }
+
+    [TestMethod]
+    public void TestBelowTheExclusiveMaximumIsValid()
+    {
+        using var doc = JsonDocument.Parse("972783798187987123879878123.188781369");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
     [TestMethod]
@@ -278,7 +300,7 @@ public class SuiteFloatComparisonWithHighPrecision
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -288,8 +310,8 @@ public class SuiteFloatComparisonWithHighPrecision
         {
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\bignum.json",
-                "#/4/schema",
+                "optional/bignum.json",
+                "#/tests/5/schema",
                 "JsonSchemaTestSuiteDraft201909OptionalBignum",
                 "FloatComparisonWithHighPrecision",
                 validateFormat: false,
@@ -297,10 +319,9 @@ public class SuiteFloatComparisonWithHighPrecision
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -310,20 +331,30 @@ public class SuiteFloatComparisonWithHighPrecision
 public class SuiteFloatComparisonWithHighPrecisionOnNegativeNumbers
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
+    }
+
+    [TestMethod]
+    public void TestAboveTheExclusiveMinimumIsValid()
+    {
+        using var doc = JsonDocument.Parse("-972783798187987123879878123.188781369");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
     [TestMethod]
@@ -334,7 +365,7 @@ public class SuiteFloatComparisonWithHighPrecisionOnNegativeNumbers
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -344,8 +375,8 @@ public class SuiteFloatComparisonWithHighPrecisionOnNegativeNumbers
         {
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\bignum.json",
-                "#/6/schema",
+                "optional/bignum.json",
+                "#/tests/8/schema",
                 "JsonSchemaTestSuiteDraft201909OptionalBignum",
                 "FloatComparisonWithHighPrecisionOnNegativeNumbers",
                 validateFormat: false,
@@ -353,10 +384,212 @@ public class SuiteFloatComparisonWithHighPrecisionOnNegativeNumbers
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteEnumComparisonWithHighPrecision
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestTheExactDecimalIsValid()
+    {
+        using var doc = JsonDocument.Parse("0.123456789123456789");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestASlightlySmallerDecimalIsInvalid()
+    {
+        using var doc = JsonDocument.Parse("0.123456789123456788");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestASlightlyLargerDecimalIsInvalid()
+    {
+        using var doc = JsonDocument.Parse("0.123456789123456790");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft201909Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "optional/bignum.json",
+                "#/tests/9/schema",
+                "JsonSchemaTestSuiteDraft201909OptionalBignum",
+                "EnumComparisonWithHighPrecision",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false);
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteConstComparisonWithHighPrecision
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestTheExactDecimalIsValid()
+    {
+        using var doc = JsonDocument.Parse("0.123456789123456789");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestASlightlySmallerDecimalIsInvalid()
+    {
+        using var doc = JsonDocument.Parse("0.123456789123456788");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestASlightlyLargerDecimalIsInvalid()
+    {
+        using var doc = JsonDocument.Parse("0.123456789123456790");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft201909Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "optional/bignum.json",
+                "#/tests/10/schema",
+                "JsonSchemaTestSuiteDraft201909OptionalBignum",
+                "ConstComparisonWithHighPrecision",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false);
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteAllIntegersAreMultiplesOf05IfOverflowIsHandled
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestValidIfOptionalOverflowHandlingIsImplemented()
+    {
+        using var doc = JsonDocument.Parse("1e308");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft201909Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "optional/bignum.json",
+                "#/tests/11/schema",
+                "JsonSchemaTestSuiteDraft201909OptionalBignum",
+                "AllIntegersAreMultiplesOf05IfOverflowIsHandled",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false);
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
         }
     }
 }

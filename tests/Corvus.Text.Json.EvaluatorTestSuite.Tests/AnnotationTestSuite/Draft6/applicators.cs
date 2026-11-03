@@ -102,7 +102,7 @@ public class SuitePropertiesPatternPropertiesAndAdditionalProperties
                 "annotations/applicators.json",
                 "{\n        \"properties\": {\n          \"foo\": {\n            \"title\": \"Foo\"\n          }\n        },\n        \"patternProperties\": {\n          \"^a\": {\n            \"title\": \"Bar\"\n          }\n        },\n        \"additionalProperties\": {\n          \"title\": \"Baz\"\n        }\n      }",
                 "AnnotationTestSuite.Draft6.Applicators",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -150,7 +150,7 @@ public class SuitePropertyNamesDoesnTAnnotatePropertyValues
                 "annotations/applicators.json",
                 "{\n        \"propertyNames\": {\n          \"const\": \"foo\",\n          \"title\": \"Foo\"\n        }\n      }",
                 "AnnotationTestSuite.Draft6.Applicators",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -231,7 +231,7 @@ public class SuiteContains
                 "annotations/applicators.json",
                 "{\n        \"contains\": {\n          \"type\": \"number\",\n          \"title\": \"Foo\"\n        }\n      }",
                 "AnnotationTestSuite.Draft6.Applicators",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -279,7 +279,7 @@ public class SuiteAllOf
                 "annotations/applicators.json",
                 "{\n        \"allOf\": [\n          {\n            \"title\": \"Foo\"\n          },\n          {\n            \"title\": \"Bar\"\n          }\n        ]\n      }",
                 "AnnotationTestSuite.Draft6.Applicators",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -338,7 +338,7 @@ public class SuiteAnyOf
                 "annotations/applicators.json",
                 "{\n        \"anyOf\": [\n          {\n            \"type\": \"integer\",\n            \"title\": \"Foo\"\n          },\n          {\n            \"type\": \"number\",\n            \"title\": \"Bar\"\n          }\n        ]\n      }",
                 "AnnotationTestSuite.Draft6.Applicators",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -397,7 +397,7 @@ public class SuiteOneOf
                 "annotations/applicators.json",
                 "{\n        \"oneOf\": [\n          {\n            \"type\": \"string\",\n            \"title\": \"Foo\"\n          },\n          {\n            \"type\": \"number\",\n            \"title\": \"Bar\"\n          }\n        ]\n      }",
                 "AnnotationTestSuite.Draft6.Applicators",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -445,7 +445,7 @@ public class SuiteNot
                 "annotations/applicators.json",
                 "{\n        \"title\": \"Foo\",\n        \"not\": {\n          \"not\": {\n            \"title\": \"Bar\"\n          }\n        }\n      }",
                 "AnnotationTestSuite.Draft6.Applicators",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

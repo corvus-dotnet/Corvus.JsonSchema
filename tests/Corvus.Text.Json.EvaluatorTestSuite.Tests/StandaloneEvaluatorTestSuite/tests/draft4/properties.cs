@@ -28,28 +28,28 @@ public class SuiteObjectPropertiesValidation
     [TestMethod]
     public void TestBothPropertiesPresentAndValidIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"bar\": \"baz\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1, \"bar\": \"baz\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestOnePropertyInvalidIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"bar\": {}}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1, \"bar\": {} }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestBothPropertiesInvalidIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": [], \"bar\": {}}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": [], \"bar\": {} }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestDoesnTInvalidateOtherProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"quux\": []}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"quux\": [] }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -75,9 +75,9 @@ public class SuiteObjectPropertiesValidation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/properties.json",
-                "{\n            \"properties\": {\n                \"foo\": {\"type\": \"integer\"},\n                \"bar\": {\"type\": \"string\"}\n            }\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": { \"type\": \"integer\" },\n                    \"bar\": { \"type\": \"string\" }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Properties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -107,56 +107,56 @@ public class SuitePropertiesPatternPropertiesAdditionalPropertiesInteraction
     [TestMethod]
     public void TestPropertyValidatesProperty()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": [1, 2]}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": [1, 2] }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestPropertyInvalidatesProperty()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": [1, 2, 3, 4]}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": [1, 2, 3, 4] }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestPatternPropertyInvalidatesProperty()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": []}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": [] }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestPatternPropertyValidatesNonproperty()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"fxo\": [1, 2]}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"fxo\": [1, 2] }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestPatternPropertyInvalidatesNonproperty()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"fxo\": []}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"fxo\": [] }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestAdditionalPropertyIgnoresProperty()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": []}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": [] }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestAdditionalPropertyValidatesOthers()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"quux\": 3}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"quux\": 3 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestAdditionalPropertyInvalidatesOthers()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"quux\": \"foo\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"quux\": \"foo\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -168,9 +168,9 @@ public class SuitePropertiesPatternPropertiesAdditionalPropertiesInteraction
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/properties.json",
-                "{\n            \"properties\": {\n                \"foo\": {\"type\": \"array\", \"maxItems\": 3},\n                \"bar\": {\"type\": \"array\"}\n            },\n            \"patternProperties\": {\"f.o\": {\"minItems\": 2}},\n            \"additionalProperties\": {\"type\": \"integer\"}\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": { \"type\": \"array\", \"maxItems\": 3 },\n                    \"bar\": { \"type\": \"array\" }\n                },\n                \"patternProperties\": { \"f.o\": { \"minItems\": 2 } },\n                \"additionalProperties\": { \"type\": \"integer\" }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Properties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -200,14 +200,14 @@ public class SuitePropertiesWithEscapedCharacters
     [TestMethod]
     public void TestObjectWithAllNumbersIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\\nbar\": 1,\n                    \"foo\\\"bar\": 1,\n                    \"foo\\\\bar\": 1,\n                    \"foo\\rbar\": 1,\n                    \"foo\\tbar\": 1,\n                    \"foo\\fbar\": 1\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                        \"foo\\nbar\": 1,\n                        \"foo\\\"bar\": 1,\n                        \"foo\\\\bar\": 1,\n                        \"foo\\rbar\": 1,\n                        \"foo\\tbar\": 1,\n                        \"foo\\fbar\": 1\n                    }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestObjectWithStringsIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\\nbar\": \"1\",\n                    \"foo\\\"bar\": \"1\",\n                    \"foo\\\\bar\": \"1\",\n                    \"foo\\rbar\": \"1\",\n                    \"foo\\tbar\": \"1\",\n                    \"foo\\fbar\": \"1\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                        \"foo\\nbar\": \"1\",\n                        \"foo\\\"bar\": \"1\",\n                        \"foo\\\\bar\": \"1\",\n                        \"foo\\rbar\": \"1\",\n                        \"foo\\tbar\": \"1\",\n                        \"foo\\fbar\": \"1\"\n                    }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -219,9 +219,9 @@ public class SuitePropertiesWithEscapedCharacters
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/properties.json",
-                "{\n            \"properties\": {\n                \"foo\\nbar\": {\"type\": \"number\"},\n                \"foo\\\"bar\": {\"type\": \"number\"},\n                \"foo\\\\bar\": {\"type\": \"number\"},\n                \"foo\\rbar\": {\"type\": \"number\"},\n                \"foo\\tbar\": {\"type\": \"number\"},\n                \"foo\\fbar\": {\"type\": \"number\"}\n            }\n        }",
+                "{\n                \"properties\": {\n                    \"foo\\nbar\": { \"type\": \"number\" },\n                    \"foo\\\"bar\": { \"type\": \"number\" },\n                    \"foo\\\\bar\": { \"type\": \"number\" },\n                    \"foo\\rbar\": { \"type\": \"number\" },\n                    \"foo\\tbar\": { \"type\": \"number\" },\n                    \"foo\\fbar\": { \"type\": \"number\" }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Properties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -251,7 +251,7 @@ public class SuitePropertiesWithNullValuedInstanceProperties
     [TestMethod]
     public void TestAllowsNullValues()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": null}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": null }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -263,9 +263,9 @@ public class SuitePropertiesWithNullValuedInstanceProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/properties.json",
-                "{\n            \"properties\": {\n                \"foo\": {\"type\": \"null\"}\n            }\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": { \"type\": \"null\" }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Properties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -337,7 +337,7 @@ public class SuitePropertiesWhoseNamesAreJavascriptObjectPropertyNames
     [TestMethod]
     public void TestAllPresentAndValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \n                    \"__proto__\": 12,\n                    \"toString\": { \"length\": \"foo\" },\n                    \"constructor\": 37\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                        \"__proto__\": 12,\n                        \"toString\": { \"length\": \"foo\" },\n                        \"constructor\": 37\n                    }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -349,9 +349,9 @@ public class SuitePropertiesWhoseNamesAreJavascriptObjectPropertyNames
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/properties.json",
-                "{\n            \"properties\": {\n                \"__proto__\": {\"type\": \"number\"},\n                \"toString\": {\n                    \"properties\": { \"length\": { \"type\": \"string\" } }\n                },\n                \"constructor\": {\"type\": \"number\"}\n            }\n        }",
+                "{\n                \"properties\": {\n                    \"__proto__\": { \"type\": \"number\" },\n                    \"toString\": {\n                        \"properties\": { \"length\": { \"type\": \"string\" } }\n                    },\n                    \"constructor\": { \"type\": \"number\" }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Properties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

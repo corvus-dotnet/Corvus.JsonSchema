@@ -17,38 +17,29 @@ public class ImageSuiteTests
 
     public static IEnumerable<object[]> OptionalFiles() => JsonSchemaTestSuiteTests.OptionalFiles();
 
-    public static IEnumerable<object[]> FormatFiles() => JsonSchemaTestSuiteTests.FormatFiles();
-
     public static string DisplayName(System.Reflection.MethodInfo method, object[] data) => $"{data[0]}/{data[1]}";
 
     [TestMethod]
     [DynamicData(nameof(RequiredFiles), DynamicDataDisplayName = nameof(DisplayName))]
-    public void Required(string draft, string name, string file)
+    public void Required(string draft, string file)
     {
-        AssertFile(file, draft, assertFormat: false);
+        AssertFile(file, draft);
     }
 
     [TestMethod]
     [DynamicData(nameof(OptionalFiles), DynamicDataDisplayName = nameof(DisplayName))]
-    public void Optional(string draft, string name, string file)
+    public void Optional(string draft, string file)
     {
-        AssertFile(file, draft, assertFormat: false);
+        AssertFile(file, draft);
     }
 
-    [TestMethod]
-    [DynamicData(nameof(FormatFiles), DynamicDataDisplayName = nameof(DisplayName))]
-    public void Format(string draft, string name, string file)
+    private static void AssertFile(string file, string draft)
     {
-        AssertFile(file, draft, assertFormat: true);
-    }
-
-    private static void AssertFile(string file, string draft, bool assertFormat)
-    {
-        List<SuiteRunner.CaseResult> results = SuiteRunner.RunFile(file, draft, assertFormat, throughImage: true);
-        List<SuiteRunner.CaseResult> failures = results.Where(r => !r.Passed).ToList();
+        List<SuiteRunner.CaseResult> results = SuiteRunner.RunFile(file, draft, throughImage: true);
+        List<SuiteRunner.CaseResult> failures = SuiteRunner.Failures(results);
         if (failures.Count > 0)
         {
-            Assert.Fail($"{failures.Count}/{results.Count} cases failed in {Path.GetFileName(file)} (through image):\n{SuiteRunner.Describe(failures)}");
+            Assert.Fail($"{failures.Count}/{results.Count} cases failed in {file} (through image):\n{SuiteRunner.Describe(failures)}");
         }
     }
 }

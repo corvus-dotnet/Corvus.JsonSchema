@@ -82,9 +82,9 @@ public class SuiteProperUtf16SurrogatePairHandlingPattern
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/optional/non-bmp-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"pattern\": \"^🐲*$\"\n        }",
+                "{\n                \"pattern\": \"^🐲*$\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Optional.NonBmpRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -154,9 +154,9 @@ public class SuiteProperUtf16SurrogatePairHandlingPatternProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/optional/non-bmp-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"patternProperties\": {\n                \"^🐲*$\": {\n                    \"type\": \"integer\"\n                }\n            }\n        }",
+                "{\n                \"patternProperties\": {\n                    \"^🐲*$\": { \"type\": \"integer\" }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Optional.NonBmpRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

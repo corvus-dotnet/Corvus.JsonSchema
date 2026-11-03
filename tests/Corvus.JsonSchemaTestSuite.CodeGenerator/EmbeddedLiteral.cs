@@ -28,3 +28,19 @@ internal static class EmbeddedLiteral
     /// <returns>The path with forward slashes.</returns>
     public static string ForwardSlash(string path) => path.Replace('\\', '/');
 }
+
+/// <summary>
+/// Helpers for conditionally emitting generated source lines.
+/// </summary>
+internal static class StringBuilderExtensions
+{
+    /// <summary>
+    /// Appends a line only when the condition holds.
+    /// </summary>
+    /// <param name="builder">The builder.</param>
+    /// <param name="condition">Whether to append the line.</param>
+    /// <param name="line">Produces the line to append.</param>
+    /// <returns>The builder.</returns>
+    public static System.Text.StringBuilder AppendLineIf(this System.Text.StringBuilder builder, bool condition, Func<string> line)
+        => condition ? builder.AppendLine(line()) : builder;
+}

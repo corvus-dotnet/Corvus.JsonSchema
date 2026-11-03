@@ -34,21 +34,21 @@ public class SuiteSingleDependency
     [TestMethod]
     public void TestNondependant()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithDependency()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1, \"bar\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1, \"bar\": 2 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestMissingDependency()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"bar\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"bar\": 2 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -81,9 +81,9 @@ public class SuiteSingleDependency
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/optional/dependencies-compatibility.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"dependencies\": {\"bar\": [\"foo\"]}\n        }",
+                "{\n                \"dependencies\": { \"bar\": [\"foo\"] }\n            }",
                 "JsonSchemaTestSuite.Draft201909.Optional.DependenciesCompatibility",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -123,7 +123,7 @@ public class SuiteEmptyDependents
     [TestMethod]
     public void TestObjectWithOneProperty()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"bar\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"bar\": 2 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -142,9 +142,9 @@ public class SuiteEmptyDependents
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/optional/dependencies-compatibility.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"dependencies\": {\"bar\": []}\n        }",
+                "{\n                \"dependencies\": { \"bar\": [] }\n            }",
                 "JsonSchemaTestSuite.Draft201909.Optional.DependenciesCompatibility",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -184,35 +184,35 @@ public class SuiteMultipleDependentsRequired
     [TestMethod]
     public void TestNondependants()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1, \"bar\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1, \"bar\": 2 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWithDependencies()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1, \"bar\": 2, \"quux\": 3}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1, \"bar\": 2, \"quux\": 3 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestMissingDependency()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1, \"quux\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1, \"quux\": 2 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestMissingOtherDependency()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"bar\": 1, \"quux\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"bar\": 1, \"quux\": 2 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestMissingBothDependencies()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"quux\": 1}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"quux\": 1 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -224,9 +224,9 @@ public class SuiteMultipleDependentsRequired
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/optional/dependencies-compatibility.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"dependencies\": {\"quux\": [\"foo\", \"bar\"]}\n        }",
+                "{\n                \"dependencies\": { \"quux\": [\"foo\", \"bar\"] }\n            }",
                 "JsonSchemaTestSuite.Draft201909.Optional.DependenciesCompatibility",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -259,28 +259,28 @@ public class SuiteDependenciesWithEscapedCharacters
     [TestMethod]
     public void TestCrlf()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\\nbar\": 1,\n                    \"foo\\rbar\": 2\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\\nbar\": 1, \"foo\\rbar\": 2 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestQuotedQuotes()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo'bar\": 1,\n                    \"foo\\\"bar\": 2\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo'bar\": 1, \"foo\\\"bar\": 2 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestCrlfMissingDependent()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\\nbar\": 1,\n                    \"foo\": 2\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\\nbar\": 1, \"foo\": 2 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestQuotedQuotesMissingDependent()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\\\"bar\": 2\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\\\"bar\": 2 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -292,9 +292,9 @@ public class SuiteDependenciesWithEscapedCharacters
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/optional/dependencies-compatibility.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"dependencies\": {\n                \"foo\\nbar\": [\"foo\\rbar\"],\n                \"foo\\\"bar\": [\"foo'bar\"]\n            }\n        }",
+                "{\n                \"dependencies\": {\n                    \"foo\\nbar\": [\"foo\\rbar\"],\n                    \"foo\\\"bar\": [\"foo'bar\"]\n                }\n            }",
                 "JsonSchemaTestSuite.Draft201909.Optional.DependenciesCompatibility",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -327,35 +327,35 @@ public class SuiteSingleSchemaDependency
     [TestMethod]
     public void TestValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1, \"bar\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1, \"bar\": 2 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestNoDependency()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": \"quux\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"quux\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWrongType()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": \"quux\", \"bar\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"quux\", \"bar\": 2 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWrongTypeOther()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 2, \"bar\": \"quux\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 2, \"bar\": \"quux\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWrongTypeBoth()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": \"quux\", \"bar\": \"quux\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"quux\", \"bar\": \"quux\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -388,9 +388,9 @@ public class SuiteSingleSchemaDependency
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/optional/dependencies-compatibility.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"dependencies\": {\n                \"bar\": {\n                    \"properties\": {\n                        \"foo\": {\"type\": \"integer\"},\n                        \"bar\": {\"type\": \"integer\"}\n                    }\n                }\n            }\n        }",
+                "{\n                \"dependencies\": {\n                    \"bar\": {\n                        \"properties\": {\n                            \"foo\": { \"type\": \"integer\" },\n                            \"bar\": { \"type\": \"integer\" }\n                        }\n                    }\n                }\n            }",
                 "JsonSchemaTestSuite.Draft201909.Optional.DependenciesCompatibility",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -423,21 +423,21 @@ public class SuiteBooleanSubschemas
     [TestMethod]
     public void TestObjectWithPropertyHavingSchemaTrueIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestObjectWithPropertyHavingSchemaFalseIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"bar\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"bar\": 2 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestObjectWithBothPropertiesIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1, \"bar\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1, \"bar\": 2 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -456,9 +456,9 @@ public class SuiteBooleanSubschemas
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/optional/dependencies-compatibility.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"dependencies\": {\n                \"foo\": true,\n                \"bar\": false\n            }\n        }",
+                "{\n                \"dependencies\": {\n                    \"foo\": true,\n                    \"bar\": false\n                }\n            }",
                 "JsonSchemaTestSuite.Draft201909.Optional.DependenciesCompatibility",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -491,28 +491,28 @@ public class SuiteSchemaDependenciesWithEscapedCharacters
     [TestMethod]
     public void TestQuotedTab()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\\tbar\": 1,\n                    \"a\": 2,\n                    \"b\": 3,\n                    \"c\": 4\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                        \"foo\\tbar\": 1,\n                        \"a\": 2,\n                        \"b\": 3,\n                        \"c\": 4\n                    }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestQuotedQuote()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo'bar\": {\"foo\\\"bar\": 1}\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo'bar\": { \"foo\\\"bar\": 1 } }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestQuotedTabInvalidUnderDependentSchema()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\\tbar\": 1,\n                    \"a\": 2\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\\tbar\": 1, \"a\": 2 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestQuotedQuoteInvalidUnderDependentSchema()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo'bar\": 1}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo'bar\": 1 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -524,9 +524,9 @@ public class SuiteSchemaDependenciesWithEscapedCharacters
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/optional/dependencies-compatibility.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"dependencies\": {\n                \"foo\\tbar\": {\"minProperties\": 4},\n                \"foo'bar\": {\"required\": [\"foo\\\"bar\"]}\n            }\n        }",
+                "{\n                \"dependencies\": {\n                    \"foo\\tbar\": { \"minProperties\": 4 },\n                    \"foo'bar\": { \"required\": [\"foo\\\"bar\"] }\n                }\n            }",
                 "JsonSchemaTestSuite.Draft201909.Optional.DependenciesCompatibility",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,

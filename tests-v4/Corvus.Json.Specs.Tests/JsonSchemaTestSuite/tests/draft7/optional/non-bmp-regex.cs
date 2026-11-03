@@ -14,19 +14,21 @@ namespace JsonSchemaTestSuite.Draft7.Optional.NonBmpRegex;
 public class SuiteProperUTF16SurrogatePairHandlingPattern
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -86,7 +88,7 @@ public class SuiteProperUTF16SurrogatePairHandlingPattern
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -96,8 +98,8 @@ public class SuiteProperUTF16SurrogatePairHandlingPattern
         {
             _driver = DriverFactory.CreateDraft7Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\non-bmp-regex.json",
-                "#/0/schema",
+                "optional/non-bmp-regex.json",
+                "#/tests/0/schema",
                 "JsonSchemaTestSuiteDraft7OptionalNonBmpRegex",
                 "ProperUTF16SurrogatePairHandlingPattern",
                 validateFormat: false,
@@ -105,10 +107,9 @@ public class SuiteProperUTF16SurrogatePairHandlingPattern
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -118,19 +119,21 @@ public class SuiteProperUTF16SurrogatePairHandlingPattern
 public class SuiteProperUTF16SurrogatePairHandlingPatternProperties
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -174,7 +177,7 @@ public class SuiteProperUTF16SurrogatePairHandlingPatternProperties
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -184,8 +187,8 @@ public class SuiteProperUTF16SurrogatePairHandlingPatternProperties
         {
             _driver = DriverFactory.CreateDraft7Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\non-bmp-regex.json",
-                "#/1/schema",
+                "optional/non-bmp-regex.json",
+                "#/tests/1/schema",
                 "JsonSchemaTestSuiteDraft7OptionalNonBmpRegex",
                 "ProperUTF16SurrogatePairHandlingPatternProperties",
                 validateFormat: false,
@@ -193,10 +196,9 @@ public class SuiteProperUTF16SurrogatePairHandlingPatternProperties
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

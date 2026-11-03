@@ -28,35 +28,35 @@ public class SuiteSingleDependency
     [TestMethod]
     public void TestValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"bar\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1, \"bar\": 2 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestNoDependency()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"quux\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"quux\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWrongType()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"quux\", \"bar\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"quux\", \"bar\": 2 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWrongTypeOther()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 2, \"bar\": \"quux\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 2, \"bar\": \"quux\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWrongTypeBoth()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"quux\", \"bar\": \"quux\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"quux\", \"bar\": \"quux\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -89,9 +89,9 @@ public class SuiteSingleDependency
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/dependentSchemas.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"dependentSchemas\": {\n                \"bar\": {\n                    \"properties\": {\n                        \"foo\": {\"type\": \"integer\"},\n                        \"bar\": {\"type\": \"integer\"}\n                    }\n                }\n            }\n        }",
+                "{\n                \"dependentSchemas\": {\n                    \"bar\": {\n                        \"properties\": {\n                            \"foo\": { \"type\": \"integer\" },\n                            \"bar\": { \"type\": \"integer\" }\n                        }\n                    }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.DependentSchemas",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -121,21 +121,21 @@ public class SuiteBooleanSubschemas
     [TestMethod]
     public void TestObjectWithPropertyHavingSchemaTrueIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestObjectWithPropertyHavingSchemaFalseIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": 2 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestObjectWithBothPropertiesIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"bar\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1, \"bar\": 2 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -154,9 +154,9 @@ public class SuiteBooleanSubschemas
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/dependentSchemas.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"dependentSchemas\": {\n                \"foo\": true,\n                \"bar\": false\n            }\n        }",
+                "{\n                \"dependentSchemas\": {\n                    \"foo\": true,\n                    \"bar\": false\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.DependentSchemas",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -166,7 +166,7 @@ public class SuiteBooleanSubschemas
 
 [TestCategory("Draft201909")]
 [TestClass]
-public class SuiteDependenciesWithEscapedCharacters
+public class SuiteDependentsWithEscapedCharacters
 {
     private static Fixture? s_fixture;
 
@@ -186,28 +186,28 @@ public class SuiteDependenciesWithEscapedCharacters
     [TestMethod]
     public void TestQuotedTab()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\\tbar\": 1,\n                    \"a\": 2,\n                    \"b\": 3,\n                    \"c\": 4\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\\tbar\": 1, \"a\": 2, \"b\": 3, \"c\": 4 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestQuotedQuote()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo'bar\": {\"foo\\\"bar\": 1}\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo'bar\": { \"foo\\\"bar\": 1 } }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestQuotedTabInvalidUnderDependentSchema()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\\tbar\": 1,\n                    \"a\": 2\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\\tbar\": 1, \"a\": 2 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestQuotedQuoteInvalidUnderDependentSchema()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo'bar\": 1}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo'bar\": 1 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -219,9 +219,9 @@ public class SuiteDependenciesWithEscapedCharacters
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/dependentSchemas.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"dependentSchemas\": {\n                \"foo\\tbar\": {\"minProperties\": 4},\n                \"foo'bar\": {\"required\": [\"foo\\\"bar\"]}\n            }\n        }",
+                "{\n                \"dependentSchemas\": {\n                    \"foo\\tbar\": { \"minProperties\": 4 },\n                    \"foo'bar\": { \"required\": [\"foo\\\"bar\"] }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.DependentSchemas",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -251,28 +251,28 @@ public class SuiteDependentSubschemaIncompatibleWithRoot
     [TestMethod]
     public void TestMatchesRoot()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestMatchesDependency()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": 1}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": 1}");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestMatchesBoth()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"bar\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1, \"bar\": 2 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestNoDependency()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"baz\": 1}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"baz\": 1 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -284,9 +284,9 @@ public class SuiteDependentSubschemaIncompatibleWithRoot
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/dependentSchemas.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\n                \"foo\": {}\n            },\n            \"dependentSchemas\": {\n                \"foo\": {\n                    \"properties\": {\n                        \"bar\": {}\n                    },\n                    \"additionalProperties\": false\n                }\n            }\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": {}\n                },\n                \"dependentSchemas\": {\n                    \"foo\": {\n                        \"properties\": {\n                            \"bar\": {}\n                        },\n                        \"additionalProperties\": false\n                    }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.DependentSchemas",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

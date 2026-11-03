@@ -60,9 +60,9 @@ public class SuiteMaxItemsValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/maxItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"maxItems\": 2\n        }",
+                "{ \"maxItems\": 2 }",
                 "JsonSchemaTestSuite.Draft202012.MaxItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -114,9 +114,9 @@ public class SuiteMaxItemsValidationWithADecimal
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/maxItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"maxItems\": 2.0\n        }",
+                "{ \"maxItems\": 2.0 }",
                 "JsonSchemaTestSuite.Draft202012.MaxItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,

@@ -61,9 +61,9 @@ public class SuiteOneOf
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/oneOf.json",
-                "{\n            \"oneOf\": [\n                {\n                    \"type\": \"integer\"\n                },\n                {\n                    \"minimum\": 2\n                }\n            ]\n        }",
+                "{\n                \"oneOf\": [\n                    { \"type\": \"integer\" },\n                    { \"minimum\": 2 }\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.OneOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -119,9 +119,9 @@ public class SuiteOneOfWithBaseSchema
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/oneOf.json",
-                "{\n            \"type\": \"string\",\n            \"oneOf\" : [\n                {\n                    \"minLength\": 2\n                },\n                {\n                    \"maxLength\": 4\n                }\n            ]\n        }",
+                "{\n                \"type\": \"string\",\n                \"oneOf\" : [\n                    { \"minLength\": 2 },\n                    { \"maxLength\": 4 }\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.OneOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -151,28 +151,28 @@ public class SuiteOneOfComplexTypes
     [TestMethod]
     public void TestFirstOneOfValidComplex()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": 2 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestSecondOneOfValidComplex()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"baz\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"baz\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestBothOneOfValidComplex()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"baz\", \"bar\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"baz\", \"bar\": 2 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestNeitherOneOfValidComplex()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 2, \"bar\": \"quux\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 2, \"bar\": \"quux\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -184,9 +184,9 @@ public class SuiteOneOfComplexTypes
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/oneOf.json",
-                "{\n            \"oneOf\": [\n                {\n                    \"properties\": {\n                        \"bar\": {\"type\": \"integer\"}\n                    },\n                    \"required\": [\"bar\"]\n                },\n                {\n                    \"properties\": {\n                        \"foo\": {\"type\": \"string\"}\n                    },\n                    \"required\": [\"foo\"]\n                }\n            ]\n        }",
+                "{\n                \"oneOf\": [\n                    {\n                        \"properties\": {\n                            \"bar\": { \"type\": \"integer\" }\n                        },\n                        \"required\": [\"bar\"]\n                    },\n                    {\n                        \"properties\": {\n                            \"foo\": { \"type\": \"string\" }\n                        },\n                        \"required\": [\"foo\"]\n                    }\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.OneOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -235,9 +235,9 @@ public class SuiteOneOfWithEmptySchema
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/oneOf.json",
-                "{\n            \"oneOf\": [\n                { \"type\": \"number\" },\n                {}\n            ]\n        }",
+                "{\n                \"oneOf\": [\n                    { \"type\": \"number\" },\n                    {}\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.OneOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -267,28 +267,28 @@ public class SuiteOneOfWithRequired
     [TestMethod]
     public void TestBothInvalidInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": 2 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestFirstValidValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"bar\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1, \"bar\": 2 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestSecondValidValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"baz\": 3}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1, \"baz\": 3 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestBothValidInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"bar\": 2, \"baz\" : 3}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1, \"bar\": 2, \"baz\" : 3 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -300,9 +300,9 @@ public class SuiteOneOfWithRequired
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/oneOf.json",
-                "{\n            \"type\": \"object\",\n            \"oneOf\": [\n                { \"required\": [\"foo\", \"bar\"] },\n                { \"required\": [\"foo\", \"baz\"] }\n            ]\n        }",
+                "{\n                \"type\": \"object\",\n                \"oneOf\": [\n                    { \"required\": [\"foo\", \"bar\"] },\n                    { \"required\": [\"foo\", \"baz\"] }\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.OneOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -332,28 +332,28 @@ public class SuiteOneOfWithMissingOptionalProperty
     [TestMethod]
     public void TestFirstOneOfValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": 8}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": 8 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestSecondOneOfValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"foo\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestBothOneOfValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"foo\", \"bar\": 8}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": 8 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestNeitherOneOfValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"baz\": \"quux\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"baz\": \"quux\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -365,9 +365,9 @@ public class SuiteOneOfWithMissingOptionalProperty
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/oneOf.json",
-                "{\n            \"oneOf\": [\n                {\n                    \"properties\": {\n                        \"bar\": {},\n                        \"baz\": {}\n                    },\n                    \"required\": [\"bar\"]\n                },\n                {\n                    \"properties\": {\n                        \"foo\": {}\n                    },\n                    \"required\": [\"foo\"]\n                }\n            ]\n        }",
+                "{\n                \"oneOf\": [\n                    {\n                        \"properties\": {\n                            \"bar\": {},\n                            \"baz\": {}\n                        },\n                        \"required\": [\"bar\"]\n                    },\n                    {\n                        \"properties\": {\n                            \"foo\": {}\n                        },\n                        \"required\": [\"foo\"]\n                    }\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.OneOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -416,9 +416,9 @@ public class SuiteNestedOneOfToCheckValidationSemantics
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/oneOf.json",
-                "{\n            \"oneOf\": [\n                {\n                    \"oneOf\": [\n                        {\n                            \"type\": \"null\"\n                        }\n                    ]\n                }\n            ]\n        }",
+                "{\n                \"oneOf\": [\n                    {\n                        \"oneOf\": [{ \"type\": \"null\" }]\n                    }\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.OneOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

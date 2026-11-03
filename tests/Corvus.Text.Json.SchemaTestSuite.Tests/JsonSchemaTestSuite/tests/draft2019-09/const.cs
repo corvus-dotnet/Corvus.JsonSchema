@@ -53,9 +53,9 @@ public class SuiteConstValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/const.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"const\": 2\n        }",
+                "{ \"const\": 2 }",
                 "JsonSchemaTestSuite.Draft201909.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -88,21 +88,21 @@ public class SuiteConstWithObject
     [TestMethod]
     public void TestSameObjectIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": \"bar\", \"baz\": \"bax\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"bar\", \"baz\": \"bax\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestSameObjectWithDifferentPropertyOrderIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"baz\": \"bax\", \"foo\": \"bar\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"baz\": \"bax\", \"foo\": \"bar\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestAnotherObjectIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": \"bar\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"bar\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -121,9 +121,9 @@ public class SuiteConstWithObject
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/const.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"const\": {\"foo\": \"bar\", \"baz\": \"bax\"}\n        }",
+                "{\n                \"const\": { \"foo\": \"bar\", \"baz\": \"bax\" }\n            }",
                 "JsonSchemaTestSuite.Draft201909.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -156,7 +156,7 @@ public class SuiteConstWithArray
     [TestMethod]
     public void TestSameArrayIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{\"foo\": \"bar\"}]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{ \"foo\": \"bar\" }]");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -182,9 +182,9 @@ public class SuiteConstWithArray
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/const.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"const\": [{ \"foo\": \"bar\" }]\n        }",
+                "{\n                \"const\": [{ \"foo\": \"bar\" }]\n            }",
                 "JsonSchemaTestSuite.Draft201909.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -236,9 +236,9 @@ public class SuiteConstWithNull
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/const.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"const\": null\n        }",
+                "{ \"const\": null }",
                 "JsonSchemaTestSuite.Draft201909.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -297,9 +297,9 @@ public class SuiteConstWithFalseDoesNotMatch0
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/const.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"const\": false\n        }",
+                "{ \"const\": false }",
                 "JsonSchemaTestSuite.Draft201909.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -358,9 +358,9 @@ public class SuiteConstWithTrueDoesNotMatch1
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/const.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"const\": true\n        }",
+                "{ \"const\": true }",
                 "JsonSchemaTestSuite.Draft201909.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -419,9 +419,9 @@ public class SuiteConstWithFalseDoesNotMatch01
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/const.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"const\": [false]\n        }",
+                "{ \"const\": [false] }",
                 "JsonSchemaTestSuite.Draft201909.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -480,9 +480,9 @@ public class SuiteConstWithTrueDoesNotMatch11
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/const.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"const\": [true]\n        }",
+                "{ \"const\": [true] }",
                 "JsonSchemaTestSuite.Draft201909.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -515,21 +515,21 @@ public class SuiteConstWithAFalseDoesNotMatchA0
     [TestMethod]
     public void TestAFalseIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"a\": false}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"a\": false }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestA0IsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"a\": 0}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"a\": 0 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestA00IsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"a\": 0.0}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"a\": 0.0 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -541,9 +541,9 @@ public class SuiteConstWithAFalseDoesNotMatchA0
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/const.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"const\": {\"a\": false}\n        }",
+                "{\n                \"const\": { \"a\": false }\n            }",
                 "JsonSchemaTestSuite.Draft201909.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -576,21 +576,21 @@ public class SuiteConstWithATrueDoesNotMatchA1
     [TestMethod]
     public void TestATrueIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"a\": true}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"a\": true }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestA1IsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"a\": 1}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"a\": 1 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestA10IsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"a\": 1.0}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"a\": 1.0 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -602,9 +602,9 @@ public class SuiteConstWithATrueDoesNotMatchA1
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/const.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"const\": {\"a\": true}\n        }",
+                "{\n                \"const\": { \"a\": true }\n            }",
                 "JsonSchemaTestSuite.Draft201909.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -684,9 +684,9 @@ public class SuiteConstWith0DoesNotMatchOtherZeroLikeTypes
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/const.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"const\": 0\n        }",
+                "{ \"const\": 0 }",
                 "JsonSchemaTestSuite.Draft201909.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -745,9 +745,9 @@ public class SuiteConstWith1DoesNotMatchTrue
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/const.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"const\": 1\n        }",
+                "{ \"const\": 1 }",
                 "JsonSchemaTestSuite.Draft201909.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -820,9 +820,9 @@ public class SuiteConstWith20MatchesIntegerAndFloatTypes
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/const.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"const\": -2.0\n        }",
+                "{ \"const\": -2.0 }",
                 "JsonSchemaTestSuite.Draft201909.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -888,9 +888,9 @@ public class SuiteFloatAndIntegersAreEqualUpTo64BitRepresentationLimits
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/const.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"const\": 9007199254740992\n        }",
+                "{ \"const\": 9007199254740992 }",
                 "JsonSchemaTestSuite.Draft201909.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -942,9 +942,9 @@ public class SuiteNulCharactersInStrings
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/const.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"const\": \"hello\\u0000there\"\n        }",
+                "{ \"const\": \"hello\\u0000there\" }",
                 "JsonSchemaTestSuite.Draft201909.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -996,9 +996,9 @@ public class SuiteCharactersWithTheSameVisualRepresentationButDifferentCodepoint
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/const.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"const\": \"μ\",\n            \"$comment\": \"U+03BC\"\n        }",
+                "{\n                \"const\": \"μ\",\n                \"$comment\": \"U+03BC\"\n            }",
                 "JsonSchemaTestSuite.Draft201909.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1050,9 +1050,9 @@ public class SuiteCharactersWithTheSameVisualRepresentationButDifferentNumberOfC
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/const.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"const\": \"ä\",\n            \"$comment\": \"U+00E4\"\n        }",
+                "{\n                \"const\": \"ä\",\n                \"$comment\": \"U+00E4\"\n            }",
                 "JsonSchemaTestSuite.Draft201909.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,

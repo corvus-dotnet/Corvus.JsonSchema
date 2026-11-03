@@ -68,9 +68,9 @@ public class SuiteMaxLengthValidation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/maxLength.json",
-                "{\"maxLength\": 2}",
+                "{ \"maxLength\": 2 }",
                 "StandaloneEvaluatorTestSuite.Draft4.MaxLength",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

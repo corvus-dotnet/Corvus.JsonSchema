@@ -14,19 +14,21 @@ namespace JsonSchemaTestSuite.Draft202012.Optional.DependenciesCompatibility;
 public class SuiteSingleDependency
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -41,7 +43,7 @@ public class SuiteSingleDependency
     [TestMethod]
     public void TestNondependant()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 1}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 1 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -49,7 +51,7 @@ public class SuiteSingleDependency
     [TestMethod]
     public void TestWithDependency()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 1, \"bar\": 2}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 1, \"bar\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -57,7 +59,7 @@ public class SuiteSingleDependency
     [TestMethod]
     public void TestMissingDependency()
     {
-        using var doc = JsonDocument.Parse("{\"bar\": 2}");
+        using var doc = JsonDocument.Parse("{ \"bar\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -86,7 +88,7 @@ public class SuiteSingleDependency
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -96,8 +98,8 @@ public class SuiteSingleDependency
         {
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\dependencies-compatibility.json",
-                "#/0/schema",
+                "optional/dependencies-compatibility.json",
+                "#/tests/0/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalDependenciesCompatibility",
                 "SingleDependency",
                 validateFormat: false,
@@ -105,10 +107,9 @@ public class SuiteSingleDependency
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -118,19 +119,21 @@ public class SuiteSingleDependency
 public class SuiteEmptyDependents
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -145,7 +148,7 @@ public class SuiteEmptyDependents
     [TestMethod]
     public void TestObjectWithOneProperty()
     {
-        using var doc = JsonDocument.Parse("{\"bar\": 2}");
+        using var doc = JsonDocument.Parse("{ \"bar\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -158,7 +161,7 @@ public class SuiteEmptyDependents
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -168,8 +171,8 @@ public class SuiteEmptyDependents
         {
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\dependencies-compatibility.json",
-                "#/1/schema",
+                "optional/dependencies-compatibility.json",
+                "#/tests/1/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalDependenciesCompatibility",
                 "EmptyDependents",
                 validateFormat: false,
@@ -177,10 +180,9 @@ public class SuiteEmptyDependents
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -190,19 +192,21 @@ public class SuiteEmptyDependents
 public class SuiteMultipleDependentsRequired
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -217,7 +221,7 @@ public class SuiteMultipleDependentsRequired
     [TestMethod]
     public void TestNondependants()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 1, \"bar\": 2}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 1, \"bar\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -225,7 +229,7 @@ public class SuiteMultipleDependentsRequired
     [TestMethod]
     public void TestWithDependencies()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 1, \"bar\": 2, \"quux\": 3}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 1, \"bar\": 2, \"quux\": 3 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -233,7 +237,7 @@ public class SuiteMultipleDependentsRequired
     [TestMethod]
     public void TestMissingDependency()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 1, \"quux\": 2}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 1, \"quux\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -241,7 +245,7 @@ public class SuiteMultipleDependentsRequired
     [TestMethod]
     public void TestMissingOtherDependency()
     {
-        using var doc = JsonDocument.Parse("{\"bar\": 1, \"quux\": 2}");
+        using var doc = JsonDocument.Parse("{ \"bar\": 1, \"quux\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -249,12 +253,12 @@ public class SuiteMultipleDependentsRequired
     [TestMethod]
     public void TestMissingBothDependencies()
     {
-        using var doc = JsonDocument.Parse("{\"quux\": 1}");
+        using var doc = JsonDocument.Parse("{ \"quux\": 1 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -264,8 +268,8 @@ public class SuiteMultipleDependentsRequired
         {
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\dependencies-compatibility.json",
-                "#/2/schema",
+                "optional/dependencies-compatibility.json",
+                "#/tests/2/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalDependenciesCompatibility",
                 "MultipleDependentsRequired",
                 validateFormat: false,
@@ -273,10 +277,9 @@ public class SuiteMultipleDependentsRequired
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -286,26 +289,28 @@ public class SuiteMultipleDependentsRequired
 public class SuiteDependenciesWithEscapedCharacters
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestCRLF()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"foo\\nbar\": 1,\r\n                    \"foo\\rbar\": 2\r\n                }");
+        using var doc = JsonDocument.Parse("{ \"foo\\nbar\": 1, \"foo\\rbar\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -313,7 +318,7 @@ public class SuiteDependenciesWithEscapedCharacters
     [TestMethod]
     public void TestQuotedQuotes()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"foo'bar\": 1,\r\n                    \"foo\\\"bar\": 2\r\n                }");
+        using var doc = JsonDocument.Parse("{ \"foo'bar\": 1, \"foo\\\"bar\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -321,7 +326,7 @@ public class SuiteDependenciesWithEscapedCharacters
     [TestMethod]
     public void TestCRLFMissingDependent()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"foo\\nbar\": 1,\r\n                    \"foo\": 2\r\n                }");
+        using var doc = JsonDocument.Parse("{ \"foo\\nbar\": 1, \"foo\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -329,12 +334,12 @@ public class SuiteDependenciesWithEscapedCharacters
     [TestMethod]
     public void TestQuotedQuotesMissingDependent()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"foo\\\"bar\": 2\r\n                }");
+        using var doc = JsonDocument.Parse("{ \"foo\\\"bar\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -344,8 +349,8 @@ public class SuiteDependenciesWithEscapedCharacters
         {
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\dependencies-compatibility.json",
-                "#/3/schema",
+                "optional/dependencies-compatibility.json",
+                "#/tests/3/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalDependenciesCompatibility",
                 "DependenciesWithEscapedCharacters",
                 validateFormat: false,
@@ -353,10 +358,9 @@ public class SuiteDependenciesWithEscapedCharacters
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -366,26 +370,28 @@ public class SuiteDependenciesWithEscapedCharacters
 public class SuiteSingleSchemaDependency
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestValid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 1, \"bar\": 2}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 1, \"bar\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -393,7 +399,7 @@ public class SuiteSingleSchemaDependency
     [TestMethod]
     public void TestNoDependency()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": \"quux\"}");
+        using var doc = JsonDocument.Parse("{ \"foo\": \"quux\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -401,7 +407,7 @@ public class SuiteSingleSchemaDependency
     [TestMethod]
     public void TestWrongType()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": \"quux\", \"bar\": 2}");
+        using var doc = JsonDocument.Parse("{ \"foo\": \"quux\", \"bar\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -409,7 +415,7 @@ public class SuiteSingleSchemaDependency
     [TestMethod]
     public void TestWrongTypeOther()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 2, \"bar\": \"quux\"}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 2, \"bar\": \"quux\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -417,7 +423,7 @@ public class SuiteSingleSchemaDependency
     [TestMethod]
     public void TestWrongTypeBoth()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": \"quux\", \"bar\": \"quux\"}");
+        using var doc = JsonDocument.Parse("{ \"foo\": \"quux\", \"bar\": \"quux\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -446,7 +452,7 @@ public class SuiteSingleSchemaDependency
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -456,8 +462,8 @@ public class SuiteSingleSchemaDependency
         {
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\dependencies-compatibility.json",
-                "#/4/schema",
+                "optional/dependencies-compatibility.json",
+                "#/tests/4/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalDependenciesCompatibility",
                 "SingleSchemaDependency",
                 validateFormat: false,
@@ -465,10 +471,9 @@ public class SuiteSingleSchemaDependency
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -478,26 +483,28 @@ public class SuiteSingleSchemaDependency
 public class SuiteBooleanSubschemas
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestObjectWithPropertyHavingSchemaTrueIsValid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 1}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 1 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -505,7 +512,7 @@ public class SuiteBooleanSubschemas
     [TestMethod]
     public void TestObjectWithPropertyHavingSchemaFalseIsInvalid()
     {
-        using var doc = JsonDocument.Parse("{\"bar\": 2}");
+        using var doc = JsonDocument.Parse("{ \"bar\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -513,7 +520,7 @@ public class SuiteBooleanSubschemas
     [TestMethod]
     public void TestObjectWithBothPropertiesIsInvalid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 1, \"bar\": 2}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 1, \"bar\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -526,7 +533,7 @@ public class SuiteBooleanSubschemas
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -536,8 +543,8 @@ public class SuiteBooleanSubschemas
         {
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\dependencies-compatibility.json",
-                "#/5/schema",
+                "optional/dependencies-compatibility.json",
+                "#/tests/5/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalDependenciesCompatibility",
                 "BooleanSubschemas",
                 validateFormat: false,
@@ -545,10 +552,9 @@ public class SuiteBooleanSubschemas
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -558,26 +564,28 @@ public class SuiteBooleanSubschemas
 public class SuiteSchemaDependenciesWithEscapedCharacters
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestQuotedTab()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"foo\\tbar\": 1,\r\n                    \"a\": 2,\r\n                    \"b\": 3,\r\n                    \"c\": 4\r\n                }");
+        using var doc = JsonDocument.Parse("{\n                        \"foo\\tbar\": 1,\n                        \"a\": 2,\n                        \"b\": 3,\n                        \"c\": 4\n                    }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -585,7 +593,7 @@ public class SuiteSchemaDependenciesWithEscapedCharacters
     [TestMethod]
     public void TestQuotedQuote()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"foo'bar\": {\"foo\\\"bar\": 1}\r\n                }");
+        using var doc = JsonDocument.Parse("{ \"foo'bar\": { \"foo\\\"bar\": 1 } }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -593,7 +601,7 @@ public class SuiteSchemaDependenciesWithEscapedCharacters
     [TestMethod]
     public void TestQuotedTabInvalidUnderDependentSchema()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"foo\\tbar\": 1,\r\n                    \"a\": 2\r\n                }");
+        using var doc = JsonDocument.Parse("{ \"foo\\tbar\": 1, \"a\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -601,12 +609,12 @@ public class SuiteSchemaDependenciesWithEscapedCharacters
     [TestMethod]
     public void TestQuotedQuoteInvalidUnderDependentSchema()
     {
-        using var doc = JsonDocument.Parse("{\"foo'bar\": 1}");
+        using var doc = JsonDocument.Parse("{ \"foo'bar\": 1 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -616,8 +624,8 @@ public class SuiteSchemaDependenciesWithEscapedCharacters
         {
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\dependencies-compatibility.json",
-                "#/6/schema",
+                "optional/dependencies-compatibility.json",
+                "#/tests/6/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalDependenciesCompatibility",
                 "SchemaDependenciesWithEscapedCharacters",
                 validateFormat: false,
@@ -625,10 +633,9 @@ public class SuiteSchemaDependenciesWithEscapedCharacters
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

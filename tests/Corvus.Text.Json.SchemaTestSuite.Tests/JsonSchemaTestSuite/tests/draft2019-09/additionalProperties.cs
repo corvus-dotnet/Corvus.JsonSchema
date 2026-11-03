@@ -27,14 +27,14 @@ public class SuiteAdditionalPropertiesBeingFalseDoesNotAllowOtherProperties
     [TestMethod]
     public void TestNoAdditionalPropertiesIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestAnAdditionalPropertyIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\" : 1, \"bar\" : 2, \"quux\" : \"boom\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\" : 1, \"bar\" : 2, \"quux\" : \"boom\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -62,7 +62,7 @@ public class SuiteAdditionalPropertiesBeingFalseDoesNotAllowOtherProperties
     [TestMethod]
     public void TestPatternPropertiesAreNotAdditionalProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\":1, \"vroom\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\":1, \"vroom\": 2 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -74,9 +74,9 @@ public class SuiteAdditionalPropertiesBeingFalseDoesNotAllowOtherProperties
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/additionalProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\"foo\": {}, \"bar\": {}},\n            \"patternProperties\": { \"^v\": {} },\n            \"additionalProperties\": false\n        }",
+                "{\n                \"properties\": { \"foo\": {}, \"bar\": {} },\n                \"patternProperties\": { \"^v\": {} },\n                \"additionalProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.AdditionalProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -109,14 +109,14 @@ public class SuiteNonAsciiPatternWithAdditionalProperties
     [TestMethod]
     public void TestMatchingThePatternIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"ármányos\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"ármányos\": 2 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestNotMatchingThePatternIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"élmény\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"élmény\": 2 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -128,9 +128,9 @@ public class SuiteNonAsciiPatternWithAdditionalProperties
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/additionalProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"patternProperties\": {\"^á\": {}},\n            \"additionalProperties\": false\n        }",
+                "{\n                \"patternProperties\": { \"^á\": {} },\n                \"additionalProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.AdditionalProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -163,21 +163,21 @@ public class SuiteAdditionalPropertiesWithSchema
     [TestMethod]
     public void TestNoAdditionalPropertiesIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestAnAdditionalValidPropertyIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\" : 1, \"bar\" : 2, \"quux\" : true}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\" : 1, \"bar\" : 2, \"quux\" : true }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestAnAdditionalInvalidPropertyIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\" : 1, \"bar\" : 2, \"quux\" : 12}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\" : 1, \"bar\" : 2, \"quux\" : 12 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -189,9 +189,9 @@ public class SuiteAdditionalPropertiesWithSchema
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/additionalProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\"foo\": {}, \"bar\": {}},\n            \"additionalProperties\": {\"type\": \"boolean\"}\n        }",
+                "{\n                \"properties\": { \"foo\": {}, \"bar\": {} },\n                \"additionalProperties\": { \"type\": \"boolean\" }\n            }",
                 "JsonSchemaTestSuite.Draft201909.AdditionalProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -224,14 +224,14 @@ public class SuiteAdditionalPropertiesCanExistByItself
     [TestMethod]
     public void TestAnAdditionalValidPropertyIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\" : true}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\" : true }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestAnAdditionalInvalidPropertyIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\" : 1}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\" : 1 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -243,9 +243,9 @@ public class SuiteAdditionalPropertiesCanExistByItself
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/additionalProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"additionalProperties\": {\"type\": \"boolean\"}\n        }",
+                "{\n                \"additionalProperties\": { \"type\": \"boolean\" }\n            }",
                 "JsonSchemaTestSuite.Draft201909.AdditionalProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -278,7 +278,7 @@ public class SuiteAdditionalPropertiesAreAllowedByDefault
     [TestMethod]
     public void TestAdditionalPropertiesAreAllowed()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1, \"bar\": 2, \"quux\": true}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1, \"bar\": 2, \"quux\": true }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -290,9 +290,9 @@ public class SuiteAdditionalPropertiesAreAllowedByDefault
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/additionalProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\"foo\": {}, \"bar\": {}}\n        }",
+                "{\n                \"properties\": { \"foo\": {}, \"bar\": {} }\n            }",
                 "JsonSchemaTestSuite.Draft201909.AdditionalProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -325,7 +325,7 @@ public class SuiteAdditionalPropertiesDoesNotLookInApplicators
     [TestMethod]
     public void TestPropertiesDefinedInAllOfAreNotExamined()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1, \"bar\": true}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1, \"bar\": true }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -337,9 +337,9 @@ public class SuiteAdditionalPropertiesDoesNotLookInApplicators
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/additionalProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"allOf\": [\n                {\"properties\": {\"foo\": {}}}\n            ],\n            \"additionalProperties\": {\"type\": \"boolean\"}\n        }",
+                "{\n                \"allOf\": [\n                    { \"properties\": { \"foo\": {} } }\n                ],\n                \"additionalProperties\": { \"type\": \"boolean\" }\n            }",
                 "JsonSchemaTestSuite.Draft201909.AdditionalProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -372,7 +372,7 @@ public class SuiteAdditionalPropertiesWithNullValuedInstanceProperties
     [TestMethod]
     public void TestAllowsNullValues()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": null}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": null }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -384,9 +384,9 @@ public class SuiteAdditionalPropertiesWithNullValuedInstanceProperties
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/additionalProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"additionalProperties\": {\n                \"type\": \"null\"\n            }\n        }",
+                "{\n                \"additionalProperties\": { \"type\": \"null\" }\n            }",
                 "JsonSchemaTestSuite.Draft201909.AdditionalProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -438,9 +438,9 @@ public class SuiteAdditionalPropertiesWithPropertyNames
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/additionalProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"propertyNames\": {\n                \"maxLength\": 5\n            },\n            \"additionalProperties\": {\n                \"type\": \"number\"\n            }\n        }",
+                "{\n                \"propertyNames\": { \"maxLength\": 5 },\n                \"additionalProperties\": { \"type\": \"number\" }\n            }",
                 "JsonSchemaTestSuite.Draft201909.AdditionalProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -473,14 +473,14 @@ public class SuiteDependentSchemasWithAdditionalProperties
     [TestMethod]
     public void TestAdditionalPropertiesDoesnTConsiderDependentSchemas()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": \"\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestAdditionalPropertiesCanTSeeBar()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"bar\": \"\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"bar\": \"\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -499,9 +499,9 @@ public class SuiteDependentSchemasWithAdditionalProperties
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/additionalProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\"foo2\": {}},\n            \"dependentSchemas\": {\n                \"foo\" : {},\n                \"foo2\": {\n                    \"properties\": {\n                        \"bar\":{}\n                    }\n                }\n            },\n            \"additionalProperties\": false\n        }",
+                "{\n                \"properties\": { \"foo2\": {} },\n                \"dependentSchemas\": {\n                    \"foo\" : {},\n                    \"foo2\": {\n                        \"properties\": { \"bar\": {} }\n                    }\n                },\n                \"additionalProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft201909.AdditionalProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,

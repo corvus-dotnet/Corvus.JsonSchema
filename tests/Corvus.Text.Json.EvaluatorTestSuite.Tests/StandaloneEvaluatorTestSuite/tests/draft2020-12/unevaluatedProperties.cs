@@ -35,7 +35,7 @@ public class SuiteUnevaluatedPropertiesTrue
     [TestMethod]
     public void TestWithUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -47,9 +47,9 @@ public class SuiteUnevaluatedPropertiesTrue
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"unevaluatedProperties\": true\n        }",
+                "{\n                \"type\": \"object\",\n                \"unevaluatedProperties\": true\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -86,14 +86,14 @@ public class SuiteUnevaluatedPropertiesSchema
     [TestMethod]
     public void TestWithValidUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithInvalidUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"fo\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"fo\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -105,9 +105,9 @@ public class SuiteUnevaluatedPropertiesSchema
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"unevaluatedProperties\": {\n                \"type\": \"string\",\n                \"minLength\": 3\n            }\n        }",
+                "{\n                \"type\": \"object\",\n                \"unevaluatedProperties\": {\n                    \"type\": \"string\",\n                    \"minLength\": 3\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -144,7 +144,7 @@ public class SuiteUnevaluatedPropertiesFalse
     [TestMethod]
     public void TestWithUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -156,9 +156,9 @@ public class SuiteUnevaluatedPropertiesFalse
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -188,14 +188,14 @@ public class SuiteUnevaluatedPropertiesWithAdjacentProperties
     [TestMethod]
     public void TestWithNoUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -207,9 +207,9 @@ public class SuiteUnevaluatedPropertiesWithAdjacentProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -239,14 +239,14 @@ public class SuiteUnevaluatedPropertiesWithAdjacentPatternProperties
     [TestMethod]
     public void TestWithNoUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -258,9 +258,9 @@ public class SuiteUnevaluatedPropertiesWithAdjacentPatternProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"patternProperties\": {\n                \"^foo\": { \"type\": \"string\" }\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"patternProperties\": {\n                    \"^foo\": { \"type\": \"string\" }\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -290,14 +290,14 @@ public class SuiteUnevaluatedPropertiesWithAdjacentBoolAdditionalProperties
     [TestMethod]
     public void TestWithNoAdditionalProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithAdditionalProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -309,9 +309,9 @@ public class SuiteUnevaluatedPropertiesWithAdjacentBoolAdditionalProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"additionalProperties\": true,\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"additionalProperties\": true,\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -341,14 +341,14 @@ public class SuiteUnevaluatedPropertiesWithAdjacentNonBoolAdditionalProperties
     [TestMethod]
     public void TestWithNoAdditionalProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithAdditionalProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -360,9 +360,9 @@ public class SuiteUnevaluatedPropertiesWithAdjacentNonBoolAdditionalProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"additionalProperties\": {\"type\": \"string\"},\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"additionalProperties\": { \"type\": \"string\" },\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -392,14 +392,14 @@ public class SuiteUnevaluatedPropertiesWithNestedProperties
     [TestMethod]
     public void TestWithNoAdditionalProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithAdditionalProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\",\n                    \"baz\": \"baz\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\", \"baz\": \"baz\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -411,9 +411,9 @@ public class SuiteUnevaluatedPropertiesWithNestedProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"allOf\": [\n                {\n                    \"properties\": {\n                        \"bar\": { \"type\": \"string\" }\n                    }\n                }\n            ],\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"allOf\": [\n                    {\n                        \"properties\": {\n                            \"bar\": { \"type\": \"string\" }\n                        }\n                    }\n                ],\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -443,14 +443,14 @@ public class SuiteUnevaluatedPropertiesWithNestedPatternProperties
     [TestMethod]
     public void TestWithNoAdditionalProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithAdditionalProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\",\n                    \"baz\": \"baz\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\", \"baz\": \"baz\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -462,9 +462,9 @@ public class SuiteUnevaluatedPropertiesWithNestedPatternProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"allOf\": [\n              {\n                  \"patternProperties\": {\n                      \"^bar\": { \"type\": \"string\" }\n                  }\n              }\n            ],\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"allOf\": [\n                {\n                    \"patternProperties\": {\n                        \"^bar\": { \"type\": \"string\" }\n                    }\n                }\n                ],\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -494,14 +494,14 @@ public class SuiteUnevaluatedPropertiesWithNestedAdditionalProperties
     [TestMethod]
     public void TestWithNoAdditionalProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithAdditionalProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -513,9 +513,9 @@ public class SuiteUnevaluatedPropertiesWithNestedAdditionalProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"allOf\": [\n                {\n                    \"additionalProperties\": true\n                }\n            ],\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"allOf\": [{ \"additionalProperties\": true }],\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -545,14 +545,14 @@ public class SuiteUnevaluatedPropertiesWithNestedUnevaluatedProperties
     [TestMethod]
     public void TestWithNoNestedUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithNestedUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -564,9 +564,9 @@ public class SuiteUnevaluatedPropertiesWithNestedUnevaluatedProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"allOf\": [\n                {\n                    \"unevaluatedProperties\": true\n                }\n            ],\n            \"unevaluatedProperties\": {\n                \"type\": \"string\",\n                \"maxLength\": 2\n            }\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"allOf\": [{ \"unevaluatedProperties\": true }],\n                \"unevaluatedProperties\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 2\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -596,28 +596,28 @@ public class SuiteUnevaluatedPropertiesWithAnyOf
     [TestMethod]
     public void TestWhenOneMatchesAndHasNoUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWhenOneMatchesAndHasUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\",\n                    \"baz\": \"not-baz\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\", \"baz\": \"not-baz\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWhenTwoMatchAndHasNoUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\",\n                    \"baz\": \"baz\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\", \"baz\": \"baz\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWhenTwoMatchAndHasUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\",\n                    \"baz\": \"baz\",\n                    \"quux\": \"not-quux\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\", \"baz\": \"baz\", \"quux\": \"not-quux\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -629,9 +629,9 @@ public class SuiteUnevaluatedPropertiesWithAnyOf
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"anyOf\": [\n                {\n                    \"properties\": {\n                        \"bar\": { \"const\": \"bar\" }\n                    },\n                    \"required\": [\"bar\"]\n                },\n                {\n                    \"properties\": {\n                        \"baz\": { \"const\": \"baz\" }\n                    },\n                    \"required\": [\"baz\"]\n                },\n                {\n                    \"properties\": {\n                        \"quux\": { \"const\": \"quux\" }\n                    },\n                    \"required\": [\"quux\"]\n                }\n            ],\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"anyOf\": [\n                    {\n                        \"properties\": {\n                            \"bar\": { \"const\": \"bar\" }\n                        },\n                        \"required\": [\"bar\"]\n                    },\n                    {\n                        \"properties\": {\n                            \"baz\": { \"const\": \"baz\" }\n                        },\n                        \"required\": [\"baz\"]\n                    },\n                    {\n                        \"properties\": {\n                            \"quux\": { \"const\": \"quux\" }\n                        },\n                        \"required\": [\"quux\"]\n                    }\n                ],\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -661,14 +661,14 @@ public class SuiteUnevaluatedPropertiesWithOneOf
     [TestMethod]
     public void TestWithNoUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\",\n                    \"quux\": \"quux\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\", \"quux\": \"quux\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -680,9 +680,9 @@ public class SuiteUnevaluatedPropertiesWithOneOf
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"oneOf\": [\n                {\n                    \"properties\": {\n                        \"bar\": { \"const\": \"bar\" }\n                    },\n                    \"required\": [\"bar\"]\n                },\n                {\n                    \"properties\": {\n                        \"baz\": { \"const\": \"baz\" }\n                    },\n                    \"required\": [\"baz\"]\n                }\n            ],\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"oneOf\": [\n                    {\n                        \"properties\": {\n                            \"bar\": { \"const\": \"bar\" }\n                        },\n                        \"required\": [\"bar\"]\n                    },\n                    {\n                        \"properties\": {\n                            \"baz\": { \"const\": \"baz\" }\n                        },\n                        \"required\": [\"baz\"]\n                    }\n                ],\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -712,7 +712,7 @@ public class SuiteUnevaluatedPropertiesWithNot
     [TestMethod]
     public void TestWithUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -724,9 +724,9 @@ public class SuiteUnevaluatedPropertiesWithNot
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"not\": {\n                \"not\": {\n                    \"properties\": {\n                        \"bar\": { \"const\": \"bar\" }\n                    },\n                    \"required\": [\"bar\"]\n                }\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"not\": {\n                    \"not\": {\n                        \"properties\": {\n                            \"bar\": { \"const\": \"bar\" }\n                        },\n                        \"required\": [\"bar\"]\n                    }\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -756,28 +756,28 @@ public class SuiteUnevaluatedPropertiesWithIfThenElse
     [TestMethod]
     public void TestWhenIfIsTrueAndHasNoUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"then\",\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"then\", \"bar\": \"bar\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWhenIfIsTrueAndHasUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"then\",\n                    \"bar\": \"bar\",\n                    \"baz\": \"baz\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"then\", \"bar\": \"bar\", \"baz\": \"baz\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWhenIfIsFalseAndHasNoUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"baz\": \"baz\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"baz\": \"baz\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWhenIfIsFalseAndHasUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"else\",\n                    \"baz\": \"baz\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"else\", \"baz\": \"baz\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -789,9 +789,9 @@ public class SuiteUnevaluatedPropertiesWithIfThenElse
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"if\": {\n                \"properties\": {\n                    \"foo\": { \"const\": \"then\" }\n                },\n                \"required\": [\"foo\"]\n            },\n            \"then\": {\n                \"properties\": {\n                    \"bar\": { \"type\": \"string\" }\n                },\n                \"required\": [\"bar\"]\n            },\n            \"else\": {\n                \"properties\": {\n                    \"baz\": { \"type\": \"string\" }\n                },\n                \"required\": [\"baz\"]\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"if\": {\n                    \"properties\": {\n                        \"foo\": { \"const\": \"then\" }\n                    },\n                    \"required\": [\"foo\"]\n                },\n                \"then\": {\n                    \"properties\": {\n                        \"bar\": { \"type\": \"string\" }\n                    },\n                    \"required\": [\"bar\"]\n                },\n                \"else\": {\n                    \"properties\": {\n                        \"baz\": { \"type\": \"string\" }\n                    },\n                    \"required\": [\"baz\"]\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -821,28 +821,28 @@ public class SuiteUnevaluatedPropertiesWithIfThenElseThenNotDefined
     [TestMethod]
     public void TestWhenIfIsTrueAndHasNoUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"then\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"then\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWhenIfIsTrueAndHasUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"then\",\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"then\", \"bar\": \"bar\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWhenIfIsFalseAndHasNoUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"baz\": \"baz\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"baz\": \"baz\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWhenIfIsFalseAndHasUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"else\",\n                    \"baz\": \"baz\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"else\", \"baz\": \"baz\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -854,9 +854,9 @@ public class SuiteUnevaluatedPropertiesWithIfThenElseThenNotDefined
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"if\": {\n                \"properties\": {\n                    \"foo\": { \"const\": \"then\" }\n                },\n                \"required\": [\"foo\"]\n            },\n            \"else\": {\n                \"properties\": {\n                    \"baz\": { \"type\": \"string\" }\n                },\n                \"required\": [\"baz\"]\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"if\": {\n                    \"properties\": {\n                        \"foo\": { \"const\": \"then\" }\n                    },\n                    \"required\": [\"foo\"]\n                },\n                \"else\": {\n                    \"properties\": {\n                        \"baz\": { \"type\": \"string\" }\n                    },\n                    \"required\": [\"baz\"]\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -886,28 +886,28 @@ public class SuiteUnevaluatedPropertiesWithIfThenElseElseNotDefined
     [TestMethod]
     public void TestWhenIfIsTrueAndHasNoUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"then\",\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"then\", \"bar\": \"bar\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWhenIfIsTrueAndHasUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"then\",\n                    \"bar\": \"bar\",\n                    \"baz\": \"baz\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"then\", \"bar\": \"bar\", \"baz\": \"baz\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWhenIfIsFalseAndHasNoUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"baz\": \"baz\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"baz\": \"baz\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWhenIfIsFalseAndHasUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"else\",\n                    \"baz\": \"baz\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"else\", \"baz\": \"baz\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -919,9 +919,9 @@ public class SuiteUnevaluatedPropertiesWithIfThenElseElseNotDefined
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"if\": {\n                \"properties\": {\n                    \"foo\": { \"const\": \"then\" }\n                },\n                \"required\": [\"foo\"]\n            },\n            \"then\": {\n                \"properties\": {\n                    \"bar\": { \"type\": \"string\" }\n                },\n                \"required\": [\"bar\"]\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"if\": {\n                    \"properties\": {\n                        \"foo\": { \"const\": \"then\" }\n                    },\n                    \"required\": [\"foo\"]\n                },\n                \"then\": {\n                    \"properties\": {\n                        \"bar\": { \"type\": \"string\" }\n                    },\n                    \"required\": [\"bar\"]\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -951,14 +951,14 @@ public class SuiteUnevaluatedPropertiesWithDependentSchemas
     [TestMethod]
     public void TestWithNoUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": \"bar\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -970,9 +970,9 @@ public class SuiteUnevaluatedPropertiesWithDependentSchemas
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"dependentSchemas\": {\n                \"foo\": {\n                    \"properties\": {\n                        \"bar\": { \"const\": \"bar\" }\n                    },\n                    \"required\": [\"bar\"]\n                }\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"dependentSchemas\": {\n                    \"foo\": {\n                        \"properties\": {\n                            \"bar\": { \"const\": \"bar\" }\n                        },\n                        \"required\": [\"bar\"]\n                    }\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1002,14 +1002,14 @@ public class SuiteUnevaluatedPropertiesWithBooleanSchemas
     [TestMethod]
     public void TestWithNoUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": \"bar\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1021,9 +1021,9 @@ public class SuiteUnevaluatedPropertiesWithBooleanSchemas
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"allOf\": [true],\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"allOf\": [true],\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1053,14 +1053,14 @@ public class SuiteUnevaluatedPropertiesWithRef
     [TestMethod]
     public void TestWithNoUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\",\n                    \"baz\": \"baz\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\", \"baz\": \"baz\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1072,9 +1072,9 @@ public class SuiteUnevaluatedPropertiesWithRef
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$ref\": \"#/$defs/bar\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"unevaluatedProperties\": false,\n            \"$defs\": {\n                \"bar\": {\n                    \"properties\": {\n                        \"bar\": { \"type\": \"string\" }\n                    }\n                }\n            }\n        }",
+                "{\n                \"type\": \"object\",\n                \"$ref\": \"#/$defs/bar\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"unevaluatedProperties\": false,\n                \"$defs\": {\n                    \"bar\": {\n                        \"properties\": {\n                            \"bar\": { \"type\": \"string\" }\n                        }\n                    }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1104,14 +1104,14 @@ public class SuiteUnevaluatedPropertiesBeforeRef
     [TestMethod]
     public void TestWithNoUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\",\n                    \"baz\": \"baz\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\", \"baz\": \"baz\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1123,9 +1123,9 @@ public class SuiteUnevaluatedPropertiesBeforeRef
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"unevaluatedProperties\": false,\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"$ref\": \"#/$defs/bar\",\n            \"$defs\": {\n                \"bar\": {\n                    \"properties\": {\n                        \"bar\": { \"type\": \"string\" }\n                    }\n                }\n            }\n        }",
+                "{\n                \"type\": \"object\",\n                \"unevaluatedProperties\": false,\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"$ref\": \"#/$defs/bar\",\n                \"$defs\": {\n                    \"bar\": {\n                        \"properties\": {\n                            \"bar\": { \"type\": \"string\" }\n                        }\n                    }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1135,7 +1135,7 @@ public class SuiteUnevaluatedPropertiesBeforeRef
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedPropertiesWithDynamicRef
+public class SuiteUnevaluatedPropertiesWithDynamicRef2020
 {
     private static Fixture? s_fixture;
 
@@ -1155,14 +1155,14 @@ public class SuiteUnevaluatedPropertiesWithDynamicRef
     [TestMethod]
     public void TestWithNoUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\",\n                    \"baz\": \"baz\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\", \"baz\": \"baz\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1174,9 +1174,9 @@ public class SuiteUnevaluatedPropertiesWithDynamicRef
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$id\": \"https://example.com/unevaluated-properties-with-dynamic-ref/derived\",\n\n            \"$ref\": \"./baseSchema\",\n\n            \"$defs\": {\n                \"derived\": {\n                    \"$dynamicAnchor\": \"addons\",\n                    \"properties\": {\n                        \"bar\": { \"type\": \"string\" }\n                    }\n                },\n                \"baseSchema\": {\n                    \"$id\": \"./baseSchema\",\n\n                    \"$comment\": \"unevaluatedProperties comes first so it's more likely to catch bugs with implementations that are sensitive to keyword ordering\",\n                    \"unevaluatedProperties\": false,\n                    \"properties\": {\n                        \"foo\": { \"type\": \"string\" }\n                    },\n                    \"$dynamicRef\": \"#addons\",\n\n                    \"$defs\": {\n                        \"defaultAddons\": {\n                            \"$comment\": \"Needed to satisfy the bookending requirement\",\n                            \"$dynamicAnchor\": \"addons\"\n                        }\n                    }\n                }\n            }\n        }",
+                "{\n                \"$id\": \"https://example.com/unevaluated-properties-with-dynamic-ref/derived\",\n                \"$ref\": \"./baseSchema\",\n                \"$defs\": {\n                    \"derived\": {\n                        \"$dynamicAnchor\": \"addons\",\n                        \"properties\": {\n                            \"bar\": { \"type\": \"string\" }\n                        }\n                    },\n                    \"baseSchema\": {\n                        \"$id\": \"./baseSchema\",\n                        \"$comment\": \"unevaluatedProperties comes first so it's more likely to catch bugs with implementations that are sensitive to keyword ordering\",\n                        \"unevaluatedProperties\": false,\n                        \"properties\": {\n                            \"foo\": { \"type\": \"string\" }\n                        },\n                        \"$dynamicRef\": \"#addons\",\n                        \"$defs\": {\n                            \"defaultAddons\": {\n                                \"$comment\": \"Needed to satisfy the bookending requirement\",\n                                \"$dynamicAnchor\": \"addons\"\n                            }\n                        }\n                    }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1206,7 +1206,7 @@ public class SuiteUnevaluatedPropertiesCanTSeeInsideCousins
     [TestMethod]
     public void TestAlwaysFails()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": 1\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1218,9 +1218,9 @@ public class SuiteUnevaluatedPropertiesCanTSeeInsideCousins
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"allOf\": [\n                {\n                    \"properties\": {\n                        \"foo\": true\n                    }\n                },\n                {\n                    \"unevaluatedProperties\": false\n                }\n            ]\n        }",
+                "{\n                \"allOf\": [\n                    {\n                        \"properties\": {\n                            \"foo\": true\n                        }\n                    },\n                    { \"unevaluatedProperties\": false }\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1250,7 +1250,7 @@ public class SuiteUnevaluatedPropertiesCanTSeeInsideCousinsReverseOrder
     [TestMethod]
     public void TestAlwaysFails()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": 1\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1262,9 +1262,9 @@ public class SuiteUnevaluatedPropertiesCanTSeeInsideCousinsReverseOrder
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"allOf\": [\n                {\n                    \"unevaluatedProperties\": false\n                },\n                {\n                    \"properties\": {\n                        \"foo\": true\n                    }\n                }\n            ]\n        }",
+                "{\n                \"allOf\": [\n                    { \"unevaluatedProperties\": false },\n                    {\n                        \"properties\": {\n                            \"foo\": true\n                        }\n                    }\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1294,14 +1294,14 @@ public class SuiteNestedUnevaluatedPropertiesOuterFalseInnerTruePropertiesOutsid
     [TestMethod]
     public void TestWithNoNestedUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithNestedUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1313,9 +1313,9 @@ public class SuiteNestedUnevaluatedPropertiesOuterFalseInnerTruePropertiesOutsid
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"allOf\": [\n                {\n                    \"unevaluatedProperties\": true\n                }\n            ],\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"allOf\": [{ \"unevaluatedProperties\": true }],\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1345,14 +1345,14 @@ public class SuiteNestedUnevaluatedPropertiesOuterFalseInnerTruePropertiesInside
     [TestMethod]
     public void TestWithNoNestedUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithNestedUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1364,9 +1364,9 @@ public class SuiteNestedUnevaluatedPropertiesOuterFalseInnerTruePropertiesInside
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"allOf\": [\n                {\n                    \"properties\": {\n                        \"foo\": { \"type\": \"string\" }\n                    },\n                    \"unevaluatedProperties\": true\n                }\n            ],\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"allOf\": [\n                    {\n                        \"properties\": {\n                            \"foo\": { \"type\": \"string\" }\n                        },\n                        \"unevaluatedProperties\": true\n                    }\n                ],\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1396,14 +1396,14 @@ public class SuiteNestedUnevaluatedPropertiesOuterTrueInnerFalsePropertiesOutsid
     [TestMethod]
     public void TestWithNoNestedUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithNestedUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1415,9 +1415,9 @@ public class SuiteNestedUnevaluatedPropertiesOuterTrueInnerFalsePropertiesOutsid
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": { \"type\": \"string\" }\n            },\n            \"allOf\": [\n                {\n                    \"unevaluatedProperties\": false\n                }\n            ],\n            \"unevaluatedProperties\": true\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"type\": \"string\" }\n                },\n                \"allOf\": [{ \"unevaluatedProperties\": false }],\n                \"unevaluatedProperties\": true\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1447,14 +1447,14 @@ public class SuiteNestedUnevaluatedPropertiesOuterTrueInnerFalsePropertiesInside
     [TestMethod]
     public void TestWithNoNestedUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithNestedUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1466,9 +1466,9 @@ public class SuiteNestedUnevaluatedPropertiesOuterTrueInnerFalsePropertiesInside
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"allOf\": [\n                {\n                    \"properties\": {\n                        \"foo\": { \"type\": \"string\" }\n                    },\n                    \"unevaluatedProperties\": false\n                }\n            ],\n            \"unevaluatedProperties\": true\n        }",
+                "{\n                \"type\": \"object\",\n                \"allOf\": [\n                    {\n                        \"properties\": {\n                            \"foo\": { \"type\": \"string\" }\n                        },\n                        \"unevaluatedProperties\": false\n                    }\n                ],\n                \"unevaluatedProperties\": true\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1498,14 +1498,14 @@ public class SuiteCousinUnevaluatedPropertiesTrueAndFalseTrueWithProperties
     [TestMethod]
     public void TestWithNoNestedUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithNestedUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1517,9 +1517,9 @@ public class SuiteCousinUnevaluatedPropertiesTrueAndFalseTrueWithProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"allOf\": [\n                {\n                    \"properties\": {\n                        \"foo\": { \"type\": \"string\" }\n                    },\n                    \"unevaluatedProperties\": true\n                },\n                {\n                    \"unevaluatedProperties\": false\n                }\n            ]\n        }",
+                "{\n                \"type\": \"object\",\n                \"allOf\": [\n                    {\n                        \"properties\": {\n                            \"foo\": { \"type\": \"string\" }\n                        },\n                        \"unevaluatedProperties\": true\n                    },\n                    { \"unevaluatedProperties\": false }\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1549,14 +1549,14 @@ public class SuiteCousinUnevaluatedPropertiesTrueAndFalseFalseWithProperties
     [TestMethod]
     public void TestWithNoNestedUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithNestedUnevaluatedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"foo\",\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1568,9 +1568,9 @@ public class SuiteCousinUnevaluatedPropertiesTrueAndFalseFalseWithProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"allOf\": [\n                {\n                    \"unevaluatedProperties\": true\n                },\n                {\n                    \"properties\": {\n                        \"foo\": { \"type\": \"string\" }\n                    },\n                    \"unevaluatedProperties\": false\n                }\n            ]\n        }",
+                "{\n                \"type\": \"object\",\n                \"allOf\": [\n                    { \"unevaluatedProperties\": true },\n                    {\n                        \"properties\": {\n                            \"foo\": { \"type\": \"string\" }\n                        },\n                        \"unevaluatedProperties\": false\n                    }\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1600,14 +1600,14 @@ public class SuitePropertyIsEvaluatedInAnUncleSchemaToUnevaluatedProperties
     [TestMethod]
     public void TestNoExtraProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": {\n                        \"bar\": \"test\"\n                    }\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": { \"bar\": \"test\" } }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestUncleKeywordEvaluationIsNotSignificant()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": {\n                        \"bar\": \"test\",\n                        \"faz\": \"test\"\n                    }\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": { \"bar\": \"test\", \"faz\": \"test\" } }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1619,9 +1619,9 @@ public class SuitePropertyIsEvaluatedInAnUncleSchemaToUnevaluatedProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": {\n                    \"properties\": {\n                        \"bar\": {\n                            \"type\": \"string\"\n                        }\n                    },\n                    \"unevaluatedProperties\": false\n                  }\n            },\n            \"anyOf\": [\n                {\n                    \"properties\": {\n                        \"foo\": {\n                            \"properties\": {\n                                \"faz\": {\n                                    \"type\": \"string\"\n                                }\n                            }\n                        }\n                    }\n                }\n            ]\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": {\n                        \"type\": \"object\",\n                        \"properties\": {\n                            \"bar\": { \"type\": \"string\" }\n                        },\n                        \"unevaluatedProperties\": false\n                    }\n                },\n                \"anyOf\": [\n                    {\n                        \"properties\": {\n                            \"foo\": {\n                                \"properties\": {\n                                    \"faz\": { \"type\": \"string\" }\n                                }\n                            }\n                        }\n                    }\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1651,21 +1651,21 @@ public class SuiteInPlaceApplicatorSiblingsAllOfHasUnevaluated
     [TestMethod]
     public void TestBaseCaseBothPropertiesPresent()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": 1,\n                    \"bar\": 1\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1, \"bar\": 1 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestInPlaceApplicatorSiblingsBarIsMissing()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": 1\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestInPlaceApplicatorSiblingsFooIsMissing()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"bar\": 1\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": 1 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1677,9 +1677,9 @@ public class SuiteInPlaceApplicatorSiblingsAllOfHasUnevaluated
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"allOf\": [\n                {\n                    \"properties\": {\n                        \"foo\": true\n                    },\n                    \"unevaluatedProperties\": false\n                }\n            ],\n            \"anyOf\": [\n                {\n                    \"properties\": {\n                        \"bar\": true\n                    }\n                }\n            ]\n        }",
+                "{\n                \"type\": \"object\",\n                \"allOf\": [\n                    {\n                        \"properties\": {\n                            \"foo\": true\n                        },\n                        \"unevaluatedProperties\": false\n                    }\n                ],\n                \"anyOf\": [\n                    {\n                        \"properties\": {\n                            \"bar\": true\n                        }\n                    }\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1709,21 +1709,21 @@ public class SuiteInPlaceApplicatorSiblingsAnyOfHasUnevaluated
     [TestMethod]
     public void TestBaseCaseBothPropertiesPresent()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": 1,\n                    \"bar\": 1\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1, \"bar\": 1 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestInPlaceApplicatorSiblingsBarIsMissing()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": 1\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestInPlaceApplicatorSiblingsFooIsMissing()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"bar\": 1\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": 1 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1735,9 +1735,9 @@ public class SuiteInPlaceApplicatorSiblingsAnyOfHasUnevaluated
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"allOf\": [\n                {\n                    \"properties\": {\n                        \"foo\": true\n                    }\n                }\n            ],\n            \"anyOf\": [\n                {\n                    \"properties\": {\n                        \"bar\": true\n                    },\n                    \"unevaluatedProperties\": false\n                }\n            ]\n        }",
+                "{\n                \"type\": \"object\",\n                \"allOf\": [\n                    {\n                        \"properties\": {\n                            \"foo\": true\n                        }\n                    }\n                ],\n                \"anyOf\": [\n                    {\n                        \"properties\": {\n                            \"bar\": true\n                        },\n                        \"unevaluatedProperties\": false\n                    }\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1821,9 +1821,9 @@ public class SuiteUnevaluatedPropertiesSingleCyclicRef
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"x\": { \"$ref\": \"#\" }\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"x\": { \"$ref\": \"#\" }\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1914,9 +1914,9 @@ public class SuiteUnevaluatedPropertiesRefInsideAllOfOneOf
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$defs\": {\n                \"one\": {\n                    \"properties\": { \"a\": true }\n                },\n                \"two\": {\n                    \"required\": [\"x\"],\n                    \"properties\": { \"x\": true }\n                }\n            },\n            \"allOf\": [\n                { \"$ref\": \"#/$defs/one\" },\n                { \"properties\": { \"b\": true } },\n                {\n                    \"oneOf\": [\n                        { \"$ref\": \"#/$defs/two\" },\n                        {\n                            \"required\": [\"y\"],\n                            \"properties\": { \"y\": true }\n                        }\n                    ]\n                }\n            ],\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"$defs\": {\n                    \"one\": {\n                        \"properties\": {\n                            \"a\": true\n                        }\n                    },\n                    \"two\": {\n                        \"required\": [\"x\"],\n                        \"properties\": {\n                            \"x\": true\n                        }\n                    }\n                },\n                \"allOf\": [\n                    { \"$ref\": \"#/$defs/one\" },\n                    { \"properties\": {\n                            \"b\": true\n                        }\n                    },\n                    {\n                        \"oneOf\": [\n                            { \"$ref\": \"#/$defs/two\" },\n                            {\n                                \"required\": [\"y\"],\n                                \"properties\": {\n                                    \"y\": true\n                                }\n                            }\n                        ]\n                    }\n                ],\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -2098,9 +2098,9 @@ public class SuiteDynamicEvalationInsideNestedRefs
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$defs\": {\n                \"one\": {\n                    \"oneOf\": [\n                        { \"$ref\": \"#/$defs/two\" },\n                        { \"required\": [\"b\"], \"properties\": { \"b\": true } },\n                        { \"required\": [\"xx\"], \"patternProperties\": { \"x\": true } },\n                        { \"required\": [\"all\"], \"unevaluatedProperties\": true }\n                    ]\n                },\n                \"two\": {\n                    \"oneOf\": [\n                        { \"required\": [\"c\"], \"properties\": { \"c\": true } },\n                        { \"required\": [\"d\"], \"properties\": { \"d\": true } }\n                    ]\n                }\n            },\n            \"oneOf\": [\n                { \"$ref\": \"#/$defs/one\" },\n                { \"required\": [\"a\"], \"properties\": { \"a\": true } }\n            ],\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"$defs\": {\n                    \"one\": {\n                        \"oneOf\": [\n                            { \"$ref\": \"#/$defs/two\" },\n                            { \"required\": [\"b\"], \"properties\": { \"b\": true } },\n                            { \"required\": [\"xx\"], \"patternProperties\": { \"x\": true } },\n                            { \"required\": [\"all\"], \"unevaluatedProperties\": true }\n                        ]\n                    },\n                    \"two\": {\n                        \"oneOf\": [\n                            { \"required\": [\"c\"], \"properties\": { \"c\": true } },\n                            { \"required\": [\"d\"], \"properties\": { \"d\": true } }\n                        ]\n                    }\n                },\n                \"oneOf\": [\n                    { \"$ref\": \"#/$defs/one\" },\n                    { \"required\": [\"a\"], \"properties\": { \"a\": true } }\n                ],\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -2177,9 +2177,9 @@ public class SuiteNonObjectInstancesAreValid
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -2209,7 +2209,7 @@ public class SuiteUnevaluatedPropertiesWithNullValuedInstanceProperties
     [TestMethod]
     public void TestAllowsNullValuedProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": null}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": null }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -2221,9 +2221,9 @@ public class SuiteUnevaluatedPropertiesWithNullValuedInstanceProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"unevaluatedProperties\": {\n                \"type\": \"null\"\n            }\n        }",
+                "{\n                \"unevaluatedProperties\": { \"type\": \"null\" }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -2253,14 +2253,14 @@ public class SuiteUnevaluatedPropertiesNotAffectedByPropertyNames
     [TestMethod]
     public void TestAllowsOnlyNumberProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"a\": 1}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"a\": 1 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestStringPropertyIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"a\": \"b\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"a\": \"b\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -2272,9 +2272,9 @@ public class SuiteUnevaluatedPropertiesNotAffectedByPropertyNames
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"propertyNames\": {\"maxLength\": 1},\n            \"unevaluatedProperties\": {\n                \"type\": \"number\"\n            }\n        }",
+                "{\n                \"propertyNames\": { \"maxLength\": 1 },\n                \"unevaluatedProperties\": { \"type\": \"number\" }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -2304,14 +2304,14 @@ public class SuiteUnevaluatedPropertiesCanSeeAnnotationsFromIfWithoutThenAndElse
     [TestMethod]
     public void TestValidInCaseIfIsEvaluated()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": \"a\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"a\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestInvalidInCaseIfIsEvaluated()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"bar\": \"a\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": \"a\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -2323,9 +2323,9 @@ public class SuiteUnevaluatedPropertiesCanSeeAnnotationsFromIfWithoutThenAndElse
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"if\": {\n                \"patternProperties\": {\n                    \"foo\": {\n                        \"type\": \"string\"\n                    }\n                }\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"if\": {\n                    \"patternProperties\": {\n                        \"foo\": { \"type\": \"string\" }\n                    }\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -2355,21 +2355,21 @@ public class SuiteDependentSchemasWithUnevaluatedProperties
     [TestMethod]
     public void TestUnevaluatedPropertiesDoesnTConsiderDependentSchemas()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestUnevaluatedPropertiesDoesnTSeeBarWhenFoo2IsAbsent()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": \"\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": \"\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestUnevaluatedPropertiesSeesBarWhenFoo2IsPresent()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo2\": \"\", \"bar\": \"\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo2\": \"\", \"bar\": \"\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -2381,9 +2381,9 @@ public class SuiteDependentSchemasWithUnevaluatedProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\"foo2\": {}},\n            \"dependentSchemas\": {\n                \"foo\" : {},\n                \"foo2\": {\n                    \"properties\": {\n                        \"bar\":{}\n                    }\n                }\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"properties\": {\n                    \"foo2\": {}\n                },\n                \"dependentSchemas\": {\n                    \"foo\" : {},\n                    \"foo2\": {\n                        \"properties\": {\n                            \"bar\":{}\n                        }\n                    }\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -2413,7 +2413,7 @@ public class SuiteEvaluatedPropertiesCollectionNeedsToConsiderInstanceLocation
     [TestMethod]
     public void TestWithAnUnevaluatedPropertyThatExistsAtAnotherLocation()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": { \"bar\": \"foo\" },\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": { \"bar\": \"foo\" }, \"bar\": \"bar\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -2425,9 +2425,9 @@ public class SuiteEvaluatedPropertiesCollectionNeedsToConsiderInstanceLocation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": {\n                    \"properties\": {\n                        \"bar\": { \"type\": \"string\" }\n                    }\n                }\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": {\n                        \"properties\": {\n                            \"bar\": { \"type\": \"string\" }\n                        }\n                    }\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -2457,14 +2457,14 @@ public class SuiteEvaluatedPropertiesCollectionNeedsToConsiderInstanceLocationWi
     [TestMethod]
     public void TestWithOnlyTheNestedEvaluatedProperty()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": { \"bar\": \"foo\" }\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                        \"foo\": { \"bar\": \"foo\" }\n                    }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithAnUnevaluatedPropertyThatExistsAtAnotherLocation()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": { \"bar\": \"foo\" },\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                        \"foo\": { \"bar\": \"foo\" },\n                        \"bar\": \"bar\"\n                    }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -2476,9 +2476,9 @@ public class SuiteEvaluatedPropertiesCollectionNeedsToConsiderInstanceLocationWi
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": {\n                    \"patternProperties\": {\n                        \"^bar$\": { \"type\": \"string\" }\n                    }\n                }\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": {\n                        \"patternProperties\": {\n                            \"^bar$\": { \"type\": \"string\" }\n                        }\n                    }\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -2508,14 +2508,14 @@ public class SuiteEvaluatedPropertiesCollectionNeedsToConsiderInstanceLocationWi
     [TestMethod]
     public void TestWithOnlyTheNestedEvaluatedProperty()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": { \"bar\": \"foo\" }\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                        \"foo\": { \"bar\": \"foo\" }\n                    }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithAnUnevaluatedPropertyThatExistsAtAnotherLocation()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": { \"bar\": \"foo\" },\n                    \"bar\": \"bar\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                        \"foo\": { \"bar\": \"foo\" },\n                        \"bar\": \"bar\"\n                    }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -2527,9 +2527,9 @@ public class SuiteEvaluatedPropertiesCollectionNeedsToConsiderInstanceLocationWi
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": {\n                    \"additionalProperties\": { \"type\": \"string\" }\n                }\n            },\n            \"unevaluatedProperties\": false\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": {\n                        \"additionalProperties\": { \"type\": \"string\" }\n                    }\n                },\n                \"unevaluatedProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

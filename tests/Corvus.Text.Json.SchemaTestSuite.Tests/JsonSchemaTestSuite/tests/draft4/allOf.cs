@@ -27,28 +27,28 @@ public class SuiteAllOf
     [TestMethod]
     public void TestAllOf()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": \"baz\", \"bar\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"baz\", \"bar\": 2 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestMismatchSecond()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": \"baz\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"baz\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestMismatchFirst()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"bar\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"bar\": 2 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWrongType()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": \"baz\", \"bar\": \"quux\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"baz\", \"bar\": \"quux\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -60,9 +60,9 @@ public class SuiteAllOf
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/allOf.json",
-                "{\n            \"allOf\": [\n                {\n                    \"properties\": {\n                        \"bar\": {\"type\": \"integer\"}\n                    },\n                    \"required\": [\"bar\"]\n                },\n                {\n                    \"properties\": {\n                        \"foo\": {\"type\": \"string\"}\n                    },\n                    \"required\": [\"foo\"]\n                }\n            ]\n        }",
+                "{\n                \"allOf\": [\n                    {\n                        \"properties\": {\n                            \"bar\": { \"type\": \"integer\" }\n                        },\n                        \"required\": [\"bar\"]\n                    },\n                    {\n                        \"properties\": {\n                            \"foo\": { \"type\": \"string\" }\n                        },\n                        \"required\": [\"foo\"]\n                    }\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft4.AllOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -95,35 +95,35 @@ public class SuiteAllOfWithBaseSchema
     [TestMethod]
     public void TestValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": \"quux\", \"bar\": 2, \"baz\": null}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"quux\", \"bar\": 2, \"baz\": null }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestMismatchBaseSchema()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": \"quux\", \"baz\": null}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"quux\", \"baz\": null }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestMismatchFirstAllOf()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"bar\": 2, \"baz\": null}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"bar\": 2, \"baz\": null }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestMismatchSecondAllOf()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": \"quux\", \"bar\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"quux\", \"bar\": 2 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestMismatchBoth()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"bar\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"bar\": 2 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -135,9 +135,9 @@ public class SuiteAllOfWithBaseSchema
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/allOf.json",
-                "{\n            \"properties\": {\"bar\": {\"type\": \"integer\"}},\n            \"required\": [\"bar\"],\n            \"allOf\" : [\n                {\n                    \"properties\": {\n                        \"foo\": {\"type\": \"string\"}\n                    },\n                    \"required\": [\"foo\"]\n                },\n                {\n                    \"properties\": {\n                        \"baz\": {\"type\": \"null\"}\n                    },\n                    \"required\": [\"baz\"]\n                }\n            ]\n        }",
+                "{\n                \"properties\": {\n                    \"bar\": { \"type\": \"integer\" }\n                },\n                \"required\": [\"bar\"],\n                \"allOf\" : [\n                    {\n                        \"properties\": {\n                            \"foo\": { \"type\": \"string\" }\n                        },\n                        \"required\": [\"foo\"]\n                    },\n                    {\n                        \"properties\": {\n                            \"baz\": { \"type\": \"null\" }\n                        },\n                        \"required\": [\"baz\"]\n                    }\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft4.AllOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -189,9 +189,9 @@ public class SuiteAllOfSimpleTypes
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/allOf.json",
-                "{\n            \"allOf\": [\n                {\"maximum\": 30},\n                {\"minimum\": 20}\n            ]\n        }",
+                "{\n                \"allOf\": [\n                    { \"maximum\": 30 },\n                    { \"minimum\": 20 }\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft4.AllOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -236,9 +236,9 @@ public class SuiteAllOfWithOneEmptySchema
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/allOf.json",
-                "{\n            \"allOf\": [\n                {}\n            ]\n        }",
+                "{\n                \"allOf\": [{}]\n            }",
                 "JsonSchemaTestSuite.Draft4.AllOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -283,9 +283,9 @@ public class SuiteAllOfWithTwoEmptySchemas
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/allOf.json",
-                "{\n            \"allOf\": [\n                {},\n                {}\n            ]\n        }",
+                "{\n                \"allOf\": [\n                    {},\n                    {}\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft4.AllOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -337,9 +337,9 @@ public class SuiteAllOfWithTheFirstEmptySchema
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/allOf.json",
-                "{\n            \"allOf\": [\n                {},\n                { \"type\": \"number\" }\n            ]\n        }",
+                "{\n                \"allOf\": [\n                    {},\n                    { \"type\": \"number\" }\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft4.AllOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -391,9 +391,9 @@ public class SuiteAllOfWithTheLastEmptySchema
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/allOf.json",
-                "{\n            \"allOf\": [\n                { \"type\": \"number\" },\n                {}\n            ]\n        }",
+                "{\n                \"allOf\": [\n                    { \"type\": \"number\" },\n                    {}\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft4.AllOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -445,9 +445,9 @@ public class SuiteNestedAllOfToCheckValidationSemantics
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/allOf.json",
-                "{\n            \"allOf\": [\n                {\n                    \"allOf\": [\n                        {\n                            \"type\": \"null\"\n                        }\n                    ]\n                }\n            ]\n        }",
+                "{\n                \"allOf\": [\n                    {\n                        \"allOf\": [{ \"type\": \"null\" }]\n                    }\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft4.AllOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -541,9 +541,9 @@ public class SuiteAllOfCombinedWithAnyOfOneOf
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/allOf.json",
-                "{\n            \"allOf\": [ { \"multipleOf\": 2 } ],\n            \"anyOf\": [ { \"multipleOf\": 3 } ],\n            \"oneOf\": [ { \"multipleOf\": 5 } ]\n        }",
+                "{\n                \"allOf\": [{ \"multipleOf\": 2 }],\n                \"anyOf\": [{ \"multipleOf\": 3 }],\n                \"oneOf\": [{ \"multipleOf\": 5 }]\n            }",
                 "JsonSchemaTestSuite.Draft4.AllOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,

@@ -61,9 +61,9 @@ public class SuiteMaxItemsValidation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/maxItems.json",
-                "{\"maxItems\": 2}",
+                "{ \"maxItems\": 2 }",
                 "StandaloneEvaluatorTestSuite.Draft4.MaxItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

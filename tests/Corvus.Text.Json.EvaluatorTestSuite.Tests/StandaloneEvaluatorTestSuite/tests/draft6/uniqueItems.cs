@@ -84,35 +84,35 @@ public class SuiteUniqueItemsValidation
     [TestMethod]
     public void TestUniqueArrayOfObjectsIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[{\"foo\": \"bar\"}, {\"foo\": \"baz\"}]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[{ \"foo\": \"bar\" }, { \"foo\": \"baz\" }]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestNonUniqueArrayOfObjectsIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[{\"foo\": \"bar\"}, {\"foo\": \"bar\"}]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[{ \"foo\": \"bar\" }, { \"foo\": \"bar\" }]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestPropertyOrderOfArrayOfObjectsIsIgnored()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[{\"foo\": \"bar\", \"bar\": \"foo\"}, {\"bar\": \"foo\", \"foo\": \"bar\"}]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[{ \"foo\": \"bar\", \"bar\": \"foo\" }, { \"bar\": \"foo\", \"foo\": \"bar\" }]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestUniqueArrayOfNestedObjectsIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\n                    {\"foo\": {\"bar\" : {\"baz\" : false}}}\n                ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                        { \"foo\": { \"bar\" : { \"baz\" : true } } },\n                        { \"foo\": { \"bar\" : { \"baz\" : false } } }\n                    ]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestNonUniqueArrayOfNestedObjectsIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}}\n                ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                        { \"foo\": { \"bar\" : { \"baz\" : true } } },\n                        { \"foo\": { \"bar\" : { \"baz\" : true } } }\n                    ]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -196,28 +196,28 @@ public class SuiteUniqueItemsValidation
     [TestMethod]
     public void TestDifferentObjectsAreUnique()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[{\"a\": 1, \"b\": 2}, {\"a\": 2, \"b\": 1}]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[{ \"a\": 1, \"b\": 2 }, { \"a\": 2, \"b\": 1 }]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestObjectsAreNonUniqueDespiteKeyOrder()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[{\"a\": 1, \"b\": 2}, {\"b\": 2, \"a\": 1}]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[{ \"a\": 1, \"b\": 2 }, { \"b\": 2, \"a\": 1 }]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestAFalseAndA0AreUnique()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[{\"a\": false}, {\"a\": 0}]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[{ \"a\": false }, { \"a\": 0 }]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestATrueAndA1AreUnique()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[{\"a\": true}, {\"a\": 1}]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[{ \"a\": true }, { \"a\": 1 }]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -229,9 +229,151 @@ public class SuiteUniqueItemsValidation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/uniqueItems.json",
-                "{\"uniqueItems\": true}",
+                "{\n                \"uniqueItems\": true\n            }",
                 "StandaloneEvaluatorTestSuite.Draft6.UniqueItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "http://json-schema.org/draft-06/schema#",
+                validateFormat: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteUniqueItemsFalseValidation
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestUniqueArrayOfIntegersIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestNonUniqueArrayOfIntegersIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 1]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestNumbersAreUniqueIfMathematicallyUnequal()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1.0, 1.00, 1]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestFalseIsNotEqualToZero()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[0, false]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestTrueIsNotEqualToOne()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, true]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestUniqueArrayOfObjectsIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[{ \"foo\": \"bar\" }, { \"foo\": \"baz\" }]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestNonUniqueArrayOfObjectsIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[{ \"foo\": \"bar\" }, { \"foo\": \"bar\" }]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestUniqueArrayOfNestedObjectsIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                        { \"foo\": { \"bar\" : { \"baz\" : true } } },\n                        { \"foo\": { \"bar\" : { \"baz\" : false } } }\n                    ]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestNonUniqueArrayOfNestedObjectsIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                        { \"foo\": { \"bar\" : { \"baz\" : true } } },\n                        { \"foo\": { \"bar\" : { \"baz\" : true } } }\n                    ]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestUniqueArrayOfArraysIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[[\"foo\"], [\"bar\"]]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestNonUniqueArrayOfArraysIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[[\"foo\"], [\"foo\"]]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void Test1AndTrueAreUnique()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, true]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void Test0AndFalseAreUnique()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[0, false]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestUniqueHeterogeneousTypesAreValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[{}, [1], true, null, 1]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestNonUniqueHeterogeneousTypesAreValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[{}, [1], true, null, {}, 1]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    public class Fixture
+    {
+        public CompiledEvaluator Evaluator { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
+                "tests/draft6/uniqueItems.json",
+                "{\n                \"uniqueItems\": false\n            }",
+                "StandaloneEvaluatorTestSuite.Draft6.UniqueItems",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -322,9 +464,9 @@ public class SuiteUniqueItemsWithAnArrayOfItems
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/uniqueItems.json",
-                "{\n            \"items\": [{\"type\": \"boolean\"}, {\"type\": \"boolean\"}],\n            \"uniqueItems\": true\n        }",
+                "{\n                \"items\": [\n                    { \"type\": \"boolean\" },\n                    { \"type\": \"boolean\" }\n                ],\n                \"uniqueItems\": true\n            }",
                 "StandaloneEvaluatorTestSuite.Draft6.UniqueItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -394,151 +536,9 @@ public class SuiteUniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/uniqueItems.json",
-                "{\n            \"items\": [{\"type\": \"boolean\"}, {\"type\": \"boolean\"}],\n            \"uniqueItems\": true,\n            \"additionalItems\": false\n        }",
+                "{\n                \"items\": [\n                    { \"type\": \"boolean\" },\n                    { \"type\": \"boolean\" }\n                ],\n                \"uniqueItems\": true,\n                \"additionalItems\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft6.UniqueItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
-                "http://json-schema.org/draft-06/schema#",
-                validateFormat: false,
-                Assembly.GetExecutingAssembly());
-        }
-    }
-}
-
-[TestCategory("Draft6")]
-[TestClass]
-public class SuiteUniqueItemsFalseValidation
-{
-    private static Fixture? s_fixture;
-
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext _)
-    {
-        s_fixture = new Fixture();
-        await s_fixture.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static void ClassCleanupMethod()
-    {
-        s_fixture = null;
-    }
-
-    [TestMethod]
-    public void TestUniqueArrayOfIntegersIsValid()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestNonUniqueArrayOfIntegersIsValid()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 1]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestNumbersAreUniqueIfMathematicallyUnequal()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1.0, 1.00, 1]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestFalseIsNotEqualToZero()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[0, false]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestTrueIsNotEqualToOne()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, true]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestUniqueArrayOfObjectsIsValid()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[{\"foo\": \"bar\"}, {\"foo\": \"baz\"}]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestNonUniqueArrayOfObjectsIsValid()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[{\"foo\": \"bar\"}, {\"foo\": \"bar\"}]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestUniqueArrayOfNestedObjectsIsValid()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\n                    {\"foo\": {\"bar\" : {\"baz\" : false}}}\n                ]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestNonUniqueArrayOfNestedObjectsIsValid()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}}\n                ]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestUniqueArrayOfArraysIsValid()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[[\"foo\"], [\"bar\"]]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestNonUniqueArrayOfArraysIsValid()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[[\"foo\"], [\"foo\"]]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void Test1AndTrueAreUnique()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, true]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void Test0AndFalseAreUnique()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[0, false]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestUniqueHeterogeneousTypesAreValid()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[{}, [1], true, null, 1]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestNonUniqueHeterogeneousTypesAreValid()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[{}, [1], true, null, {}, 1]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    public class Fixture
-    {
-        public CompiledEvaluator Evaluator { get; private set; }
-
-        public async Task InitializeAsync()
-        {
-            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests/draft6/uniqueItems.json",
-                "{ \"uniqueItems\": false }",
-                "StandaloneEvaluatorTestSuite.Draft6.UniqueItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -629,9 +629,9 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItems
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/uniqueItems.json",
-                "{\n            \"items\": [{\"type\": \"boolean\"}, {\"type\": \"boolean\"}],\n            \"uniqueItems\": false\n        }",
+                "{\n                \"items\": [\n                    { \"type\": \"boolean\" },\n                    { \"type\": \"boolean\" }\n                ],\n                \"uniqueItems\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft6.UniqueItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -701,9 +701,9 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItemsAndAdditionalItemsFalse
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/uniqueItems.json",
-                "{\n            \"items\": [{\"type\": \"boolean\"}, {\"type\": \"boolean\"}],\n            \"uniqueItems\": false,\n            \"additionalItems\": false\n        }",
+                "{\n                \"items\": [\n                    { \"type\": \"boolean\" },\n                    { \"type\": \"boolean\" }\n                ],\n                \"uniqueItems\": false,\n                \"additionalItems\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft6.UniqueItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

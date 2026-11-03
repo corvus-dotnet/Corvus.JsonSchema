@@ -47,7 +47,7 @@ public class SuiteTitleIsAnAnnotation
                 "annotations/meta-data.json",
                 "{\n        \"title\": \"Foo\"\n      }",
                 "AnnotationTestSuite.Draft6.MetaData",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -95,7 +95,7 @@ public class SuiteDescriptionIsAnAnnotation
                 "annotations/meta-data.json",
                 "{\n        \"description\": \"Foo\"\n      }",
                 "AnnotationTestSuite.Draft6.MetaData",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -143,7 +143,7 @@ public class SuiteDefaultIsAnAnnotation
                 "annotations/meta-data.json",
                 "{\n        \"default\": \"Foo\"\n      }",
                 "AnnotationTestSuite.Draft6.MetaData",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -191,7 +191,7 @@ public class SuiteExamplesIsAnAnnotation
                 "annotations/meta-data.json",
                 "{\n        \"examples\": [\"Foo\", \"Bar\"]\n      }",
                 "AnnotationTestSuite.Draft6.MetaData",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

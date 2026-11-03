@@ -14,26 +14,28 @@ namespace JsonSchemaTestSuite.Draft4.PatternProperties;
 public class SuitePatternPropertiesValidatesPropertiesMatchingARegex
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestASingleValidMatchIsValid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 1}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 1 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -41,7 +43,7 @@ public class SuitePatternPropertiesValidatesPropertiesMatchingARegex
     [TestMethod]
     public void TestMultipleValidMatchesIsValid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 1, \"foooooo\" : 2}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 1, \"foooooo\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -49,7 +51,7 @@ public class SuitePatternPropertiesValidatesPropertiesMatchingARegex
     [TestMethod]
     public void TestASingleInvalidMatchIsInvalid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": \"bar\", \"fooooo\": 2}");
+        using var doc = JsonDocument.Parse("{ \"foo\": \"bar\", \"fooooo\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -57,7 +59,7 @@ public class SuitePatternPropertiesValidatesPropertiesMatchingARegex
     [TestMethod]
     public void TestMultipleInvalidMatchesIsInvalid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": \"bar\", \"foooooo\" : \"baz\"}");
+        using var doc = JsonDocument.Parse("{ \"foo\": \"bar\", \"foooooo\": \"baz\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -65,7 +67,7 @@ public class SuitePatternPropertiesValidatesPropertiesMatchingARegex
     [TestMethod]
     public void TestIgnoresArrays()
     {
-        using var doc = JsonDocument.Parse("[]");
+        using var doc = JsonDocument.Parse("[\"foo\"]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -73,7 +75,7 @@ public class SuitePatternPropertiesValidatesPropertiesMatchingARegex
     [TestMethod]
     public void TestIgnoresStrings()
     {
-        using var doc = JsonDocument.Parse("\"\"");
+        using var doc = JsonDocument.Parse("\"foo\"");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -86,7 +88,7 @@ public class SuitePatternPropertiesValidatesPropertiesMatchingARegex
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -97,7 +99,7 @@ public class SuitePatternPropertiesValidatesPropertiesMatchingARegex
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "patternProperties.json",
-                "#/0/schema",
+                "#/tests/0/schema",
                 "JsonSchemaTestSuiteDraft4PatternProperties",
                 "PatternPropertiesValidatesPropertiesMatchingARegex",
                 validateFormat: false,
@@ -105,10 +107,9 @@ public class SuitePatternPropertiesValidatesPropertiesMatchingARegex
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -118,26 +119,28 @@ public class SuitePatternPropertiesValidatesPropertiesMatchingARegex
 public class SuiteMultipleSimultaneousPatternPropertiesAreValidated
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestASingleValidMatchIsValid()
     {
-        using var doc = JsonDocument.Parse("{\"a\": 21}");
+        using var doc = JsonDocument.Parse("{ \"a\": 21 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -145,7 +148,7 @@ public class SuiteMultipleSimultaneousPatternPropertiesAreValidated
     [TestMethod]
     public void TestASimultaneousMatchIsValid()
     {
-        using var doc = JsonDocument.Parse("{\"aaaa\": 18}");
+        using var doc = JsonDocument.Parse("{ \"aaaa\": 18 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -153,7 +156,7 @@ public class SuiteMultipleSimultaneousPatternPropertiesAreValidated
     [TestMethod]
     public void TestMultipleMatchesIsValid()
     {
-        using var doc = JsonDocument.Parse("{\"a\": 21, \"aaaa\": 18}");
+        using var doc = JsonDocument.Parse("{ \"a\": 21, \"aaaa\": 18 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -161,7 +164,7 @@ public class SuiteMultipleSimultaneousPatternPropertiesAreValidated
     [TestMethod]
     public void TestAnInvalidDueToOneIsInvalid()
     {
-        using var doc = JsonDocument.Parse("{\"a\": \"bar\"}");
+        using var doc = JsonDocument.Parse("{ \"a\": \"bar\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -169,7 +172,7 @@ public class SuiteMultipleSimultaneousPatternPropertiesAreValidated
     [TestMethod]
     public void TestAnInvalidDueToTheOtherIsInvalid()
     {
-        using var doc = JsonDocument.Parse("{\"aaaa\": 31}");
+        using var doc = JsonDocument.Parse("{ \"aaaa\": 31 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -177,12 +180,12 @@ public class SuiteMultipleSimultaneousPatternPropertiesAreValidated
     [TestMethod]
     public void TestAnInvalidDueToBothIsInvalid()
     {
-        using var doc = JsonDocument.Parse("{\"aaa\": \"foo\", \"aaaa\": 31}");
+        using var doc = JsonDocument.Parse("{ \"aaa\": \"foo\", \"aaaa\": 31 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -193,7 +196,7 @@ public class SuiteMultipleSimultaneousPatternPropertiesAreValidated
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "patternProperties.json",
-                "#/1/schema",
+                "#/tests/1/schema",
                 "JsonSchemaTestSuiteDraft4PatternProperties",
                 "MultipleSimultaneousPatternPropertiesAreValidated",
                 validateFormat: false,
@@ -201,10 +204,9 @@ public class SuiteMultipleSimultaneousPatternPropertiesAreValidated
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -214,19 +216,21 @@ public class SuiteMultipleSimultaneousPatternPropertiesAreValidated
 public class SuiteRegexesAreNotAnchoredByDefaultAndAreCaseSensitive
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -262,7 +266,7 @@ public class SuiteRegexesAreNotAnchoredByDefaultAndAreCaseSensitive
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -273,7 +277,7 @@ public class SuiteRegexesAreNotAnchoredByDefaultAndAreCaseSensitive
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "patternProperties.json",
-                "#/2/schema",
+                "#/tests/2/schema",
                 "JsonSchemaTestSuiteDraft4PatternProperties",
                 "RegexesAreNotAnchoredByDefaultAndAreCaseSensitive",
                 validateFormat: false,
@@ -281,10 +285,9 @@ public class SuiteRegexesAreNotAnchoredByDefaultAndAreCaseSensitive
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -294,31 +297,33 @@ public class SuiteRegexesAreNotAnchoredByDefaultAndAreCaseSensitive
 public class SuitePatternPropertiesWithNullValuedInstanceProperties
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestAllowsNullValues()
     {
-        using var doc = JsonDocument.Parse("{\"foobar\": null}");
+        using var doc = JsonDocument.Parse("{ \"foobar\": null }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -329,7 +334,7 @@ public class SuitePatternPropertiesWithNullValuedInstanceProperties
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "patternProperties.json",
-                "#/3/schema",
+                "#/tests/4/schema",
                 "JsonSchemaTestSuiteDraft4PatternProperties",
                 "PatternPropertiesWithNullValuedInstanceProperties",
                 validateFormat: false,
@@ -337,10 +342,9 @@ public class SuitePatternPropertiesWithNullValuedInstanceProperties
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

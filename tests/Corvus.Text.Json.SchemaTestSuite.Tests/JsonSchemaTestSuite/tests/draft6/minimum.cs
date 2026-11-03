@@ -60,9 +60,9 @@ public class SuiteMinimumValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft6/minimum.json",
-                "{\"minimum\": 1.1}",
+                "{ \"minimum\": 1.1 }",
                 "JsonSchemaTestSuite.Draft6.Minimum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -149,9 +149,77 @@ public class SuiteMinimumValidationWithSignedInteger
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft6/minimum.json",
-                "{\"minimum\": -2}",
+                "{ \"minimum\": -2 }",
                 "JsonSchemaTestSuite.Draft6.Minimum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "http://json-schema.org/draft-06/schema#",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteExclusiveMinimumValidation
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAboveTheExclusiveMinimumIsValid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("1.2");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestBoundaryPointIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("1.1");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestBelowTheExclusiveMinimumIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("0.6");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestIgnoresNonNumbers()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"x\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests/draft6/minimum.json",
+                "{ \"exclusiveMinimum\": 1.1 }",
+                "JsonSchemaTestSuite.Draft6.Minimum",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,

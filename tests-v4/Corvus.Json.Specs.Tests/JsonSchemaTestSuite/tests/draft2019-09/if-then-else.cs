@@ -14,19 +14,21 @@ namespace JsonSchemaTestSuite.Draft201909.IfThenElse;
 public class SuiteIgnoreIfWithoutThenOrElse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -46,7 +48,7 @@ public class SuiteIgnoreIfWithoutThenOrElse
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -57,7 +59,7 @@ public class SuiteIgnoreIfWithoutThenOrElse
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "if-then-else.json",
-                "#/0/schema",
+                "#/tests/0/schema",
                 "JsonSchemaTestSuiteDraft201909IfThenElse",
                 "IgnoreIfWithoutThenOrElse",
                 validateFormat: false,
@@ -65,10 +67,9 @@ public class SuiteIgnoreIfWithoutThenOrElse
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -78,19 +79,21 @@ public class SuiteIgnoreIfWithoutThenOrElse
 public class SuiteIgnoreThenWithoutIf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -110,7 +113,7 @@ public class SuiteIgnoreThenWithoutIf
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -121,7 +124,7 @@ public class SuiteIgnoreThenWithoutIf
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "if-then-else.json",
-                "#/1/schema",
+                "#/tests/1/schema",
                 "JsonSchemaTestSuiteDraft201909IfThenElse",
                 "IgnoreThenWithoutIf",
                 validateFormat: false,
@@ -129,10 +132,9 @@ public class SuiteIgnoreThenWithoutIf
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -142,19 +144,21 @@ public class SuiteIgnoreThenWithoutIf
 public class SuiteIgnoreElseWithoutIf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -174,7 +178,7 @@ public class SuiteIgnoreElseWithoutIf
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -185,7 +189,7 @@ public class SuiteIgnoreElseWithoutIf
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "if-then-else.json",
-                "#/2/schema",
+                "#/tests/2/schema",
                 "JsonSchemaTestSuiteDraft201909IfThenElse",
                 "IgnoreElseWithoutIf",
                 validateFormat: false,
@@ -193,10 +197,9 @@ public class SuiteIgnoreElseWithoutIf
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -206,19 +209,21 @@ public class SuiteIgnoreElseWithoutIf
 public class SuiteIfAndThenWithoutElse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -246,7 +251,7 @@ public class SuiteIfAndThenWithoutElse
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -257,7 +262,7 @@ public class SuiteIfAndThenWithoutElse
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "if-then-else.json",
-                "#/3/schema",
+                "#/tests/3/schema",
                 "JsonSchemaTestSuiteDraft201909IfThenElse",
                 "IfAndThenWithoutElse",
                 validateFormat: false,
@@ -265,10 +270,9 @@ public class SuiteIfAndThenWithoutElse
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -278,19 +282,21 @@ public class SuiteIfAndThenWithoutElse
 public class SuiteIfAndElseWithoutThen
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -318,7 +324,7 @@ public class SuiteIfAndElseWithoutThen
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -329,7 +335,7 @@ public class SuiteIfAndElseWithoutThen
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "if-then-else.json",
-                "#/4/schema",
+                "#/tests/4/schema",
                 "JsonSchemaTestSuiteDraft201909IfThenElse",
                 "IfAndElseWithoutThen",
                 validateFormat: false,
@@ -337,10 +343,9 @@ public class SuiteIfAndElseWithoutThen
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -350,19 +355,21 @@ public class SuiteIfAndElseWithoutThen
 public class SuiteValidateAgainstCorrectBranchThenVsElse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -398,7 +405,7 @@ public class SuiteValidateAgainstCorrectBranchThenVsElse
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -409,7 +416,7 @@ public class SuiteValidateAgainstCorrectBranchThenVsElse
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "if-then-else.json",
-                "#/5/schema",
+                "#/tests/5/schema",
                 "JsonSchemaTestSuiteDraft201909IfThenElse",
                 "ValidateAgainstCorrectBranchThenVsElse",
                 validateFormat: false,
@@ -417,10 +424,9 @@ public class SuiteValidateAgainstCorrectBranchThenVsElse
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -430,19 +436,21 @@ public class SuiteValidateAgainstCorrectBranchThenVsElse
 public class SuiteNonInterferenceAcrossCombinedSchemas
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -462,7 +470,7 @@ public class SuiteNonInterferenceAcrossCombinedSchemas
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -473,7 +481,7 @@ public class SuiteNonInterferenceAcrossCombinedSchemas
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "if-then-else.json",
-                "#/6/schema",
+                "#/tests/6/schema",
                 "JsonSchemaTestSuiteDraft201909IfThenElse",
                 "NonInterferenceAcrossCombinedSchemas",
                 validateFormat: false,
@@ -481,10 +489,9 @@ public class SuiteNonInterferenceAcrossCombinedSchemas
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -494,19 +501,21 @@ public class SuiteNonInterferenceAcrossCombinedSchemas
 public class SuiteIfWithBooleanSchemaTrue
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -526,7 +535,7 @@ public class SuiteIfWithBooleanSchemaTrue
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -537,7 +546,7 @@ public class SuiteIfWithBooleanSchemaTrue
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "if-then-else.json",
-                "#/7/schema",
+                "#/tests/7/schema",
                 "JsonSchemaTestSuiteDraft201909IfThenElse",
                 "IfWithBooleanSchemaTrue",
                 validateFormat: false,
@@ -545,10 +554,9 @@ public class SuiteIfWithBooleanSchemaTrue
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -558,19 +566,21 @@ public class SuiteIfWithBooleanSchemaTrue
 public class SuiteIfWithBooleanSchemaFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -590,7 +600,7 @@ public class SuiteIfWithBooleanSchemaFalse
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -601,7 +611,7 @@ public class SuiteIfWithBooleanSchemaFalse
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "if-then-else.json",
-                "#/8/schema",
+                "#/tests/8/schema",
                 "JsonSchemaTestSuiteDraft201909IfThenElse",
                 "IfWithBooleanSchemaFalse",
                 validateFormat: false,
@@ -609,10 +619,9 @@ public class SuiteIfWithBooleanSchemaFalse
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -622,19 +631,21 @@ public class SuiteIfWithBooleanSchemaFalse
 public class SuiteIfAppearsAtTheEndWhenSerializedKeywordProcessingSequence
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -670,7 +681,7 @@ public class SuiteIfAppearsAtTheEndWhenSerializedKeywordProcessingSequence
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -681,7 +692,7 @@ public class SuiteIfAppearsAtTheEndWhenSerializedKeywordProcessingSequence
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "if-then-else.json",
-                "#/9/schema",
+                "#/tests/9/schema",
                 "JsonSchemaTestSuiteDraft201909IfThenElse",
                 "IfAppearsAtTheEndWhenSerializedKeywordProcessingSequence",
                 validateFormat: false,
@@ -689,10 +700,9 @@ public class SuiteIfAppearsAtTheEndWhenSerializedKeywordProcessingSequence
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -702,19 +712,21 @@ public class SuiteIfAppearsAtTheEndWhenSerializedKeywordProcessingSequence
 public class SuiteThenFalseFailsWhenConditionMatches
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -734,7 +746,7 @@ public class SuiteThenFalseFailsWhenConditionMatches
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -745,7 +757,7 @@ public class SuiteThenFalseFailsWhenConditionMatches
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "if-then-else.json",
-                "#/10/schema",
+                "#/tests/10/schema",
                 "JsonSchemaTestSuiteDraft201909IfThenElse",
                 "ThenFalseFailsWhenConditionMatches",
                 validateFormat: false,
@@ -753,10 +765,9 @@ public class SuiteThenFalseFailsWhenConditionMatches
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -766,19 +777,21 @@ public class SuiteThenFalseFailsWhenConditionMatches
 public class SuiteElseFalseFailsWhenConditionDoesNotMatch
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -798,7 +811,7 @@ public class SuiteElseFalseFailsWhenConditionDoesNotMatch
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -809,7 +822,7 @@ public class SuiteElseFalseFailsWhenConditionDoesNotMatch
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "if-then-else.json",
-                "#/11/schema",
+                "#/tests/11/schema",
                 "JsonSchemaTestSuiteDraft201909IfThenElse",
                 "ElseFalseFailsWhenConditionDoesNotMatch",
                 validateFormat: false,
@@ -817,10 +830,9 @@ public class SuiteElseFalseFailsWhenConditionDoesNotMatch
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

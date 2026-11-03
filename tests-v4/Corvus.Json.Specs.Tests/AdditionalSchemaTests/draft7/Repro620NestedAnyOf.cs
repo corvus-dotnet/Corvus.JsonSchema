@@ -14,26 +14,28 @@ namespace AdditionalSchemaTests.AdditionalDraft7.Repro620NestedAnyOf;
 public class SuiteRepro620NamesCollideInIsAndAsMatchers
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestDataKindFooDataKindBar()
     {
-        using var doc = JsonDocument.Parse("{\r\n          \"kind\": \"foo\",\r\n          \"data\": {\r\n            \"kind\": \"bar\"\r\n          }\r\n        }");
+        using var doc = JsonDocument.Parse("{\n          \"kind\": \"foo\",\n          \"data\": {\n            \"kind\": \"bar\"\n          }\n        }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -41,12 +43,12 @@ public class SuiteRepro620NamesCollideInIsAndAsMatchers
     [TestMethod]
     public void TestDataKindFooDataKindBat()
     {
-        using var doc = JsonDocument.Parse("{\r\n          \"kind\": \"foo\",\r\n          \"data\": {\r\n            \"kind\": \"bat\"\r\n          }\r\n        }");
+        using var doc = JsonDocument.Parse("{\n          \"kind\": \"foo\",\n          \"data\": {\n            \"kind\": \"bat\"\n          }\n        }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -65,10 +67,9 @@ public class SuiteRepro620NamesCollideInIsAndAsMatchers
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

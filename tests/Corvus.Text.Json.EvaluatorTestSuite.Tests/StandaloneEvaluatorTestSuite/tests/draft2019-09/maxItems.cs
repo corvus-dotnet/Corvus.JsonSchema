@@ -61,9 +61,9 @@ public class SuiteMaxItemsValidation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/maxItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"maxItems\": 2\n        }",
+                "{ \"maxItems\": 2 }",
                 "StandaloneEvaluatorTestSuite.Draft201909.MaxItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -112,9 +112,9 @@ public class SuiteMaxItemsValidationWithADecimal
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/maxItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"maxItems\": 2.0\n        }",
+                "{ \"maxItems\": 2.0 }",
                 "StandaloneEvaluatorTestSuite.Draft201909.MaxItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

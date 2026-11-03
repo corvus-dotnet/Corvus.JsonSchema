@@ -14,31 +14,33 @@ namespace AdditionalSchemaTests.AdditionalDraft7.Repro479;
 public class SuiteGenerationErrorWithRegularExpressions
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestDataSchemaHttpsWwwKrakendIoSchemaV23KrakendJs()
     {
-        using var doc = JsonDocument.Parse("{\r\n          \"$schema\": \"https://www.krakend.io/schema/v2.3/krakend.json\",\r\n          \"endpoints\": [\r\n            {\r\n              \"backend\": [\r\n                {\r\n                  \"extra_config\": {\r\n                    \"modifier/lua-backend\": {\r\n                      \"allow_open_libs\": true,\r\n                      \"live\": true,\r\n                      \"post\": \"filter(request.load(), response.load())\",\r\n                      \"sources\": [\r\n                        \"./filter.lua\"\r\n                      ]\r\n                    }\r\n                  },\r\n                  \"mapping\": {\r\n                    \"expandedBom\": \"collection\"\r\n                  },\r\n                  \"url_pattern\": \"/bom.json\"\r\n                }\r\n              ],\r\n              \"endpoint\": \"/using-lua\",\r\n              \"output_encoding\": \"json-collection\"\r\n            },\r\n            {\r\n              \"backend\": [\r\n                {\r\n                  \"url_pattern\": \"/bom.json\"\r\n                }\r\n              ],\r\n              \"endpoint\": \"/using-jmespath\",\r\n              \"extra_config\": {\r\n                \"modifier/jmespath\": {\r\n                  \"expr\": \"expandedBom[*]\"\r\n                }\r\n              },\r\n              \"output_encoding\": \"json-collection\"\r\n            },\r\n            {\r\n              \"backend\": [\r\n                {\r\n                  \"allow\": [\r\n                    \"expandedBom\"\r\n                  ],\r\n                  \"mapping\": {\r\n                    \"expandedBom\": \"collection\"\r\n                  },\r\n                  \"url_pattern\": \"/bom.json\"\r\n                }\r\n              ],\r\n              \"endpoint\": \"/using-allow\",\r\n              \"output_encoding\": \"json-collection\"\r\n            }\r\n          ],\r\n          \"host\": [\r\n            \"http://my_service:8080\"\r\n          ],\r\n          \"name\": \"My KrakenD API Gateway\",\r\n          \"plugin\": {\r\n            \"folder\": \"/opt/krakend/plugins/\",\r\n            \"pattern\": \".so\"\r\n          },\r\n          \"port\": 8080,\r\n          \"version\": 3\r\n        }");
+        using var doc = JsonDocument.Parse("{\n          \"$schema\": \"https://www.krakend.io/schema/v2.3/krakend.json\",\n          \"endpoints\": [\n            {\n              \"backend\": [\n                {\n                  \"extra_config\": {\n                    \"modifier/lua-backend\": {\n                      \"allow_open_libs\": true,\n                      \"live\": true,\n                      \"post\": \"filter(request.load(), response.load())\",\n                      \"sources\": [\n                        \"./filter.lua\"\n                      ]\n                    }\n                  },\n                  \"mapping\": {\n                    \"expandedBom\": \"collection\"\n                  },\n                  \"url_pattern\": \"/bom.json\"\n                }\n              ],\n              \"endpoint\": \"/using-lua\",\n              \"output_encoding\": \"json-collection\"\n            },\n            {\n              \"backend\": [\n                {\n                  \"url_pattern\": \"/bom.json\"\n                }\n              ],\n              \"endpoint\": \"/using-jmespath\",\n              \"extra_config\": {\n                \"modifier/jmespath\": {\n                  \"expr\": \"expandedBom[*]\"\n                }\n              },\n              \"output_encoding\": \"json-collection\"\n            },\n            {\n              \"backend\": [\n                {\n                  \"allow\": [\n                    \"expandedBom\"\n                  ],\n                  \"mapping\": {\n                    \"expandedBom\": \"collection\"\n                  },\n                  \"url_pattern\": \"/bom.json\"\n                }\n              ],\n              \"endpoint\": \"/using-allow\",\n              \"output_encoding\": \"json-collection\"\n            }\n          ],\n          \"host\": [\n            \"http://my_service:8080\"\n          ],\n          \"name\": \"My KrakenD API Gateway\",\n          \"plugin\": {\n            \"folder\": \"/opt/krakend/plugins/\",\n            \"pattern\": \".so\"\n          },\n          \"port\": 8080,\n          \"version\": 3\n        }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -57,10 +59,9 @@ public class SuiteGenerationErrorWithRegularExpressions
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

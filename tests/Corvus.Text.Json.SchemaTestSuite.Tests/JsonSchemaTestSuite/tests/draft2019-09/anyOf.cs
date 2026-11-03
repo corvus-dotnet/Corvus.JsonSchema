@@ -60,9 +60,9 @@ public class SuiteAnyOf
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/anyOf.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"anyOf\": [\n                {\n                    \"type\": \"integer\"\n                },\n                {\n                    \"minimum\": 2\n                }\n            ]\n        }",
+                "{\n                \"anyOf\": [\n                    { \"type\": \"integer\" },\n                    { \"minimum\": 2 }\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft201909.AnyOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -121,9 +121,9 @@ public class SuiteAnyOfWithBaseSchema
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/anyOf.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"string\",\n            \"anyOf\" : [\n                {\n                    \"maxLength\": 2\n                },\n                {\n                    \"minLength\": 4\n                }\n            ]\n        }",
+                "{\n                \"type\": \"string\",\n                \"anyOf\" : [\n                    { \"maxLength\": 2 },\n                    { \"minLength\": 4 }\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft201909.AnyOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -168,9 +168,9 @@ public class SuiteAnyOfWithBooleanSchemasAllTrue
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/anyOf.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"anyOf\": [true, true]\n        }",
+                "{\n                \"anyOf\": [true, true]\n            }",
                 "JsonSchemaTestSuite.Draft201909.AnyOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -215,9 +215,9 @@ public class SuiteAnyOfWithBooleanSchemasSomeTrue
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/anyOf.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"anyOf\": [true, false]\n        }",
+                "{\n                \"anyOf\": [true, false]\n            }",
                 "JsonSchemaTestSuite.Draft201909.AnyOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -262,9 +262,9 @@ public class SuiteAnyOfWithBooleanSchemasAllFalse
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/anyOf.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"anyOf\": [false, false]\n        }",
+                "{\n                \"anyOf\": [false, false]\n            }",
                 "JsonSchemaTestSuite.Draft201909.AnyOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -297,28 +297,28 @@ public class SuiteAnyOfComplexTypes
     [TestMethod]
     public void TestFirstAnyOfValidComplex()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"bar\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"bar\": 2 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestSecondAnyOfValidComplex()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": \"baz\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"baz\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestBothAnyOfValidComplex()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": \"baz\", \"bar\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"baz\", \"bar\": 2 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestNeitherAnyOfValidComplex()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 2, \"bar\": \"quux\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 2, \"bar\": \"quux\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -330,9 +330,9 @@ public class SuiteAnyOfComplexTypes
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/anyOf.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"anyOf\": [\n                {\n                    \"properties\": {\n                        \"bar\": {\"type\": \"integer\"}\n                    },\n                    \"required\": [\"bar\"]\n                },\n                {\n                    \"properties\": {\n                        \"foo\": {\"type\": \"string\"}\n                    },\n                    \"required\": [\"foo\"]\n                }\n            ]\n        }",
+                "{\n                \"anyOf\": [\n                    {\n                        \"properties\": {\n                            \"bar\": { \"type\": \"integer\" }\n                        },\n                        \"required\": [\"bar\"]\n                    },\n                    {\n                        \"properties\": {\n                            \"foo\": { \"type\": \"string\" }\n                        },\n                        \"required\": [\"foo\"]\n                    }\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft201909.AnyOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -384,9 +384,9 @@ public class SuiteAnyOfWithOneEmptySchema
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/anyOf.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"anyOf\": [\n                { \"type\": \"number\" },\n                {}\n            ]\n        }",
+                "{\n                \"anyOf\": [\n                    { \"type\": \"number\" },\n                    {}\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft201909.AnyOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -438,9 +438,9 @@ public class SuiteNestedAnyOfToCheckValidationSemantics
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/anyOf.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"anyOf\": [\n                {\n                    \"anyOf\": [\n                        {\n                            \"type\": \"null\"\n                        }\n                    ]\n                }\n            ]\n        }",
+                "{\n                \"anyOf\": [\n                    {\n                        \"anyOf\": [{ \"type\": \"null\" }]\n                    }\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft201909.AnyOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,

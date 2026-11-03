@@ -22,25 +22,25 @@ public class CollectingSuiteTests
 
     [TestMethod]
     [DynamicData(nameof(RequiredFiles), DynamicDataDisplayName = nameof(DisplayName))]
-    public void Required(string draft, string name, string file)
+    public void Required(string draft, string file)
     {
         AssertFile(file, draft);
     }
 
     [TestMethod]
     [DynamicData(nameof(OptionalFiles), DynamicDataDisplayName = nameof(DisplayName))]
-    public void Optional(string draft, string name, string file)
+    public void Optional(string draft, string file)
     {
         AssertFile(file, draft);
     }
 
     private static void AssertFile(string file, string draft)
     {
-        List<SuiteRunner.CaseResult> results = SuiteRunner.RunFile(file, draft, assertFormat: false, collecting: true);
-        List<SuiteRunner.CaseResult> failures = results.Where(r => !r.Passed).ToList();
+        List<SuiteRunner.CaseResult> results = SuiteRunner.RunFile(file, draft, collecting: true);
+        List<SuiteRunner.CaseResult> failures = SuiteRunner.Failures(results);
         if (failures.Count > 0)
         {
-            Assert.Fail($"{failures.Count}/{results.Count} cases failed in {Path.GetFileName(file)} (collecting):\n{SuiteRunner.Describe(failures)}");
+            Assert.Fail($"{failures.Count}/{results.Count} cases failed in {file} (collecting):\n{SuiteRunner.Describe(failures)}");
         }
     }
 }

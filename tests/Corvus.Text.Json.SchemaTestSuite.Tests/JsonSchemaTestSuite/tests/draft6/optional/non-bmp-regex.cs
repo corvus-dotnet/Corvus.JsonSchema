@@ -81,9 +81,9 @@ public class SuiteProperUtf16SurrogatePairHandlingPattern
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft6/optional/non-bmp-regex.json",
-                "{ \"pattern\": \"^🐲*$\" }",
+                "{\n                \"pattern\": \"^🐲*$\"\n            }",
                 "JsonSchemaTestSuite.Draft6.Optional.NonBmpRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -156,9 +156,9 @@ public class SuiteProperUtf16SurrogatePairHandlingPatternProperties
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft6/optional/non-bmp-regex.json",
-                "{\n            \"patternProperties\": {\n                \"^🐲*$\": {\n                    \"type\": \"integer\"\n                }\n            }\n        }",
+                "{\n                \"patternProperties\": {\n                    \"^🐲*$\": { \"type\": \"integer\" }\n                }\n            }",
                 "JsonSchemaTestSuite.Draft6.Optional.NonBmpRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,

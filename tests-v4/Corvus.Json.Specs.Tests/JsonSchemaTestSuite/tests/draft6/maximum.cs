@@ -14,19 +14,21 @@ namespace JsonSchemaTestSuite.Draft6.Maximum;
 public class SuiteMaximumValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -62,7 +64,7 @@ public class SuiteMaximumValidation
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -73,7 +75,7 @@ public class SuiteMaximumValidation
             _driver = DriverFactory.CreateDraft6Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maximum.json",
-                "#/0/schema",
+                "#/tests/0/schema",
                 "JsonSchemaTestSuiteDraft6Maximum",
                 "MaximumValidation",
                 validateFormat: false,
@@ -81,10 +83,9 @@ public class SuiteMaximumValidation
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -94,19 +95,21 @@ public class SuiteMaximumValidation
 public class SuiteMaximumValidationWithUnsignedInteger
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -142,7 +145,7 @@ public class SuiteMaximumValidationWithUnsignedInteger
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -153,7 +156,7 @@ public class SuiteMaximumValidationWithUnsignedInteger
             _driver = DriverFactory.CreateDraft6Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maximum.json",
-                "#/1/schema",
+                "#/tests/1/schema",
                 "JsonSchemaTestSuiteDraft6Maximum",
                 "MaximumValidationWithUnsignedInteger",
                 validateFormat: false,
@@ -161,10 +164,90 @@ public class SuiteMaximumValidationWithUnsignedInteger
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
+        }
+    }
+}
+
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteExclusiveMaximumValidation
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestBelowTheExclusiveMaximumIsValid()
+    {
+        using var doc = JsonDocument.Parse("2.2");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestBoundaryPointIsInvalid()
+    {
+        using var doc = JsonDocument.Parse("3.0");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestAboveTheExclusiveMaximumIsInvalid()
+    {
+        using var doc = JsonDocument.Parse("3.5");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestIgnoresNonNumbers()
+    {
+        using var doc = JsonDocument.Parse("\"x\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft6Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "maximum.json",
+                "#/tests/4/schema",
+                "JsonSchemaTestSuiteDraft6Maximum",
+                "ExclusiveMaximumValidation",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false);
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
         }
     }
 }

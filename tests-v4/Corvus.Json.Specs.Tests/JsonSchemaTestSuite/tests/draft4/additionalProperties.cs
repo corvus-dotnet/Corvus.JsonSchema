@@ -14,26 +14,28 @@ namespace JsonSchemaTestSuite.Draft4.AdditionalProperties;
 public class SuiteAdditionalPropertiesBeingFalseDoesNotAllowOtherProperties
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestNoAdditionalPropertiesIsValid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 1}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 1 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -41,7 +43,7 @@ public class SuiteAdditionalPropertiesBeingFalseDoesNotAllowOtherProperties
     [TestMethod]
     public void TestAnAdditionalPropertyIsInvalid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\" : 1, \"bar\" : 2, \"quux\" : \"boom\"}");
+        using var doc = JsonDocument.Parse("{ \"foo\" : 1, \"bar\" : 2, \"quux\" : \"boom\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -73,12 +75,12 @@ public class SuiteAdditionalPropertiesBeingFalseDoesNotAllowOtherProperties
     [TestMethod]
     public void TestPatternPropertiesAreNotAdditionalProperties()
     {
-        using var doc = JsonDocument.Parse("{\"foo\":1, \"vroom\": 2}");
+        using var doc = JsonDocument.Parse("{ \"foo\":1, \"vroom\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -89,7 +91,7 @@ public class SuiteAdditionalPropertiesBeingFalseDoesNotAllowOtherProperties
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "additionalProperties.json",
-                "#/0/schema",
+                "#/tests/0/schema",
                 "JsonSchemaTestSuiteDraft4AdditionalProperties",
                 "AdditionalPropertiesBeingFalseDoesNotAllowOtherProperties",
                 validateFormat: false,
@@ -97,10 +99,9 @@ public class SuiteAdditionalPropertiesBeingFalseDoesNotAllowOtherProperties
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -110,26 +111,28 @@ public class SuiteAdditionalPropertiesBeingFalseDoesNotAllowOtherProperties
 public class SuiteNonASCIIPatternWithAdditionalProperties
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestMatchingThePatternIsValid()
     {
-        using var doc = JsonDocument.Parse("{\"ármányos\": 2}");
+        using var doc = JsonDocument.Parse("{ \"ármányos\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -137,12 +140,12 @@ public class SuiteNonASCIIPatternWithAdditionalProperties
     [TestMethod]
     public void TestNotMatchingThePatternIsInvalid()
     {
-        using var doc = JsonDocument.Parse("{\"élmény\": 2}");
+        using var doc = JsonDocument.Parse("{ \"élmény\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -153,7 +156,7 @@ public class SuiteNonASCIIPatternWithAdditionalProperties
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "additionalProperties.json",
-                "#/1/schema",
+                "#/tests/1/schema",
                 "JsonSchemaTestSuiteDraft4AdditionalProperties",
                 "NonASCIIPatternWithAdditionalProperties",
                 validateFormat: false,
@@ -161,10 +164,9 @@ public class SuiteNonASCIIPatternWithAdditionalProperties
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -174,26 +176,28 @@ public class SuiteNonASCIIPatternWithAdditionalProperties
 public class SuiteAdditionalPropertiesWithSchema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestNoAdditionalPropertiesIsValid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 1}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 1 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -201,7 +205,7 @@ public class SuiteAdditionalPropertiesWithSchema
     [TestMethod]
     public void TestAnAdditionalValidPropertyIsValid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\" : 1, \"bar\" : 2, \"quux\" : true}");
+        using var doc = JsonDocument.Parse("{ \"foo\" : 1, \"bar\" : 2, \"quux\" : true }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -209,12 +213,12 @@ public class SuiteAdditionalPropertiesWithSchema
     [TestMethod]
     public void TestAnAdditionalInvalidPropertyIsInvalid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\" : 1, \"bar\" : 2, \"quux\" : 12}");
+        using var doc = JsonDocument.Parse("{ \"foo\" : 1, \"bar\" : 2, \"quux\" : 12 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -225,7 +229,7 @@ public class SuiteAdditionalPropertiesWithSchema
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "additionalProperties.json",
-                "#/2/schema",
+                "#/tests/2/schema",
                 "JsonSchemaTestSuiteDraft4AdditionalProperties",
                 "AdditionalPropertiesWithSchema",
                 validateFormat: false,
@@ -233,10 +237,9 @@ public class SuiteAdditionalPropertiesWithSchema
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -246,26 +249,28 @@ public class SuiteAdditionalPropertiesWithSchema
 public class SuiteAdditionalPropertiesCanExistByItself
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestAnAdditionalValidPropertyIsValid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\" : true}");
+        using var doc = JsonDocument.Parse("{ \"foo\" : true }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -273,12 +278,12 @@ public class SuiteAdditionalPropertiesCanExistByItself
     [TestMethod]
     public void TestAnAdditionalInvalidPropertyIsInvalid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\" : 1}");
+        using var doc = JsonDocument.Parse("{ \"foo\" : 1 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -289,7 +294,7 @@ public class SuiteAdditionalPropertiesCanExistByItself
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "additionalProperties.json",
-                "#/3/schema",
+                "#/tests/3/schema",
                 "JsonSchemaTestSuiteDraft4AdditionalProperties",
                 "AdditionalPropertiesCanExistByItself",
                 validateFormat: false,
@@ -297,10 +302,9 @@ public class SuiteAdditionalPropertiesCanExistByItself
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -310,31 +314,33 @@ public class SuiteAdditionalPropertiesCanExistByItself
 public class SuiteAdditionalPropertiesAreAllowedByDefault
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestAdditionalPropertiesAreAllowed()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 1, \"bar\": 2, \"quux\": true}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 1, \"bar\": 2, \"quux\": true }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -345,7 +351,7 @@ public class SuiteAdditionalPropertiesAreAllowedByDefault
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "additionalProperties.json",
-                "#/4/schema",
+                "#/tests/4/schema",
                 "JsonSchemaTestSuiteDraft4AdditionalProperties",
                 "AdditionalPropertiesAreAllowedByDefault",
                 validateFormat: false,
@@ -353,10 +359,9 @@ public class SuiteAdditionalPropertiesAreAllowedByDefault
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -366,31 +371,33 @@ public class SuiteAdditionalPropertiesAreAllowedByDefault
 public class SuiteAdditionalPropertiesDoesNotLookInApplicators
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestPropertiesDefinedInAllOfAreNotExamined()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 1, \"bar\": true}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 1, \"bar\": true }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -401,7 +408,7 @@ public class SuiteAdditionalPropertiesDoesNotLookInApplicators
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "additionalProperties.json",
-                "#/5/schema",
+                "#/tests/6/schema",
                 "JsonSchemaTestSuiteDraft4AdditionalProperties",
                 "AdditionalPropertiesDoesNotLookInApplicators",
                 validateFormat: false,
@@ -409,10 +416,9 @@ public class SuiteAdditionalPropertiesDoesNotLookInApplicators
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -422,31 +428,33 @@ public class SuiteAdditionalPropertiesDoesNotLookInApplicators
 public class SuiteAdditionalPropertiesWithNullValuedInstanceProperties
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestAllowsNullValues()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": null}");
+        using var doc = JsonDocument.Parse("{ \"foo\": null }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -457,7 +465,7 @@ public class SuiteAdditionalPropertiesWithNullValuedInstanceProperties
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "additionalProperties.json",
-                "#/6/schema",
+                "#/tests/7/schema",
                 "JsonSchemaTestSuiteDraft4AdditionalProperties",
                 "AdditionalPropertiesWithNullValuedInstanceProperties",
                 validateFormat: false,
@@ -465,10 +473,9 @@ public class SuiteAdditionalPropertiesWithNullValuedInstanceProperties
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

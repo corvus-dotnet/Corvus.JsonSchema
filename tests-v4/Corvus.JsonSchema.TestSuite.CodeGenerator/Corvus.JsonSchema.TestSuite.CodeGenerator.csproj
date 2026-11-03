@@ -14,6 +14,9 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\Common\tests\TestUtilities\JsonSchemaTestSuite\SuiteCompatibility.cs" Link="SuiteCompatibility.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

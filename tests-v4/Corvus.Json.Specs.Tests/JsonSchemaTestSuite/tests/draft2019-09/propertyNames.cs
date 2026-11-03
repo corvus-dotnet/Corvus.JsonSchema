@@ -14,26 +14,28 @@ namespace JsonSchemaTestSuite.Draft201909.PropertyNames;
 public class SuitePropertyNamesValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestAllPropertyNamesValid()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"f\": {},\r\n                    \"foo\": {}\r\n                }");
+        using var doc = JsonDocument.Parse("{ \"f\": {}, \"foo\": {} }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -41,7 +43,7 @@ public class SuitePropertyNamesValidation
     [TestMethod]
     public void TestSomePropertyNamesInvalid()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"foo\": {},\r\n                    \"foobar\": {}\r\n                }");
+        using var doc = JsonDocument.Parse("{ \"foo\": {}, \"foobar\": {} }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -78,7 +80,23 @@ public class SuitePropertyNamesValidation
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    [TestMethod]
+    public void TestIgnoresNull()
+    {
+        using var doc = JsonDocument.Parse("null");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestIgnoresBooleans()
+    {
+        using var doc = JsonDocument.Parse("true");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -89,7 +107,7 @@ public class SuitePropertyNamesValidation
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "propertyNames.json",
-                "#/0/schema",
+                "#/tests/0/schema",
                 "JsonSchemaTestSuiteDraft201909PropertyNames",
                 "PropertyNamesValidation",
                 validateFormat: false,
@@ -97,10 +115,9 @@ public class SuitePropertyNamesValidation
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -110,26 +127,28 @@ public class SuitePropertyNamesValidation
 public class SuitePropertyNamesValidationWithPattern
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestMatchingPropertyNamesValid()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"a\": {},\r\n                    \"aa\": {},\r\n                    \"aaa\": {}\r\n                }");
+        using var doc = JsonDocument.Parse("{ \"a\": {}, \"aa\": {}, \"aaa\": {} }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -137,7 +156,7 @@ public class SuitePropertyNamesValidationWithPattern
     [TestMethod]
     public void TestNonMatchingPropertyNameIsInvalid()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"aaA\": {}\r\n                }");
+        using var doc = JsonDocument.Parse("{ \"aaA\": {} }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -150,7 +169,7 @@ public class SuitePropertyNamesValidationWithPattern
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -161,7 +180,7 @@ public class SuitePropertyNamesValidationWithPattern
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "propertyNames.json",
-                "#/1/schema",
+                "#/tests/1/schema",
                 "JsonSchemaTestSuiteDraft201909PropertyNames",
                 "PropertyNamesValidationWithPattern",
                 validateFormat: false,
@@ -169,10 +188,9 @@ public class SuitePropertyNamesValidationWithPattern
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -182,26 +200,28 @@ public class SuitePropertyNamesValidationWithPattern
 public class SuitePropertyNamesWithBooleanSchemaTrue
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestObjectWithAnyPropertiesIsValid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 1}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 1 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -214,7 +234,7 @@ public class SuitePropertyNamesWithBooleanSchemaTrue
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -225,7 +245,7 @@ public class SuitePropertyNamesWithBooleanSchemaTrue
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "propertyNames.json",
-                "#/2/schema",
+                "#/tests/2/schema",
                 "JsonSchemaTestSuiteDraft201909PropertyNames",
                 "PropertyNamesWithBooleanSchemaTrue",
                 validateFormat: false,
@@ -233,10 +253,9 @@ public class SuitePropertyNamesWithBooleanSchemaTrue
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -246,26 +265,28 @@ public class SuitePropertyNamesWithBooleanSchemaTrue
 public class SuitePropertyNamesWithBooleanSchemaFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestObjectWithAnyPropertiesIsInvalid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 1}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 1 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -278,7 +299,7 @@ public class SuitePropertyNamesWithBooleanSchemaFalse
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -289,7 +310,7 @@ public class SuitePropertyNamesWithBooleanSchemaFalse
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "propertyNames.json",
-                "#/3/schema",
+                "#/tests/3/schema",
                 "JsonSchemaTestSuiteDraft201909PropertyNames",
                 "PropertyNamesWithBooleanSchemaFalse",
                 validateFormat: false,
@@ -297,10 +318,9 @@ public class SuitePropertyNamesWithBooleanSchemaFalse
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -310,26 +330,28 @@ public class SuitePropertyNamesWithBooleanSchemaFalse
 public class SuitePropertyNamesWithConst
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestObjectWithPropertyFooIsValid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 1}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 1 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -337,7 +359,7 @@ public class SuitePropertyNamesWithConst
     [TestMethod]
     public void TestObjectWithAnyOtherPropertyIsInvalid()
     {
-        using var doc = JsonDocument.Parse("{\"bar\": 1}");
+        using var doc = JsonDocument.Parse("{ \"bar\": 1 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -350,7 +372,7 @@ public class SuitePropertyNamesWithConst
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -361,7 +383,7 @@ public class SuitePropertyNamesWithConst
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "propertyNames.json",
-                "#/4/schema",
+                "#/tests/4/schema",
                 "JsonSchemaTestSuiteDraft201909PropertyNames",
                 "PropertyNamesWithConst",
                 validateFormat: false,
@@ -369,10 +391,9 @@ public class SuitePropertyNamesWithConst
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -382,26 +403,28 @@ public class SuitePropertyNamesWithConst
 public class SuitePropertyNamesWithEnum
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestObjectWithPropertyFooIsValid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 1}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 1 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -409,7 +432,7 @@ public class SuitePropertyNamesWithEnum
     [TestMethod]
     public void TestObjectWithPropertyFooAndBarIsValid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 1, \"bar\": 1}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 1, \"bar\": 1 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -417,7 +440,7 @@ public class SuitePropertyNamesWithEnum
     [TestMethod]
     public void TestObjectWithAnyOtherPropertyIsInvalid()
     {
-        using var doc = JsonDocument.Parse("{\"baz\": 1}");
+        using var doc = JsonDocument.Parse("{ \"baz\": 1 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -430,7 +453,7 @@ public class SuitePropertyNamesWithEnum
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -441,7 +464,7 @@ public class SuitePropertyNamesWithEnum
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "propertyNames.json",
-                "#/5/schema",
+                "#/tests/5/schema",
                 "JsonSchemaTestSuiteDraft201909PropertyNames",
                 "PropertyNamesWithEnum",
                 validateFormat: false,
@@ -449,10 +472,9 @@ public class SuitePropertyNamesWithEnum
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

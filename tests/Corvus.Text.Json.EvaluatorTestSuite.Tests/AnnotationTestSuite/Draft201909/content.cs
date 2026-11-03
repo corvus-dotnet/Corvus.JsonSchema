@@ -58,7 +58,7 @@ public class SuiteContentMediaTypeIsAnAnnotationForStringInstances
                 "annotations/content.json",
                 "{\n        \"contentMediaType\": \"application/json\"\n      }",
                 "AnnotationTestSuite.Draft201909.Content",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -117,7 +117,7 @@ public class SuiteContentEncodingIsAnAnnotationForStringInstances
                 "annotations/content.json",
                 "{\n        \"contentEncoding\": \"base64\"\n      }",
                 "AnnotationTestSuite.Draft201909.Content",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -176,7 +176,7 @@ public class SuiteContentSchemaIsAnAnnotationForStringInstances
                 "annotations/content.json",
                 "{\n        \"contentMediaType\": \"application/json\",\n        \"contentSchema\": { \"type\": \"number\" }\n      }",
                 "AnnotationTestSuite.Draft201909.Content",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -224,7 +224,7 @@ public class SuiteContentSchemaRequiresContentMediaType
                 "annotations/content.json",
                 "{\n        \"contentSchema\": { \"type\": \"number\" }\n      }",
                 "AnnotationTestSuite.Draft201909.Content",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

@@ -44,11 +44,16 @@ public class TestFile(string baseDirectory, string relativePath, string namespac
 /// <param name="schema">The schema text for the test suite.</param>
 /// <param name="testSpecifications">The test specifications.</param>
 /// <param name="validateFormat">Whether to always assert format.</param>
+/// <param name="externalSchemas">
+/// The test case's <c>externalSchemas</c> object (retrieval URI to schema) as JSON text, or
+/// <see langword="null"/> if it has none. These are scoped to this test case only.
+/// </param>
 public class TestSuite(
     string suiteName,
     JsonAny schema,
     List<TestSpecification> testSpecifications,
-    bool validateFormat)
+    bool validateFormat,
+    string? externalSchemas = null)
 {
     public string SuiteName { get; } = suiteName;
 
@@ -57,6 +62,8 @@ public class TestSuite(
     public bool ValidateFormat { get; } = validateFormat;
 
     public JsonAny Schema { get; } = schema;
+
+    public string? ExternalSchemas { get; } = externalSchemas;
 }
 
 /// <summary>

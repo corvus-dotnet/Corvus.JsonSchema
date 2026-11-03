@@ -14,19 +14,21 @@ namespace JsonSchemaTestSuite.Draft201909.AnyOf;
 public class SuiteAnyOf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -62,7 +64,7 @@ public class SuiteAnyOf
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -73,7 +75,7 @@ public class SuiteAnyOf
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "anyOf.json",
-                "#/0/schema",
+                "#/tests/0/schema",
                 "JsonSchemaTestSuiteDraft201909AnyOf",
                 "AnyOf",
                 validateFormat: false,
@@ -81,10 +83,9 @@ public class SuiteAnyOf
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -94,19 +95,21 @@ public class SuiteAnyOf
 public class SuiteAnyOfWithBaseSchema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -134,7 +137,7 @@ public class SuiteAnyOfWithBaseSchema
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -145,7 +148,7 @@ public class SuiteAnyOfWithBaseSchema
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "anyOf.json",
-                "#/1/schema",
+                "#/tests/1/schema",
                 "JsonSchemaTestSuiteDraft201909AnyOf",
                 "AnyOfWithBaseSchema",
                 validateFormat: false,
@@ -153,10 +156,9 @@ public class SuiteAnyOfWithBaseSchema
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -166,19 +168,21 @@ public class SuiteAnyOfWithBaseSchema
 public class SuiteAnyOfWithBooleanSchemasAllTrue
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -190,7 +194,7 @@ public class SuiteAnyOfWithBooleanSchemasAllTrue
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -201,7 +205,7 @@ public class SuiteAnyOfWithBooleanSchemasAllTrue
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "anyOf.json",
-                "#/2/schema",
+                "#/tests/2/schema",
                 "JsonSchemaTestSuiteDraft201909AnyOf",
                 "AnyOfWithBooleanSchemasAllTrue",
                 validateFormat: false,
@@ -209,10 +213,9 @@ public class SuiteAnyOfWithBooleanSchemasAllTrue
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -222,19 +225,21 @@ public class SuiteAnyOfWithBooleanSchemasAllTrue
 public class SuiteAnyOfWithBooleanSchemasSomeTrue
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -246,7 +251,7 @@ public class SuiteAnyOfWithBooleanSchemasSomeTrue
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -257,7 +262,7 @@ public class SuiteAnyOfWithBooleanSchemasSomeTrue
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "anyOf.json",
-                "#/3/schema",
+                "#/tests/3/schema",
                 "JsonSchemaTestSuiteDraft201909AnyOf",
                 "AnyOfWithBooleanSchemasSomeTrue",
                 validateFormat: false,
@@ -265,10 +270,9 @@ public class SuiteAnyOfWithBooleanSchemasSomeTrue
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -278,19 +282,21 @@ public class SuiteAnyOfWithBooleanSchemasSomeTrue
 public class SuiteAnyOfWithBooleanSchemasAllFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -302,7 +308,7 @@ public class SuiteAnyOfWithBooleanSchemasAllFalse
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -313,7 +319,7 @@ public class SuiteAnyOfWithBooleanSchemasAllFalse
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "anyOf.json",
-                "#/4/schema",
+                "#/tests/4/schema",
                 "JsonSchemaTestSuiteDraft201909AnyOf",
                 "AnyOfWithBooleanSchemasAllFalse",
                 validateFormat: false,
@@ -321,10 +327,9 @@ public class SuiteAnyOfWithBooleanSchemasAllFalse
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -334,26 +339,28 @@ public class SuiteAnyOfWithBooleanSchemasAllFalse
 public class SuiteAnyOfComplexTypes
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestFirstAnyOfValidComplex()
     {
-        using var doc = JsonDocument.Parse("{\"bar\": 2}");
+        using var doc = JsonDocument.Parse("{ \"bar\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -361,7 +368,7 @@ public class SuiteAnyOfComplexTypes
     [TestMethod]
     public void TestSecondAnyOfValidComplex()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": \"baz\"}");
+        using var doc = JsonDocument.Parse("{ \"foo\": \"baz\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -369,7 +376,7 @@ public class SuiteAnyOfComplexTypes
     [TestMethod]
     public void TestBothAnyOfValidComplex()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": \"baz\", \"bar\": 2}");
+        using var doc = JsonDocument.Parse("{ \"foo\": \"baz\", \"bar\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -377,12 +384,12 @@ public class SuiteAnyOfComplexTypes
     [TestMethod]
     public void TestNeitherAnyOfValidComplex()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 2, \"bar\": \"quux\"}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 2, \"bar\": \"quux\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -393,7 +400,7 @@ public class SuiteAnyOfComplexTypes
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "anyOf.json",
-                "#/5/schema",
+                "#/tests/5/schema",
                 "JsonSchemaTestSuiteDraft201909AnyOf",
                 "AnyOfComplexTypes",
                 validateFormat: false,
@@ -401,10 +408,9 @@ public class SuiteAnyOfComplexTypes
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -414,19 +420,21 @@ public class SuiteAnyOfComplexTypes
 public class SuiteAnyOfWithOneEmptySchema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -446,7 +454,7 @@ public class SuiteAnyOfWithOneEmptySchema
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -457,7 +465,7 @@ public class SuiteAnyOfWithOneEmptySchema
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "anyOf.json",
-                "#/6/schema",
+                "#/tests/6/schema",
                 "JsonSchemaTestSuiteDraft201909AnyOf",
                 "AnyOfWithOneEmptySchema",
                 validateFormat: false,
@@ -465,10 +473,9 @@ public class SuiteAnyOfWithOneEmptySchema
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -478,19 +485,21 @@ public class SuiteAnyOfWithOneEmptySchema
 public class SuiteNestedAnyOfToCheckValidationSemantics
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -510,7 +519,7 @@ public class SuiteNestedAnyOfToCheckValidationSemantics
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -521,7 +530,7 @@ public class SuiteNestedAnyOfToCheckValidationSemantics
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "anyOf.json",
-                "#/7/schema",
+                "#/tests/7/schema",
                 "JsonSchemaTestSuiteDraft201909AnyOf",
                 "NestedAnyOfToCheckValidationSemantics",
                 validateFormat: false,
@@ -529,10 +538,9 @@ public class SuiteNestedAnyOfToCheckValidationSemantics
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

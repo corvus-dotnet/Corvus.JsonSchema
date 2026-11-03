@@ -47,9 +47,9 @@ public class SuiteIgnoreIfWithoutThenOrElse
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/if-then-else.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"if\": {\n                \"const\": 0\n            }\n        }",
+                "{\n                \"if\": { \"const\": 0 }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.IfThenElse",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -98,9 +98,9 @@ public class SuiteIgnoreThenWithoutIf
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/if-then-else.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"then\": {\n                \"const\": 0\n            }\n        }",
+                "{\n                \"then\": { \"const\": 0 }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.IfThenElse",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -149,9 +149,9 @@ public class SuiteIgnoreElseWithoutIf
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/if-then-else.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"else\": {\n                \"const\": 0\n            }\n        }",
+                "{\n                \"else\": { \"const\": 0 }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.IfThenElse",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -207,9 +207,9 @@ public class SuiteIfAndThenWithoutElse
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/if-then-else.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"if\": {\n                \"exclusiveMaximum\": 0\n            },\n            \"then\": {\n                \"minimum\": -10\n            }\n        }",
+                "{\n                \"if\": { \"exclusiveMaximum\": 0 },\n                \"then\": { \"minimum\": -10 }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.IfThenElse",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -265,9 +265,9 @@ public class SuiteIfAndElseWithoutThen
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/if-then-else.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"if\": {\n                \"exclusiveMaximum\": 0\n            },\n            \"else\": {\n                \"multipleOf\": 2\n            }\n        }",
+                "{\n                \"if\": { \"exclusiveMaximum\": 0 },\n                \"else\": { \"multipleOf\": 2 }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.IfThenElse",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -330,9 +330,9 @@ public class SuiteValidateAgainstCorrectBranchThenVsElse
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/if-then-else.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"if\": {\n                \"exclusiveMaximum\": 0\n            },\n            \"then\": {\n                \"minimum\": -10\n            },\n            \"else\": {\n                \"multipleOf\": 2\n            }\n        }",
+                "{\n                \"if\": { \"exclusiveMaximum\": 0 },\n                \"then\": { \"minimum\": -10 },\n                \"else\": { \"multipleOf\": 2 }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.IfThenElse",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -381,9 +381,9 @@ public class SuiteNonInterferenceAcrossCombinedSchemas
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/if-then-else.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"allOf\": [\n                {\n                    \"if\": {\n                        \"exclusiveMaximum\": 0\n                    }\n                },\n                {\n                    \"then\": {\n                        \"minimum\": -10\n                    }\n                },\n                {\n                    \"else\": {\n                        \"multipleOf\": 2\n                    }\n                }\n            ]\n        }",
+                "{\n                \"allOf\": [\n                    {\n                        \"if\": { \"exclusiveMaximum\": 0 }\n                    },\n                    {\n                        \"then\": { \"minimum\": -10 }\n                    },\n                    {\n                        \"else\": { \"multipleOf\": 2 }\n                    }\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.IfThenElse",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -432,9 +432,9 @@ public class SuiteIfWithBooleanSchemaTrue
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/if-then-else.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"if\": true,\n            \"then\": { \"const\": \"then\" },\n            \"else\": { \"const\": \"else\" }\n        }",
+                "{\n                \"if\": true,\n                \"then\": { \"const\": \"then\" },\n                \"else\": { \"const\": \"else\" }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.IfThenElse",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -483,9 +483,9 @@ public class SuiteIfWithBooleanSchemaFalse
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/if-then-else.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"if\": false,\n            \"then\": { \"const\": \"then\" },\n            \"else\": { \"const\": \"else\" }\n        }",
+                "{\n                \"if\": false,\n                \"then\": { \"const\": \"then\" },\n                \"else\": { \"const\": \"else\" }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.IfThenElse",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -548,9 +548,9 @@ public class SuiteIfAppearsAtTheEndWhenSerializedKeywordProcessingSequence
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/if-then-else.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"then\": { \"const\": \"yes\" },\n            \"else\": { \"const\": \"other\" },\n            \"if\": { \"maxLength\": 4 }\n        }",
+                "{\n                \"then\": { \"const\": \"yes\" },\n                \"else\": { \"const\": \"other\" },\n                \"if\": { \"maxLength\": 4 }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.IfThenElse",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -599,9 +599,9 @@ public class SuiteThenFalseFailsWhenConditionMatches
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/if-then-else.json",
-                "{\n            \"if\": { \"const\": 1 },\n            \"then\": false\n        }",
+                "{\n                \"if\": { \"const\": 1 },\n                \"then\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.IfThenElse",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -650,9 +650,9 @@ public class SuiteElseFalseFailsWhenConditionDoesNotMatch
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/if-then-else.json",
-                "{\n            \"if\": { \"const\": 1 },\n            \"else\": false\n        }",
+                "{\n                \"if\": { \"const\": 1 },\n                \"else\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.IfThenElse",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

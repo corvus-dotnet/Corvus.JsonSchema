@@ -47,7 +47,7 @@ public class SuiteRefAndDefs
                 "annotations/core.json",
                 "{\n        \"$ref\": \"#/$defs/foo\",\n        \"$defs\": {\n          \"foo\": { \"title\": \"Foo\" }\n        }\n      }",
                 "AnnotationTestSuite.Draft201909.Core",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

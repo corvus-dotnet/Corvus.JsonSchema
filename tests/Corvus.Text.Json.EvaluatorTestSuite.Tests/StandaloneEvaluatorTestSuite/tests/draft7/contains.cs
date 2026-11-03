@@ -67,6 +67,13 @@ public class SuiteContainsKeywordValidation
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
+    [TestMethod]
+    public void TestNotArrayOrObjectIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("42");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
     public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
@@ -75,9 +82,9 @@ public class SuiteContainsKeywordValidation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/contains.json",
-                "{\n            \"contains\": {\"minimum\": 5}\n        }",
+                "{\n                \"contains\": { \"minimum\": 5 }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft7.Contains",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -133,9 +140,9 @@ public class SuiteContainsKeywordWithConstKeyword
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/contains.json",
-                "{\n            \"contains\": { \"const\": 5 }\n        }",
+                "{\n                \"contains\": { \"const\": 5 }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft7.Contains",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -184,9 +191,9 @@ public class SuiteContainsKeywordWithBooleanSchemaTrue
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/contains.json",
-                "{\"contains\": true}",
+                "{ \"contains\": true }",
                 "StandaloneEvaluatorTestSuite.Draft7.Contains",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -228,9 +235,37 @@ public class SuiteContainsKeywordWithBooleanSchemaFalse
     }
 
     [TestMethod]
-    public void TestNonArraysAreValid()
+    public void TestNonArraysAreValidString()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"contains does not apply to strings\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestNonArraysAreValidObject()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{}");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestNonArraysAreValidNumber()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("42");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestNonArraysAreValidBoolean()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("false");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestNonArraysAreValidNull()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("null");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -242,9 +277,9 @@ public class SuiteContainsKeywordWithBooleanSchemaFalse
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/contains.json",
-                "{\"contains\": false}",
+                "{ \"contains\": false }",
                 "StandaloneEvaluatorTestSuite.Draft7.Contains",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -274,28 +309,28 @@ public class SuiteItemsContains
     [TestMethod]
     public void TestMatchesItemsDoesNotMatchContains()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 2, 4, 8 ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[2, 4, 8]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestDoesNotMatchItemsMatchesContains()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 3, 6, 9 ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[3, 6, 9]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestMatchesBothItemsAndContains()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 6, 12 ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[6, 12]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestMatchesNeitherItemsNorContains()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 5 ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 5]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -307,9 +342,9 @@ public class SuiteItemsContains
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/contains.json",
-                "{\n            \"items\": { \"multipleOf\": 2 },\n            \"contains\": { \"multipleOf\": 3 }\n        }",
+                "{\n                \"items\": { \"multipleOf\": 2 },\n                \"contains\": { \"multipleOf\": 3 }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft7.Contains",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -358,9 +393,9 @@ public class SuiteContainsWithFalseIfSubschema
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/contains.json",
-                "{\n            \"contains\": {\n                \"if\": false,\n                \"else\": true\n            }\n        }",
+                "{\n                \"contains\": {\n                    \"if\": false,\n                    \"else\": true\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft7.Contains",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -402,9 +437,9 @@ public class SuiteContainsWithNullInstanceElements
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/contains.json",
-                "{\n            \"contains\": {\n                \"type\": \"null\"\n            }\n        }",
+                "{\n                \"contains\": { \"type\": \"null\" }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft7.Contains",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

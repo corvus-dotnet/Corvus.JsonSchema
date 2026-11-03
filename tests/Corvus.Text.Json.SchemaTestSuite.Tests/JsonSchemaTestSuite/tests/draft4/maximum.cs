@@ -60,9 +60,9 @@ public class SuiteMaximumValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/maximum.json",
-                "{\"maximum\": 3.0}",
+                "{ \"maximum\": 3.0 }",
                 "JsonSchemaTestSuite.Draft4.Maximum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -128,9 +128,9 @@ public class SuiteMaximumValidationWithUnsignedInteger
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/maximum.json",
-                "{\"maximum\": 300}",
+                "{ \"maximum\": 300 }",
                 "JsonSchemaTestSuite.Draft4.Maximum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -196,9 +196,9 @@ public class SuiteMaximumValidationExplicitFalseExclusivity
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/maximum.json",
-                "{\"maximum\": 3.0, \"exclusiveMaximum\": false}",
+                "{ \"maximum\": 3.0, \"exclusiveMaximum\": false }",
                 "JsonSchemaTestSuite.Draft4.Maximum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -211,7 +211,7 @@ public class SuiteMaximumValidationExplicitFalseExclusivity
 
 [TestCategory("Draft4")]
 [TestClass]
-public class SuiteExclusiveMaximumValidation
+public class SuiteExclusiveMaximumValidationBooleanForm
 {
     private static Fixture? s_fixture;
 
@@ -250,9 +250,9 @@ public class SuiteExclusiveMaximumValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/maximum.json",
-                "{\n            \"maximum\": 3.0,\n            \"exclusiveMaximum\": true\n        }",
+                "{\n                \"maximum\": 3.0,\n                \"exclusiveMaximum\": true\n            }",
                 "JsonSchemaTestSuite.Draft4.Maximum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,

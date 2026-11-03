@@ -47,9 +47,9 @@ public class SuiteEcma262RegexDoesNotMatchTrailingNewline
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^abc$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^abc$\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -98,9 +98,9 @@ public class SuiteEcma262RegexConvertsTToHorizontalTab
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\t$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\t$\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -149,9 +149,9 @@ public class SuiteEcma262RegexEscapesControlCodesWithCAndUpperLetter
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\cC$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\cC$\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -200,9 +200,9 @@ public class SuiteEcma262RegexEscapesControlCodesWithCAndLowerLetter
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\cc$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\cc$\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -258,9 +258,9 @@ public class SuiteEcma262DMatchesAsciiDigitsOnly
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\d$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\d$\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -316,9 +316,9 @@ public class SuiteEcma262DMatchesEverythingButAsciiDigits
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\D$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\D$\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -367,9 +367,9 @@ public class SuiteEcma262WMatchesAsciiLettersOnly
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\w$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\w$\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -418,9 +418,9 @@ public class SuiteEcma262WMatchesEverythingButAsciiLetters
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\W$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\W$\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -532,9 +532,9 @@ public class SuiteEcma262SMatchesWhitespace
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\s$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\s$\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -646,74 +646,9 @@ public class SuiteEcma262SMatchesEverythingButWhitespace
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\S$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\S$\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
-                "https://json-schema.org/draft/2019-09/schema",
-                validateFormat: false,
-                Assembly.GetExecutingAssembly());
-        }
-    }
-}
-
-[TestCategory("Draft201909")]
-[TestClass]
-public class SuitePatternsAlwaysUseUnicodeSemanticsWithPattern
-{
-    private static Fixture? s_fixture;
-
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext _)
-    {
-        s_fixture = new Fixture();
-        await s_fixture.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static void ClassCleanupMethod()
-    {
-        s_fixture = null;
-    }
-
-    [TestMethod]
-    public void TestAsciiCharacterInJsonString()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"Les hivers de mon enfance etaient des saisons longues, longues. Nous vivions en trois lieux: l'ecole, l'eglise et la patinoire; mais la vraie vie etait sur la patinoire.\"");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestLiteralUnicodeCharacterInJsonString()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"Les hivers de mon enfance étaient des saisons longues, longues. Nous vivions en trois lieux: l'école, l'église et la patinoire; mais la vraie vie était sur la patinoire.\"");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestUnicodeCharacterInHexFormatInString()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"Les hivers de mon enfance étaient des saisons longues, longues. Nous vivions en trois lieux: l'\\u00e9cole, l'église et la patinoire; mais la vraie vie était sur la patinoire.\"");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestUnicodeMatchingIsCaseSensitive()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"LES HIVERS DE MON ENFANCE ÉTAIENT DES SAISONS LONGUES, LONGUES. NOUS VIVIONS EN TROIS LIEUX: L'ÉCOLE, L'ÉGLISE ET LA PATINOIRE; MAIS LA VRAIE VIE ÉTAIT SUR LA PATINOIRE.\"");
-        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    public class Fixture
-    {
-        public CompiledEvaluator Evaluator { get; private set; }
-
-        public async Task InitializeAsync()
-        {
-            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests/draft2019-09/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"pattern\": \"\\\\p{Letter}cole\"\n        }",
-                "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -776,9 +711,9 @@ public class SuiteWInPatternsMatchesAZaZ09NotUnicodeLetters
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"pattern\": \"\\\\wcole\"\n        }",
+                "{\n                \"pattern\": \"\\\\wcole\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -834,9 +769,9 @@ public class SuitePatternWithAsciiRanges
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"pattern\": \"[a-z]cole\"\n        }",
+                "{\n                \"pattern\": \"[a-z]cole\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -892,132 +827,9 @@ public class SuiteDInPatternMatches09NotUnicodeDigits
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"pattern\": \"^\\\\d+$\"\n        }",
+                "{\n                \"pattern\": \"^\\\\d+$\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
-                "https://json-schema.org/draft/2019-09/schema",
-                validateFormat: false,
-                Assembly.GetExecutingAssembly());
-        }
-    }
-}
-
-[TestCategory("Draft201909")]
-[TestClass]
-public class SuitePatternWithNonAsciiDigits
-{
-    private static Fixture? s_fixture;
-
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext _)
-    {
-        s_fixture = new Fixture();
-        await s_fixture.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static void ClassCleanupMethod()
-    {
-        s_fixture = null;
-    }
-
-    [TestMethod]
-    public void TestAsciiDigits()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"42\"");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestAsciiNonDigits()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"-%#\"");
-        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestNonAsciiDigitsBengaliDigitFourBengaliDigitTwo()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"৪২\"");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    public class Fixture
-    {
-        public CompiledEvaluator Evaluator { get; private set; }
-
-        public async Task InitializeAsync()
-        {
-            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests/draft2019-09/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"pattern\": \"^\\\\p{digit}+$\"\n        }",
-                "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
-                "https://json-schema.org/draft/2019-09/schema",
-                validateFormat: false,
-                Assembly.GetExecutingAssembly());
-        }
-    }
-}
-
-[TestCategory("Draft201909")]
-[TestClass]
-public class SuitePatternsAlwaysUseUnicodeSemanticsWithPatternProperties
-{
-    private static Fixture? s_fixture;
-
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext _)
-    {
-        s_fixture = new Fixture();
-        await s_fixture.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static void ClassCleanupMethod()
-    {
-        s_fixture = null;
-    }
-
-    [TestMethod]
-    public void TestAsciiCharacterInJsonString()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"l'ecole\": \"pas de vraie vie\" }");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestLiteralUnicodeCharacterInJsonString()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"l'école\": \"pas de vraie vie\" }");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestUnicodeCharacterInHexFormatInString()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"l'\\u00e9cole\": \"pas de vraie vie\" }");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestUnicodeMatchingIsCaseSensitive()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"L'ÉCOLE\": \"PAS DE VRAIE VIE\" }");
-        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    public class Fixture
-    {
-        public CompiledEvaluator Evaluator { get; private set; }
-
-        public async Task InitializeAsync()
-        {
-            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests/draft2019-09/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"patternProperties\": {\n                \"\\\\p{Letter}cole\": true\n            },\n            \"additionalProperties\": false\n        }",
-                "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1080,9 +892,9 @@ public class SuiteWInPatternPropertiesMatchesAZaZ09NotUnicodeLetters
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"patternProperties\": {\n                \"\\\\wcole\": true\n            },\n            \"additionalProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"patternProperties\": {\n                    \"\\\\wcole\": {}\n                },\n                \"additionalProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1138,9 +950,9 @@ public class SuitePatternPropertiesWithAsciiRanges
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"patternProperties\": {\n                \"[a-z]cole\": true\n            },\n            \"additionalProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"patternProperties\": {\n                    \"[a-z]cole\": {}\n                },\n                \"additionalProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1196,67 +1008,9 @@ public class SuiteDInPatternPropertiesMatches09NotUnicodeDigits
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"patternProperties\": {\n                \"^\\\\d+$\": true\n            },\n            \"additionalProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"patternProperties\": {\n                    \"^\\\\d+$\": {}\n                },\n                \"additionalProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
-                "https://json-schema.org/draft/2019-09/schema",
-                validateFormat: false,
-                Assembly.GetExecutingAssembly());
-        }
-    }
-}
-
-[TestCategory("Draft201909")]
-[TestClass]
-public class SuitePatternPropertiesWithNonAsciiDigits
-{
-    private static Fixture? s_fixture;
-
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext _)
-    {
-        s_fixture = new Fixture();
-        await s_fixture.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static void ClassCleanupMethod()
-    {
-        s_fixture = null;
-    }
-
-    [TestMethod]
-    public void TestAsciiDigits()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"42\": \"life, the universe, and everything\" }");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestAsciiNonDigits()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"-%#\": \"spending the year dead for tax reasons\" }");
-        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestNonAsciiDigitsBengaliDigitFourBengaliDigitTwo()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"৪২\": \"khajit has wares if you have coin\" }");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    public class Fixture
-    {
-        public CompiledEvaluator Evaluator { get; private set; }
-
-        public async Task InitializeAsync()
-        {
-            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests/draft2019-09/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"object\",\n            \"patternProperties\": {\n                \"^\\\\p{digit}+$\": true\n            },\n            \"additionalProperties\": false\n        }",
-                "StandaloneEvaluatorTestSuite.Draft201909.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

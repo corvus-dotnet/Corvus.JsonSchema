@@ -14,19 +14,21 @@ namespace JsonSchemaTestSuite.Draft202012.Pattern;
 public class SuitePatternValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -94,7 +96,7 @@ public class SuitePatternValidation
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -105,7 +107,7 @@ public class SuitePatternValidation
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "pattern.json",
-                "#/0/schema",
+                "#/tests/0/schema",
                 "JsonSchemaTestSuiteDraft202012Pattern",
                 "PatternValidation",
                 validateFormat: false,
@@ -113,10 +115,9 @@ public class SuitePatternValidation
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -126,19 +127,21 @@ public class SuitePatternValidation
 public class SuitePatternIsNotAnchored
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -150,7 +153,7 @@ public class SuitePatternIsNotAnchored
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -161,7 +164,7 @@ public class SuitePatternIsNotAnchored
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "pattern.json",
-                "#/1/schema",
+                "#/tests/1/schema",
                 "JsonSchemaTestSuiteDraft202012Pattern",
                 "PatternIsNotAnchored",
                 validateFormat: false,
@@ -169,10 +172,9 @@ public class SuitePatternIsNotAnchored
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -182,19 +184,21 @@ public class SuitePatternIsNotAnchored
 public class SuitePatternWithUnicodePropertyEscapeRequiresUnicodeMode
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -222,7 +226,7 @@ public class SuitePatternWithUnicodePropertyEscapeRequiresUnicodeMode
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -233,7 +237,7 @@ public class SuitePatternWithUnicodePropertyEscapeRequiresUnicodeMode
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "pattern.json",
-                "#/2/schema",
+                "#/tests/2/schema",
                 "JsonSchemaTestSuiteDraft202012Pattern",
                 "PatternWithUnicodePropertyEscapeRequiresUnicodeMode",
                 validateFormat: false,
@@ -241,10 +245,82 @@ public class SuitePatternWithUnicodePropertyEscapeRequiresUnicodeMode
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuitePatternWithUnicodePropertyEscape
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestAValidCaseWithAUnicodeLetter()
+    {
+        using var doc = JsonDocument.Parse("\"π\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestAnotherValidCaseWithMultipleUnicodeLetters()
+    {
+        using var doc = JsonDocument.Parse("\"πλ\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestAnInvalidCaseWhereTheStringContainsDigits()
+    {
+        using var doc = JsonDocument.Parse("\"123\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft202012Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "pattern.json",
+                "#/tests/3/schema",
+                "JsonSchemaTestSuiteDraft202012Pattern",
+                "PatternWithUnicodePropertyEscape",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false);
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
         }
     }
 }
