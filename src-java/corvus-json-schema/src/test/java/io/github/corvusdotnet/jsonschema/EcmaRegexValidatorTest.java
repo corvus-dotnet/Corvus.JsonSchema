@@ -28,7 +28,7 @@ class EcmaRegexValidatorTest {
 
     static List<String> corpusPatterns() throws IOException {
         Set<String> out = new LinkedHashSet<>();
-        Path suite = SuiteTest.suiteRoot().resolve("tests");
+        Path suite = SuiteTest.suiteRoot().resolve("validation").resolve("tests");
         if (Files.isDirectory(suite)) {
             try (Stream<Path> files = Files.walk(suite)) {
                 for (Path f : (Iterable<Path>) files.filter(p -> p.toString().endsWith(".json"))::iterator) {

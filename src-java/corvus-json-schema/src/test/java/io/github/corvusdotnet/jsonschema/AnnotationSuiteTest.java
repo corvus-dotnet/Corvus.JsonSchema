@@ -16,24 +16,11 @@ import org.junit.jupiter.api.Test;
  * each assertion compared with the annotations grouped by instance location, keyword and schema location.
  */
 class AnnotationSuiteTest {
-    private static final List<String> ORDER = List.of("3", "4", "6", "7", "2019", "2020");
-
-    static boolean compatible(String level, String compat) {
-        int l = ORDER.indexOf(level);
-        if (compat.startsWith("<=")) {
-            int max = ORDER.indexOf(compat.substring(2));
-            return max >= 0 && l <= max;
-        }
-        int min = ORDER.indexOf(compat);
-        return min >= 0 && l >= min;
-    }
-
     @Test
     void annotationSuite() {
         Path root = SuiteTest.suiteRoot();
         Path dir = root.resolve("annotations").resolve("tests");
         Assumptions.assumeTrue(Files.isDirectory(dir), "annotation tests not found at " + dir);
-        DocumentResolver resolver = SuiteTest.remotes(root);
         String[][] drafts = {
             {"draft4", "DRAFT4", "4"}, {"draft6", "DRAFT6", "6"}, {"draft7", "DRAFT7", "7"},
             {"draft2019-09", "DRAFT201909", "2019"}, {"draft2020-12", "DRAFT202012", "2020"},
@@ -46,15 +33,14 @@ class AnnotationSuiteTest {
                 int suite = d.property(d.root(), "suite");
                 for (int gi = 0; gi < d.count(suite); gi++) {
                     int group = d.first(suite) + gi;
-                    int compat = d.property(group, "compatibility");
-                    if (compat >= 0 && !compatible(draft[2], d.string(compat))) {
+                    if (!SuiteTest.compatible(SuiteTest.compatibility(d, group), Integer.parseInt(draft[2]))) {
                         continue;
                     }
                     int descriptionNode = d.property(group, "description");
                     String description = descriptionNode >= 0 ? d.string(descriptionNode) : "";
                     CompileOptions options = CompileOptions.builder()
                             .defaultDialect(Dialect.valueOf(draft[1]))
-                            .documentResolver(resolver)
+                            .documentResolver(SuiteTest.externalSchemas(d, group))
                             .build();
                     Validator validator;
                     try {
