@@ -83,7 +83,7 @@ results into `IJsonSchemaResultsCollector` with evaluation path, schema location
 
 `tests/.../Suite/JsonSchemaTestSuiteTests.cs` runs every file under `tests/draft4`, `draft6`, `draft7`,
 `draft2019-09`, `draft2020-12` (required, `optional/` and `optional/format/` with format assertion on).
-No file is excluded, so it runs all 7,967 cases, `draft4/optional/zeroTerminatedFloats.json` among them. Failures
+No file is excluded, so it runs all 7,967 cases, `draft4/optional/zero-terminated-floats.json` among them. Failures
 on the 73 leap-second cases in the `time`/`date-time` format files are ignored, because the shared Corvus date and
 time parsers reject leap seconds (see [Known gaps and next steps](#known-gaps-and-next-steps)); 28 of those cases expect a leap second to be
 accepted, and the other 45 expect an invalid one to be rejected. `AnnotationSuiteTests.cs` runs the annotation
@@ -94,8 +94,8 @@ The runners of the other evaluators differ:
 | Runner | Cases run | Files skipped | Failures ignored |
 |---|---:|---|---|
 | C# | 7,967 | none | the 73 leap-second cases |
-| TypeScript | 7,966 | `draft4/optional/zeroTerminatedFloats.json` (`JSON.parse` reads `1.0` as `1`) | none |
-| Rust | 7,966 | `draft4/optional/zeroTerminatedFloats.json` | none |
+| TypeScript | 7,966 | `draft4/optional/zero-terminated-floats.json` (`JSON.parse` reads `1.0` as `1`) | none |
+| Rust | 7,966 | `draft4/optional/zero-terminated-floats.json` | none |
 
 ## Flag-mode optimisations (after reading Blaze's compiler)
 

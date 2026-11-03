@@ -54,9 +54,11 @@ on Julia 1.10 to 1.12 and not on 1.13, so the script is what CI runs on every ve
 
 The suites read the repository's `JSON-Schema-Test-Suite` submodule (or `JSON_SCHEMA_TEST_SUITE`, and
 `CORVUS_JSON_SCHEMA_TEST_SUITE` for the pattern engine's tests). Every required, optional and format test must pass
-(`draft4/optional/zeroTerminatedFloats.json` is excluded, as in the C# runner), and all annotation assertions. Each
-case runs fail-fast as a document, as bytes and as a string, and through a collector at each level, and the
-verdicts must agree. `SUITE_DRAFT` and `SUITE_FILTER` narrow the run.
+(`draft4/optional/zero-terminated-floats.json` is excluded, as in the C# runner), and all annotation assertions. Each
+case's `compatibility` selects the drafts it applies to, its `tags` whether format is asserted, and its
+`externalSchemas` are served to that case alone (the unified layout of the suite, `validation/tests`). Each case runs
+fail-fast as a document, as bytes and as a string, and through a collector at each level, and the verdicts must agree.
+`SUITE_DRAFT` and `SUITE_FILTER` narrow the run.
 
 `test/metaschemas.jl` checks the embedded metaschemas (`src/metaschemas/`) against
 `src/Corvus.Text.Json/metaschema`. `UPDATE_METASCHEMAS=1` copies them again.

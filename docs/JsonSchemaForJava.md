@@ -8,8 +8,8 @@ or later and is one jar with no dependencies.
 A schema is compiled once into JVM bytecode: one method per subschema, holding only the checks that subschema needs,
 which the JIT then optimises as it would hand-written code. Any number of instances can then be validated against it.
 
-- **Conformant.** Passes the whole JSON-Schema-Test-Suite (required, optional and `optional/format`, every draft) except
-  `draft4/optional/zeroTerminatedFloats.json`, and all of its annotation tests.
+- **Conformant.** Passes the whole JSON-Schema-Test-Suite (required and optional, every draft) except
+  `draft4/optional/zero-terminated-floats.json`, and all of its annotation tests.
 - **Fast.** See [Performance](#performance).
 - **Results and annotations.** Basic, Detailed and Verbose results, and annotations, the same as every other Corvus
   implementation.

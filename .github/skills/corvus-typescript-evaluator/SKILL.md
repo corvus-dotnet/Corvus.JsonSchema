@@ -32,9 +32,11 @@ npm test    # unit tests, the suite via compile(), via generateModule(), via a v
             # the annotation suite, and the Bowtie IHOP driver
 ```
 
-The suites read the repository's `JSON-Schema-Test-Suite` submodule
-(`git submodule update --init JSON-Schema-Test-Suite`). Every required, optional and format test must pass
-(`draft4/optional/zeroTerminatedFloats.json` is excluded, as in the C# runner), and all annotation assertions.
+The suites read the repository's `JSON-Schema-Test-Suite` submodule (`git submodule update --init
+JSON-Schema-Test-Suite`). Every required, optional and format test must pass
+(`draft4/optional/zero-terminated-floats.json` is excluded, as in the C# runner), and all annotation assertions. Each
+case's `compatibility` selects the drafts it applies to, its `tags` whether format is asserted, and its
+`externalSchemas` are served to that case alone (the unified layout of the suite, `validation/tests`).
 
 `src/metaschemas.ts` is generated from `src/Corvus.Text.Json/metaschema` by `npm run embed-metaschemas`; CI fails
 if it is stale.

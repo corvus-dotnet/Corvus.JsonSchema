@@ -9,9 +9,10 @@ other Corvus implementation.
 | [corvus-json-schema](https://pypi.org/project/corvus-json-schema/) | Pure Python: it compiles a schema into specialised Python code. Its one dependency is [`regex`](https://pypi.org/project/regex/). | You want no native code, or a schema as a standalone Python module. |
 | [corvus-json-schema-rs](https://pypi.org/project/corvus-json-schema-rs/) | Backed by the [Rust crate](JsonSchemaForRust.md), reading Python objects in place through CPython's C API. | You want the fastest validation. |
 
-- **Conformant.** Both pass the whole JSON-Schema-Test-Suite (required, optional and `optional/format`, every draft),
-  and all of its annotation tests. The pure package passes `draft4/optional/zeroTerminatedFloats.json` too, which the
-  others exclude.
+- **Conformant.** Both pass the whole JSON-Schema-Test-Suite (required and optional, every draft) but the
+  high-precision cases of `optional/bignum.json` (they evaluate Python values, and a float holds a number to the
+  precision of a double), and all of its annotation tests. The pure package passes
+  `draft4/optional/zero-terminated-floats.json` too, which the others exclude.
 - **Fast.** The pure package validates six times faster than fastjsonschema, the other generator of Python code. The
   Rust-backed package takes about a third of the pure package's time, and 0.72 of jsonschema-rs's.
 - **Results and annotations.** Basic, Detailed and Verbose results, and annotations.

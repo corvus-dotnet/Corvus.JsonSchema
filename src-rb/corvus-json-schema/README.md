@@ -4,9 +4,10 @@ A JSON Schema evaluator for Ruby (draft 4, 6, 7, 2019-09 and 2020-12), a native 
 [corvus-json-schema](https://crates.io/crates/corvus-json-schema) Rust crate, the Rust port of the Corvus.Text.Json V5
 standalone evaluator.
 
-- **Conformant**: passes the JSON-Schema-Test-Suite (required, optional and `optional/format`, every draft) except
-  `draft4/optional/zeroTerminatedFloats.json`, which the other Corvus evaluators also exclude (a JSON parser reads
-  `1.0` as an integer).
+- **Conformant**: passes the JSON-Schema-Test-Suite (required and optional, every draft) except
+  `draft4/optional/zero-terminated-floats.json`, which the other Corvus evaluators also exclude (a JSON parser reads
+  `1.0` as an integer), and the high-precision cases of `optional/bignum.json`, whose digits the crate's serde_json
+  values do not hold.
 - **Fast**: values are read in place from Ruby's own objects (nothing is converted or copied), and JSON text is
   validated without creating Ruby objects for it.
 - **Precompiled**: native gems for Linux (x86_64 and aarch64, glibc and musl), macOS (x86_64 and arm64) and Windows
