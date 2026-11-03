@@ -180,6 +180,10 @@ public class TestJsonSchemaCodeGenerator
     /// <param name="useImplicitOperatorString">Whether to generate implicit conversions to string.</param>
     /// <param name="addExplicitUsings">Whether to add explicit usings for the generated code, or rely on the global usings.</param>
     /// <param name="hostAssembly">The host assembly with preserved compilation context.</param>
+    /// <param name="externalSchemas">
+    /// The test case's <c>externalSchemas</c> object as JSON text (retrieval URI to schema), or <see langword="null"/>.
+    /// Each schema is registered at its retrieval URI for this compilation only.
+    /// </param>
     /// <returns>A task which, when complete, provides the <see cref="DynamicJsonType"/> for the schema.</returns>
     public static async ValueTask<DynamicJsonType> GenerateTypeForVirtualFile(
         string virtualFilename,
@@ -191,9 +195,10 @@ public class TestJsonSchemaCodeGenerator
         bool optionalAsNullable,
         bool useImplicitOperatorString,
         bool addExplicitUsings,
-        Assembly hostAssembly)
+        Assembly hostAssembly,
+        string? externalSchemas = null)
     {
-        string key = $"{schemaText}_{defaultVocabulary}_{validateFormat}_{optionalAsNullable}_{useImplicitOperatorString}_{addExplicitUsings}";
+        string key = $"{schemaText}_{defaultVocabulary}_{validateFormat}_{optionalAsNullable}_{useImplicitOperatorString}_{addExplicitUsings}_{externalSchemas}";
         if (s_compiledTypesCache.TryGetValue(key, out DynamicJsonType value))
         {
             return value;
@@ -207,6 +212,8 @@ public class TestJsonSchemaCodeGenerator
             optionalAsNullable: optionalAsNullable,
             useImplicitOperatorString: useImplicitOperatorString,
             addExplicitUsings: addExplicitUsings);
+
+        ExternalSchemaRegistration.Register(externalSchemas, generator._jsonSchemaTypeBuilder.AddDocument);
 
         GeneratedCode generatedCode = await generator.GenerateCodeAsync(virtualFilename, schemaText, defaultNamespace: ToPascalCase(defaultNamespace));
         DynamicJsonType result = Compile(generatedCode, hostAssembly);

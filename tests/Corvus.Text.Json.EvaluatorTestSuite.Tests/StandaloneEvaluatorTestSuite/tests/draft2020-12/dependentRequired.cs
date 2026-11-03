@@ -35,21 +35,21 @@ public class SuiteSingleDependency
     [TestMethod]
     public void TestNondependant()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithDependency()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"bar\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1, \"bar\": 2 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestMissingDependency()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": 2 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -82,9 +82,9 @@ public class SuiteSingleDependency
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/dependentRequired.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"dependentRequired\": {\"bar\": [\"foo\"]}\n        }",
+                "{\n                \"dependentRequired\": {\n                    \"bar\": [\"foo\"]\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.DependentRequired",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -121,7 +121,7 @@ public class SuiteEmptyDependents
     [TestMethod]
     public void TestObjectWithOneProperty()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": 2 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -140,9 +140,9 @@ public class SuiteEmptyDependents
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/dependentRequired.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"dependentRequired\": {\"bar\": []}\n        }",
+                "{\n                \"dependentRequired\": {\n                    \"bar\": []\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.DependentRequired",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -179,35 +179,35 @@ public class SuiteMultipleDependentsRequired
     [TestMethod]
     public void TestNondependants()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"bar\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1, \"bar\": 2 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWithDependencies()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"bar\": 2, \"quux\": 3}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1, \"bar\": 2, \"quux\": 3 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestMissingDependency()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"quux\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1, \"quux\": 2 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestMissingOtherDependency()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": 1, \"quux\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": 1, \"quux\": 2 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestMissingBothDependencies()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"quux\": 1}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"quux\": 1 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -219,9 +219,9 @@ public class SuiteMultipleDependentsRequired
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/dependentRequired.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"dependentRequired\": {\"quux\": [\"foo\", \"bar\"]}\n        }",
+                "{\n                \"dependentRequired\": {\n                    \"quux\": [\"foo\", \"bar\"] }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.DependentRequired",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -251,28 +251,28 @@ public class SuiteDependenciesWithEscapedCharacters
     [TestMethod]
     public void TestCrlf()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\\nbar\": 1,\n                    \"foo\\rbar\": 2\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\\nbar\": 1, \"foo\\rbar\": 2 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestQuotedQuotes()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo'bar\": 1,\n                    \"foo\\\"bar\": 2\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo'bar\": 1, \"foo\\\"bar\": 2 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestCrlfMissingDependent()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\\nbar\": 1,\n                    \"foo\": 2\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\\nbar\": 1, \"foo\": 2 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestQuotedQuotesMissingDependent()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\\\"bar\": 2\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\\\"bar\": 2 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -284,9 +284,9 @@ public class SuiteDependenciesWithEscapedCharacters
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/dependentRequired.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"dependentRequired\": {\n                \"foo\\nbar\": [\"foo\\rbar\"],\n                \"foo\\\"bar\": [\"foo'bar\"]\n            }\n        }",
+                "{\n                \"dependentRequired\": {\n                    \"foo\\nbar\": [\"foo\\rbar\"],\n                    \"foo\\\"bar\": [\"foo'bar\"]\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.DependentRequired",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

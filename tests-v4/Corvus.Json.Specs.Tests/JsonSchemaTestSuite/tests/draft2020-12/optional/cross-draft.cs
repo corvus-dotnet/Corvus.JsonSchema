@@ -11,22 +11,82 @@ namespace JsonSchemaTestSuite.Draft202012.Optional.CrossDraft;
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteRefsToHistoricDraftsAreProcessedAsHistoricDrafts
+public class SuiteRefsToHistoricDraftsAreProcessedAsHistoricDrafts7
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestMissingBarIsValid()
+    {
+        using var doc = JsonDocument.Parse("{ \"foo\": \"any value\" }");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft202012Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "optional/cross-draft.json",
+                "#/tests/2/schema",
+                "JsonSchemaTestSuiteDraft202012OptionalCrossDraft",
+                "RefsToHistoricDraftsAreProcessedAsHistoricDrafts7",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                externalSchemasPath: "#/tests/2/externalSchemas");
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteRefsToHistoricDraftsAreProcessedAsHistoricDrafts2019
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -38,7 +98,7 @@ public class SuiteRefsToHistoricDraftsAreProcessedAsHistoricDrafts
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -48,19 +108,19 @@ public class SuiteRefsToHistoricDraftsAreProcessedAsHistoricDrafts
         {
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\cross-draft.json",
-                "#/0/schema",
+                "optional/cross-draft.json",
+                "#/tests/3/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalCrossDraft",
-                "RefsToHistoricDraftsAreProcessedAsHistoricDrafts",
+                "RefsToHistoricDraftsAreProcessedAsHistoricDrafts2019",
                 validateFormat: false,
                 optionalAsNullable: false,
-                useImplicitOperatorString: false);
+                useImplicitOperatorString: false,
+                externalSchemasPath: "#/tests/3/externalSchemas");
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

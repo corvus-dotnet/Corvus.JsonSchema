@@ -67,9 +67,9 @@ public class SuiteMaxLengthValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft6/maxLength.json",
-                "{\"maxLength\": 2}",
+                "{ \"maxLength\": 2 }",
                 "JsonSchemaTestSuite.Draft6.MaxLength",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -121,9 +121,9 @@ public class SuiteMaxLengthValidationWithADecimal
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft6/maxLength.json",
-                "{\"maxLength\": 2.0}",
+                "{ \"maxLength\": 2.0 }",
                 "JsonSchemaTestSuite.Draft6.MaxLength",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,

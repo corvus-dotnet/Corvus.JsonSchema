@@ -46,9 +46,9 @@ public class SuiteIgnoreIfWithoutThenOrElse
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/if-then-else.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"if\": {\n                \"const\": 0\n            }\n        }",
+                "{\n                \"if\": { \"const\": 0 }\n            }",
                 "JsonSchemaTestSuite.Draft202012.IfThenElse",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -100,9 +100,9 @@ public class SuiteIgnoreThenWithoutIf
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/if-then-else.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"then\": {\n                \"const\": 0\n            }\n        }",
+                "{\n                \"then\": { \"const\": 0 }\n            }",
                 "JsonSchemaTestSuite.Draft202012.IfThenElse",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -154,9 +154,9 @@ public class SuiteIgnoreElseWithoutIf
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/if-then-else.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"else\": {\n                \"const\": 0\n            }\n        }",
+                "{\n                \"else\": { \"const\": 0 }\n            }",
                 "JsonSchemaTestSuite.Draft202012.IfThenElse",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -215,9 +215,9 @@ public class SuiteIfAndThenWithoutElse
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/if-then-else.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"if\": {\n                \"exclusiveMaximum\": 0\n            },\n            \"then\": {\n                \"minimum\": -10\n            }\n        }",
+                "{\n                \"if\": { \"exclusiveMaximum\": 0 },\n                \"then\": { \"minimum\": -10 }\n            }",
                 "JsonSchemaTestSuite.Draft202012.IfThenElse",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -276,9 +276,9 @@ public class SuiteIfAndElseWithoutThen
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/if-then-else.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"if\": {\n                \"exclusiveMaximum\": 0\n            },\n            \"else\": {\n                \"multipleOf\": 2\n            }\n        }",
+                "{\n                \"if\": { \"exclusiveMaximum\": 0 },\n                \"else\": { \"multipleOf\": 2 }\n            }",
                 "JsonSchemaTestSuite.Draft202012.IfThenElse",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -344,9 +344,9 @@ public class SuiteValidateAgainstCorrectBranchThenVsElse
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/if-then-else.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"if\": {\n                \"exclusiveMaximum\": 0\n            },\n            \"then\": {\n                \"minimum\": -10\n            },\n            \"else\": {\n                \"multipleOf\": 2\n            }\n        }",
+                "{\n                \"if\": { \"exclusiveMaximum\": 0 },\n                \"then\": { \"minimum\": -10 },\n                \"else\": { \"multipleOf\": 2 }\n            }",
                 "JsonSchemaTestSuite.Draft202012.IfThenElse",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -398,9 +398,9 @@ public class SuiteNonInterferenceAcrossCombinedSchemas
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/if-then-else.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"allOf\": [\n                {\n                    \"if\": {\n                        \"exclusiveMaximum\": 0\n                    }\n                },\n                {\n                    \"then\": {\n                        \"minimum\": -10\n                    }\n                },\n                {\n                    \"else\": {\n                        \"multipleOf\": 2\n                    }\n                }\n            ]\n        }",
+                "{\n                \"allOf\": [\n                    {\n                        \"if\": { \"exclusiveMaximum\": 0 }\n                    },\n                    {\n                        \"then\": { \"minimum\": -10 }\n                    },\n                    {\n                        \"else\": { \"multipleOf\": 2 }\n                    }\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft202012.IfThenElse",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -452,9 +452,9 @@ public class SuiteIfWithBooleanSchemaTrue
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/if-then-else.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"if\": true,\n            \"then\": { \"const\": \"then\" },\n            \"else\": { \"const\": \"else\" }\n        }",
+                "{\n                \"if\": true,\n                \"then\": { \"const\": \"then\" },\n                \"else\": { \"const\": \"else\" }\n            }",
                 "JsonSchemaTestSuite.Draft202012.IfThenElse",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -506,9 +506,9 @@ public class SuiteIfWithBooleanSchemaFalse
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/if-then-else.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"if\": false,\n            \"then\": { \"const\": \"then\" },\n            \"else\": { \"const\": \"else\" }\n        }",
+                "{\n                \"if\": false,\n                \"then\": { \"const\": \"then\" },\n                \"else\": { \"const\": \"else\" }\n            }",
                 "JsonSchemaTestSuite.Draft202012.IfThenElse",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -574,9 +574,9 @@ public class SuiteIfAppearsAtTheEndWhenSerializedKeywordProcessingSequence
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/if-then-else.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"then\": { \"const\": \"yes\" },\n            \"else\": { \"const\": \"other\" },\n            \"if\": { \"maxLength\": 4 }\n        }",
+                "{\n                \"then\": { \"const\": \"yes\" },\n                \"else\": { \"const\": \"other\" },\n                \"if\": { \"maxLength\": 4 }\n            }",
                 "JsonSchemaTestSuite.Draft202012.IfThenElse",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -628,9 +628,9 @@ public class SuiteThenFalseFailsWhenConditionMatches
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/if-then-else.json",
-                "{\n            \"if\": { \"const\": 1 },\n            \"then\": false\n        }",
+                "{\n                \"if\": { \"const\": 1 },\n                \"then\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.IfThenElse",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -682,9 +682,9 @@ public class SuiteElseFalseFailsWhenConditionDoesNotMatch
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/if-then-else.json",
-                "{\n            \"if\": { \"const\": 1 },\n            \"else\": false\n        }",
+                "{\n                \"if\": { \"const\": 1 },\n                \"else\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.IfThenElse",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,

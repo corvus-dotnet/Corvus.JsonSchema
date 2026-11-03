@@ -28,7 +28,7 @@ public class SuiteASchemaGivenForItems
     [TestMethod]
     public void TestValidItems()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 2, 3 ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2, 3]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -42,14 +42,14 @@ public class SuiteASchemaGivenForItems
     [TestMethod]
     public void TestIgnoresNonArrays()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\" : \"bar\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"bar\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestJavaScriptPseudoArrayIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"0\": \"invalid\",\n                    \"length\": 1\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                        \"0\": \"invalid\",\n                        \"length\": 1\n                    }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -61,9 +61,88 @@ public class SuiteASchemaGivenForItems
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/items.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"items\": {\"type\": \"integer\"}\n        }",
+                "{\n                \"items\": { \"type\": \"integer\"}\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Items",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "https://json-schema.org/draft/2020-12/schema",
+                validateFormat: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteASchemaGivenForPrefixItems
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestCorrectTypes()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, \"foo\"]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestWrongTypes()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\"foo\", 1]");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestIncompleteArrayOfItems()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestArrayWithAdditionalItems()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, \"foo\", true]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestEmptyArray()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestJavaScriptPseudoArrayIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                        \"0\": \"invalid\",\n                        \"1\": \"valid\",\n                        \"length\": 2\n                    }");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    public class Fixture
+    {
+        public CompiledEvaluator Evaluator { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
+                "tests/draft2020-12/items.json",
+                "{\n                \"prefixItems\": [\n                    { \"type\": \"integer\" },\n                    { \"type\": \"string\" }\n                ]\n            }",
+                "StandaloneEvaluatorTestSuite.Draft202012.Items",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -93,7 +172,7 @@ public class SuiteItemsWithBooleanSchemaTrue
     [TestMethod]
     public void TestAnyArrayIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, \"foo\", true ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, \"foo\", true]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -112,9 +191,9 @@ public class SuiteItemsWithBooleanSchemaTrue
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/items.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"items\": true\n        }",
+                "{\n                \"items\": true\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Items",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -144,7 +223,7 @@ public class SuiteItemsWithBooleanSchemaFalse
     [TestMethod]
     public void TestAnyNonEmptyArrayIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, \"foo\", true ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, \"foo\", true]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -163,9 +242,67 @@ public class SuiteItemsWithBooleanSchemaFalse
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/items.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"items\": false\n        }",
+                "{\n                \"items\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Items",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "https://json-schema.org/draft/2020-12/schema",
+                validateFormat: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuitePrefixItemsWithBooleanSchemas
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestArrayWithOneItemIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestArrayWithTwoItemsIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, \"foo\"]");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestEmptyArrayIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    public class Fixture
+    {
+        public CompiledEvaluator Evaluator { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
+                "tests/draft2020-12/items.json",
+                "{\n                \"prefixItems\": [true, false]\n            }",
+                "StandaloneEvaluatorTestSuite.Draft202012.Items",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -195,42 +332,42 @@ public class SuiteItemsAndSubitems
     [TestMethod]
     public void TestValidItems()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                    [ {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ]\n                ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                        [{ \"foo\": null }, { \"foo\": null }],\n                        [{ \"foo\": null }, { \"foo\": null }],\n                        [{ \"foo\": null }, { \"foo\": null }]\n                    ]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestTooManyItems()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                    [ {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ]\n                ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                        [{ \"foo\": null }, { \"foo\": null }],\n                        [{ \"foo\": null }, { \"foo\": null }],\n                        [{ \"foo\": null }, { \"foo\": null }],\n                        [{ \"foo\": null }, { \"foo\": null }]\n                    ]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestTooManySubItems()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                    [ {\"foo\": null}, {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ]\n                ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                        [{ \"foo\": null }, { \"foo\": null }, { \"foo\": null }],\n                        [{ \"foo\": null }, { \"foo\": null }],\n                        [{ \"foo\": null }, { \"foo\": null }]\n                    ]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWrongItem()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                    {\"foo\": null},\n                    [ {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ]\n                ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                        { \"foo\": null },\n                        [{ \"foo\": null }, { \"foo\": null }],\n                        [{ \"foo\": null }, { \"foo\": null }]\n                    ]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWrongSubItem()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                    [ {}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ],\n                    [ {\"foo\": null}, {\"foo\": null} ]\n                ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                        [{}, { \"foo\": null }],\n                        [{ \"foo\": null }, { \"foo\": null }],\n                        [{ \"foo\": null }, { \"foo\": null }]\n                    ]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestFewerItemsIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                    [ {\"foo\": null} ],\n                    [ {\"foo\": null} ]\n                ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                        [{ \"foo\": null }],\n                        [{ \"foo\": null }]\n                    ]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -242,9 +379,9 @@ public class SuiteItemsAndSubitems
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/items.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$defs\": {\n                \"item\": {\n                    \"type\": \"array\",\n                    \"items\": false,\n                    \"prefixItems\": [\n                        { \"$ref\": \"#/$defs/sub-item\" },\n                        { \"$ref\": \"#/$defs/sub-item\" }\n                    ]\n                },\n                \"sub-item\": {\n                    \"type\": \"object\",\n                    \"required\": [\"foo\"]\n                }\n            },\n            \"type\": \"array\",\n            \"items\": false,\n            \"prefixItems\": [\n                { \"$ref\": \"#/$defs/item\" },\n                { \"$ref\": \"#/$defs/item\" },\n                { \"$ref\": \"#/$defs/item\" }\n            ]\n        }",
+                "{\n                \"$defs\": {\n                    \"item\": {\n                        \"type\": \"array\",\n                        \"items\": false,\n                        \"prefixItems\": [\n                            { \"$ref\": \"#/$defs/sub-item\" },\n                            { \"$ref\": \"#/$defs/sub-item\" }\n                        ]\n                    },\n                    \"sub-item\": {\n                        \"type\": \"object\",\n                        \"required\": [\"foo\"]\n                    }\n                },\n                \"type\": \"array\",\n                \"items\": false,\n                \"prefixItems\": [\n                    { \"$ref\": \"#/$defs/item\" },\n                    { \"$ref\": \"#/$defs/item\" },\n                    { \"$ref\": \"#/$defs/item\" }\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Items",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -300,234 +437,9 @@ public class SuiteNestedItems
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/items.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"array\",\n            \"items\": {\n                \"type\": \"array\",\n                \"items\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"array\",\n                        \"items\": {\n                            \"type\": \"number\"\n                        }\n                    }\n                }\n            }\n        }",
+                "{\n                \"type\": \"array\",\n                \"items\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"array\",\n                        \"items\": {\n                            \"type\": \"array\",\n                            \"items\": {\n                                \"type\": \"number\"\n                            }\n                        }\n                    }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Items",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
-                "https://json-schema.org/draft/2020-12/schema",
-                validateFormat: false,
-                Assembly.GetExecutingAssembly());
-        }
-    }
-}
-
-[TestCategory("Draft202012")]
-[TestClass]
-public class SuitePrefixItemsWithNoAdditionalItemsAllowed
-{
-    private static Fixture? s_fixture;
-
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext _)
-    {
-        s_fixture = new Fixture();
-        await s_fixture.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static void ClassCleanupMethod()
-    {
-        s_fixture = null;
-    }
-
-    [TestMethod]
-    public void TestEmptyArray()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ ]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestFewerNumberOfItemsPresent1()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1 ]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestFewerNumberOfItemsPresent2()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 2 ]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestEqualNumberOfItemsPresent()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 2, 3 ]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestAdditionalItemsAreNotPermitted()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 2, 3, 4 ]");
-        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    public class Fixture
-    {
-        public CompiledEvaluator Evaluator { get; private set; }
-
-        public async Task InitializeAsync()
-        {
-            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests/draft2020-12/items.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [{}, {}, {}],\n            \"items\": false\n        }",
-                "StandaloneEvaluatorTestSuite.Draft202012.Items",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
-                "https://json-schema.org/draft/2020-12/schema",
-                validateFormat: false,
-                Assembly.GetExecutingAssembly());
-        }
-    }
-}
-
-[TestCategory("Draft202012")]
-[TestClass]
-public class SuiteItemsDoesNotLookInApplicatorsValidCase
-{
-    private static Fixture? s_fixture;
-
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext _)
-    {
-        s_fixture = new Fixture();
-        await s_fixture.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static void ClassCleanupMethod()
-    {
-        s_fixture = null;
-    }
-
-    [TestMethod]
-    public void TestPrefixItemsInAllOfDoesNotConstrainItemsInvalidCase()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 3, 5 ]");
-        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestPrefixItemsInAllOfDoesNotConstrainItemsValidCase()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 5, 5 ]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    public class Fixture
-    {
-        public CompiledEvaluator Evaluator { get; private set; }
-
-        public async Task InitializeAsync()
-        {
-            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests/draft2020-12/items.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"allOf\": [\n                { \"prefixItems\": [ { \"minimum\": 3 } ] }\n            ],\n            \"items\": { \"minimum\": 5 }\n        }",
-                "StandaloneEvaluatorTestSuite.Draft202012.Items",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
-                "https://json-schema.org/draft/2020-12/schema",
-                validateFormat: false,
-                Assembly.GetExecutingAssembly());
-        }
-    }
-}
-
-[TestCategory("Draft202012")]
-[TestClass]
-public class SuitePrefixItemsValidationAdjustsTheStartingIndexForItems
-{
-    private static Fixture? s_fixture;
-
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext _)
-    {
-        s_fixture = new Fixture();
-        await s_fixture.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static void ClassCleanupMethod()
-    {
-        s_fixture = null;
-    }
-
-    [TestMethod]
-    public void TestValidItems()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ \"x\", 2, 3 ]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestWrongTypeOfSecondItem()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ \"x\", \"y\" ]");
-        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    public class Fixture
-    {
-        public CompiledEvaluator Evaluator { get; private set; }
-
-        public async Task InitializeAsync()
-        {
-            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests/draft2020-12/items.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [ { \"type\": \"string\" } ],\n            \"items\": { \"type\": \"integer\" }\n        }",
-                "StandaloneEvaluatorTestSuite.Draft202012.Items",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
-                "https://json-schema.org/draft/2020-12/schema",
-                validateFormat: false,
-                Assembly.GetExecutingAssembly());
-        }
-    }
-}
-
-[TestCategory("Draft202012")]
-[TestClass]
-public class SuiteItemsWithHeterogeneousArray
-{
-    private static Fixture? s_fixture;
-
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext _)
-    {
-        s_fixture = new Fixture();
-        await s_fixture.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static void ClassCleanupMethod()
-    {
-        s_fixture = null;
-    }
-
-    [TestMethod]
-    public void TestHeterogeneousInvalidInstance()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ \"foo\", \"bar\", 37 ]");
-        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestValidInstance()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ null ]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    public class Fixture
-    {
-        public CompiledEvaluator Evaluator { get; private set; }
-
-        public async Task InitializeAsync()
-        {
-            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests/draft2020-12/items.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [{}],\n            \"items\": false\n        }",
-                "StandaloneEvaluatorTestSuite.Draft202012.Items",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -557,7 +469,7 @@ public class SuiteItemsWithNullInstanceElements
     [TestMethod]
     public void TestAllowsNullElements()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ null ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[null]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -569,9 +481,322 @@ public class SuiteItemsWithNullInstanceElements
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/items.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"items\": {\n                \"type\": \"null\"\n            }\n        }",
+                "{\n                \"items\": { \"type\": \"null\" }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Items",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "https://json-schema.org/draft/2020-12/schema",
+                validateFormat: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuitePrefixItemsWithNullInstanceElements
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAllowsNullElements()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[null]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    public class Fixture
+    {
+        public CompiledEvaluator Evaluator { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
+                "tests/draft2020-12/items.json",
+                "{\n                \"prefixItems\": [{ \"type\": \"null\" }]\n            }",
+                "StandaloneEvaluatorTestSuite.Draft202012.Items",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "https://json-schema.org/draft/2020-12/schema",
+                validateFormat: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuitePrefixItemsWithNoAdditionalItemsPermitted
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestEmptyArray()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestFewerNumberOfItemsPresent1()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestFewerNumberOfItemsPresent2()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestEqualNumberOfItemsPresent()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2, 3]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestAdditionalItemsAreNotPermitted()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2, 3, 4]");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    public class Fixture
+    {
+        public CompiledEvaluator Evaluator { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
+                "tests/draft2020-12/items.json",
+                "{\n                \"prefixItems\": [{}, {}, {}],\n                \"items\": false\n            }",
+                "StandaloneEvaluatorTestSuite.Draft202012.Items",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "https://json-schema.org/draft/2020-12/schema",
+                validateFormat: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteAdditionalItemsAreAllowedByDefault
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestOnlyTheFirstItemIsValidated()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, \"foo\", false]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    public class Fixture
+    {
+        public CompiledEvaluator Evaluator { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
+                "tests/draft2020-12/items.json",
+                "{\n                \"prefixItems\": [{ \"type\": \"integer\" }]\n            }",
+                "StandaloneEvaluatorTestSuite.Draft202012.Items",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "https://json-schema.org/draft/2020-12/schema",
+                validateFormat: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteItemsDoesNotLookInApplicatorsValidCase
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestPrefixItemsInAllOfDoesNotConstrainItemsInvalidCase()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[3, 5]");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestPrefixItemsInAllOfDoesNotConstrainItemsValidCase()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[5, 5]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    public class Fixture
+    {
+        public CompiledEvaluator Evaluator { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
+                "tests/draft2020-12/items.json",
+                "{\n                \"allOf\": [\n                    { \"prefixItems\": [{ \"minimum\": 3 }] }\n                ],\n                \"items\": { \"minimum\": 5 }\n            }",
+                "StandaloneEvaluatorTestSuite.Draft202012.Items",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "https://json-schema.org/draft/2020-12/schema",
+                validateFormat: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuitePrefixItemsValidationAdjustsTheStartingIndexForItems
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestValidItems()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\"x\", 2, 3]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestWrongTypeOfSecondItem()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\"x\", \"y\"]");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    public class Fixture
+    {
+        public CompiledEvaluator Evaluator { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
+                "tests/draft2020-12/items.json",
+                "{\n                \"prefixItems\": [{ \"type\": \"string\" }],\n                \"items\": { \"type\": \"integer\" }\n            }",
+                "StandaloneEvaluatorTestSuite.Draft202012.Items",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "https://json-schema.org/draft/2020-12/schema",
+                validateFormat: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuitePrefixItemsWithHeterogeneousArray
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestHeterogeneousInvalidInstance()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\"foo\", \"bar\", 37]");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestValidInstance()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[null]");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    public class Fixture
+    {
+        public CompiledEvaluator Evaluator { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
+                "tests/draft2020-12/items.json",
+                "{\n                \"prefixItems\": [{}],\n                \"items\": false\n            }",
+                "StandaloneEvaluatorTestSuite.Draft202012.Items",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

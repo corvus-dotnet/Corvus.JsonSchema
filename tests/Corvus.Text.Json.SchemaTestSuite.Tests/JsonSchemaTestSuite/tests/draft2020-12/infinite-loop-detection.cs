@@ -46,9 +46,9 @@ public class SuiteEvaluatingTheSameSchemaLocationAgainstTheSameDataLocationTwice
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/infinite-loop-detection.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$defs\": {\n                \"int\": { \"type\": \"integer\" }\n            },\n            \"allOf\": [\n                {\n                    \"properties\": {\n                        \"foo\": {\n                            \"$ref\": \"#/$defs/int\"\n                        }\n                    }\n                },\n                {\n                    \"additionalProperties\": {\n                        \"$ref\": \"#/$defs/int\"\n                    }\n                }\n            ]\n        }",
+                "{\n                \"$defs\": { \"int\": { \"type\": \"integer\" } },\n                \"allOf\": [\n                    {\n                        \"properties\": { \"foo\": { \"$ref\": \"#/$defs/int\" } }\n                    },\n                    {\n                        \"additionalProperties\": { \"$ref\": \"#/$defs/int\" }\n                    }\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft202012.InfiniteLoopDetection",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,

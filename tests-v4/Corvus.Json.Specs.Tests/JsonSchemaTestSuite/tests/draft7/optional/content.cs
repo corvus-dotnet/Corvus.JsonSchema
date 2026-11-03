@@ -14,19 +14,21 @@ namespace JsonSchemaTestSuite.Draft7.Optional.Content;
 public class SuiteValidationOfStringEncodedContentBasedOnMediaType
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -54,7 +56,7 @@ public class SuiteValidationOfStringEncodedContentBasedOnMediaType
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -64,8 +66,8 @@ public class SuiteValidationOfStringEncodedContentBasedOnMediaType
         {
             _driver = DriverFactory.CreateDraft7Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\content.json",
-                "#/0/schema",
+                "optional/content.json",
+                "#/tests/0/schema",
                 "JsonSchemaTestSuiteDraft7OptionalContent",
                 "ValidationOfStringEncodedContentBasedOnMediaType",
                 validateFormat: false,
@@ -73,10 +75,9 @@ public class SuiteValidationOfStringEncodedContentBasedOnMediaType
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -86,19 +87,21 @@ public class SuiteValidationOfStringEncodedContentBasedOnMediaType
 public class SuiteValidationOfBinaryStringEncoding
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -126,7 +129,7 @@ public class SuiteValidationOfBinaryStringEncoding
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -136,8 +139,8 @@ public class SuiteValidationOfBinaryStringEncoding
         {
             _driver = DriverFactory.CreateDraft7Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\content.json",
-                "#/1/schema",
+                "optional/content.json",
+                "#/tests/1/schema",
                 "JsonSchemaTestSuiteDraft7OptionalContent",
                 "ValidationOfBinaryStringEncoding",
                 validateFormat: false,
@@ -145,10 +148,9 @@ public class SuiteValidationOfBinaryStringEncoding
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -158,19 +160,21 @@ public class SuiteValidationOfBinaryStringEncoding
 public class SuiteValidationOfBinaryEncodedMediaTypeDocuments
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -206,7 +210,7 @@ public class SuiteValidationOfBinaryEncodedMediaTypeDocuments
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -216,8 +220,8 @@ public class SuiteValidationOfBinaryEncodedMediaTypeDocuments
         {
             _driver = DriverFactory.CreateDraft7Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\content.json",
-                "#/2/schema",
+                "optional/content.json",
+                "#/tests/2/schema",
                 "JsonSchemaTestSuiteDraft7OptionalContent",
                 "ValidationOfBinaryEncodedMediaTypeDocuments",
                 validateFormat: false,
@@ -225,10 +229,9 @@ public class SuiteValidationOfBinaryEncodedMediaTypeDocuments
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

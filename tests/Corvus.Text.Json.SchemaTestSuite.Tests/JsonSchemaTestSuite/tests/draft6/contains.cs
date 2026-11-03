@@ -66,6 +66,13 @@ public class SuiteContainsKeywordValidation
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
+    [TestMethod]
+    public void TestNotArrayOrObjectIsValid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("42");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
     public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
@@ -74,9 +81,9 @@ public class SuiteContainsKeywordValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft6/contains.json",
-                "{\n            \"contains\": {\"minimum\": 5}\n        }",
+                "{\n                \"contains\": { \"minimum\": 5 }\n            }",
                 "JsonSchemaTestSuite.Draft6.Contains",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -135,9 +142,9 @@ public class SuiteContainsKeywordWithConstKeyword
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft6/contains.json",
-                "{\n            \"contains\": { \"const\": 5 }\n        }",
+                "{\n                \"contains\": { \"const\": 5 }\n            }",
                 "JsonSchemaTestSuite.Draft6.Contains",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -189,9 +196,9 @@ public class SuiteContainsKeywordWithBooleanSchemaTrue
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft6/contains.json",
-                "{\"contains\": true}",
+                "{ \"contains\": true }",
                 "JsonSchemaTestSuite.Draft6.Contains",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -236,9 +243,37 @@ public class SuiteContainsKeywordWithBooleanSchemaFalse
     }
 
     [TestMethod]
-    public void TestNonArraysAreValid()
+    public void TestNonArraysAreValidString()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"contains does not apply to strings\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestNonArraysAreValidObject()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestNonArraysAreValidNumber()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("42");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestNonArraysAreValidBoolean()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("false");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestNonArraysAreValidNull()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -250,9 +285,9 @@ public class SuiteContainsKeywordWithBooleanSchemaFalse
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft6/contains.json",
-                "{\"contains\": false}",
+                "{ \"contains\": false }",
                 "JsonSchemaTestSuite.Draft6.Contains",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -285,28 +320,28 @@ public class SuiteItemsContains
     [TestMethod]
     public void TestMatchesItemsDoesNotMatchContains()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[ 2, 4, 8 ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[2, 4, 8]");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestDoesNotMatchItemsMatchesContains()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[ 3, 6, 9 ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[3, 6, 9]");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestMatchesBothItemsAndContains()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[ 6, 12 ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[6, 12]");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestMatchesNeitherItemsNorContains()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[ 1, 5 ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, 5]");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -318,9 +353,9 @@ public class SuiteItemsContains
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft6/contains.json",
-                "{\n            \"items\": { \"multipleOf\": 2 },\n            \"contains\": { \"multipleOf\": 3 }\n        }",
+                "{\n                \"items\": { \"multipleOf\": 2 },\n                \"contains\": { \"multipleOf\": 3 }\n            }",
                 "JsonSchemaTestSuite.Draft6.Contains",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -365,9 +400,9 @@ public class SuiteContainsWithNullInstanceElements
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft6/contains.json",
-                "{\n            \"contains\": {\n                \"type\": \"null\"\n            }\n        }",
+                "{\n                \"contains\": { \"type\": \"null\" }\n            }",
                 "JsonSchemaTestSuite.Draft6.Contains",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,

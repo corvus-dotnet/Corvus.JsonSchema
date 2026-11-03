@@ -53,9 +53,9 @@ public class SuiteValidationOfStringEncodedContentBasedOnMediaType
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft7/optional/content.json",
-                "{\n            \"contentMediaType\": \"application/json\"\n        }",
+                "{\n                \"contentMediaType\": \"application/json\"\n            }",
                 "JsonSchemaTestSuite.Draft7.Optional.Content",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -114,9 +114,9 @@ public class SuiteValidationOfBinaryStringEncoding
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft7/optional/content.json",
-                "{\n            \"contentEncoding\": \"base64\"\n        }",
+                "{\n                \"contentEncoding\": \"base64\"\n            }",
                 "JsonSchemaTestSuite.Draft7.Optional.Content",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -182,9 +182,9 @@ public class SuiteValidationOfBinaryEncodedMediaTypeDocuments
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft7/optional/content.json",
-                "{\n            \"contentMediaType\": \"application/json\",\n            \"contentEncoding\": \"base64\"\n        }",
+                "{\n                \"contentMediaType\": \"application/json\",\n                \"contentEncoding\": \"base64\"\n            }",
                 "JsonSchemaTestSuite.Draft7.Optional.Content",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,

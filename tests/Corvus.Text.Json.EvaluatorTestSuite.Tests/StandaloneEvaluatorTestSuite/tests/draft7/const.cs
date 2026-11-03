@@ -54,9 +54,9 @@ public class SuiteConstValidation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/const.json",
-                "{\"const\": 2}",
+                "{ \"const\": 2 }",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -86,21 +86,21 @@ public class SuiteConstWithObject
     [TestMethod]
     public void TestSameObjectIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"bar\", \"baz\": \"bax\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"bar\", \"baz\": \"bax\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestSameObjectWithDifferentPropertyOrderIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"baz\": \"bax\", \"foo\": \"bar\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"baz\": \"bax\", \"foo\": \"bar\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestAnotherObjectIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"bar\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"bar\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -119,9 +119,9 @@ public class SuiteConstWithObject
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/const.json",
-                "{\"const\": {\"foo\": \"bar\", \"baz\": \"bax\"}}",
+                "{\n                \"const\": { \"foo\": \"bar\", \"baz\": \"bax\" }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -151,7 +151,7 @@ public class SuiteConstWithArray
     [TestMethod]
     public void TestSameArrayIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[{\"foo\": \"bar\"}]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[{ \"foo\": \"bar\" }]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -177,9 +177,9 @@ public class SuiteConstWithArray
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/const.json",
-                "{\"const\": [{ \"foo\": \"bar\" }]}",
+                "{\n                \"const\": [{ \"foo\": \"bar\" }]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -228,9 +228,9 @@ public class SuiteConstWithNull
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/const.json",
-                "{\"const\": null}",
+                "{ \"const\": null }",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -286,9 +286,9 @@ public class SuiteConstWithFalseDoesNotMatch0
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/const.json",
-                "{\"const\": false}",
+                "{ \"const\": false }",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -344,9 +344,9 @@ public class SuiteConstWithTrueDoesNotMatch1
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/const.json",
-                "{\"const\": true}",
+                "{ \"const\": true }",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -402,9 +402,9 @@ public class SuiteConstWithFalseDoesNotMatch01
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/const.json",
-                "{\"const\": [false]}",
+                "{ \"const\": [false] }",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -460,9 +460,9 @@ public class SuiteConstWithTrueDoesNotMatch11
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/const.json",
-                "{\"const\": [true]}",
+                "{ \"const\": [true] }",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -492,21 +492,21 @@ public class SuiteConstWithAFalseDoesNotMatchA0
     [TestMethod]
     public void TestAFalseIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"a\": false}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"a\": false }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestA0IsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"a\": 0}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"a\": 0 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestA00IsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"a\": 0.0}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"a\": 0.0 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -518,9 +518,9 @@ public class SuiteConstWithAFalseDoesNotMatchA0
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/const.json",
-                "{\"const\": {\"a\": false}}",
+                "{\n                \"const\": { \"a\": false }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -550,21 +550,21 @@ public class SuiteConstWithATrueDoesNotMatchA1
     [TestMethod]
     public void TestATrueIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"a\": true}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"a\": true }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestA1IsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"a\": 1}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"a\": 1 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestA10IsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"a\": 1.0}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"a\": 1.0 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -576,9 +576,9 @@ public class SuiteConstWithATrueDoesNotMatchA1
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/const.json",
-                "{\"const\": {\"a\": true}}",
+                "{\n                \"const\": { \"a\": true }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -655,9 +655,9 @@ public class SuiteConstWith0DoesNotMatchOtherZeroLikeTypes
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/const.json",
-                "{\"const\": 0}",
+                "{ \"const\": 0 }",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -713,9 +713,9 @@ public class SuiteConstWith1DoesNotMatchTrue
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/const.json",
-                "{\"const\": 1}",
+                "{ \"const\": 1 }",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -785,9 +785,9 @@ public class SuiteConstWith20MatchesIntegerAndFloatTypes
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/const.json",
-                "{\"const\": -2.0}",
+                "{ \"const\": -2.0 }",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -850,9 +850,9 @@ public class SuiteFloatAndIntegersAreEqualUpTo64BitRepresentationLimits
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/const.json",
-                "{\"const\": 9007199254740992}",
+                "{ \"const\": 9007199254740992 }",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -903,7 +903,7 @@ public class SuiteNulCharactersInStrings
                 "tests/draft7/const.json",
                 "{ \"const\": \"hello\\u0000there\" }",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -952,9 +952,9 @@ public class SuiteCharactersWithTheSameVisualRepresentationButDifferentCodepoint
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/const.json",
-                "{\n            \"const\": \"μ\",\n            \"$comment\": \"U+03BC\"\n        }",
+                "{\n                \"const\": \"μ\",\n                \"$comment\": \"U+03BC\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1003,9 +1003,9 @@ public class SuiteCharactersWithTheSameVisualRepresentationButDifferentNumberOfC
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/const.json",
-                "{\n            \"const\": \"ä\",\n            \"$comment\": \"U+00E4\"\n        }",
+                "{\n                \"const\": \"ä\",\n                \"$comment\": \"U+00E4\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft7.Const",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

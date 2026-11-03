@@ -89,7 +89,26 @@ public class ReferenceTests
               "unevaluatedProperties": false
             }
             """;
-        var options = new JsonSchemaEvaluatorOptions { DocumentResolver = Tests.Suite.SuiteRunner.ResolveRemote };
+        byte[] tree = System.Text.Encoding.UTF8.GetBytes("""
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "$id": "http://localhost:1234/draft2020-12/tree.json",
+              "$dynamicAnchor": "node",
+              "type": "object",
+              "properties": {
+                "data": true,
+                "children": { "type": "array", "items": { "$dynamicRef": "#node" } }
+              }
+            }
+            """);
+        var options = new JsonSchemaEvaluatorOptions
+        {
+            DocumentResolver = (string uri, out ReadOnlyMemory<byte> utf8) =>
+            {
+                utf8 = uri == "http://localhost:1234/draft2020-12/tree.json" ? tree : default;
+                return uri == "http://localhost:1234/draft2020-12/tree.json";
+            },
+        };
         using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(strictTree, options);
 
         // The entry resource defines the anchor, so every $dynamicRef resolves to it on every path and the compiler

@@ -89,9 +89,9 @@ public class SuiteIntegerTypeMatchesIntegers
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/type.json",
-                "{\"type\": \"integer\"}",
+                "{\n                \"type\": \"integer\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -189,9 +189,9 @@ public class SuiteNumberTypeMatchesNumbers
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/type.json",
-                "{\"type\": \"number\"}",
+                "{\n                \"type\": \"number\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -289,9 +289,9 @@ public class SuiteStringTypeMatchesStrings
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/type.json",
-                "{\"type\": \"string\"}",
+                "{\n                \"type\": \"string\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -375,9 +375,9 @@ public class SuiteObjectTypeMatchesObjects
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/type.json",
-                "{\"type\": \"object\"}",
+                "{\n                \"type\": \"object\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -461,9 +461,9 @@ public class SuiteArrayTypeMatchesArrays
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/type.json",
-                "{\"type\": \"array\"}",
+                "{\n                \"type\": \"array\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -568,9 +568,9 @@ public class SuiteBooleanTypeMatchesBooleans
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/type.json",
-                "{\"type\": \"boolean\"}",
+                "{\n                \"type\": \"boolean\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -675,9 +675,60 @@ public class SuiteNullTypeMatchesOnlyTheNullObject
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/type.json",
-                "{\"type\": \"null\"}",
+                "{\n                \"type\": \"null\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "http://json-schema.org/draft-04/schema#",
+                validateFormat: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteTypeAsArrayWithOneItem
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestStringIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"foo\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestNumberIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("123");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    public class Fixture
+    {
+        public CompiledEvaluator Evaluator { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
+                "tests/draft4/type.json",
+                "{\n                \"type\": [\"string\"]\n            }",
+                "StandaloneEvaluatorTestSuite.Draft4.Type",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -761,60 +812,9 @@ public class SuiteMultipleTypesCanBeSpecifiedInAnArray
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/type.json",
-                "{\"type\": [\"integer\", \"string\"]}",
+                "{\n                \"type\": [\"integer\", \"string\"]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
-                "http://json-schema.org/draft-04/schema#",
-                validateFormat: false,
-                Assembly.GetExecutingAssembly());
-        }
-    }
-}
-
-[TestCategory("Draft4")]
-[TestClass]
-public class SuiteTypeAsArrayWithOneItem
-{
-    private static Fixture? s_fixture;
-
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext _)
-    {
-        s_fixture = new Fixture();
-        await s_fixture.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static void ClassCleanupMethod()
-    {
-        s_fixture = null;
-    }
-
-    [TestMethod]
-    public void TestStringIsValid()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"foo\"");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestNumberIsInvalid()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("123");
-        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    public class Fixture
-    {
-        public CompiledEvaluator Evaluator { get; private set; }
-
-        public async Task InitializeAsync()
-        {
-            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests/draft4/type.json",
-                "{\n            \"type\": [\"string\"]\n        }",
-                "StandaloneEvaluatorTestSuite.Draft4.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -844,14 +844,14 @@ public class SuiteTypeArrayOrObject
     [TestMethod]
     public void TestArrayIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1,2,3]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2, 3]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestObjectIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 123}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 123 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -884,9 +884,9 @@ public class SuiteTypeArrayOrObject
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/type.json",
-                "{\n            \"type\": [\"array\", \"object\"]\n        }",
+                "{\n                \"type\": [\"array\", \"object\"]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -916,14 +916,14 @@ public class SuiteTypeArrayObjectOrNull
     [TestMethod]
     public void TestArrayIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1,2,3]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2, 3]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestObjectIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 123}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 123 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -956,9 +956,9 @@ public class SuiteTypeArrayObjectOrNull
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/type.json",
-                "{\n            \"type\": [\"array\", \"object\", \"null\"]\n        }",
+                "{\n                \"type\": [\"array\", \"object\", \"null\"]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

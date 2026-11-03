@@ -8,7 +8,7 @@ namespace StandaloneEvaluatorTestSuite.Draft6.MultipleOf;
 
 [TestCategory("Draft6")]
 [TestClass]
-public class SuiteByInt
+public class SuiteMultipleOfInt
 {
     private static Fixture? s_fixture;
 
@@ -54,9 +54,9 @@ public class SuiteByInt
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/multipleOf.json",
-                "{\"multipleOf\": 2}",
+                "{\n                \"multipleOf\": 2\n            }",
                 "StandaloneEvaluatorTestSuite.Draft6.MultipleOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -66,7 +66,7 @@ public class SuiteByInt
 
 [TestCategory("Draft6")]
 [TestClass]
-public class SuiteByNumber
+public class SuiteMultipleOfNumber
 {
     private static Fixture? s_fixture;
 
@@ -119,9 +119,9 @@ public class SuiteByNumber
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/multipleOf.json",
-                "{\"multipleOf\": 1.5}",
+                "{\n                \"multipleOf\": 1.5\n            }",
                 "StandaloneEvaluatorTestSuite.Draft6.MultipleOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -131,7 +131,7 @@ public class SuiteByNumber
 
 [TestCategory("Draft6")]
 [TestClass]
-public class SuiteBySmallNumber
+public class SuiteMultipleOfSmallNumber
 {
     private static Fixture? s_fixture;
 
@@ -170,9 +170,9 @@ public class SuiteBySmallNumber
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/multipleOf.json",
-                "{\"multipleOf\": 0.0001}",
+                "{\n                \"multipleOf\": 0.0001\n            }",
                 "StandaloneEvaluatorTestSuite.Draft6.MultipleOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -182,7 +182,7 @@ public class SuiteBySmallNumber
 
 [TestCategory("Draft6")]
 [TestClass]
-public class SuiteFloatDivisionInf
+public class SuiteMultipleOfWhenFloatDivisionInf
 {
     private static Fixture? s_fixture;
 
@@ -200,7 +200,7 @@ public class SuiteFloatDivisionInf
     }
 
     [TestMethod]
-    public void TestAlwaysInvalidButNaiveImplementationsMayRaiseAnOverflowError()
+    public void TestInvalidButNaiveImplementationsMayRaiseAnOverflowError()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("1e308");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
@@ -214,9 +214,9 @@ public class SuiteFloatDivisionInf
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/multipleOf.json",
-                "{\"type\": \"integer\", \"multipleOf\": 0.123456789}",
+                "{\n                \"type\": \"integer\",\n                \"multipleOf\": 0.123456789\n            }",
                 "StandaloneEvaluatorTestSuite.Draft6.MultipleOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -258,9 +258,9 @@ public class SuiteSmallMultipleOfLargeInteger
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/multipleOf.json",
-                "{\"type\": \"integer\", \"multipleOf\": 1e-8}",
+                "{\n                \"type\": \"integer\",\n                \"multipleOf\": 1e-8\n            }",
                 "StandaloneEvaluatorTestSuite.Draft6.MultipleOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

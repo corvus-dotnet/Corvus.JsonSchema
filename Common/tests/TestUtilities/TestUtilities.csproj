@@ -32,12 +32,6 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <None Remove="JsonSchemaTestSuite\test-schema.json" />
-  </ItemGroup>
-  <ItemGroup>
-    <AdditionalFiles Include="JsonSchemaTestSuite\test-schema.json" />
-  </ItemGroup>
-  <ItemGroup>
     <Using Include="System" />
     <Using Include="System.Text" />
   </ItemGroup>
@@ -76,7 +70,8 @@
   <ItemGroup>
     <!--<Compile Include="System\AdminHelpers.cs" />-->
     <Compile Include="FakeWebDocumentResolver.cs" />
-    <Compile Include="JsonSchemaTestSuite\TestFile.cs" />
+    <Compile Include="JsonSchemaTestSuite\ExternalSchemaRegistration.cs" />
+    <Compile Include="JsonSchemaTestSuite\SuiteCompatibility.cs" />
     <Compile Include="JsonSchemaTestSuite\TestSpecification.cs" />
     <Compile Include="Metaschema.cs" />
     <!--<Compile Include="System\AssertExtensions.cs" />-->
@@ -167,7 +162,6 @@
     <ProjectReference Include="..\..\..\src-v4\Corvus.Json.CodeGeneration.OpenApi30\Corvus.Json.CodeGeneration.OpenApi30.csproj" />
     <ProjectReference Include="..\..\..\src-v4\Corvus.Json.CodeGeneration.YamlPreProcessor\Corvus.Json.CodeGeneration.YamlPreProcessor.csproj" />
     <ProjectReference Include="..\..\..\src-v4\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
-    <ProjectReference Include="..\..\..\src-v4\Corvus.Json.SourceGenerator\Corvus.Json.SourceGenerator.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
     <PackageReference Include="Microsoft.Bcl.Memory" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
     <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />

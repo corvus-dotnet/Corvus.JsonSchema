@@ -61,9 +61,9 @@ public class SuiteMinItemsValidation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/minItems.json",
-                "{\"minItems\": 1}",
+                "{ \"minItems\": 1 }",
                 "StandaloneEvaluatorTestSuite.Draft4.MinItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

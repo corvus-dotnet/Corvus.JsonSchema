@@ -88,9 +88,9 @@ public class SuitePatternValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/pattern.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"pattern\": \"^a*$\"\n        }",
+                "{ \"pattern\": \"^a*$\" }",
                 "JsonSchemaTestSuite.Draft202012.Pattern",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -135,9 +135,9 @@ public class SuitePatternIsNotAnchored
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/pattern.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"pattern\": \"a+\"\n        }",
+                "{ \"pattern\": \"a+\" }",
                 "JsonSchemaTestSuite.Draft202012.Pattern",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -196,9 +196,70 @@ public class SuitePatternWithUnicodePropertyEscapeRequiresUnicodeMode
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/pattern.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\p{Letter}+$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\p{Letter}+$\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Pattern",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "https://json-schema.org/draft/2020-12/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuitePatternWithUnicodePropertyEscape
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAValidCaseWithAUnicodeLetter()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"π\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAnotherValidCaseWithMultipleUnicodeLetters()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"πλ\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAnInvalidCaseWhereTheStringContainsDigits()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"123\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests/draft2020-12/pattern.json",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\p{Letter}+$\"\n            }",
+                "JsonSchemaTestSuite.Draft202012.Pattern",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,

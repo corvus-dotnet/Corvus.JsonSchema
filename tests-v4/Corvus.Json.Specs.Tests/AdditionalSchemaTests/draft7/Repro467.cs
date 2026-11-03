@@ -14,26 +14,28 @@ namespace AdditionalSchemaTests.AdditionalDraft7.Repro467;
 public class SuiteValidationError
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestDataMachinesTestplc2ProductionLineTestline1LanguageCodeDeMessageTypeMappi()
     {
-        using var doc = JsonDocument.Parse("{\r\n          \"machines\": {\r\n            \"testplc2\": {\r\n              \"productionLine\": \"testline1\",\r\n              \"languageCode\": \"de\",\r\n              \"messageTypeMapping\": [],\r\n              \"variableMapping\": [\r\n                {\r\n                  \"from\": {\r\n                    \"namespace\": 3,\r\n                    \"identifier\": \"state\",\r\n                    \"type\": \"Int64\"\r\n                  },\r\n                  \"transforms\": [\r\n                    {\r\n                      \"mapping\": [\r\n                        [\r\n                          0,\r\n                          \"undefined\"\r\n                        ],\r\n                        [\r\n                          5,\r\n                          \"auto-off-setup\"\r\n                        ],\r\n                        [\r\n                          10,\r\n                          \"auto-off-stop-initial\"\r\n                        ],\r\n                        [\r\n                          15,\r\n                          \"auto-off-stop-idling\"\r\n                        ],\r\n                        [\r\n                          16,\r\n                          \"auto-off-stop-idling\"\r\n                        ],\r\n                        [\r\n                          20,\r\n                          \"auto-waiting-no-interaction-required\"\r\n                        ],\r\n                        [\r\n                          26,\r\n                          \"auto-waiting-interaction-required\"\r\n                        ],\r\n                        [\r\n                          30,\r\n                          \"stop-emergency\"\r\n                        ],\r\n                        [\r\n                          35,\r\n                          \"stop-error\"\r\n                        ],\r\n                        [\r\n                          40,\r\n                          \"auto-off\"\r\n                        ],\r\n                        [\r\n                          50,\r\n                          \"auto-on\"\r\n                        ]\r\n                      ]\r\n                    }\r\n                  ],\r\n                  \"to\": {\r\n                    \"measurement\": \"state\",\r\n                    \"field\": \"state_hint\",\r\n                    \"type\": \"string\"\r\n                  }\r\n                }\r\n              ]\r\n            }\r\n          }\r\n        }");
+        using var doc = JsonDocument.Parse("{\n          \"machines\": {\n            \"testplc2\": {\n              \"productionLine\": \"testline1\",\n              \"languageCode\": \"de\",\n              \"messageTypeMapping\": [],\n              \"variableMapping\": [\n                {\n                  \"from\": {\n                    \"namespace\": 3,\n                    \"identifier\": \"state\",\n                    \"type\": \"Int64\"\n                  },\n                  \"transforms\": [\n                    {\n                      \"mapping\": [\n                        [\n                          0,\n                          \"undefined\"\n                        ],\n                        [\n                          5,\n                          \"auto-off-setup\"\n                        ],\n                        [\n                          10,\n                          \"auto-off-stop-initial\"\n                        ],\n                        [\n                          15,\n                          \"auto-off-stop-idling\"\n                        ],\n                        [\n                          16,\n                          \"auto-off-stop-idling\"\n                        ],\n                        [\n                          20,\n                          \"auto-waiting-no-interaction-required\"\n                        ],\n                        [\n                          26,\n                          \"auto-waiting-interaction-required\"\n                        ],\n                        [\n                          30,\n                          \"stop-emergency\"\n                        ],\n                        [\n                          35,\n                          \"stop-error\"\n                        ],\n                        [\n                          40,\n                          \"auto-off\"\n                        ],\n                        [\n                          50,\n                          \"auto-on\"\n                        ]\n                      ]\n                    }\n                  ],\n                  \"to\": {\n                    \"measurement\": \"state\",\n                    \"field\": \"state_hint\",\n                    \"type\": \"string\"\n                  }\n                }\n              ]\n            }\n          }\n        }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -41,12 +43,12 @@ public class SuiteValidationError
     [TestMethod]
     public void TestDataSourcesTestplc1IpAddress127001Port32796TypeSoftopcuaTestplc()
     {
-        using var doc = JsonDocument.Parse("{\r\n          \"sources\": {\r\n            \"testplc1\": {\r\n              \"ipAddress\": \"127.0.0.1\",\r\n              \"port\": \"32796\",\r\n              \"type\": \"softopcua\"\r\n            },\r\n            \"testplc2\": {\r\n              \"ipAddress\": \"127.0.0.1\",\r\n              \"port\": \"32797\",\r\n              \"type\": \"softopcua\"\r\n            }\r\n          },\r\n          \"machines\": {\r\n            \"testplc1\": {\r\n              \"productionLine\": \"testline1\",\r\n              \"languageCode\": \"de\",\r\n              \"messageTypeMapping\": [],\r\n              \"variableMapping\": []\r\n            },\r\n            \"testplc2\": {\r\n              \"productionLine\": \"testline1\",\r\n              \"languageCode\": \"de\",\r\n              \"messageTypeMapping\": [],\r\n              \"variableMapping\": [\r\n                {\r\n                  \"from\": {\r\n                    \"namespace\": 3,\r\n                    \"identifier\": \"state\",\r\n                    \"type\": \"Int64\"\r\n                  },\r\n                  \"transforms\": [\r\n                    {\r\n                      \"valueOverride\": {\r\n                        \"condition\": {\r\n                          \"from\": {\r\n                            \"namespace\": 3,\r\n                            \"identifier\": \"state_ecomode-active\",\r\n                            \"type\": \"Boolean\"\r\n                          },\r\n                          \"value\": [\r\n                            true\r\n                          ]\r\n                        },\r\n                        \"newValue\": \"auto-off-ecomode\"\r\n                      }\r\n                    }\r\n                  ],\r\n                  \"to\": {\r\n                    \"measurement\": \"state\",\r\n                    \"field\": \"state_hint\",\r\n                    \"type\": \"string\"\r\n                  }\r\n                }\r\n              ]\r\n            }\r\n          },\r\n          \"sinks\": {\r\n            \"testplc1\": {\r\n              \"subject\": \"smpoac.test.eu.de.dev.testplc1\"\r\n            },\r\n            \"testplc2\": {\r\n              \"subject\": \"smpoac.test.eu.de.dev.testplc2\"\r\n            }\r\n          }\r\n        }");
+        using var doc = JsonDocument.Parse("{\n          \"sources\": {\n            \"testplc1\": {\n              \"ipAddress\": \"127.0.0.1\",\n              \"port\": \"32796\",\n              \"type\": \"softopcua\"\n            },\n            \"testplc2\": {\n              \"ipAddress\": \"127.0.0.1\",\n              \"port\": \"32797\",\n              \"type\": \"softopcua\"\n            }\n          },\n          \"machines\": {\n            \"testplc1\": {\n              \"productionLine\": \"testline1\",\n              \"languageCode\": \"de\",\n              \"messageTypeMapping\": [],\n              \"variableMapping\": []\n            },\n            \"testplc2\": {\n              \"productionLine\": \"testline1\",\n              \"languageCode\": \"de\",\n              \"messageTypeMapping\": [],\n              \"variableMapping\": [\n                {\n                  \"from\": {\n                    \"namespace\": 3,\n                    \"identifier\": \"state\",\n                    \"type\": \"Int64\"\n                  },\n                  \"transforms\": [\n                    {\n                      \"valueOverride\": {\n                        \"condition\": {\n                          \"from\": {\n                            \"namespace\": 3,\n                            \"identifier\": \"state_ecomode-active\",\n                            \"type\": \"Boolean\"\n                          },\n                          \"value\": [\n                            true\n                          ]\n                        },\n                        \"newValue\": \"auto-off-ecomode\"\n                      }\n                    }\n                  ],\n                  \"to\": {\n                    \"measurement\": \"state\",\n                    \"field\": \"state_hint\",\n                    \"type\": \"string\"\n                  }\n                }\n              ]\n            }\n          },\n          \"sinks\": {\n            \"testplc1\": {\n              \"subject\": \"smpoac.test.eu.de.dev.testplc1\"\n            },\n            \"testplc2\": {\n              \"subject\": \"smpoac.test.eu.de.dev.testplc2\"\n            }\n          }\n        }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -65,10 +67,9 @@ public class SuiteValidationError
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

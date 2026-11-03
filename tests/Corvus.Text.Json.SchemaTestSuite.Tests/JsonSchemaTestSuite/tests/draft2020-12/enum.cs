@@ -46,9 +46,9 @@ public class SuiteSimpleEnumValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/enum.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"enum\": [1, 2, 3]\n        }",
+                "{\n                \"enum\": [1, 2, 3]\n            }",
                 "JsonSchemaTestSuite.Draft202012.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -95,21 +95,21 @@ public class SuiteHeterogeneousEnumValidation
     [TestMethod]
     public void TestObjectsAreDeepCompared()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": false}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": false }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestValidObjectMatches()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 12}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 12 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestExtraPropertiesInObjectIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 12, \"boo\": 42}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 12, \"boo\": 42 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -121,9 +121,9 @@ public class SuiteHeterogeneousEnumValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/enum.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"enum\": [6, \"foo\", [], true, {\"foo\": 12}]\n        }",
+                "{\n                \"enum\": [6, \"foo\", [], true, { \"foo\": 12 }]\n            }",
                 "JsonSchemaTestSuite.Draft202012.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -182,9 +182,9 @@ public class SuiteHeterogeneousEnumWithNullValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/enum.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"enum\": [6, null]\n        }",
+                "{\n                \"enum\": [6, null]\n            }",
                 "JsonSchemaTestSuite.Draft202012.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -217,35 +217,35 @@ public class SuiteEnumsInProperties
     [TestMethod]
     public void TestBothPropertiesAreValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\":\"foo\", \"bar\":\"bar\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWrongFooValue()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\":\"foot\", \"bar\":\"bar\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foot\", \"bar\": \"bar\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestWrongBarValue()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\":\"foo\", \"bar\":\"bart\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\", \"bar\": \"bart\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestMissingOptionalPropertyIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"bar\":\"bar\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"bar\": \"bar\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestMissingRequiredPropertyIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\":\"foo\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"foo\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -264,9 +264,9 @@ public class SuiteEnumsInProperties
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/enum.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\":\"object\",\n            \"properties\": {\n                \"foo\": {\"enum\":[\"foo\"]},\n                \"bar\": {\"enum\":[\"bar\"]}\n            },\n            \"required\": [\"bar\"]\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"enum\": [\"foo\"] },\n                    \"bar\": { \"enum\": [\"bar\"] }\n                },\n                \"required\": [\"bar\"]\n            }",
                 "JsonSchemaTestSuite.Draft202012.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -325,9 +325,9 @@ public class SuiteEnumWithEscapedCharacters
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/enum.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"enum\": [\"foo\\nbar\", \"foo\\rbar\"]\n        }",
+                "{\n                \"enum\": [\"foo\\nbar\", \"foo\\rbar\"]\n            }",
                 "JsonSchemaTestSuite.Draft202012.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -386,9 +386,9 @@ public class SuiteEnumWithFalseDoesNotMatch0
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/enum.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"enum\": [false]\n        }",
+                "{\n                \"enum\": [false]\n            }",
                 "JsonSchemaTestSuite.Draft202012.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -447,9 +447,9 @@ public class SuiteEnumWithFalseDoesNotMatch01
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/enum.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"enum\": [[false]]\n        }",
+                "{\n                \"enum\": [[false]]\n            }",
                 "JsonSchemaTestSuite.Draft202012.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -508,9 +508,9 @@ public class SuiteEnumWithTrueDoesNotMatch1
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/enum.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"enum\": [true]\n        }",
+                "{\n                \"enum\": [true]\n            }",
                 "JsonSchemaTestSuite.Draft202012.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -569,9 +569,9 @@ public class SuiteEnumWithTrueDoesNotMatch11
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/enum.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"enum\": [[true]]\n        }",
+                "{\n                \"enum\": [[true]]\n            }",
                 "JsonSchemaTestSuite.Draft202012.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -630,9 +630,9 @@ public class SuiteEnumWith0DoesNotMatchFalse
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/enum.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"enum\": [0]\n        }",
+                "{\n                \"enum\": [0]\n            }",
                 "JsonSchemaTestSuite.Draft202012.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -691,9 +691,9 @@ public class SuiteEnumWith0DoesNotMatchFalse1
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/enum.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"enum\": [[0]]\n        }",
+                "{\n                \"enum\": [[0]]\n            }",
                 "JsonSchemaTestSuite.Draft202012.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -752,9 +752,9 @@ public class SuiteEnumWith1DoesNotMatchTrue
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/enum.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"enum\": [1]\n        }",
+                "{\n                \"enum\": [1]\n            }",
                 "JsonSchemaTestSuite.Draft202012.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -813,9 +813,9 @@ public class SuiteEnumWith1DoesNotMatchTrue1
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/enum.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"enum\": [[1]]\n        }",
+                "{\n                \"enum\": [[1]]\n            }",
                 "JsonSchemaTestSuite.Draft202012.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -867,9 +867,9 @@ public class SuiteNulCharactersInStrings
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/enum.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"enum\": [ \"hello\\u0000there\" ]\n        }",
+                "{\n                \"enum\": [\"hello\\u0000there\"]\n            }",
                 "JsonSchemaTestSuite.Draft202012.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -949,9 +949,117 @@ public class SuiteEmptyEnum
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/enum.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"enum\": []\n        }",
+                "{\n                \"enum\": []\n            }",
                 "JsonSchemaTestSuite.Draft202012.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "https://json-schema.org/draft/2020-12/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteCharactersWithTheSameVisualRepresentationButDifferentCodepoint
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestCharacterUsesTheSameCodepoint()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"μ\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestCharacterLooksTheSameButUsesADifferentCodepoint()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"µ\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests/draft2020-12/enum.json",
+                "{\n                \"enum\": [\"μ\"]\n            }",
+                "JsonSchemaTestSuite.Draft202012.Enum",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "https://json-schema.org/draft/2020-12/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteCharactersWithTheSameVisualRepresentationButDifferentNumberOfCodepoints
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestCharacterUsesTheSameCodepoint()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"ä\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestCharacterLooksTheSameButUsesCombiningMarks()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"ä\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests/draft2020-12/enum.json",
+                "{\n                \"enum\": [\"ä\"]\n            }",
+                "JsonSchemaTestSuite.Draft202012.Enum",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,

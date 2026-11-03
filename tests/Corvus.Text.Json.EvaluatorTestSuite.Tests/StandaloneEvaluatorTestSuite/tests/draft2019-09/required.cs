@@ -28,14 +28,14 @@ public class SuiteRequiredValidation
     [TestMethod]
     public void TestPresentRequiredPropertyIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestNonPresentRequiredPropertyIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": 1}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": 1 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -82,9 +82,9 @@ public class SuiteRequiredValidation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/required.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\n                \"foo\": {},\n                \"bar\": {}\n            },\n            \"required\": [\"foo\"]\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": {},\n                    \"bar\": {}\n                },\n                \"required\": [\"foo\"]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Required",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -126,9 +126,9 @@ public class SuiteRequiredDefaultValidation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/required.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\n                \"foo\": {}\n            }\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": {}\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Required",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -170,9 +170,9 @@ public class SuiteRequiredWithEmptyArray
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/required.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"properties\": {\n                \"foo\": {}\n            },\n            \"required\": []\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": {}\n                },\n                \"required\": []\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Required",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -202,14 +202,14 @@ public class SuiteRequiredWithEscapedCharacters
     [TestMethod]
     public void TestObjectWithAllPropertiesPresentIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\\nbar\": 1,\n                    \"foo\\\"bar\": 1,\n                    \"foo\\\\bar\": 1,\n                    \"foo\\rbar\": 1,\n                    \"foo\\tbar\": 1,\n                    \"foo\\fbar\": 1\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                        \"foo\\nbar\": 1,\n                        \"foo\\\"bar\": 1,\n                        \"foo\\\\bar\": 1,\n                        \"foo\\rbar\": 1,\n                        \"foo\\tbar\": 1,\n                        \"foo\\fbar\": 1\n                    }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestObjectWithSomePropertiesMissingIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\\nbar\": \"1\",\n                    \"foo\\\"bar\": \"1\"\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                        \"foo\\nbar\": \"1\",\n                        \"foo\\\"bar\": \"1\"\n                    }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -221,9 +221,9 @@ public class SuiteRequiredWithEscapedCharacters
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/required.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"required\": [\n                \"foo\\nbar\",\n                \"foo\\\"bar\",\n                \"foo\\\\bar\",\n                \"foo\\rbar\",\n                \"foo\\tbar\",\n                \"foo\\fbar\"\n            ]\n        }",
+                "{\n                \"required\": [\n                    \"foo\\nbar\",\n                    \"foo\\\"bar\",\n                    \"foo\\\\bar\",\n                    \"foo\\rbar\",\n                    \"foo\\tbar\",\n                    \"foo\\fbar\"\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Required",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -295,7 +295,7 @@ public class SuiteRequiredPropertiesWhoseNamesAreJavascriptObjectPropertyNames
     [TestMethod]
     public void TestAllPresent()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \n                    \"__proto__\": 12,\n                    \"toString\": { \"length\": \"foo\" },\n                    \"constructor\": 37\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                        \"__proto__\": 12,\n                        \"toString\": { \"length\": \"foo\" },\n                        \"constructor\": 37\n                    }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -307,9 +307,9 @@ public class SuiteRequiredPropertiesWhoseNamesAreJavascriptObjectPropertyNames
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/required.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"required\": [\"__proto__\", \"toString\", \"constructor\"]\n        }",
+                "{ \"required\": [\"__proto__\", \"toString\", \"constructor\"] }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Required",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

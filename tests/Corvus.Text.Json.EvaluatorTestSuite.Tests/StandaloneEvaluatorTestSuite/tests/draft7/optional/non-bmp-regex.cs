@@ -82,9 +82,9 @@ public class SuiteProperUtf16SurrogatePairHandlingPattern
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/optional/non-bmp-regex.json",
-                "{ \"pattern\": \"^🐲*$\" }",
+                "{\n                \"pattern\": \"^🐲*$\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft7.Optional.NonBmpRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -154,9 +154,9 @@ public class SuiteProperUtf16SurrogatePairHandlingPatternProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/optional/non-bmp-regex.json",
-                "{\n            \"patternProperties\": {\n                \"^🐲*$\": {\n                    \"type\": \"integer\"\n                }\n            }\n        }",
+                "{\n                \"patternProperties\": {\n                    \"^🐲*$\": { \"type\": \"integer\" }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft7.Optional.NonBmpRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

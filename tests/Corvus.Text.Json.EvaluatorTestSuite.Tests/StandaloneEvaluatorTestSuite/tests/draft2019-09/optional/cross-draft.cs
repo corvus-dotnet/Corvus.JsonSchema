@@ -8,7 +8,7 @@ namespace StandaloneEvaluatorTestSuite.Draft201909.Optional.CrossDraft;
 
 [TestCategory("Draft201909")]
 [TestClass]
-public class SuiteRefsToFutureDraftsAreProcessedAsFutureDrafts
+public class SuiteRefsToFutureDraftsAreProcessedAsFutureDrafts2020
 {
     private static Fixture? s_fixture;
 
@@ -47,19 +47,20 @@ public class SuiteRefsToFutureDraftsAreProcessedAsFutureDrafts
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/optional/cross-draft.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"type\": \"array\",\n            \"$ref\": \"http://localhost:1234/draft2020-12/prefixItems.json\"\n        }",
+                "{\n                \"type\": \"array\",\n                \"$ref\": \"http://localhost:1234/draft2020-12/prefixItems.json\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.CrossDraft",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
-                Assembly.GetExecutingAssembly());
+                Assembly.GetExecutingAssembly(),
+                externalSchemas: "{\n                \"http://localhost:1234/draft2020-12/prefixItems.json\": {\n                    \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n                    \"prefixItems\": [\n                        { \"type\": \"string\" }\n                    ]\n                }\n            }");
         }
     }
 }
 
 [TestCategory("Draft201909")]
 [TestClass]
-public class SuiteRefsToHistoricDraftsAreProcessedAsHistoricDrafts
+public class SuiteRefsToHistoricDraftsAreProcessedAsHistoricDrafts7
 {
     private static Fixture? s_fixture;
 
@@ -79,7 +80,7 @@ public class SuiteRefsToHistoricDraftsAreProcessedAsHistoricDrafts
     [TestMethod]
     public void TestMissingBarIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"any value\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"any value\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -91,12 +92,13 @@ public class SuiteRefsToHistoricDraftsAreProcessedAsHistoricDrafts
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/optional/cross-draft.json",
-                "{\n            \"type\": \"object\",\n            \"allOf\": [\n                { \"properties\": { \"foo\": true } },\n                { \"$ref\": \"http://localhost:1234/draft7/ignore-dependentRequired.json\" }\n            ]\n        }",
+                "{\n                \"type\": \"object\",\n                \"allOf\": [\n                    { \"properties\": { \"foo\": true } },\n                    { \"$ref\": \"http://localhost:1234/draft7/ignore-dependentRequired.json\" }\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.Optional.CrossDraft",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
-                Assembly.GetExecutingAssembly());
+                Assembly.GetExecutingAssembly(),
+                externalSchemas: "{\n                \"http://localhost:1234/draft7/ignore-dependentRequired.json\": {\n                    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n                    \"dependentRequired\": {\n                        \"foo\": [\"bar\"]\n                    }\n                }\n            }");
         }
     }
 }

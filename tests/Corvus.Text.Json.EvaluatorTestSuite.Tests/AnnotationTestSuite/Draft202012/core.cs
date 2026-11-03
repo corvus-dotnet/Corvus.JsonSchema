@@ -47,7 +47,7 @@ public class SuiteRefAndDefs
                 "annotations/core.json",
                 "{\n        \"$ref\": \"#/$defs/foo\",\n        \"$defs\": {\n          \"foo\": { \"title\": \"Foo\" }\n        }\n      }",
                 "AnnotationTestSuite.Draft202012.Core",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -95,7 +95,7 @@ public class SuiteDynamicRefResolvesToDynamicAnchor
                 "annotations/core.json",
                 "{\n        \"$dynamicRef\": \"#foo\",\n        \"$defs\": {\n          \"foo\": {\n            \"$dynamicAnchor\": \"foo\",\n            \"title\": \"Foo\"\n          }\n        }\n      }",
                 "AnnotationTestSuite.Draft202012.Core",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -154,7 +154,7 @@ public class SuiteDynamicRefResolvesToDifferentDynamicAnchorSDependingOnDynamicP
                 "annotations/core.json",
                 "{\n        \"$id\": \"https://test.json-schema.org/dynamic-ref-annotation/main\",\n        \"if\": {\n          \"properties\": { \"kindOfList\": { \"const\": \"numbers\" } },\n          \"required\": [\"kindOfList\"]\n        },\n        \"then\": { \"$ref\": \"numberList\" },\n        \"else\": { \"$ref\": \"stringList\" },\n        \"$defs\": {\n          \"genericList\": {\n            \"$id\": \"genericList\",\n            \"properties\": {\n              \"list\": {\n                \"items\": { \"$dynamicRef\": \"#itemType\" }\n              }\n            },\n            \"$defs\": {\n              \"defaultItemType\": {\n                \"$dynamicAnchor\": \"itemType\"\n              }\n            }\n          },\n          \"numberList\": {\n            \"$id\": \"numberList\",\n            \"$defs\": {\n              \"itemType\": {\n                \"$dynamicAnchor\": \"itemType\",\n                \"title\": \"Number Item\"\n              }\n            },\n            \"$ref\": \"genericList\"\n          },\n          \"stringList\": {\n            \"$id\": \"stringList\",\n            \"$defs\": {\n              \"itemType\": {\n                \"$dynamicAnchor\": \"itemType\",\n                \"title\": \"String Item\"\n              }\n            },\n            \"$ref\": \"genericList\"\n          }\n        }\n      }",
                 "AnnotationTestSuite.Draft202012.Core",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

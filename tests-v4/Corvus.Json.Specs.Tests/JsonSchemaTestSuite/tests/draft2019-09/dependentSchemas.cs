@@ -14,26 +14,28 @@ namespace JsonSchemaTestSuite.Draft201909.DependentSchemas;
 public class SuiteSingleDependency
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestValid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 1, \"bar\": 2}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 1, \"bar\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -41,7 +43,7 @@ public class SuiteSingleDependency
     [TestMethod]
     public void TestNoDependency()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": \"quux\"}");
+        using var doc = JsonDocument.Parse("{ \"foo\": \"quux\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -49,7 +51,7 @@ public class SuiteSingleDependency
     [TestMethod]
     public void TestWrongType()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": \"quux\", \"bar\": 2}");
+        using var doc = JsonDocument.Parse("{ \"foo\": \"quux\", \"bar\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -57,7 +59,7 @@ public class SuiteSingleDependency
     [TestMethod]
     public void TestWrongTypeOther()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 2, \"bar\": \"quux\"}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 2, \"bar\": \"quux\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -65,7 +67,7 @@ public class SuiteSingleDependency
     [TestMethod]
     public void TestWrongTypeBoth()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": \"quux\", \"bar\": \"quux\"}");
+        using var doc = JsonDocument.Parse("{ \"foo\": \"quux\", \"bar\": \"quux\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -94,7 +96,7 @@ public class SuiteSingleDependency
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -105,7 +107,7 @@ public class SuiteSingleDependency
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dependentSchemas.json",
-                "#/0/schema",
+                "#/tests/0/schema",
                 "JsonSchemaTestSuiteDraft201909DependentSchemas",
                 "SingleDependency",
                 validateFormat: false,
@@ -113,10 +115,9 @@ public class SuiteSingleDependency
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -126,26 +127,28 @@ public class SuiteSingleDependency
 public class SuiteBooleanSubschemas
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestObjectWithPropertyHavingSchemaTrueIsValid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 1}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 1 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -153,7 +156,7 @@ public class SuiteBooleanSubschemas
     [TestMethod]
     public void TestObjectWithPropertyHavingSchemaFalseIsInvalid()
     {
-        using var doc = JsonDocument.Parse("{\"bar\": 2}");
+        using var doc = JsonDocument.Parse("{ \"bar\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -161,7 +164,7 @@ public class SuiteBooleanSubschemas
     [TestMethod]
     public void TestObjectWithBothPropertiesIsInvalid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 1, \"bar\": 2}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 1, \"bar\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -174,7 +177,7 @@ public class SuiteBooleanSubschemas
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -185,7 +188,7 @@ public class SuiteBooleanSubschemas
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dependentSchemas.json",
-                "#/1/schema",
+                "#/tests/2/schema",
                 "JsonSchemaTestSuiteDraft201909DependentSchemas",
                 "BooleanSubschemas",
                 validateFormat: false,
@@ -193,39 +196,40 @@ public class SuiteBooleanSubschemas
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
 
 [TestCategory("Draft201909")]
 [TestClass]
-public class SuiteDependenciesWithEscapedCharacters
+public class SuiteDependentsWithEscapedCharacters
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestQuotedTab()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"foo\\tbar\": 1,\r\n                    \"a\": 2,\r\n                    \"b\": 3,\r\n                    \"c\": 4\r\n                }");
+        using var doc = JsonDocument.Parse("{ \"foo\\tbar\": 1, \"a\": 2, \"b\": 3, \"c\": 4 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -233,7 +237,7 @@ public class SuiteDependenciesWithEscapedCharacters
     [TestMethod]
     public void TestQuotedQuote()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"foo'bar\": {\"foo\\\"bar\": 1}\r\n                }");
+        using var doc = JsonDocument.Parse("{ \"foo'bar\": { \"foo\\\"bar\": 1 } }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -241,7 +245,7 @@ public class SuiteDependenciesWithEscapedCharacters
     [TestMethod]
     public void TestQuotedTabInvalidUnderDependentSchema()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"foo\\tbar\": 1,\r\n                    \"a\": 2\r\n                }");
+        using var doc = JsonDocument.Parse("{ \"foo\\tbar\": 1, \"a\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -249,12 +253,12 @@ public class SuiteDependenciesWithEscapedCharacters
     [TestMethod]
     public void TestQuotedQuoteInvalidUnderDependentSchema()
     {
-        using var doc = JsonDocument.Parse("{\"foo'bar\": 1}");
+        using var doc = JsonDocument.Parse("{ \"foo'bar\": 1 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -265,18 +269,17 @@ public class SuiteDependenciesWithEscapedCharacters
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dependentSchemas.json",
-                "#/2/schema",
+                "#/tests/4/schema",
                 "JsonSchemaTestSuiteDraft201909DependentSchemas",
-                "DependenciesWithEscapedCharacters",
+                "DependentsWithEscapedCharacters",
                 validateFormat: false,
                 optionalAsNullable: false,
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -286,26 +289,28 @@ public class SuiteDependenciesWithEscapedCharacters
 public class SuiteDependentSubschemaIncompatibleWithRoot
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestMatchesRoot()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 1}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 1 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -313,7 +318,7 @@ public class SuiteDependentSubschemaIncompatibleWithRoot
     [TestMethod]
     public void TestMatchesDependency()
     {
-        using var doc = JsonDocument.Parse("{\"bar\": 1}");
+        using var doc = JsonDocument.Parse("{ \"bar\": 1}");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -321,7 +326,7 @@ public class SuiteDependentSubschemaIncompatibleWithRoot
     [TestMethod]
     public void TestMatchesBoth()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 1, \"bar\": 2}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 1, \"bar\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -329,12 +334,12 @@ public class SuiteDependentSubschemaIncompatibleWithRoot
     [TestMethod]
     public void TestNoDependency()
     {
-        using var doc = JsonDocument.Parse("{\"baz\": 1}");
+        using var doc = JsonDocument.Parse("{ \"baz\": 1 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -345,7 +350,7 @@ public class SuiteDependentSubschemaIncompatibleWithRoot
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dependentSchemas.json",
-                "#/3/schema",
+                "#/tests/6/schema",
                 "JsonSchemaTestSuiteDraft201909DependentSchemas",
                 "DependentSubschemaIncompatibleWithRoot",
                 validateFormat: false,
@@ -353,10 +358,9 @@ public class SuiteDependentSubschemaIncompatibleWithRoot
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

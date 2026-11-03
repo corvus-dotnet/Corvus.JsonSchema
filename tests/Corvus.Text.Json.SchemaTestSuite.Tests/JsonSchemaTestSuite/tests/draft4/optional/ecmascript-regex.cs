@@ -46,9 +46,9 @@ public class SuiteEcma262RegexDoesNotMatchTrailingNewline
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/optional/ecmascript-regex.json",
-                "{\n            \"type\": \"string\",\n            \"pattern\": \"^abc$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^abc$\"\n            }",
                 "JsonSchemaTestSuite.Draft4.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -100,9 +100,9 @@ public class SuiteEcma262RegexConvertsTToHorizontalTab
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/optional/ecmascript-regex.json",
-                "{\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\t$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\t$\"\n            }",
                 "JsonSchemaTestSuite.Draft4.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -154,9 +154,9 @@ public class SuiteEcma262RegexEscapesControlCodesWithCAndUpperLetter
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/optional/ecmascript-regex.json",
-                "{\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\cC$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\cC$\"\n            }",
                 "JsonSchemaTestSuite.Draft4.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -208,9 +208,9 @@ public class SuiteEcma262RegexEscapesControlCodesWithCAndLowerLetter
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/optional/ecmascript-regex.json",
-                "{\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\cc$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\cc$\"\n            }",
                 "JsonSchemaTestSuite.Draft4.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -269,9 +269,9 @@ public class SuiteEcma262DMatchesAsciiDigitsOnly
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/optional/ecmascript-regex.json",
-                "{\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\d$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\d$\"\n            }",
                 "JsonSchemaTestSuite.Draft4.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -330,9 +330,9 @@ public class SuiteEcma262DMatchesEverythingButAsciiDigits
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/optional/ecmascript-regex.json",
-                "{\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\D$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\D$\"\n            }",
                 "JsonSchemaTestSuite.Draft4.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -384,9 +384,9 @@ public class SuiteEcma262WMatchesAsciiLettersOnly
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/optional/ecmascript-regex.json",
-                "{\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\w$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\w$\"\n            }",
                 "JsonSchemaTestSuite.Draft4.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -438,9 +438,9 @@ public class SuiteEcma262WMatchesEverythingButAsciiLetters
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/optional/ecmascript-regex.json",
-                "{\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\W$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\W$\"\n            }",
                 "JsonSchemaTestSuite.Draft4.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -555,9 +555,9 @@ public class SuiteEcma262SMatchesWhitespace
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/optional/ecmascript-regex.json",
-                "{\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\s$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\s$\"\n            }",
                 "JsonSchemaTestSuite.Draft4.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -672,77 +672,9 @@ public class SuiteEcma262SMatchesEverythingButWhitespace
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/optional/ecmascript-regex.json",
-                "{\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\S$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\S$\"\n            }",
                 "JsonSchemaTestSuite.Draft4.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
-                "http://json-schema.org/draft-04/schema#",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false,
-                addExplicitUsings: false,
-                Assembly.GetExecutingAssembly());
-        }
-    }
-}
-
-[TestCategory("Draft4")]
-[TestClass]
-public class SuitePatternsAlwaysUseUnicodeSemanticsWithPattern
-{
-    private static Fixture? s_fixture;
-
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext _)
-    {
-        s_fixture = new Fixture();
-        await s_fixture.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static void ClassCleanupMethod()
-    {
-        s_fixture = null;
-    }
-
-    [TestMethod]
-    public void TestAsciiCharacterInJsonString()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"Les hivers de mon enfance etaient des saisons longues, longues. Nous vivions en trois lieux: l'ecole, l'eglise et la patinoire; mais la vraie vie etait sur la patinoire.\"");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestLiteralUnicodeCharacterInJsonString()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"Les hivers de mon enfance étaient des saisons longues, longues. Nous vivions en trois lieux: l'école, l'église et la patinoire; mais la vraie vie était sur la patinoire.\"");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestUnicodeCharacterInHexFormatInString()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"Les hivers de mon enfance étaient des saisons longues, longues. Nous vivions en trois lieux: l'\\u00e9cole, l'église et la patinoire; mais la vraie vie était sur la patinoire.\"");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestUnicodeMatchingIsCaseSensitive()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"LES HIVERS DE MON ENFANCE ÉTAIENT DES SAISONS LONGUES, LONGUES. NOUS VIVIONS EN TROIS LIEUX: L'ÉCOLE, L'ÉGLISE ET LA PATINOIRE; MAIS LA VRAIE VIE ÉTAIT SUR LA PATINOIRE.\"");
-        Assert.IsFalse(dynamicInstance.EvaluateSchema());
-    }
-
-    public class Fixture
-    {
-        public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public async Task InitializeAsync()
-        {
-            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests/draft4/optional/ecmascript-regex.json",
-                "{ \"pattern\": \"\\\\p{Letter}cole\" }",
-                "JsonSchemaTestSuite.Draft4.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -808,9 +740,9 @@ public class SuiteWInPatternsMatchesAZaZ09NotUnicodeLetters
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/optional/ecmascript-regex.json",
-                "{ \"pattern\": \"\\\\wcole\" }",
+                "{\n                \"pattern\": \"\\\\wcole\"\n            }",
                 "JsonSchemaTestSuite.Draft4.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -869,9 +801,9 @@ public class SuitePatternWithAsciiRanges
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/optional/ecmascript-regex.json",
-                "{ \"pattern\": \"[a-z]cole\" }",
+                "{\n                \"pattern\": \"[a-z]cole\"\n            }",
                 "JsonSchemaTestSuite.Draft4.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -930,138 +862,9 @@ public class SuiteDInPatternMatches09NotUnicodeDigits
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/optional/ecmascript-regex.json",
-                "{ \"pattern\": \"^\\\\d+$\" }",
+                "{\n                \"pattern\": \"^\\\\d+$\"\n            }",
                 "JsonSchemaTestSuite.Draft4.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
-                "http://json-schema.org/draft-04/schema#",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false,
-                addExplicitUsings: false,
-                Assembly.GetExecutingAssembly());
-        }
-    }
-}
-
-[TestCategory("Draft4")]
-[TestClass]
-public class SuitePatternWithNonAsciiDigits
-{
-    private static Fixture? s_fixture;
-
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext _)
-    {
-        s_fixture = new Fixture();
-        await s_fixture.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static void ClassCleanupMethod()
-    {
-        s_fixture = null;
-    }
-
-    [TestMethod]
-    public void TestAsciiDigits()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"42\"");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestAsciiNonDigits()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"-%#\"");
-        Assert.IsFalse(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestNonAsciiDigitsBengaliDigitFourBengaliDigitTwo()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"৪২\"");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    public class Fixture
-    {
-        public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public async Task InitializeAsync()
-        {
-            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests/draft4/optional/ecmascript-regex.json",
-                "{ \"pattern\": \"^\\\\p{digit}+$\" }",
-                "JsonSchemaTestSuite.Draft4.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
-                "http://json-schema.org/draft-04/schema#",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false,
-                addExplicitUsings: false,
-                Assembly.GetExecutingAssembly());
-        }
-    }
-}
-
-[TestCategory("Draft4")]
-[TestClass]
-public class SuitePatternsAlwaysUseUnicodeSemanticsWithPatternProperties
-{
-    private static Fixture? s_fixture;
-
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext _)
-    {
-        s_fixture = new Fixture();
-        await s_fixture.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static void ClassCleanupMethod()
-    {
-        s_fixture = null;
-    }
-
-    [TestMethod]
-    public void TestAsciiCharacterInJsonString()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"l'ecole\": \"pas de vraie vie\" }");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestLiteralUnicodeCharacterInJsonString()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"l'école\": \"pas de vraie vie\" }");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestUnicodeCharacterInHexFormatInString()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"l'\\u00e9cole\": \"pas de vraie vie\" }");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestUnicodeMatchingIsCaseSensitive()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"L'ÉCOLE\": \"PAS DE VRAIE VIE\" }");
-        Assert.IsFalse(dynamicInstance.EvaluateSchema());
-    }
-
-    public class Fixture
-    {
-        public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public async Task InitializeAsync()
-        {
-            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests/draft4/optional/ecmascript-regex.json",
-                "{\n            \"type\": \"object\",\n            \"patternProperties\": {\n                \"\\\\p{Letter}cole\": {}\n            },\n            \"additionalProperties\": false\n        }",
-                "JsonSchemaTestSuite.Draft4.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1127,9 +930,9 @@ public class SuiteWInPatternPropertiesMatchesAZaZ09NotUnicodeLetters
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/optional/ecmascript-regex.json",
-                "{\n            \"type\": \"object\",\n            \"patternProperties\": {\n                \"\\\\wcole\": {}\n            },\n            \"additionalProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"patternProperties\": {\n                    \"\\\\wcole\": {}\n                },\n                \"additionalProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft4.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1188,9 +991,9 @@ public class SuitePatternPropertiesWithAsciiRanges
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/optional/ecmascript-regex.json",
-                "{\n            \"type\": \"object\",\n            \"patternProperties\": {\n                \"[a-z]cole\": {}\n            },\n            \"additionalProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"patternProperties\": {\n                    \"[a-z]cole\": {}\n                },\n                \"additionalProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft4.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1249,70 +1052,9 @@ public class SuiteDInPatternPropertiesMatches09NotUnicodeDigits
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/optional/ecmascript-regex.json",
-                "{\n            \"type\": \"object\",\n            \"patternProperties\": {\n                \"^\\\\d+$\": {}\n            },\n            \"additionalProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"patternProperties\": {\n                    \"^\\\\d+$\": {}\n                },\n                \"additionalProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft4.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
-                "http://json-schema.org/draft-04/schema#",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false,
-                addExplicitUsings: false,
-                Assembly.GetExecutingAssembly());
-        }
-    }
-}
-
-[TestCategory("Draft4")]
-[TestClass]
-public class SuitePatternPropertiesWithNonAsciiDigits
-{
-    private static Fixture? s_fixture;
-
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext _)
-    {
-        s_fixture = new Fixture();
-        await s_fixture.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static void ClassCleanupMethod()
-    {
-        s_fixture = null;
-    }
-
-    [TestMethod]
-    public void TestAsciiDigits()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"42\": \"life, the universe, and everything\" }");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestAsciiNonDigits()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"-%#\": \"spending the year dead for tax reasons\" }");
-        Assert.IsFalse(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestNonAsciiDigitsBengaliDigitFourBengaliDigitTwo()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"৪২\": \"khajit has wares if you have coin\" }");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    public class Fixture
-    {
-        public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public async Task InitializeAsync()
-        {
-            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests/draft4/optional/ecmascript-regex.json",
-                "{\n            \"type\": \"object\",\n            \"patternProperties\": {\n                \"^\\\\p{digit}+$\": {}\n            },\n            \"additionalProperties\": false\n        }",
-                "JsonSchemaTestSuite.Draft4.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
