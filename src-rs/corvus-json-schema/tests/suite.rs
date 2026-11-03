@@ -230,12 +230,8 @@ fn json_schema_test_suite() {
     }
 
     let draft_filter = std::env::var("SUITE_DRAFT").ok();
-    let mut runner = Runner {
-        filter: std::env::var("SUITE_FILTER").ok(),
-        total: 0,
-        failures: Vec::new(),
-        summary: Vec::new(),
-    };
+    let mut runner =
+        Runner { filter: std::env::var("SUITE_FILTER").ok(), total: 0, failures: Vec::new(), summary: Vec::new() };
     // Keep panics in the evaluator from spamming the output: they are reported as failures.
     std::panic::set_hook(Box::new(|_| {}));
     for (draft, dialect, release) in DRAFTS {
