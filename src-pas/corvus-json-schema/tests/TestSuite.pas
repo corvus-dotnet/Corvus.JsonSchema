@@ -3,9 +3,10 @@ program TestSuite;
 {$I corvus.inc}
 
 { Runs the JSON-Schema-Test-Suite (the repository's submodule) against the evaluator, as suite_test.go of the Go
-  module and the C# and Rust suite runners do: required and optional tests with format as an annotation,
-  optional/format with format asserted. Every case runs fail-fast (as a document, as bytes and as a string) and
-  through a results collector at each level.
+  module and the C# and Rust suite runners do. Every dialect's cases are in one tree (validation/tests, required and
+  optional): each case's compatibility selects the drafts it applies to, its tags whether format is asserted, and its
+  externalSchemas are served to that case alone. Every case runs fail-fast (as a document, as bytes and as a string)
+  and through a results collector at each level.
 
   Set JSON_SCHEMA_TEST_SUITE to use a different checkout, SUITE_DRAFT and SUITE_FILTER to narrow the run. }
 
@@ -25,7 +26,7 @@ type
   end;
 
 var
-  Remotes: TRemotes;
+  CaseSchemas: TCaseSchemas;
   Areas: array of TArea;
   Filter: UTF8String;
   Total, Failed, Skipped: Int32;
@@ -169,28 +170,37 @@ begin
   end;
 end;
 
-procedure RunFile(Dialect: TJsonSchemaDialect; const Path, Name, AreaName: UTF8String; AssertFormat: Boolean);
+procedure RunFile(Dialect: TJsonSchemaDialect; Release: Int32; const Path, Name, AreaName: UTF8String);
 var
   Text: TBytes;
   Doc: TDocument;
   E: TParseError;
-  Area, G, T, Group, Schema, Tests, Test, Data, Valid, Description: Int32;
+  Area, G, T, Group, Groups, Schema, Tests, Test, Data, Valid, Description: Int32;
   Options: TJsonSchemaOptions;
   GroupDescription, TestDescription, CompileError, Error, Got: UTF8String;
   Validator: IJsonSchemaValidator;
-  Actual, Expected, Ran: Boolean;
+  Actual, Expected, Ran, AssertFormat: Boolean;
 begin
   if not ReadFile(Path, Text) then begin
     WriteLn('FAILED: ', Path, ' could not be read');
     Halt(1);
   end;
-  if not ParseDocument(Text, Doc, E) or (DocKind(Doc, Doc.Root) <> KindArray) then begin
-    WriteLn('FAILED: ', Path, ' is not a JSON array: ', ParseErrorText(E));
+  Groups := -1;
+  if ParseDocument(Text, Doc, E) then
+    Groups := Member(Doc, Doc.Root, 'tests');
+  if not IsKind(Doc, Groups, KindArray) then begin
+    WriteLn('FAILED: ', Path, ' is not a suite file: ', ParseErrorText(E));
     Halt(1);
   end;
   Area := AreaOf(AreaName);
-  for G := 0 to DocCount(Doc, Doc.Root) - 1 do begin
-    Group := DocFirst(Doc, Doc.Root) + G;
+  for G := 0 to DocCount(Doc, Groups) - 1 do begin
+    Group := DocFirst(Doc, Groups) + G;
+    if not SuiteCompatible(Doc, Group, Release) then
+      Continue;
+    { The evaluator asserts format by default up to draft7, so a format-annotation case does not apply there. }
+    if HasTag(Doc, Group, 'format-annotation') and (Release <= 7) then
+      Continue;
+    AssertFormat := HasTag(Doc, Group, 'format-assertion');
     GroupDescription := '';
     Description := Member(Doc, Group, 'description');
     if IsKind(Doc, Description, KindString) then
@@ -200,7 +210,8 @@ begin
     Schema := Member(Doc, Group, 'schema');
     Options := DefaultJsonSchemaOptions;
     WithDefaultDialect(Options, Dialect);
-    WithDocumentResolver(Options, RemoteResolver, @Remotes);
+    CaseSchemas := CaseSchemasOf(Doc, Group);
+    WithDocumentResolver(Options, CaseSchemaResolver, @CaseSchemas);
     if AssertFormat then
       WithAssertFormat(Options, True);
     Validator := nil;
@@ -234,7 +245,7 @@ begin
         Inc(Areas[Area].Passed);
         Continue;
       end;
-      { Leap seconds are skipped in the format run, as in the C# runner. }
+      { Leap seconds are skipped where format is asserted, as in the C# runner. }
       if AssertFormat and (Pos('leap second', LowerAscii(TestDescription)) > 0) then begin
         Inc(Areas[Area].Passed);
         Inc(Skipped);
@@ -253,49 +264,47 @@ end;
 const
   DraftNames: array[0..4] of UTF8String = ('draft4', 'draft6', 'draft7', 'draft2019-09', 'draft2020-12');
   DraftDialects: array[0..4] of TJsonSchemaDialect = (Draft4, Draft6, Draft7, Draft201909, Draft202012);
+  DraftReleases: array[0..4] of Int32 = (4, 6, 7, 2019, 2020);
+  { The number of test cases the suite has, less the exclusion: a smaller count means a stale or partial run. }
+  ExpectedTotal = 8611;
 var
-  Root, Tests, Dir, DraftFilter, Name: UTF8String;
-  Files: TUTF8StringArray;
+  Root, Tests, DraftFilter, Name: UTF8String;
+  Files, OptionalFiles: TUTF8StringArray;
   D, I: Int32;
 begin
   Root := SuiteRoot;
-  Tests := Root + '/tests';
+  Tests := Root + '/validation/tests';
   if not DirectoryExists(Tests) then begin
     WriteLn('JSON-Schema-Test-Suite not found at ', Root,
       ' (set JSON_SCHEMA_TEST_SUITE, or check out the submodule)');
     Halt(1);
   end;
-  Remotes := Default(TRemotes);
-  Remotes.Root := Root + '/remotes';
   Filter := UTF8String(GetEnvironmentVariable('SUITE_FILTER'));
   DraftFilter := UTF8String(GetEnvironmentVariable('SUITE_DRAFT'));
   Areas := nil;
   Total := 0;
   Failed := 0;
   Skipped := 0;
+  Files := JsonFiles(Tests);
+  OptionalFiles := JsonFiles(Tests + '/optional');
   for D := 0 to 4 do begin
     if (DraftFilter <> '') and (DraftFilter <> DraftNames[D]) then
       Continue;
-    Dir := Tests + '/' + DraftNames[D];
-    Files := JsonFiles(Dir);
     for I := 0 to Length(Files) - 1 do
-      RunFile(DraftDialects[D], Dir + '/' + Files[I], DraftNames[D] + '/' + Files[I], DraftNames[D], False);
-    Files := JsonFiles(Dir + '/optional');
-    for I := 0 to Length(Files) - 1 do begin
-      Name := DraftNames[D] + '/optional/' + Files[I];
+      RunFile(DraftDialects[D], DraftReleases[D], Tests + '/' + Files[I], DraftNames[D] + '/' + Files[I],
+        DraftNames[D]);
+    for I := 0 to Length(OptionalFiles) - 1 do begin
+      Name := DraftNames[D] + '/optional/' + OptionalFiles[I];
       { The one exclusion, matching the C# and Rust runners: zero-terminated floats. }
-      if Name <> 'draft4/optional/zeroTerminatedFloats.json' then
-        RunFile(DraftDialects[D], Dir + '/optional/' + Files[I], Name, DraftNames[D] + '/optional', False);
+      if Name <> 'draft4/optional/zero-terminated-floats.json' then
+        RunFile(DraftDialects[D], DraftReleases[D], Tests + '/optional/' + OptionalFiles[I], Name,
+          DraftNames[D] + '/optional');
     end;
-    Files := JsonFiles(Dir + '/optional/format');
-    for I := 0 to Length(Files) - 1 do
-      RunFile(DraftDialects[D], Dir + '/optional/format/' + Files[I], DraftNames[D] + '/optional/format/' + Files[I],
-        DraftNames[D] + '/optional/format', True);
   end;
   JsonSchemaReleaseThreadScratch;
   for I := 0 to Length(Areas) - 1 do
     WriteLn(Areas[I].Name, '': 35 - Length(Areas[I].Name), Areas[I].Passed: 5, '/', Areas[I].Counted);
-  WriteLn(Skipped, ' failing leap second cases of the format runs were skipped');
+  WriteLn(Skipped, ' failing leap second cases that assert format were skipped');
   WriteLn('JSON-Schema-Test-Suite: ', Total - Failed, '/', Total, ' passed');
   if Total = 0 then begin
     WriteLn('no JSON-Schema-Test-Suite cases ran');
@@ -303,6 +312,10 @@ begin
   end;
   if Failed <> 0 then begin
     WriteLn(Failed, ' JSON-Schema-Test-Suite cases failed');
+    Halt(1);
+  end;
+  if (DraftFilter = '') and (Filter = '') and (Total <> ExpectedTotal) then begin
+    WriteLn(Total, ' JSON-Schema-Test-Suite cases ran, where ', ExpectedTotal, ' were expected');
     Halt(1);
   end;
 end.

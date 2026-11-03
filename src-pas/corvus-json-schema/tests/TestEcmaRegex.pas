@@ -482,7 +482,7 @@ begin
     Root := UTF8String(GetEnvironmentVariable('CORVUS_JSON_SCHEMA_TEST_SUITE'));
   if Root = '' then
     Root := '../../JSON-Schema-Test-Suite';
-  Tests := Root + '/tests';
+  Tests := Root + '/validation/tests';
   Result := DirectoryExists(Tests);
 end;
 
@@ -505,29 +505,43 @@ begin
   SortTexts(Result, 0, Count - 1);
 end;
 
-{ SuiteFiles lists the files of the suite that exercise regular expressions, for every draft that has them. }
+{ SuiteFiles lists the files of the suite that exercise regular expressions. }
 function SuiteFiles(const Tests: UTF8String): TTexts;
 const
-  Names: array[0..4] of UTF8String = ('optional/ecmascript-regex.json', 'optional/format/regex.json',
-    'pattern.json', 'patternProperties.json', 'optional/non-bmp-regex.json');
+  Names: array[0..5] of UTF8String = ('optional/ecmascript-regex.json', 'optional/format-regex.json',
+    'format-regex.json', 'pattern.json', 'patternProperties.json', 'optional/non-bmp-regex.json');
 var
-  Drafts: TTexts;
-  Count, N, D: Int32;
+  Count, N: Int32;
   Path: UTF8String;
 begin
   Result := nil;
   Count := 0;
-  Drafts := ListDir(Tests, True);
-  for N := 0 to High(Names) do
-    for D := 0 to High(Drafts) do begin
-      Path := Tests + '/' + Drafts[D] + '/' + Names[N];
-      if FileExists(Path) then
-        AppendText(Result, Count, Path);
-    end;
+  for N := 0 to High(Names) do begin
+    Path := Tests + '/' + Names[N];
+    if FileExists(Path) then
+      AppendText(Result, Count, Path)
+    else
+      Fail(Path + ': not found');
+  end;
   SetLength(Result, Count);
   SortTexts(Result, 0, Count - 1);
-  if Count = 0 then
-    Fail('no regular expression files under ' + Tests);
+end;
+
+{ HasTag reports whether a test case of the suite has a tag. }
+function HasTag(const Json: TJson; TestCase: Int32; const Tag: UTF8String): Boolean;
+var
+  T: Int32;
+begin
+  Result := False;
+  T := Json.Member(TestCase, 'tags');
+  if T < 0 then
+    Exit;
+  T := Json.Nodes[T].First;
+  while T >= 0 do begin
+    if Json.Nodes[T].Text = Tag then
+      Exit(True);
+    T := Json.Nodes[T].Next;
+  end;
 end;
 
 type
@@ -707,8 +721,13 @@ begin
       Fail(Files[F] + ': cannot be read');
       Continue;
     end;
-    Group := E.Json.Nodes[Root].First;
+    Group := E.Json.Nodes[E.Json.Member(Root, 'tests')].First;
     while Group >= 0 do begin
+      // The regex format is asserted here: a case that expects it to be an annotation does not apply.
+      if HasTag(E.Json, Group, 'format-annotation') then begin
+        Group := E.Json.Nodes[Group].Next;
+        Continue;
+      end;
       Test := E.Json.Nodes[E.Json.Member(Group, 'tests')].First;
       while Test >= 0 do begin
         Inc(Cases);

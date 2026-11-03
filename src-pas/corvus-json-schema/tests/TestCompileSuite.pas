@@ -3,8 +3,9 @@ program TestCompileSuite;
 {$I corvus.inc}
 
 { Compiles every schema of the JSON-Schema-Test-Suite, as suite_test.go of the Go module does before it evaluates:
-  the required and optional tests with format as an annotation, optional/format with format asserted, and the
-  suite's remotes (http://localhost:1234/...) resolved from its remotes directory. Every schema must compile.
+  every case of the one tree of every dialect (validation/tests, required and optional) that the dialect's release
+  is compatible with, format asserted where the case says, and each case's externalSchemas served to that case alone.
+  Every schema must compile.
 
   The suite is looked for at ../../JSON-Schema-Test-Suite (the repository's submodule, from the package directory).
   Set JSON_SCHEMA_TEST_SUITE to use a different checkout, and SUITE_DRAFT to narrow the run to one draft.
@@ -29,108 +30,12 @@ uses
   Corvus.JsonSchema.Loader,
   Corvus.JsonSchema.Compiler;
 
-type
-  { The suite's remotes: the documents read so far, by their path within the remotes directory. }
-  TRemotes = record
-    Root: UTF8String;
-    Cache: TStringTable;
-    Docs: array of TDocument;
-  end;
-  PRemotes = ^TRemotes;
+{$I SuiteCommon.inc}
 
 var
   Failures: Int32;
   Dumping: Boolean;
   Dump: Text;
-
-function ReadFile(const Path: UTF8String; out Bytes: TBytes): Boolean;
-var
-  F: THandle;
-  Size, Got: Int64;
-begin
-  Bytes := nil;
-  Result := False;
-  F := FileOpen(Path, fmOpenRead or fmShareDenyNone);
-  if F = THandle(-1) then
-    Exit;
-  Size := FileSeek(F, Int64(0), 2);
-  FileSeek(F, Int64(0), 0);
-  SetLength(Bytes, Size);
-  Got := 0;
-  if Size > 0 then
-    Got := FileRead(F, Bytes[0], Size);
-  FileClose(F);
-  Result := Got = Size;
-end;
-
-{ RemoteResolver resolves the suite's remotes (http://localhost:1234/...) from its remotes directory. }
-function RemoteResolver(Context: Pointer; const Uri: UTF8String; out Doc: TDocument): Boolean;
-const
-  Prefix: UTF8String = 'http://localhost:1234/';
-var
-  R: PRemotes;
-  Rest: UTF8String;
-  At, N: Int32;
-  Text: TBytes;
-  E: TParseError;
-begin
-  Doc := Default(TDocument);
-  Result := False;
-  R := PRemotes(Context);
-  if Copy(Uri, 1, Length(Prefix)) <> Prefix then
-    Exit;
-  Rest := Copy(Uri, Length(Prefix) + 1, Length(Uri) - Length(Prefix));
-  At := StringTableFind(R^.Cache, Rest);
-  if At >= 0 then begin
-    Doc := R^.Docs[R^.Cache.Values[At]];
-    Result := True;
-    Exit;
-  end;
-  if not ReadFile(R^.Root + '/' + Rest, Text) then
-    Exit;
-  if not ParseDocument(Text, Doc, E) then
-    Exit;
-  N := Length(R^.Docs);
-  SetLength(R^.Docs, N + 1);
-  R^.Docs[N] := Doc;
-  StringTableAdd(R^.Cache, Rest, N, '');
-  Result := True;
-end;
-
-{ JsonFiles are the names of the .json files of a directory, in byte order. }
-function JsonFiles(const Dir: UTF8String): TUTF8StringArray;
-var
-  Search: TSearchRec;
-  Name, T: UTF8String;
-  N, I, J: Int32;
-begin
-  Result := nil;
-  N := 0;
-  if FindFirst(Dir + '/*', faAnyFile, Search) <> 0 then
-    Exit;
-  repeat
-    Name := UTF8String(Search.Name);
-    if (Search.Attr and faDirectory = 0) and (Length(Name) > 5)
-      and (Copy(Name, Length(Name) - 4, 5) = '.json') then begin
-      SetLength(Result, N + 1);
-      Result[N] := Name;
-      Inc(N);
-    end;
-  until FindNext(Search) <> 0;
-  FindClose(Search);
-  for I := 1 to N - 1 do begin
-    T := Result[I];
-    J := I - 1;
-    while (J >= 0) and (CompareUtf8(Result[J], T) > 0) do begin
-      Result[J + 1] := Result[J];
-      Dec(J);
-    end;
-    Result[J + 1] := T;
-  end;
-end;
-
-{ --------------------------------------------------------------------------------------------------------------------
-  The dump }
 
 { Q is a text with every byte that is not a visible ASCII character, and the characters the dump itself uses,
   written as % and two hexadecimal digits. }
@@ -363,7 +268,7 @@ type
   end;
 
 var
-  Remotes: TRemotes;
+  CaseSchemas: TCaseSchemas;
   Areas: array of TArea;
 
 function AreaOf(const AreaName: UTF8String): Int32;
@@ -419,12 +324,12 @@ begin
     DumpSchema(Compiled);
 end;
 
-procedure RunFile(Dialect: TDialect; const Path, Name, AreaName: UTF8String; AssertFormat: Boolean);
+procedure RunFile(Dialect: TDialect; Release: Int32; const Path, Name, AreaName: UTF8String);
 var
   Text: TBytes;
   Doc, Sub: TDocument;
   E: TParseError;
-  Area, G, Schema, Description: Int32;
+  Area, G, Group, Groups, Schema, Description: Int32;
   Options: TCompileOptions;
   What, SchemaText: UTF8String;
 begin
@@ -435,19 +340,26 @@ begin
     WriteLn('FAILED: ', Path, ' could not be read');
     Exit;
   end;
-  if not ParseDocument(Text, Doc, E) or (DocKind(Doc, Doc.Root) <> KindArray) then begin
+  Groups := -1;
+  if ParseDocument(Text, Doc, E) then
+    Groups := Member(Doc, Doc.Root, 'tests');
+  if not IsKind(Doc, Groups, KindArray) then begin
     Inc(Failures);
-    WriteLn('FAILED: ', Path, ' is not a JSON array: ', ParseErrorText(E));
+    WriteLn('FAILED: ', Path, ' is not a suite file: ', ParseErrorText(E));
     Exit;
   end;
-  for G := 0 to DocCount(Doc, Doc.Root) - 1 do begin
-    Schema := Member(Doc, DocFirst(Doc, Doc.Root) + G, 'schema');
+  for G := 0 to DocCount(Doc, Groups) - 1 do begin
+    Group := DocFirst(Doc, Groups) + G;
+    if not SuiteCompatible(Doc, Group, Release)
+      or (HasTag(Doc, Group, 'format-annotation') and (Release <= 7)) then
+      Continue;
+    Schema := Member(Doc, Group, 'schema');
     if Schema < 0 then begin
       Inc(Failures);
       WriteLn('FAILED: ', Name, ' group ', G, ' has no schema');
       Continue;
     end;
-    Description := Member(Doc, DocFirst(Doc, Doc.Root) + G, 'description');
+    Description := Member(Doc, Group, 'description');
     What := Name + ' [';
     if IsKind(Doc, Description, KindString) then
       What := What + DocStrCopy(Doc, Description);
@@ -464,8 +376,9 @@ begin
     end;
     Options := DefaultOptions;
     WithDefaultDialect(Options, Dialect);
-    WithDocumentResolver(Options, RemoteResolver, @Remotes);
-    if AssertFormat then
+    CaseSchemas := CaseSchemasOf(Doc, Group);
+    WithDocumentResolver(Options, CaseSchemaResolver, @CaseSchemas);
+    if HasTag(Doc, Group, 'format-assertion') then
       WithAssertFormat(Options, True);
     CompileOne(Area, Name, G, What, Sub, '', Options);
   end;
@@ -562,10 +475,11 @@ end;
 
 const
   DraftNames: array[TDialect] of UTF8String = ('draft4', 'draft6', 'draft7', 'draft2019-09', 'draft2020-12');
+  DraftReleases: array[TDialect] of Int32 = (4, 6, 7, 2019, 2020);
 var
-  Root, Tests, Dir, DraftFilter, Extra: UTF8String;
+  Root, Tests, DraftFilter, Extra: UTF8String;
   D: TDialect;
-  Files: TUTF8StringArray;
+  Files, OptionalFiles: TUTF8StringArray;
   I, Schemas, Compiled: Int32;
 begin
   Failures := 0;
@@ -574,36 +488,27 @@ begin
     Assign(Dump, ParamStr(2));
     Rewrite(Dump);
   end;
-  Root := UTF8String(GetEnvironmentVariable('JSON_SCHEMA_TEST_SUITE'));
-  if Root = '' then
-    Root := '../../JSON-Schema-Test-Suite';
-  Tests := Root + '/tests';
+  Root := SuiteRoot;
+  Tests := Root + '/validation/tests';
   if not DirectoryExists(Tests) then begin
     WriteLn('JSON-Schema-Test-Suite not found at ', Root,
       ' (set JSON_SCHEMA_TEST_SUITE, or check out the submodule)');
     Halt(1);
   end;
-  Remotes := Default(TRemotes);
-  Remotes.Root := Root + '/remotes';
   DraftFilter := UTF8String(GetEnvironmentVariable('SUITE_DRAFT'));
   Areas := nil;
+  Files := JsonFiles(Tests);
+  OptionalFiles := JsonFiles(Tests + '/optional');
   for D := Low(TDialect) to High(TDialect) do begin
     if (DraftFilter <> '') and (DraftFilter <> DraftNames[D]) then
       Continue;
-    Dir := Tests + '/' + DraftNames[D];
-    Files := JsonFiles(Dir);
     for I := 0 to Length(Files) - 1 do
-      RunFile(D, Dir + '/' + Files[I], DraftNames[D] + '/' + Files[I], DraftNames[D], False);
-    { The Go test does not run draft4/optional/zeroTerminatedFloats.json, whose cases differ by design. Its
+      RunFile(D, DraftReleases[D], Tests + '/' + Files[I], DraftNames[D] + '/' + Files[I], DraftNames[D]);
+    { The Go test does not run draft4/optional/zero-terminated-floats.json, whose cases differ by design. Its
       schemas are compiled here like any other. }
-    Files := JsonFiles(Dir + '/optional');
-    for I := 0 to Length(Files) - 1 do
-      RunFile(D, Dir + '/optional/' + Files[I], DraftNames[D] + '/optional/' + Files[I],
-        DraftNames[D] + '/optional', False);
-    Files := JsonFiles(Dir + '/optional/format');
-    for I := 0 to Length(Files) - 1 do
-      RunFile(D, Dir + '/optional/format/' + Files[I], DraftNames[D] + '/optional/format/' + Files[I],
-        DraftNames[D] + '/optional/format', True);
+    for I := 0 to Length(OptionalFiles) - 1 do
+      RunFile(D, DraftReleases[D], Tests + '/optional/' + OptionalFiles[I],
+        DraftNames[D] + '/optional/' + OptionalFiles[I], DraftNames[D] + '/optional');
   end;
   if DraftFilter = '' then begin
     RunMetaschemas;
@@ -623,7 +528,7 @@ begin
     Inc(Schemas, Areas[I].Schemas);
     Inc(Compiled, Areas[I].Compiled);
   end;
-  WriteLn(Compiled, '/', Schemas, ' schemas compiled, ', Length(Remotes.Docs), ' remote documents read');
+  WriteLn(Compiled, '/', Schemas, ' schemas compiled');
   if Schemas = 0 then begin
     WriteLn('no JSON-Schema-Test-Suite schemas were compiled');
     Halt(1);
