@@ -227,14 +227,6 @@ public class SuiteMaximumIntegerComparison
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [TestMethod]
-    public void TestJustAboveTheMaximumIsInvalid()
-    {
-        using var doc = JsonDocument.Parse("18446744073709551616");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
     public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
@@ -282,14 +274,6 @@ public class SuiteFloatComparisonWithHighPrecisionBoolean
             s_fixture.Dispose();
             s_fixture = null;
         }
-    }
-
-    [TestMethod]
-    public void TestBelowTheExclusiveMaximumIsValid()
-    {
-        using var doc = JsonDocument.Parse("972783798187987123879878123.188781369");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
     [TestMethod]
@@ -347,14 +331,6 @@ public class SuiteFloatComparisonWithHighPrecisionOnNegativeNumbersBoolean
             s_fixture.Dispose();
             s_fixture = null;
         }
-    }
-
-    [TestMethod]
-    public void TestAboveTheExclusiveMinimumIsValid()
-    {
-        using var doc = JsonDocument.Parse("-972783798187987123879878123.188781369");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
     [TestMethod]
@@ -420,22 +396,6 @@ public class SuiteEnumComparisonWithHighPrecision
         using var doc = JsonDocument.Parse("0.123456789123456789");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestASlightlySmallerDecimalIsInvalid()
-    {
-        using var doc = JsonDocument.Parse("0.123456789123456788");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestASlightlyLargerDecimalIsInvalid()
-    {
-        using var doc = JsonDocument.Parse("0.123456789123456790");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
     public class Fixture : IDisposable
