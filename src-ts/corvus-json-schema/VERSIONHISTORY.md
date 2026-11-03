@@ -2,6 +2,10 @@
 
 The version history of `@corvus-dotnet/json-schema`, the TypeScript port of the Corvus.Text.Json V5 runtime evaluator. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md).
 
+## V0.1.2
+
+V0.1.2 fixes the `format` checks that the JSON-Schema-Test-Suite's unified layout found wrong. `idn-hostname` (and the domain of `idn-email`) applies the UTS #46 mapping (Unicode 17.0.0) before it checks a name, so ignored code points such as U+200B are removed, fullwidth letters are read as ASCII and an uppercase letter outside ASCII is lowered. A name over 1,012 bytes of UTF-8 (253 characters of at most 4 bytes) is refused before it is mapped or read further, as in the other ports. `email` follows RFC 5321 in a quoted local part (printable ASCII and quoted pairs of printable ASCII only), and `idn-email` RFC 6531: any character outside ASCII in the local part, whatever its category, where only letters, marks and numbers were allowed. `uri-template` takes the RFC 6570 literals, with the apostrophe that erratum 6937 adds, so a `%` must begin a complete percent-encoded triplet and a delete character is refused. The UTS #46 table is written by `gen-uts46-data.ps1`, from the same `IdnaMappingTable.txt` as the .NET engine's and the Rust crate's.
+
 ## V0.1.1
 
 V0.1.1 makes the generated validators faster on schemas that compose objects with `allOf` and `$ref`, and on schemas whose `unevaluatedProperties` depends on `if`/`then`/`else` or `dependentSchemas`. There are no API changes and no changes to results.

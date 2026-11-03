@@ -1,5 +1,7 @@
 // Format assertions, applied only when `format` is asserted (format-assertion vocabulary or assertFormat).
 
+import { uts46Map } from './uts46.js';
+
 const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const TIME_RE = /^(\d{2}):(\d{2}):(\d{2})(\.\d+)?([zZ]|([+-])(\d{2}):(\d{2}))$/;
 const DAYS = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -332,8 +334,25 @@ function zwnjJoiningContext(cps: number[], i: number): boolean {
   return l >= 0 && r < cps.length && isJoiner(cps[l]) && isJoiner(cps[r]);
 }
 
-export function idnHostname(s: string): boolean {
-  if (s.length === 0) return false;
+// The most bytes of UTF-8 a host name has in any form: 253 characters of at most 4 bytes. A longer string is not one,
+// and is not mapped or read further (the bound of the other ports, before the mapping).
+const MAX_IDN_HOSTNAME_BYTES = 4 * 253;
+
+function utf8Length(s: string, limit: number): number {
+  let bytes = 0;
+  for (let i = 0; i < s.length && bytes <= limit; i++) {
+    const c = s.charCodeAt(i);
+    bytes += c < 0x80 ? 1 : c < 0x800 ? 2 : c >= 0xd800 && c <= 0xdfff ? 2 : 3;
+  }
+  return bytes;
+}
+
+export function idnHostname(name: string): boolean {
+  if (name.length === 0 || utf8Length(name, MAX_IDN_HOSTNAME_BYTES) > MAX_IDN_HOSTNAME_BYTES) return false;
+  // UTS #46 maps the name before it is checked: it removes the ignored code points and replaces the mapped ones,
+  // such as the fullwidth forms, which can produce an "xn--" A-label to decode.
+  const s = uts46Map(name);
+  if (s.length === 0 || utf8Length(s, MAX_IDN_HOSTNAME_BYTES) > MAX_IDN_HOSTNAME_BYTES) return false;
   // Label separators: full stop, ideographic full stop, fullwidth full stop, halfwidth ideographic full stop.
   const labels = s.split(/[.。．｡]/);
   const unicodeLabels = labels.map((l) => (/^xn--/i.test(l) ? (punycodeDecode(l.slice(4)) ?? l) : l));
@@ -360,8 +379,11 @@ export function idnHostname(s: string): boolean {
   return asciiLength - 1 <= 253;
 }
 
-const EMAIL_LOCAL_RE = /^(?:[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[^"\\\r\n]|\\.)*")$/;
-const IDN_EMAIL_LOCAL_RE = /^(?:[\p{L}\p{M}\p{N}!#$%&'*+/=?^_`{|}~-]+(?:\.[\p{L}\p{M}\p{N}!#$%&'*+/=?^_`{|}~-]+)*|"(?:[^"\\\r\n]|\\.)*")$/u;
+// RFC 5321 Local-part: a dot-string of atext, or a quoted string of qtextSMTP (%d32-33 / %d35-91 / %d93-126) and quoted
+// pairs (a backslash and one of %d32-126). There are no comments. RFC 6531 extends atext and qtextSMTP with
+// UTF8-non-ascii (every character outside ASCII, whatever its category), but not the quoted pair.
+const EMAIL_LOCAL_RE = /^(?:[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x20\x21\x23-\x5B\x5D-\x7E]|\\[\x20-\x7E])*")$/;
+const IDN_EMAIL_LOCAL_RE = /^(?:[A-Za-z0-9!#$%&'*+/=?^_`{|}~\u{80}-\u{10FFFF}-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~\u{80}-\u{10FFFF}-]+)*|"(?:[\x20\x21\x23-\x5B\x5D-\x7E\u{80}-\u{10FFFF}]|\\[\x20-\x7E])*")$/u;
 
 function emailDomain(domain: string, idn: boolean): boolean {
   if (domain.startsWith('[') && domain.endsWith(']')) {
@@ -427,8 +449,10 @@ export const uriReference = (s: string): boolean => URI_REF_RE.test(s);
 export const iri = (s: string): boolean => IRI_RE.test(s);
 export const iriReference = (s: string): boolean => IRI_REF_RE.test(s);
 
+// RFC 6570: literals = %x21 / %x23-24 / %x26-3B / %x3D / %x3F-5B / %x5D / %x5F / %x61-7A / %x7E / ucschar / iprivate /
+// pct-encoded. RFC 6570 printed %x26 / %x28-3B, leaving out the apostrophe; erratum 6937 corrects it.
 const URI_TEMPLATE_RE =
-  /^(?:[^\x00-\x20"'<>\\^`{|}]|\{[+#./;?&=,!@|]?(?:[A-Za-z0-9_]|%[0-9A-Fa-f]{2})(?:\.?(?:[A-Za-z0-9_]|%[0-9A-Fa-f]{2}))*(?::[1-9]\d{0,3}|\*)?(?:,(?:[A-Za-z0-9_]|%[0-9A-Fa-f]{2})(?:\.?(?:[A-Za-z0-9_]|%[0-9A-Fa-f]{2}))*(?::[1-9]\d{0,3}|\*)?)*\})*$/u;
+  /^(?:[\x21\x23\x24\x26-\x3B\x3D\x3F-\x5B\x5D\x5F\x61-\x7A\x7E\u{A0}-\u{D7FF}\u{E000}-\u{FDCF}\u{FDF0}-\u{FFEF}\u{10000}-\u{1FFFD}\u{20000}-\u{2FFFD}\u{30000}-\u{3FFFD}\u{40000}-\u{4FFFD}\u{50000}-\u{5FFFD}\u{60000}-\u{6FFFD}\u{70000}-\u{7FFFD}\u{80000}-\u{8FFFD}\u{90000}-\u{9FFFD}\u{A0000}-\u{AFFFD}\u{B0000}-\u{BFFFD}\u{C0000}-\u{CFFFD}\u{D0000}-\u{DFFFD}\u{E1000}-\u{EFFFD}\u{F0000}-\u{FFFFD}\u{100000}-\u{10FFFD}]|%[0-9A-Fa-f]{2}|\{[+#./;?&=,!@|]?(?:[A-Za-z0-9_]|%[0-9A-Fa-f]{2})(?:\.?(?:[A-Za-z0-9_]|%[0-9A-Fa-f]{2}))*(?::[1-9]\d{0,3}|\*)?(?:,(?:[A-Za-z0-9_]|%[0-9A-Fa-f]{2})(?:\.?(?:[A-Za-z0-9_]|%[0-9A-Fa-f]{2}))*(?::[1-9]\d{0,3}|\*)?)*\})*$/u;
 
 export const uriTemplate = (s: string): boolean => URI_TEMPLATE_RE.test(s);
 
