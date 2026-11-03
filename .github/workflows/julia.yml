@@ -80,7 +80,7 @@ jobs:
         # for a package installed from the registry. Here the files have to be there.
         working-directory: .
         run: |
-          test -d JSON-Schema-Test-Suite/tests/draft2020-12
+          test -d JSON-Schema-Test-Suite/validation/tests/optional
           test -d JSON-Schema-Test-Suite/annotations/tests
           test -f src/Corvus.Text.Json/metaschema/draft2020-12/schema.json
           test -f docs/JsonSchemaForJulia.md
