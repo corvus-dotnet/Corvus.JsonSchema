@@ -6,6 +6,7 @@ import re
 from collections.abc import Callable
 from typing import Any
 
+from ._uts46 import uts46_map
 from .pattern import is_valid_ecma_regex
 
 
@@ -431,8 +432,22 @@ _LABEL_SEPARATORS_RE = _Lazy("[.\u3002\uff0e\uff61]")
 _IDN_DISALLOWED_RE = _RX(r"[\p{Cc}\p{Cf}\p{Zs}\p{Cn}]")
 
 
-def idn_hostname(s: str) -> bool:
-    if len(s) == 0:
+# The most bytes of UTF-8 a host name has in any form: 253 characters of at most 4 bytes. A longer string is not one,
+# and is not mapped or read further (the bound of the other ports, before the mapping).
+_MAX_IDN_HOSTNAME_BYTES = 4 * 253
+
+
+def _too_long(s: str) -> bool:
+    return len(s) > _MAX_IDN_HOSTNAME_BYTES or len(s.encode("utf-8", "surrogatepass")) > _MAX_IDN_HOSTNAME_BYTES
+
+
+def idn_hostname(name: str) -> bool:
+    if len(name) == 0 or _too_long(name):
+        return False
+    # UTS #46 maps the name before it is checked: it removes the ignored code points and replaces the mapped ones,
+    # such as the fullwidth forms, which can produce an "xn--" A-label to decode.
+    s = uts46_map(name)
+    if len(s) == 0 or _too_long(s):
         return False
     # Label separators: full stop, ideographic full stop, fullwidth full stop, halfwidth ideographic full stop.
     labels = _LABEL_SEPARATORS_RE.split(s)
@@ -467,11 +482,15 @@ def idn_hostname(s: str) -> bool:
     return ascii_length - 1 <= 253
 
 
+# RFC 5321 Local-part: a dot-string of atext, or a quoted string of qtextSMTP (%d32-33 / %d35-91 / %d93-126) and quoted
+# pairs (a backslash and one of %d32-126). There are no comments. RFC 6531 extends atext and qtextSMTP with
+# UTF8-non-ascii (every character outside ASCII, whatever its category), but not the quoted pair.
 _EMAIL_LOCAL_RE = _Lazy(
-    r"""^(?:[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[^"\\\r\n]|\\.)*")\Z"""
+    r"""^(?:[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x20\x21\x23-\x5B\x5D-\x7E]|\\[\x20-\x7E])*")\Z"""
 )
-_IDN_EMAIL_LOCAL_RE = _RX(
-    r"""^(?:[\p{L}\p{M}\p{N}!#$%&'*+/=?^_`{|}~-]+(?:\.[\p{L}\p{M}\p{N}!#$%&'*+/=?^_`{|}~-]+)*|"(?:[^"\\\r\n]|\\.)*")\Z"""
+_IDN_EMAIL_LOCAL_RE = _Lazy(
+    r"""^(?:[A-Za-z0-9!#$%&'*+/=?^_`{|}~\x80-\U0010FFFF-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~\x80-\U0010FFFF-]+)*"""
+    r"""|"(?:[\x20\x21\x23-\x5B\x5D-\x7E\x80-\U0010FFFF]|\\[\x20-\x7E])*")\Z"""
 )
 
 
@@ -564,8 +583,14 @@ def iri_reference(s: str) -> bool:
     return _IRI_REF_RE.match(s) is not None
 
 
+# RFC 6570: literals = %x21 / %x23-24 / %x26-3B / %x3D / %x3F-5B / %x5D / %x5F / %x61-7A / %x7E / ucschar / iprivate /
+# pct-encoded. RFC 6570 printed %x26 / %x28-3B, leaving out the apostrophe; erratum 6937 corrects it.
 _URI_TEMPLATE_RE = _Lazy(
-    r"^(?:[^\x00-\x20\"'<>\\^`{|}]|\{[+#./;?&=,!@|]?(?:[A-Za-z0-9_]|%[0-9A-Fa-f]{2})(?:\.?(?:[A-Za-z0-9_]|%[0-9A-Fa-f]{2}))*"
+    r"^(?:[\x21\x23\x24\x26-\x3B\x3D\x3F-\x5B\x5D\x5F\x61-\x7A\x7E\xA0-\uD7FF\uE000-\uFDCF\uFDF0-\uFFEF"
+    r"\U00010000-\U0001FFFD\U00020000-\U0002FFFD\U00030000-\U0003FFFD\U00040000-\U0004FFFD\U00050000-\U0005FFFD"
+    r"\U00060000-\U0006FFFD\U00070000-\U0007FFFD\U00080000-\U0008FFFD\U00090000-\U0009FFFD\U000A0000-\U000AFFFD"
+    r"\U000B0000-\U000BFFFD\U000C0000-\U000CFFFD\U000D0000-\U000DFFFD\U000E1000-\U000EFFFD\U000F0000-\U000FFFFD"
+    r"\U00100000-\U0010FFFD]|%[0-9A-Fa-f]{2}|\{[+#./;?&=,!@|]?(?:[A-Za-z0-9_]|%[0-9A-Fa-f]{2})(?:\.?(?:[A-Za-z0-9_]|%[0-9A-Fa-f]{2}))*"
     r"(?::[1-9][0-9]{0,3}|\*)?(?:,(?:[A-Za-z0-9_]|%[0-9A-Fa-f]{2})(?:\.?(?:[A-Za-z0-9_]|%[0-9A-Fa-f]{2}))*"
     r"(?::[1-9][0-9]{0,3}|\*)?)*\})*\Z"
 )

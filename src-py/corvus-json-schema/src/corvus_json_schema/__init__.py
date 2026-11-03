@@ -50,7 +50,7 @@ from .results import (
     schema_location_fragment,
 )
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 __all__ = [
     "Annotation",
