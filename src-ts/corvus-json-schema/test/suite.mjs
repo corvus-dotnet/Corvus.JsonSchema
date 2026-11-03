@@ -1,5 +1,6 @@
-// Runs the JSON-Schema-Test-Suite (the repository's submodule) against the evaluator, mirroring the C# SuiteRunner:
-// required and optional tests with format as an annotation, optional/format with format asserted.
+// Runs the JSON-Schema-Test-Suite (the repository's submodule) against the evaluator, mirroring the C# SuiteRunner.
+// Every dialect's cases are in one tree (validation/tests, required and optional): each case's compatibility selects
+// the drafts it applies to, its tags whether format is asserted, and its externalSchemas are served to that case alone.
 //
 //   node test/suite.mjs [--verbose] [--draft draft2020-12] [--filter text]
 //
@@ -12,7 +13,7 @@ import { compile, Dialect, generateModule, JsonSchemaResultsCollector, ResultsLe
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const suiteRoot = process.env.JSON_SCHEMA_TEST_SUITE ?? path.resolve(here, '../../../JSON-Schema-Test-Suite');
-const remotesRoot = path.join(suiteRoot, 'remotes');
+const testsRoot = path.join(suiteRoot, 'validation', 'tests');
 
 const args = process.argv.slice(2);
 const verbose = args.includes('--verbose');
@@ -26,28 +27,55 @@ const draftArg = args.includes('--draft') ? args[args.indexOf('--draft') + 1] : 
 const filter = args.includes('--filter') ? args[args.indexOf('--filter') + 1] : undefined;
 
 const drafts = {
-  draft4: Dialect.Draft4,
-  draft6: Dialect.Draft6,
-  draft7: Dialect.Draft7,
-  'draft2019-09': Dialect.Draft201909,
-  'draft2020-12': Dialect.Draft202012,
+  draft4: [Dialect.Draft4, 4],
+  draft6: [Dialect.Draft6, 6],
+  draft7: [Dialect.Draft7, 7],
+  'draft2019-09': [Dialect.Draft201909, 2019],
+  'draft2020-12': [Dialect.Draft202012, 2020],
 };
 
 // Exclusions, matching the C# runner: zero-terminated floats (JSON.parse cannot tell 1.0 from 1 either).
-const excludedFiles = new Set(['draft4/optional/zeroTerminatedFloats.json']);
+const excludedFiles = new Set(['draft4/optional/zero-terminated-floats.json']);
 
-const remoteCache = new Map();
-function resolveRemote(uri) {
-  const prefix = 'http://localhost:1234/';
-  if (!uri.startsWith(prefix)) return undefined;
-  const file = path.join(remotesRoot, uri.slice(prefix.length));
-  if (!fs.existsSync(file)) return undefined;
-  if (!remoteCache.has(file)) remoteCache.set(file, JSON.parse(fs.readFileSync(file, 'utf8')));
-  return remoteCache.get(file);
+// Test cases left out by name (file and test description):
+// - the six required leap-second cases, which optional/format-time.json contradicts for the same drafts (the
+//   evaluator accepts leap seconds);
+// - the high-precision cases of optional/bignum.json: the evaluator takes JavaScript values, so a number has at most
+//   the precision of a double by the time it sees it.
+const excludedCases = new Set([
+  'format-time.json|a leap second is not a valid time',
+  'format-time.json|a leap second with a zero time-offset is not a valid time',
+  'format-time.json|a leap second with a positive time-offset is not a valid time',
+  'format-time.json|a leap second with a large positive time-offset is not a valid time',
+  'format-time.json|a leap second with a negative time-offset is not a valid time',
+  'format-time.json|a leap second with a large negative time-offset is not a valid time',
+  'bignum.json|below the exclusive maximum is valid',
+  'bignum.json|above the exclusive minimum is valid',
+  'bignum.json|just above the maximum is invalid',
+  'bignum.json|just below the minimum is invalid',
+  'bignum.json|a slightly smaller decimal is invalid',
+  'bignum.json|a slightly larger decimal is invalid',
+]);
+
+// Whether a test case's compatibility (a comma-separated list of minimums, <= maximums and = releases, from the
+// smallest release to the largest) admits the release, by the algorithm of the suite's validation/README.md.
+function compatible(compatibility, release) {
+  if (compatibility === undefined) return true;
+  let valid = true;
+  for (const constraint of compatibility.split(',')) {
+    const [op, version] = constraint.startsWith('<=') ? ['<=', constraint.slice(2)] : constraint.startsWith('=') ? ['=', constraint.slice(1)] : ['', constraint];
+    const number = Number.parseInt(version.trim(), 10);
+    valid = op === '<=' ? release <= number : op === '=' ? release === number : release >= number;
+    if (release <= number) break;
+  }
+  return valid;
 }
 
-function files(draft, sub) {
-  const dir = path.join(suiteRoot, 'tests', draft, sub);
+// A resolver serving a test case's externalSchemas at their retrieval URIs.
+const resolverFor = (group) => (group.externalSchemas === undefined ? undefined : (uri) => group.externalSchemas[uri]);
+
+function files(sub) {
+  const dir = path.join(testsRoot, sub);
   if (!fs.existsSync(dir)) return [];
   return fs
     .readdirSync(dir)
@@ -85,24 +113,32 @@ async function build(schema, options) {
   }, { source });
 }
 
-async function runFile(draft, file, label, assertFormat) {
-  const groups = JSON.parse(fs.readFileSync(file, 'utf8'));
+async function runFile(draft, file, label) {
+  const [dialect, release] = drafts[draft];
+  const { tests: groups } = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const fileName = path.basename(file);
   let fileTotal = 0;
   let fileFailed = 0;
   for (const group of groups) {
+    if (!compatible(group.compatibility, release)) continue;
+    const tags = group.tags ?? [];
+    // The evaluator asserts format by default up to draft7, so a format-annotation case does not apply there.
+    if (tags.includes('format-annotation') && release <= 7) continue;
+    const assertFormat = tags.includes('format-assertion');
     if (filter && !group.description.includes(filter) && !label.includes(filter)) continue;
     let validate;
     let compileError;
     try {
       validate = await build(group.schema, {
-        defaultDialect: drafts[draft],
+        defaultDialect: dialect,
         assertFormat: assertFormat ? true : undefined,
-        resolveDocument: resolveRemote,
+        resolveDocument: resolverFor(group),
       });
     } catch (e) {
       compileError = e;
     }
     for (const test of group.tests) {
+      if (excludedCases.has(`${fileName}|${test.description}`)) continue;
       fileTotal++;
       let actual;
       let error;
@@ -129,18 +165,17 @@ async function runFile(draft, file, label, assertFormat) {
 
 for (const draft of Object.keys(drafts)) {
   if (draftArg && draft !== draftArg) continue;
-  for (const f of files(draft, '')) await runFile(draft, f, `${draft}/${path.basename(f)}`, false);
-  for (const f of files(draft, 'optional')) {
+  for (const f of files('')) await runFile(draft, f, `${draft}/${path.basename(f)}`);
+  for (const f of files('optional')) {
     const label = `${draft}/optional/${path.basename(f)}`;
-    if (!excludedFiles.has(label)) await runFile(draft, f, label, false);
+    if (!excludedFiles.has(label)) await runFile(draft, f, label);
   }
-  for (const f of files(draft, path.join('optional', 'format'))) await runFile(draft, f, `${draft}/optional/format/${path.basename(f)}`, true);
 }
 
 for (const line of failures) console.log(line);
 const byArea = {};
 for (const [label, t, f] of summary) {
-  const area = label.split('/').slice(0, label.includes('/optional/format/') ? 3 : label.includes('/optional/') ? 2 : 1).join('/');
+  const area = label.split('/').slice(0, label.includes('/optional/') ? 2 : 1).join('/');
   byArea[area] ??= [0, 0];
   byArea[area][0] += t;
   byArea[area][1] += f;
