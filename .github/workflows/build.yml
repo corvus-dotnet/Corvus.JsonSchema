@@ -89,11 +89,17 @@ jobs:
       with:
         environmentVariablesYaml: |
           ZF_NUGET_PUBLISH_SOURCE: ${{ (startsWith(github.ref, 'refs/tags/') || github.event.inputs.forcePublicNugetDestination == 'true') && 'https://api.nuget.org/v3/index.json' || format('https://nuget.pkg.github.com/{0}/index.json', github.repository_owner) }}
+          # NuGet.org takes a short-lived key from Trusted Publishing (GitHub Actions OIDC), which the Publish job asks
+          # for: no long-lived key is stored. The policy on nuget.org (owner corvus-dotnet) names this repository and
+          # build.yml, and NUGET_TRUSTED_PUBLISHING_USER is the nuget.org profile name of the user who created it.
+          ZF_BUILD_DOTNET_NUGET_USE_TRUSTED_PUBLISHING: "${{ startsWith(github.ref, 'refs/tags/') || github.event.inputs.forcePublicNugetDestination == 'true' }}"
+          ZF_BUILD_DOTNET_NUGET_TRUSTED_PUBLISHING_USER: "${{ vars.NUGET_TRUSTED_PUBLISHING_USER }}"
           BUILDVAR_BuildWebsite: "false"
           BUILDVAR_IsPreviewDeployment: "${{ github.event_name == 'pull_request' }}"
           BUILDVAR_BasePathPrefix: "${{ github.event_name == 'pull_request' && format('/{0}/pr-preview/pr-{1}', github.event.repository.name, github.event.pull_request.number) || format('/{0}', github.event.repository.name) }}"
         secretsYaml: |
-          NUGET_API_KEY: "${{ startsWith(github.ref, 'refs/tags/') && secrets.NUGET_APIKEY || secrets.BUILD_PUBLISHER_PAT }}"
+          # GitHub Packages only: NuGet.org uses Trusted Publishing (above), which ignores this key.
+          NUGET_API_KEY: "${{ secrets.BUILD_PUBLISHER_PAT }}"
           # TODO: Review approach to enable Vellum to be downloaded
           VELLUM_DOWNLOAD_TOKEN: "${{ secrets.ENDJIN_PACKAGES_TOKEN }}"
         secretsEncryptionKey: ${{ secrets.SHARED_WORKFLOW_KEY }}
@@ -182,6 +188,10 @@ jobs:
       testPhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
       packagePhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
       publishPhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
+      # The shared pipeline's Publish job cannot ask for an OIDC token (it does not have 'id-token: write', and adding
+      # it there would stop every caller that does not grant it), so it runs an empty task and the Publish job below
+      # publishes.
+      publishPhaseTasks: RunFirst
       additionalCachePaths: ${{ needs.setCachePathsConfig.outputs.additionalCachePaths }}
       # Build the documentation website in a parallel post-compile job
       postCompilePhaseTasks: BuildWebsite
@@ -200,6 +210,50 @@ jobs:
       publishPhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
       postCompilePhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
       secretsEncryptionKey: ${{ secrets.SHARED_WORKFLOW_KEY }}
+
+  # Publishes the packages the build's package phase made, as the shared pipeline's Publish job would, but in a job of
+  # this workflow, so that it can have 'id-token: write' for NuGet.org Trusted Publishing (ZeroFailed.Build.DotNet's
+  # PublishNuGetPackages exchanges the OIDC token for a key valid for an hour). The packages come from the run's
+  # Actions cache: the paths and the cross-OS setting are the package phase's, which a restore must match. The
+  # repository's PrePublish task fails a publish that finds no packages.
+  publish:
+    name: Publish
+    needs:
+      - prepareConfig
+      - setCachePathsConfig
+      - build
+    if: >-
+      !cancelled() && needs.build.result == 'success' &&
+      (github.event.inputs.forcePublish == 'true' || startsWith(github.ref, 'refs/tags/'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # the GitHub release
+      packages: write  # GitHub Packages
+      id-token: write  # NuGet.org Trusted Publishing
+    steps:
+    - uses: endjin/Endjin.RecommendedPractices.GitHubActions/actions/common-pre-scripted-build@main
+      with:
+        additionalEnvVars: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
+        additionalSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
+        secretsEncryptionKey: ${{ secrets.SHARED_WORKFLOW_KEY }}
+    - uses: endjin/Endjin.RecommendedPractices.GitHubActions/actions/run-scripted-build@main
+      with:
+        displayName: Publish Packages
+        buildScriptPath: ./build.ps1
+        netSdkVersion: '11.0.100-rc.1.26425.128'
+        additionalNetSdkVersion: |
+          8.0.x
+          9.0.x
+          10.0.x
+        tasks: Publish
+        inputCacheKeySuffix: package
+        inputCachePaths: |
+          _packages
+          ${{ needs.setCachePathsConfig.outputs.additionalCachePaths }}
+        enableCrossOsCaching: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        NUGET_API_KEY: ${{ env.NUGET_API_KEY }}
 
   # A change to the documentation alone builds the website without the .NET build, its test matrix and its packages:
   # the code-sample catalog check that the .NET build runs first, then BuildWebsite with BUILDVAR_WebsiteBuildsDotNet,
