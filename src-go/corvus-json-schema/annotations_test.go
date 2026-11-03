@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"slices"
 	"testing"
 )
 
@@ -12,24 +11,13 @@ import (
 // collector, as the C# and Rust annotation tests do: every draft, cases filtered by "compatibility", and each
 // assertion compared with the annotations grouped by instance location, keyword and schema location.
 
-var compatibilityOrder = []string{"3", "4", "6", "7", "2019", "2020"}
-
-func compatible(level, compatibility string) bool {
-	at := slices.Index(compatibilityOrder, level)
-	if len(compatibility) > 2 && compatibility[:2] == "<=" {
-		limit := slices.Index(compatibilityOrder, compatibility[2:])
-		return limit >= 0 && at <= limit
-	}
-	least := slices.Index(compatibilityOrder, compatibility)
-	return least >= 0 && at >= least
-}
-
 type annotationSuite struct {
 	Suite []struct {
-		Description   string          `json:"description"`
-		Compatibility string          `json:"compatibility"`
-		Schema        json.RawMessage `json:"schema"`
-		Tests         []struct {
+		Description     string                     `json:"description"`
+		Compatibility   string                     `json:"compatibility"`
+		Schema          json.RawMessage            `json:"schema"`
+		ExternalSchemas map[string]json.RawMessage `json:"externalSchemas"`
+		Tests           []struct {
 			Instance   json.RawMessage `json:"instance"`
 			Assertions []struct {
 				Location string                     `json:"location"`
@@ -66,17 +54,8 @@ func TestAnnotationSuite(t *testing.T) {
 	if _, err := os.Stat(dir); err != nil {
 		t.Fatalf("annotation tests not found at %s (set JSON_SCHEMA_TEST_SUITE, or check out the submodule)", dir)
 	}
-	resolver := remoteResolver(root)
-	drafts := []struct {
-		name    string
-		dialect Dialect
-		level   string
-	}{
-		{"draft4", Draft4, "4"}, {"draft6", Draft6, "6"}, {"draft7", Draft7, "7"},
-		{"draft2019-09", Draft201909, "2019"}, {"draft2020-12", Draft202012, "2020"},
-	}
 	total, failed := 0, 0
-	for _, draft := range drafts {
+	for _, draft := range suiteDrafts {
 		for _, file := range jsonFiles(t, dir) {
 			text, err := os.ReadFile(file)
 			if err != nil {
@@ -88,10 +67,14 @@ func TestAnnotationSuite(t *testing.T) {
 			}
 			name := draft.name + "/" + filepath.Base(file)
 			for _, group := range suite.Suite {
-				if group.Compatibility != "" && !compatible(draft.level, group.Compatibility) {
+				if !suiteCompatible(group.Compatibility, draft.release) {
 					continue
 				}
-				validator, err := Compile(group.Schema, WithDefaultDialect(draft.dialect), WithDocumentResolver(resolver))
+				options := []Option{WithDefaultDialect(draft.dialect)}
+				if resolver := caseResolver(group.ExternalSchemas); resolver != nil {
+					options = append(options, WithDocumentResolver(resolver))
+				}
+				validator, err := Compile(group.Schema, options...)
 				if err != nil {
 					failed++
 					t.Errorf("%s [%s]: compile error: %v", name, group.Description, err)

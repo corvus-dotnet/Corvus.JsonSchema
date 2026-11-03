@@ -8,26 +8,78 @@ import (
 	"reflect"
 	"sort"
 	"strings"
-	"sync"
 	"testing"
 )
 
 // Runs the JSON-Schema-Test-Suite (the repository's submodule) against the evaluator, as the C# and Rust suite
-// runners do: required and optional tests with format as an annotation, optional/format with format asserted. Every
-// case runs fail-fast (as a document, as bytes and as a string) and through a results collector at each level.
+// runners do. Every case runs fail-fast (as a document, as bytes and as a string) and through a results collector at
+// each level.
+//
+// The suite keeps every dialect in one tree (validation/tests). Each test case says which releases it applies to
+// (compatibility), whether it expects format to be asserted (tags), and carries any other schemas it references
+// (externalSchemas), which are scoped to that test case.
 //
 // Set JSON_SCHEMA_TEST_SUITE to use a different checkout, SUITE_DRAFT and SUITE_FILTER to narrow the run.
 
+// The drafts, with the release number the suite's compatibility uses for each.
 var suiteDrafts = []struct {
 	name    string
 	dialect Dialect
+	release int
 }{
-	{"draft4", Draft4}, {"draft6", Draft6}, {"draft7", Draft7}, {"draft2019-09", Draft201909},
-	{"draft2020-12", Draft202012},
+	{"draft4", Draft4, 4}, {"draft6", Draft6, 6}, {"draft7", Draft7, 7}, {"draft2019-09", Draft201909, 2019},
+	{"draft2020-12", Draft202012, 2020},
 }
 
 // Exclusions, matching the C# and Rust runners: zero-terminated floats.
-var suiteExcludedFiles = map[string]bool{"draft4/optional/zeroTerminatedFloats.json": true}
+var suiteExcludedFiles = map[string]bool{"draft4/optional/zero-terminated-floats.json": true}
+
+// suiteCompatible reports whether a test case's compatibility (a comma-separated list of minimums, "<=" maximums
+// and "=" releases, from the smallest release to the largest) admits the release, by the algorithm of the suite's
+// validation/README.md.
+func suiteCompatible(compatibility string, release int) bool {
+	if compatibility == "" {
+		return true
+	}
+	valid := true
+	for _, constraint := range strings.Split(compatibility, ",") {
+		op := ""
+		switch {
+		case strings.HasPrefix(constraint, "<="):
+			op, constraint = "<=", constraint[2:]
+		case strings.HasPrefix(constraint, "="):
+			op, constraint = "=", constraint[1:]
+		}
+		var version int
+		fmt.Sscan(strings.TrimSpace(constraint), &version)
+		switch op {
+		case "<=":
+			valid = release <= version
+		case "=":
+			valid = release == version
+		default:
+			valid = release >= version
+		}
+		if release <= version {
+			break
+		}
+	}
+	return valid
+}
+
+// caseResolver serves a test case's externalSchemas at their retrieval URIs, and nothing else.
+func caseResolver(external map[string]json.RawMessage) DocumentResolver {
+	if len(external) == 0 {
+		return nil
+	}
+	docs := make(map[string]*Document, len(external))
+	for uri, schema := range external {
+		if doc, err := ParseDocument(schema); err == nil {
+			docs[uri] = doc
+		}
+	}
+	return func(uri string) *Document { return docs[uri] }
+}
 
 func suiteRoot() string {
 	if root := os.Getenv("JSON_SCHEMA_TEST_SUITE"); root != "" {
@@ -51,38 +103,13 @@ func jsonFiles(t *testing.T, dir string) []string {
 	return out
 }
 
-// remoteResolver resolves the suite's remotes (http://localhost:1234/...) from its remotes directory.
-func remoteResolver(root string) DocumentResolver {
-	remotes := filepath.Join(root, "remotes")
-	var mu sync.Mutex
-	cache := make(map[string]*Document)
-	return func(uri string) *Document {
-		rest, ok := strings.CutPrefix(uri, "http://localhost:1234/")
-		if !ok {
-			return nil
-		}
-		mu.Lock()
-		defer mu.Unlock()
-		if doc, ok := cache[rest]; ok {
-			return doc
-		}
-		text, err := os.ReadFile(filepath.Join(remotes, filepath.FromSlash(rest)))
-		if err != nil {
-			return nil
-		}
-		doc, err := ParseDocument(text)
-		if err != nil {
-			return nil
-		}
-		cache[rest] = doc
-		return doc
-	}
-}
-
 type suiteGroup struct {
-	Description string          `json:"description"`
-	Schema      json.RawMessage `json:"schema"`
-	Tests       []struct {
+	Description     string                     `json:"description"`
+	Compatibility   string                     `json:"compatibility"`
+	Tags            []string                   `json:"tags"`
+	Schema          json.RawMessage            `json:"schema"`
+	ExternalSchemas map[string]json.RawMessage `json:"externalSchemas"`
+	Tests           []struct {
 		Description string          `json:"description"`
 		Data        json.RawMessage `json:"data"`
 		Valid       bool            `json:"valid"`
@@ -154,7 +181,6 @@ func runSuiteCase(v *Validator, data []byte) (result bool, err error) {
 }
 
 type suiteRunner struct {
-	resolver DocumentResolver
 	filter   string
 	total    int
 	failures []string
@@ -172,23 +198,45 @@ func compileSuiteSchema(schema []byte, options ...Option) (v *Validator, err err
 	return Compile(schema, options...)
 }
 
-func (r *suiteRunner) runFile(t *testing.T, dialect Dialect, file, label, area string, assertFormat bool) {
+func (r *suiteRunner) runFile(t *testing.T, dialect Dialect, release int, file, label, area string) {
 	text, err := os.ReadFile(file)
 	if err != nil {
 		t.Fatalf("%s: %v", file, err)
 	}
-	var groups []suiteGroup
-	if err := json.Unmarshal(text, &groups); err != nil {
+	var suiteFile struct {
+		Tests []suiteGroup `json:"tests"`
+	}
+	if err := json.Unmarshal(text, &suiteFile); err != nil {
 		t.Fatalf("%s: %v", file, err)
 	}
 	if _, ok := r.counted[area]; !ok {
 		r.areas = append(r.areas, area)
 	}
-	for _, group := range groups {
+	for _, group := range suiteFile.Tests {
+		if !suiteCompatible(group.Compatibility, release) {
+			continue
+		}
+		hasTag := func(tag string) bool {
+			for _, t := range group.Tags {
+				if t == tag {
+					return true
+				}
+			}
+			return false
+		}
+		// Drafts 4 to 7 assert format by default here (the specification allows it), so a "format-annotation" case
+		// describes behaviour the evaluator does not provide there.
+		if hasTag("format-annotation") && release <= 7 {
+			continue
+		}
 		if r.filter != "" && !strings.Contains(group.Description, r.filter) && !strings.Contains(label, r.filter) {
 			continue
 		}
-		options := []Option{WithDefaultDialect(dialect), WithDocumentResolver(r.resolver)}
+		assertFormat := hasTag("format-assertion")
+		options := []Option{WithDefaultDialect(dialect)}
+		if resolver := caseResolver(group.ExternalSchemas); resolver != nil {
+			options = append(options, WithDocumentResolver(resolver))
+		}
 		if assertFormat {
 			options = append(options, WithAssertFormat(true))
 		}
@@ -219,12 +267,12 @@ func (r *suiteRunner) runFile(t *testing.T, dialect Dialect, file, label, area s
 
 func TestJSONSchemaTestSuite(t *testing.T) {
 	root := suiteRoot()
-	tests := filepath.Join(root, "tests")
+	tests := filepath.Join(root, "validation", "tests")
 	if _, err := os.Stat(tests); err != nil {
 		t.Fatalf("JSON-Schema-Test-Suite not found at %s (set JSON_SCHEMA_TEST_SUITE, or check out the submodule)", root)
 	}
 	runner := &suiteRunner{
-		resolver: remoteResolver(root), filter: os.Getenv("SUITE_FILTER"),
+		filter: os.Getenv("SUITE_FILTER"),
 		passed: make(map[string]int), counted: make(map[string]int),
 	}
 	draftFilter := os.Getenv("SUITE_DRAFT")
@@ -232,19 +280,14 @@ func TestJSONSchemaTestSuite(t *testing.T) {
 		if draftFilter != "" && draftFilter != draft.name {
 			continue
 		}
-		dir := filepath.Join(tests, draft.name)
-		for _, f := range jsonFiles(t, dir) {
-			runner.runFile(t, draft.dialect, f, draft.name+"/"+filepath.Base(f), draft.name, false)
+		for _, f := range jsonFiles(t, tests) {
+			runner.runFile(t, draft.dialect, draft.release, f, draft.name+"/"+filepath.Base(f), draft.name)
 		}
-		for _, f := range jsonFiles(t, filepath.Join(dir, "optional")) {
+		for _, f := range jsonFiles(t, filepath.Join(tests, "optional")) {
 			label := draft.name + "/optional/" + filepath.Base(f)
 			if !suiteExcludedFiles[label] {
-				runner.runFile(t, draft.dialect, f, label, draft.name+"/optional", false)
+				runner.runFile(t, draft.dialect, draft.release, f, label, draft.name+"/optional")
 			}
-		}
-		for _, f := range jsonFiles(t, filepath.Join(dir, "optional", "format")) {
-			label := draft.name + "/optional/format/" + filepath.Base(f)
-			runner.runFile(t, draft.dialect, f, label, draft.name+"/optional/format", true)
 		}
 	}
 	for _, line := range runner.failures {
