@@ -75,6 +75,8 @@ mod options;
 mod pattern;
 mod results;
 mod uri;
+mod uts46;
+mod uts46_data;
 
 use std::sync::Arc;
 

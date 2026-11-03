@@ -2,6 +2,10 @@
 
 The version history of `corvus-json-schema-rs`, the Python package backed by the `corvus-json-schema` Rust crate. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md).
 
+## V0.2.1
+
+V0.2.1 takes version 0.2.1 of the `corvus-json-schema` crate, which fixes the `format` checks that the JSON-Schema-Test-Suite's unified layout found wrong. `idn-hostname` (and the domain of `idn-email`) applies the UTS #46 mapping (Unicode 17.0.0) before it checks a name, so ignored code points such as U+200B are removed and fullwidth letters are read as ASCII. `email` follows RFC 5321 in a quoted local part (printable ASCII and quoted pairs of printable ASCII only), and `idn-email` RFC 6531 (any character outside ASCII in the local part, whatever its category). `uri-template` takes the RFC 6570 literals, with the apostrophe that erratum 6937 adds, so a `%` must begin a complete percent-encoded triplet and a delete character is refused. Nothing else in the package changes.
+
 ## V0.2.0
 
 V0.2.0 takes version 0.2.0 of the `corvus-json-schema` crate, which matches patterns with the [`corvus-regex-ecma262`](https://crates.io/crates/corvus-regex-ecma262) crate and reads them in the grammar of the dialect. It is a minor version because under 2019-09 and 2020-12 a pattern that uses what ECMAScript added after 2020 is no longer valid. Everything else that was there is unchanged, and there are two new options.
