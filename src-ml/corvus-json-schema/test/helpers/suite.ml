@@ -7,7 +7,7 @@ let root () =
       (* The tests run from a directory of the build, some way below the root of the repository. *)
       let rec find dir depth =
         let candidate = Filename.concat dir "JSON-Schema-Test-Suite" in
-        if Sys.file_exists (Filename.concat candidate "tests") then candidate
+        if Sys.file_exists (Filename.concat (Filename.concat candidate "validation") "tests") then candidate
         else if depth = 0 then Filename.concat (Filename.concat ".." "..") "JSON-Schema-Test-Suite"
         else find (Filename.concat dir "..") (depth - 1)
       in
@@ -15,7 +15,7 @@ let root () =
 
 let absent root =
   (match Sys.getenv_opt "JSON_SCHEMA_TEST_SUITE" with Some named when named <> "" -> false | _ -> true)
-  && not (Sys.file_exists (Filename.concat root "tests"))
+  && not (Sys.file_exists (Filename.concat (Filename.concat root "validation") "tests"))
 
 let skipped what =
   Printf.printf
@@ -46,30 +46,56 @@ let properties d n =
         let key = Json.first d n + (2 * i) in
         (Json.string_value d key, key + 1))
 
-let remote_resolver root =
-  let remotes = Filename.concat root "remotes" in
-  let cache = Hashtbl.create 16 in
-  let prefix = "http://localhost:1234/" in
-  fun uri ->
-    if not (String.starts_with ~prefix uri) then None
-    else begin
-      let rest = String.sub uri (String.length prefix) (String.length uri - String.length prefix) in
-      match Hashtbl.find_opt cache rest with
-      | Some doc -> Some doc
-      | None -> (
-          let path = List.fold_left Filename.concat remotes (String.split_on_char '/' rest) in
-          match read_file path with
-          | None -> None
-          | Some text -> (
-              match Corvus_json_schema.Document.parse_string text with
-              | Error _ -> None
-              | Ok doc ->
-                  Hashtbl.replace cache rest doc;
-                  Some doc))
-    end
+let tests_dir root = Filename.concat (Filename.concat root "validation") "tests"
 
-type group = { description : string; schema : string; tests : case list }
+let compatible compatibility release =
+  match compatibility with
+  | None -> true
+  | Some compatibility ->
+      let valid = ref true and stop = ref false in
+      List.iter
+        (fun constraint_ ->
+          if not !stop then begin
+            let op, version =
+              if String.starts_with ~prefix:"<=" constraint_ then
+                ("<=", String.sub constraint_ 2 (String.length constraint_ - 2))
+              else if String.starts_with ~prefix:"=" constraint_ then
+                ("=", String.sub constraint_ 1 (String.length constraint_ - 1))
+              else ("", constraint_)
+            in
+            let number = int_of_string (String.trim version) in
+            valid := if op = "<=" then release <= number else if op = "=" then release = number else release >= number;
+            if release <= number then stop := true
+          end)
+        (String.split_on_char ',' compatibility);
+      !valid
+
+type group = {
+  description : string;
+  compatibility : string option;
+  tags : string list;
+  external_schemas : (string * string) list;
+  schema : string;
+  tests : case list;
+}
+
 and case = { case_description : string; data : string; valid : bool }
+
+let has_tag group tag = List.mem tag group.tags
+
+let case_resolver group =
+  match group.external_schemas with
+  | [] -> None
+  | schemas ->
+      let documents =
+        List.map
+          (fun (uri, text) ->
+            match Corvus_json_schema.Document.parse_string text with
+            | Ok doc -> (uri, doc)
+            | Error e -> failwith (uri ^ ": " ^ Corvus_json_schema.Document.error_to_string e))
+          schemas
+      in
+      Some (fun uri -> List.assoc_opt uri documents)
 
 let groups path =
   match read_file path with
@@ -80,8 +106,13 @@ let groups path =
       | Ok d ->
           List.map
             (fun group ->
+              let compatibility = member d group "compatibility" in
               {
                 description = string d (member d group "description");
+                compatibility = (if compatibility < 0 then None else Some (string d compatibility));
+                tags = List.map (string d) (items d (member d group "tags"));
+                external_schemas =
+                  List.map (fun (uri, value) -> (uri, text d value)) (properties d (member d group "externalSchemas"));
                 schema = text d (member d group "schema");
                 tests =
                   List.map
@@ -94,4 +125,4 @@ let groups path =
                       })
                     (items d (member d group "tests"));
               })
-            (items d (Json.root d)))
+            (items d (member d (Json.root d) "tests")))
