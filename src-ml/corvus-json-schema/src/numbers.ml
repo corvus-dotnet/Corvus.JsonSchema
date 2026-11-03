@@ -415,6 +415,102 @@ let compare fa a floats_a fb b floats_b =
   else if cb = num_int then if fa lsr 2 = 0 then -1 else 1
   else compare_big_float (fa lsr 2) a floats_b b
 
+(* first_non_zero is the offset of the first non-zero digit of the significand of the number text at b[start], or -1
+   if it writes zero. *)
+let first_non_zero b start =
+  let len = Bytes.length b in
+  let j = ref start and result = ref (-2) in
+  while !result = -2 do
+    if !j >= len then result := -1
+    else match Bytes.get b !j with '1' .. '9' -> result := !j | '-' | '0' | '.' -> incr j | _ -> result := -1
+  done;
+  !result
+
+(* sign_of is the sign of the number text at b[start] whose first non-zero digit is at first (-1 for zero). *)
+let sign_of b start first = if first < 0 then 0 else if Bytes.get b start = '-' then -1 else 1
+
+(* last_non_zero is the offset of the last non-zero digit of a number text's significand, at or after its first. *)
+let last_non_zero b first =
+  let len = Bytes.length b in
+  let last = ref first and j = ref first and scanning = ref true in
+  while !scanning && !j < len do
+    (match Bytes.get b !j with '1' .. '9' -> last := !j | '0' | '.' -> () | _ -> scanning := false);
+    incr j
+  done;
+  !last
+
+(* decimal_exponent is the exponent of the number text at b[start] written as 0.d1d2d3... * 10^exponent, with d1 at
+   b[first]: its integer digits, less the digits before d1, plus its exponent part. *)
+let decimal_exponent b start first =
+  let len = Bytes.length b in
+  let integer_digits = ref 0 and position = ref 0 and first_position = ref 0 and fraction = ref false in
+  let j = ref (if Bytes.get b start = '-' then start + 1 else start) in
+  let scanning = ref true in
+  while !scanning && !j < len do
+    let c = Bytes.get b !j in
+    if c = '.' then begin
+      fraction := true;
+      incr j
+    end
+    else if is_digit c then begin
+      if not !fraction then incr integer_digits;
+      if !j = first then first_position := !position;
+      incr position;
+      incr j
+    end
+    else scanning := false
+  done;
+  !integer_digits - !first_position + read_exponent b !j len
+
+(* compare_text compares the JSON number texts at a[start_a] and b[start_b] exactly, as the decimals they write:
+   negative, zero or positive. Each is read as sign * 0.d1d2d3... * 10^exponent, with d1 its first non-zero digit. *)
+let compare_text a start_a b start_b =
+  let fa = first_non_zero a start_a and fb = first_non_zero b start_b in
+  let sa = sign_of a start_a fa and sb = sign_of b start_b fb in
+  if sa <> sb || sa = 0 then compare_int sa sb
+  else
+    let ea = decimal_exponent a start_a fa and eb = decimal_exponent b start_b fb in
+    if ea <> eb then compare_int ea eb * sa
+    else begin
+      let la = last_non_zero a fa and lb = last_non_zero b fb in
+      let i = ref fa and k = ref fb and result = ref 2 in
+      while !result = 2 do
+        while !i <= la && Bytes.get a !i = '.' do
+          incr i
+        done;
+        while !k <= lb && Bytes.get b !k = '.' do
+          incr k
+        done;
+        if !i > la || !k > lb then result := if !i <= la then sa else if !k <= lb then -sa else 0
+        else if Bytes.get a !i <> Bytes.get b !k then
+          result := compare_int (Char.code (Bytes.get a !i)) (Char.code (Bytes.get b !k)) * sa
+        else begin
+          incr i;
+          incr k
+        end
+      done;
+      !result
+    end
+
+(* holds_exactly is whether a float holds the value of a number's representation exactly: always for a float, and for
+   an int of at most 2^53 in magnitude. (An integer beyond an int is taken not to be held, which leaves the text to
+   decide.) *)
+let holds_exactly flags data =
+  let c = flags land 3 in
+  c = num_float || (c = num_int && data >= -(1 lsl 53) && data <= 1 lsl 53)
+
+(* compare_exact compares two numbers exactly, as the decimals their texts write: negative, zero or positive. Each is
+   given as its representation and its text, which starts at its source's offset. The representations decide it when
+   they can: two integers always, and a float with a float or with an integer that a float holds exactly when they
+   differ (rounding to a float keeps the order, so different floats come from different decimals in the same order).
+   Otherwise the texts decide it, so 0.123456789123456788 is less than 0.123456789123456789 although both read as the
+   same float. *)
+let compare_exact fa a floats_a source_a start_a fb b floats_b source_b start_b =
+  let c = compare fa a floats_a fb b floats_b in
+  if fa land 3 <> num_float && fb land 3 <> num_float then c
+  else if c <> 0 && holds_exactly fa a && holds_exactly fb b then c
+  else compare_text source_a start_a source_b start_b
+
 let is_integer flags data floats =
   flags land 3 <> num_float
   ||

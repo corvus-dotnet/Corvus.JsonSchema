@@ -24,10 +24,24 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
+#if CORVUS_JSON_EXTENDEDTYPES
+
+// Corvus.Text.Json imports System.Text for the whole project; the V4 engine does not.
+using System.Text;
+
+// Linked into the V4 engine (Corvus.Json.ExtendedTypes), which has its own public Corvus.Globalization types.
+namespace Corvus.Text.Json.Internal.Globalization;
+#else
+
 namespace Corvus.Globalization;
+#endif
 
 // IdnMapping class used to map names to Punycode
+#if CORVUS_JSON_EXTENDEDTYPES
+internal sealed partial class IdnMapping
+#else
 public sealed partial class IdnMapping
+#endif
 {
     private static ReadOnlySpan<byte> c_strAcePrefixUtf8 => "xn--"u8;
 

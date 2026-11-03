@@ -2,6 +2,10 @@
 
 The version history of the `corvus-json-schema` Rust crate. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md).
 
+## V0.2.1
+
+V0.2.1 fixes the `format` checks that the JSON-Schema-Test-Suite's unified layout found wrong. `idn-hostname` (and the domain of `idn-email`) applies the UTS #46 mapping (Unicode 17.0.0) before it checks a name, so ignored code points such as U+200B are removed and fullwidth letters are read as ASCII; an uppercase letter outside ASCII is lowered, so it is no longer refused. `email` follows RFC 5321 in a quoted local part (printable ASCII and quoted pairs of printable ASCII only), and `idn-email` RFC 6531 (any character outside ASCII in the local part, whatever its category). `uri-template` takes the RFC 6570 literals, with the apostrophe that erratum 6937 adds, so a `%` must begin a complete percent-encoded triplet and a delete character is refused. The UTS #46 table is written by `gen-uts46-data.ps1`, from the same `IdnaMappingTable.txt` as the .NET engine's.
+
 ## V0.2.0
 
 V0.2.0 matches patterns with the [`corvus-regex-ecma262`](https://crates.io/crates/corvus-regex-ecma262) crate, reads them in the grammar of the dialect, and adds options for the edition and the version of Unicode. It is a minor version because two things that were there change: `CompileOptions` has two new fields, so a struct literal without `..CompileOptions::default()` no longer compiles, and under 2019-09 and 2020-12 a pattern that uses what ECMAScript added after 2020 is no longer valid. The minimum Rust version is 1.89 as before.

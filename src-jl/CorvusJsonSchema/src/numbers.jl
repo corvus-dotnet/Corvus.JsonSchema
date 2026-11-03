@@ -26,7 +26,114 @@ function compare_uint_float(u::UInt64, d::Float64)
     return u < v ? -1 : (u > v ? 1 : 0)
 end
 
-# Compares two numbers exactly: negative, zero or positive.
+# Compares the numbers x of a and y of b exactly, as the decimals their texts write: negative, zero or positive. The
+# parsed representations decide it when they can: two integers always, and a float with a float or with an integer
+# that a Float64 holds exactly when they differ (rounding to a Float64 keeps the order, so different floats come from
+# different decimals in the same order). Otherwise, the texts decide it, so 0.123456789123456788 is less than
+# 0.123456789123456789 although both read as the same Float64.
+function compare_values(a::Document, x::Int, b::Document, y::Int)
+    fa, va, fb, vb = flags(a, x), data(a, x), flags(b, y), data(b, y)
+    c = compare_numbers(fa, va, fb, vb)
+    (fa != NUM_FLOAT && fb != NUM_FLOAT) && return c
+    (c != 0 && holds_exactly(fa, va) && holds_exactly(fb, vb)) && return c
+    as, bs = count(a, x), count(b, y)
+    return compare_number_text(a.source, as, number_end(a.source, as), b.source, bs, number_end(b.source, bs))
+end
+
+# Reports whether a Float64 holds the value of a number's representation exactly (always for a float).
+@inline function holds_exactly(flag::UInt8, v::UInt64)
+    if flag == NUM_INT
+        i = v % Int64
+        return -(Int64(1) << 53) <= i <= Int64(1) << 53
+    elseif flag == NUM_UINT
+        # Floats in [2^63, 2^64) are multiples of 2^11.
+        return v & ((UInt64(1) << 11) - 1) == 0
+    end
+    return true
+end
+
+# Compares two JSON number texts exactly, as the decimals they write: negative, zero or positive. Each text is the
+# bytes from the offset start (0-based) to the offset stop, read as sign * 0.d1d2d3... * 10^exponent, with d1 its
+# first non-zero digit.
+function compare_number_text(a::Vector{UInt8}, as::Int, ae::Int, b::Vector{UInt8}, bs::Int, be::Int)
+    fa = first_nonzero(a, as, ae)
+    fb = first_nonzero(b, bs, be)
+    sa = fa < 0 ? 0 : (a[as+1] == UInt8('-') ? -1 : 1)
+    sb = fb < 0 ? 0 : (b[bs+1] == UInt8('-') ? -1 : 1)
+    (sa != sb || sa == 0) && return compare_int(Int64(sa), Int64(sb))
+    ea = decimal_exponent(a, as, ae, fa)
+    eb = decimal_exponent(b, bs, be, fb)
+    ea != eb && return compare_int(ea, eb) * sa
+    la = last_nonzero(a, fa, ae)
+    lb = last_nonzero(b, fb, be)
+    i, k = fa, fb
+    while true
+        while i <= la && a[i+1] == UInt8('.')
+            i += 1
+        end
+        while k <= lb && b[k+1] == UInt8('.')
+            k += 1
+        end
+        if i > la || k > lb
+            return (i > la ? (k > lb ? 0 : -1) : 1) * sa
+        end
+        a[i+1] != b[k+1] && return (a[i+1] < b[k+1] ? -1 : 1) * sa
+        i += 1
+        k += 1
+    end
+end
+
+# The offset of the first non-zero digit of a number text's significand, or -1 if it writes zero.
+function first_nonzero(t::Vector{UInt8}, start::Int, stop::Int)
+    for j in start:stop-1
+        c = t[j+1]
+        UInt8('1') <= c <= UInt8('9') && return j
+        (c == UInt8('-') || c == UInt8('0') || c == UInt8('.')) || return -1
+    end
+    return -1
+end
+
+# The offset of the last non-zero digit of a number text's significand, at or after its first.
+function last_nonzero(t::Vector{UInt8}, first::Int, stop::Int)
+    last = first
+    for j in first:stop-1
+        c = t[j+1]
+        if UInt8('1') <= c <= UInt8('9')
+            last = j
+        elseif c != UInt8('0') && c != UInt8('.')
+            break
+        end
+    end
+    return last
+end
+
+# The exponent of a number text written as 0.d1d2d3... * 10^exponent: its integer digits, less the digits before d1
+# (at the offset first), plus its exponent part.
+function decimal_exponent(t::Vector{UInt8}, start::Int, stop::Int, first::Int)
+    integer_digits = Int64(0)
+    position = Int64(0)
+    first_position = Int64(0)
+    fraction = false
+    j = t[start+1] == UInt8('-') ? start + 1 : start
+    while j < stop
+        c = t[j+1]
+        if c == UInt8('.')
+            fraction = true
+            j += 1
+            continue
+        end
+        UInt8('0') <= c <= UInt8('9') || break
+        fraction || (integer_digits += 1)
+        j == first && (first_position = position)
+        position += 1
+        j += 1
+    end
+    e, _ = text_exponent(t, j, stop)
+    return integer_digits - first_position + e
+end
+
+# Compares two numbers' representations: negative, zero or positive. It is exact for two integers; compare_values
+# decides the cases a float's rounding hides.
 function compare_numbers(fa::UInt8, a::UInt64, fb::UInt8, b::UInt64)
     if fa == NUM_INT
         if fb == NUM_INT

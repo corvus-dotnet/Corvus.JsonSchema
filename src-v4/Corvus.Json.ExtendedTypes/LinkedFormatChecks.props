@@ -1,0 +1,34 @@
+<Project>
+  <!--
+    The format checks are V5's (Corvus.Text.Json), linked into Corvus.Json.ExtendedTypes and into every project that
+    compiles its sources (the V4 source generator tools and the V5 source generator), so that the two engines give
+    the same answer for every format.
+
+    CORVUS_JSON_EXTENDEDTYPES compiles the linked globalization types into an internal namespace
+    (Corvus.Text.Json.Internal.Globalization) and keeps every linked type internal, so Corvus.Json.ExtendedTypes gains
+    no public types and cannot clash with Corvus.Text.Json.
+
+    A project that already compiles JsonElementHelpers.DateTime.Core.cs sets CorvusLinkedFormatChecksHasDateCore to
+    true before it imports this file.
+  -->
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);CORVUS_JSON_EXTENDEDTYPES</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)..\..\src\Corvus.Text.Json\Corvus\Text\Json\JsonSchema\Internal\FormatMatchers.cs" Link="V5\FormatMatchers.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)..\..\src\Corvus.Text.Json\Corvus\Text\Json\JsonSchema\Internal\IPAddressParser.cs" Link="V5\IPAddressParser.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)..\..\src\Corvus.Text.Json\Corvus\Text\Json\JsonSchema\Internal\IPV4AddressHelper.cs" Link="V5\IPV4AddressHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)..\..\src\Corvus.Text.Json\Corvus\Text\Json\JsonSchema\Internal\IPV6AddressHelper.cs" Link="V5\IPV6AddressHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)..\..\src\Corvus.Text.Json\Corvus\Text\Json\Uri\Internal\Utf8UriGrammar.cs" Link="V5\Utf8UriGrammar.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)..\..\src\Corvus.Text.Json\Corvus\Text\Json\Uri\Internal\Utf8JsonPointerTools.cs" Link="V5\Utf8JsonPointerTools.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)..\..\src\Corvus.Text.Json\Corvus\Text\Json\UriTemplate\Utf8UriTemplate.cs" Link="V5\Utf8UriTemplate.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)..\..\src\Corvus.Text.Json\Corvus\Text\Json\Internal\JsonElementHelpers.DateTime.Core.cs" Link="V5\JsonElementHelpers.DateTime.Core.cs" Condition="'$(CorvusLinkedFormatChecksHasDateCore)' != 'true'" />
+    <Compile Include="$(MSBuildThisFileDirectory)..\..\src\Corvus.Text.Json\Corvus\Globalization\CharUnicodeInfo.cs" Link="V5\CharUnicodeInfo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)..\..\src\Corvus.Text.Json\Corvus\Globalization\CharUnicodeInfoData.cs" Link="V5\CharUnicodeInfoData.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)..\..\src\Corvus.Text.Json\Corvus\Globalization\IdnMapping.Ascii.cs" Link="V5\IdnMapping.Ascii.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)..\..\src\Corvus.Text.Json\Corvus\Globalization\IdnMapping.Unicode.UTF8.cs" Link="V5\IdnMapping.Unicode.UTF8.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)..\..\src\Corvus.Text.Json\Corvus\Globalization\StrongBidiCategory.cs" Link="V5\StrongBidiCategory.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)..\..\src\Corvus.Text.Json\Corvus\Globalization\Uts46Mapping.cs" Link="V5\Uts46Mapping.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)..\..\src\Corvus.Text.Json\Corvus\Globalization\Uts46MappingData.cs" Link="V5\Uts46MappingData.cs" />
+  </ItemGroup>
+</Project>

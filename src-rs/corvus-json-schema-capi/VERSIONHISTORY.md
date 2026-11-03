@@ -2,6 +2,10 @@
 
 The version history of the corvus-json-schema C library and its C++ wrapper (`src-rs/corvus-json-schema-capi`), released on GitHub as `capi-v<version>`. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md), and of the Rust crate it wraps.
 
+## V0.1.6
+
+V0.1.6 takes version 0.2.1 of the `corvus-json-schema` crate, which fixes the `format` checks that the JSON-Schema-Test-Suite's unified layout found wrong. `idn-hostname` (and the domain of `idn-email`) applies the UTS #46 mapping (Unicode 17.0.0) before it checks a name, so ignored code points such as U+200B are removed and fullwidth letters are read as ASCII. `email` follows RFC 5321 in a quoted local part (printable ASCII and quoted pairs of printable ASCII only), and `idn-email` RFC 6531 (any character outside ASCII in the local part, whatever its category). `uri-template` takes the RFC 6570 literals, with the apostrophe that erratum 6937 adds, so a `%` must begin a complete percent-encoded triplet and a delete character is refused. Nothing else in the library changes.
+
 ## V0.1.5
 
 V0.1.5 takes version 0.2.0 of the `corvus-json-schema` crate, which matches patterns with the [`corvus-regex-ecma262`](https://crates.io/crates/corvus-regex-ecma262) crate and reads them in the grammar of the dialect. Nothing that was in the header has changed, so it is a patch for the ABI, and a program built against 0.1.4 runs against it. There are two new functions and their constants.

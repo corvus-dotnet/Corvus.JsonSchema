@@ -112,9 +112,8 @@ const (
 
 type numberOp struct {
 	kind numberOpKind
-	// The bound's representation.
-	flag    uint8
-	data    uint64
+	// The bound.
+	bound   valueRef
 	divisor *divisor
 	format  formatCheck
 }
@@ -605,7 +604,7 @@ func planNode(p *program, id nodeID, n *schemaNode) plan {
 	}
 	bound := func(kind numberOpKind, v valueRef) {
 		if v.set() {
-			b.number = append(b.number, numberOp{kind: kind, flag: v.d.flags(v.n), data: v.d.data(v.n)})
+			b.number = append(b.number, numberOp{kind: kind, bound: v})
 		}
 	}
 	bound(numberMinimum, n.minimum)
@@ -1671,19 +1670,18 @@ func (e *evaluator) runLeaf(b *body, x int) bool {
 
 func (e *evaluator) runNumber(ops []numberOp, x int) bool {
 	d := e.d
-	flag, data := d.flags(x), d.data(x)
 	for i := range ops {
 		o := &ops[i]
 		var ok bool
 		switch o.kind {
 		case numberMinimum:
-			ok = compareNumbers(flag, data, o.flag, o.data) >= 0
+			ok = compareValues(d, x, o.bound.d, o.bound.n) >= 0
 		case numberMaximum:
-			ok = compareNumbers(flag, data, o.flag, o.data) <= 0
+			ok = compareValues(d, x, o.bound.d, o.bound.n) <= 0
 		case numberExclusiveMinimum:
-			ok = compareNumbers(flag, data, o.flag, o.data) > 0
+			ok = compareValues(d, x, o.bound.d, o.bound.n) > 0
 		case numberExclusiveMaximum:
-			ok = compareNumbers(flag, data, o.flag, o.data) < 0
+			ok = compareValues(d, x, o.bound.d, o.bound.n) < 0
 		case numberMultipleOf:
 			ok = o.divisor.divides(d, x)
 		default:

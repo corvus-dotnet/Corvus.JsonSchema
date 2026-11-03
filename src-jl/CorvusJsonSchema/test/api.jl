@@ -238,6 +238,26 @@
         @test expect_valid(compile_schema("""{ "multipleOf": 0.0001 }"""), "0.0075", true)
     end
 
+    @testset "numbers are compared exactly beyond what a Float64 holds" begin
+        for (schema, instance, want) in [
+            ("""{ "const": 0.123456789123456789 }""", "0.123456789123456789", true),
+            ("""{ "const": 0.123456789123456789 }""", "0.123456789123456788", false),
+            ("""{ "enum": [0.123456789123456789] }""", "0.123456789123456790", false),
+            ("""{ "maximum": 972783798187987123879878123.18878137 }""", "972783798187987123879878123.188781371", false),
+            ("""{ "exclusiveMaximum": 972783798187987123879878123.18878137 }""",
+                "972783798187987123879878123.188781369", true),
+            ("""{ "minimum": -18446744073709551615 }""", "-18446744073709551616", false),
+            ("""{ "exclusiveMinimum": -972783798187987123879878123.18878137 }""",
+                "-972783798187987123879878123.188781369", true),
+            ("""{ "uniqueItems": true }""", "[0.123456789123456788, 0.123456789123456789]", true),
+            ("""{ "uniqueItems": true }""", "[1, 1.0]", false),
+        ]
+            v = compile_schema(schema)
+            @test isvalid(v, instance) == want
+            @test evaluate(v, instance, ResultsCollector(Basic)) == want
+        end
+    end
+
     # A task may move to another thread where it yields. A custom format that yields does that in the middle of a
     # validation, which then finishes on another thread than the one whose evaluation state it took.
     @testset "a validation that moves between threads" begin

@@ -783,7 +783,13 @@ const MAX_IDN_HOSTNAME_BYTES: usize = 4 * 253;
 /// check decodes and encodes Punycode and walks around every joiner and every katakana middle dot, which take time
 /// that grows with the square of a label, so it must not be given a label of any length.
 pub(crate) fn idn_hostname(s: &str) -> bool {
-    s.len() <= MAX_IDN_HOSTNAME_BYTES && idn_hostname_of_any_length(s)
+    if s.len() > MAX_IDN_HOSTNAME_BYTES {
+        return false;
+    }
+    // UTS #46 maps the name before it is checked: it removes the ignored code points and replaces the mapped ones,
+    // such as the fullwidth forms, which can produce an "xn--" A-label to decode.
+    let mapped = crate::uts46::map(s);
+    mapped.len() <= MAX_IDN_HOSTNAME_BYTES && idn_hostname_of_any_length(&mapped)
 }
 
 /// The check itself, for a string of any length.
@@ -842,13 +848,19 @@ fn idn_hostname_of_any_length(s: &str) -> bool {
     ascii_length - 1 <= 253
 }
 
+// RFC 5321 Local-part: a dot-string of atext, or a quoted string of qtextSMTP (%d32-33 / %d35-91 / %d93-126) and
+// quoted pairs (a backslash and one of %d32-126). There are no comments.
 static EMAIL_LOCAL_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"^(?:[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[^"\\\r\n]|\\.)*")$"#)
-        .unwrap()
+    Regex::new(
+        r#"^(?:[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x20\x21\x23-\x5B\x5D-\x7E]|\\[\x20-\x7E])*")$"#,
+    )
+    .unwrap()
 });
+// RFC 6531 extends atext and qtextSMTP with UTF8-non-ascii: every character outside ASCII, whatever its category. It
+// does not extend the quoted pair.
 static IDN_EMAIL_LOCAL_RE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
-        r#"^(?:[\p{L}\p{M}\p{N}!#$%&'*+/=?^_`{|}~-]+(?:\.[\p{L}\p{M}\p{N}!#$%&'*+/=?^_`{|}~-]+)*|"(?:[^"\\\r\n]|\\.)*")$"#,
+        r#"^(?:[A-Za-z0-9!#$%&'*+/=?^_`{|}~\x{80}-\x{10FFFF}-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~\x{80}-\x{10FFFF}-]+)*|"(?:[\x20\x21\x23-\x5B\x5D-\x7E\x{80}-\x{10FFFF}]|\\[\x20-\x7E])*")$"#,
     )
     .unwrap()
 });
@@ -922,9 +934,12 @@ static URI_REF_RE: LazyLock<Regex> = LazyLock::new(|| uri_regex(false, true));
 static IRI_RE: LazyLock<Regex> = LazyLock::new(|| uri_regex(true, false));
 static IRI_REF_RE: LazyLock<Regex> = LazyLock::new(|| uri_regex(true, true));
 
+// RFC 6570: literals = %x21 / %x23-24 / %x26-3B / %x3D / %x3F-5B / %x5D / %x5F / %x61-7A / %x7E / ucschar /
+// iprivate / pct-encoded. RFC 6570 printed %x26 / %x28-3B, leaving out the apostrophe; erratum 6937 corrects it.
 static URI_TEMPLATE_RE: LazyLock<Regex> = LazyLock::new(|| {
     let var = "(?:[A-Za-z0-9_]|%[0-9A-Fa-f]{2})(?:\\.?(?:[A-Za-z0-9_]|%[0-9A-Fa-f]{2}))*(?::[1-9][0-9]{0,3}|\\*)?";
-    Regex::new(&format!(r#"^(?:[^\x00-\x20"'<>\\^`{{|}}]|\{{[+#./;?&=,!@|]?{var}(?:,{var})*\}})*$"#)).unwrap()
+    let literal = r"(?:[\x21\x23\x24\x26-\x3B\x3D\x3F-\x5B\x5D\x5F\x61-\x7A\x7E\x{A0}-\x{D7FF}\x{E000}-\x{FDCF}\x{FDF0}-\x{FFEF}\x{10000}-\x{1FFFD}\x{20000}-\x{2FFFD}\x{30000}-\x{3FFFD}\x{40000}-\x{4FFFD}\x{50000}-\x{5FFFD}\x{60000}-\x{6FFFD}\x{70000}-\x{7FFFD}\x{80000}-\x{8FFFD}\x{90000}-\x{9FFFD}\x{A0000}-\x{AFFFD}\x{B0000}-\x{BFFFD}\x{C0000}-\x{CFFFD}\x{D0000}-\x{DFFFD}\x{E1000}-\x{EFFFD}\x{F0000}-\x{FFFFD}\x{100000}-\x{10FFFD}]|%[0-9A-Fa-f]{2})";
+    Regex::new(&format!(r#"^(?:{literal}|\{{[+#./;?&=,!@|]?{var}(?:,{var})*\}})*$"#)).unwrap()
 });
 static JSON_POINTER_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^(?:/(?:[^~/]|~[01])*)*$").unwrap());
 static RELATIVE_JSON_POINTER_RE: LazyLock<Regex> =
@@ -944,6 +959,33 @@ mod tests {
         assert!(idn_hostname("실례.테스트") && !idn_hostname("〮실례.테스트"));
         assert!(URI_RE.is_match("http://example.com/a?b#c") && !URI_RE.is_match("//example.com"));
         assert!(DURATION_RE.is_match("P4DT12H30M5S") && !DURATION_RE.is_match("PT1D"));
+    }
+
+    /// The cases of the unified JSON-Schema-Test-Suite that the checks got wrong (the descriptions are the suite's).
+    #[test]
+    fn unified_suite_formats() {
+        use FormatKind::*;
+        for (format, text, expected, description) in [
+            (Email, "\"test\\\u{a9}\"@iana.org", false, "a non-ASCII character in a quoted pair is not valid"),
+            (Email, "\"\\a\"@iana.org", true, "a quoted pair in the local part is valid"),
+            (IdnEmail, "\u{85}@example.com", true, "a C1 control in the local part is valid"),
+            (IdnEmail, "\u{ffff}@example.com", true, "a noncharacter in the local part is valid"),
+            (IdnHostname, "a\u{200b}b", true, "a zero width space is ignored by the mapping"),
+            (IdnHostname, &"\u{ff41}".repeat(63), true, "a label of 63 fullwidth characters is valid after mapping"),
+            (
+                IdnHostname,
+                "\u{ff58}\u{ff4e}--nxasmq6b",
+                true,
+                "an ACE prefix produced by the mapping step is decoded as an A-label",
+            ),
+            (UriTemplate, "a'b", true, "an apostrophe in a literal is valid"),
+            (UriTemplate, "a%", false, "a literal with a lone percent sign is invalid"),
+            (UriTemplate, "a%4", false, "a literal with an incomplete percent-encoded triplet is invalid"),
+            (UriTemplate, "a%GG", false, "a literal with non-hex percent encoding is invalid"),
+            (UriTemplate, "a\u{7f}b", false, "a delete character in a literal is invalid"),
+        ] {
+            assert_eq!(format.check_string(text, false), expected, "{format:?}: {description}");
+        }
     }
 
     /// The check of an internationalized host name decodes and encodes Punycode, looks for a kana for every katakana

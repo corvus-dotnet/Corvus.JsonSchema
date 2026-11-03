@@ -418,7 +418,7 @@ final class Evaluator {
             }
         }
         if (n.minimum != null) {
-            boolean m = Numbers.compare(flag, bits, n.minimum.flag, n.minimum.bits) >= 0;
+            boolean m = Numbers.compare(doc, x, n.minimum) >= 0;
             ok &= check(m, null,
                     !collect ? null
                             : () -> "The value was expected to be greater than or equal to" + q(n.minimum.text),
@@ -428,7 +428,7 @@ final class Evaluator {
             }
         }
         if (n.maximum != null) {
-            boolean m = Numbers.compare(flag, bits, n.maximum.flag, n.maximum.bits) <= 0;
+            boolean m = Numbers.compare(doc, x, n.maximum) <= 0;
             ok &= check(m, null,
                     !collect ? null
                             : () -> "The value was expected to be less than or equal to" + q(n.maximum.text),
@@ -438,7 +438,7 @@ final class Evaluator {
             }
         }
         if (n.exclusiveMinimum != null) {
-            boolean m = Numbers.compare(flag, bits, n.exclusiveMinimum.flag, n.exclusiveMinimum.bits) > 0;
+            boolean m = Numbers.compare(doc, x, n.exclusiveMinimum) > 0;
             ok &= check(m, null,
                     !collect ? null
                             : () -> "The value was expected to be greater than" + q(n.exclusiveMinimum.text),
@@ -448,7 +448,7 @@ final class Evaluator {
             }
         }
         if (n.exclusiveMaximum != null) {
-            boolean m = Numbers.compare(flag, bits, n.exclusiveMaximum.flag, n.exclusiveMaximum.bits) < 0;
+            boolean m = Numbers.compare(doc, x, n.exclusiveMaximum) < 0;
             ok &= check(m, null,
                     !collect ? null
                             : () -> "The value was expected to be less than" + q(n.exclusiveMaximum.text),

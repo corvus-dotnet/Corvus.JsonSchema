@@ -240,10 +240,28 @@ public class DateTimeCoreParsingCoverageTests
 
     [TestMethod]
     [TestCategory("coverage")]
-    public void ParseTimeCore_TooLong_ReturnsFalse()
+    public void ParseTimeCore_FractionBeyondNanoseconds_IsTruncated()
     {
-        // text.Length > 18 triggers the first validation check
-        ReadOnlySpan<byte> text = "14:30:59.1234567890"u8; // 19 chars
+        // RFC 3339 time-secfrac has any number of digits; those beyond the nanosecond are checked and truncated.
+        ReadOnlySpan<byte> text = "14:30:59.1234567890"u8;
+        bool result = JsonElementHelpers.ParseTimeCore(
+            text, out int hours, out int minutes, out int seconds,
+            out int ms, out int us, out int ns);
+
+        Assert.IsTrue(result);
+        Assert.AreEqual(14, hours);
+        Assert.AreEqual(30, minutes);
+        Assert.AreEqual(59, seconds);
+        Assert.AreEqual(123, ms);
+        Assert.AreEqual(456, us);
+        Assert.AreEqual(789, ns);
+    }
+
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void ParseTimeCore_NonDigitBeyondNanoseconds_ReturnsFalse()
+    {
+        ReadOnlySpan<byte> text = "14:30:59.123456789x"u8;
         bool result = JsonElementHelpers.ParseTimeCore(
             text, out int hours, out int minutes, out int seconds,
             out int ms, out int us, out int ns);

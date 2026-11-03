@@ -1,5 +1,16 @@
 Revision history for JSON-Schema-Corvus
 
+v0.1.1  2026-11-03
+  - The format checks follow the grammars the unified JSON-Schema-Test-Suite tests. idn-hostname (and the domain of
+    idn-email) applies the UTS #46 mapping (Unicode 17.0.0) before it checks a name, so ignored code points such as
+    U+200B are removed and fullwidth letters are read as ASCII; a name of more than 1,012 UTF-8 bytes is refused before
+    it is read. email follows RFC 5321 in a quoted local part (printable ASCII and quoted pairs of printable ASCII
+    only), and idn-email RFC 6531: any character outside ASCII in the local part, whatever its category. uri-template
+    takes the RFC 6570 literals, with the apostrophe of erratum 6937, so a % must begin a complete percent-encoded
+    triplet and a delete character is refused. The UTS #46 table is written by tools/gen-uts46-data.ps1.
+  - An integer of 19 or 20 digits that fits in 64 bits is a number. Reading it made it a string, so a maximum or
+    minimum of one was dropped, and a const or type compared it as a string.
+
 v0.1.0  2026-10-20
   - First release: JSON Schema validation (draft 4, 6, 7, 2019-09 and 2020-12) in pure Perl, with no dependency
     beyond Perl's core. Schemas compile to Perl; results at the basic, detailed and verbose levels, with annotations;

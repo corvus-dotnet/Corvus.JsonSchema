@@ -156,8 +156,11 @@ let find_property d obj key koff klen =
 let float_value d n = Numbers.to_float (flags d n) (data d n) d.floats
 let is_integer d n = Numbers.is_integer (flags d n) (data d n) d.floats
 
-(* compare_numbers compares two number values exactly: negative, zero or positive. *)
-let compare_numbers a x b y = Numbers.compare (flags a x) (data a x) a.floats (flags b y) (data b y) b.floats
+(* compare_numbers compares two number values exactly, as the decimals their texts write: negative, zero or
+   positive. *)
+let compare_numbers a x b y =
+  Numbers.compare_exact (flags a x) (data a x) a.floats a.source (count a x) (flags b y) (data b y) b.floats b.source
+    (count b y)
 
 (* number_end is the end of the number whose text starts at j (already validated). *)
 let number_end b j =

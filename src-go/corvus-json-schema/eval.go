@@ -623,7 +623,7 @@ func (e *evaluator) evalNumber(n *schemaNode, x int) bool {
 		return e.keyword(m, message, keyword)
 	}
 	compare := func(b valueRef) int {
-		return compareNumbers(d.flags(x), d.data(x), b.d.flags(b.n), b.d.data(b.n))
+		return compareValues(d, x, b.d, b.n)
 	}
 	if b := n.minimum; b.set() {
 		m := compare(b) >= 0

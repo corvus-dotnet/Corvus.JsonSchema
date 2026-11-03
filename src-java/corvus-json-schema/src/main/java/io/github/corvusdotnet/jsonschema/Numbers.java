@@ -24,7 +24,180 @@ final class Numbers {
         return ((double) ((bits >>> 1) | (bits & 1))) * 2.0;
     }
 
-    /** Compares two numbers exactly: negative, zero or positive. */
+    /**
+     * Compares the numbers x of a and y of b exactly, as the decimals their texts write: negative, zero or positive.
+     */
+    static int compare(JsonDocument a, int x, JsonDocument b, int y) {
+        int fa = a.flags(x);
+        long va = a.data(x);
+        int fb = b.flags(y);
+        long vb = b.data(y);
+        int c = compare(fa, va, fb, vb);
+        if (decided(fa, va, fb, vb, c)) {
+            return c;
+        }
+        int as = a.count(x);
+        int bs = b.count(y);
+        return compareText(a.source, as, JsonDocument.Parser.numberEnd(a.source, as, a.sourceEnd),
+                b.source, bs, JsonDocument.Parser.numberEnd(b.source, bs, b.sourceEnd));
+    }
+
+    /** Compares the number x of a document with a schema's number exactly: negative, zero or positive. */
+    static int compare(JsonDocument d, int x, SchemaNode.Num bound) {
+        int flag = d.flags(x);
+        long bits = d.data(x);
+        int c = compare(flag, bits, bound.flag, bound.bits);
+        if (decided(flag, bits, bound.flag, bound.bits, c)) {
+            return c;
+        }
+        int start = d.count(x);
+        return compareText(d.source, start, JsonDocument.Parser.numberEnd(d.source, start, d.sourceEnd),
+                bound.utf8, 0, bound.utf8.length);
+    }
+
+    /**
+     * Whether the representations' comparison c is the comparison of the decimals: always for two integers, and for a
+     * double with a double or with an integer that a double holds exactly when they differ (rounding to a double keeps
+     * the order, so different doubles come from different decimals in the same order). Otherwise the texts decide it,
+     * so 0.123456789123456788 is less than 0.123456789123456789 although both read as the same double.
+     */
+    private static boolean decided(int fa, long a, int fb, long b, int c) {
+        if (fa != NUM_DOUBLE && fb != NUM_DOUBLE) {
+            return true;
+        }
+        return c != 0 && holdsExactly(fa, a) && holdsExactly(fb, b);
+    }
+
+    /** Whether a double holds the value of a number's representation exactly (always for a double). */
+    private static boolean holdsExactly(int flag, long v) {
+        if (flag == NUM_LONG) {
+            return v >= -(1L << 53) && v <= 1L << 53;
+        }
+        if (flag == NUM_U64) {
+            // Doubles in [2^63, 2^64) are multiples of 2^11.
+            return (v & ((1L << 11) - 1)) == 0;
+        }
+        return true;
+    }
+
+    /**
+     * Compares two JSON number texts exactly, as the decimals they write: negative, zero or positive. Each is read as
+     * sign * 0.d1d2d3... * 10^exponent, with d1 its first non-zero digit.
+     */
+    static int compareText(byte[] a, int as, int ae, byte[] b, int bs, int be) {
+        int fa = firstNonZero(a, as, ae);
+        int fb = firstNonZero(b, bs, be);
+        int sa = fa < 0 ? 0 : a[as] == '-' ? -1 : 1;
+        int sb = fb < 0 ? 0 : b[bs] == '-' ? -1 : 1;
+        if (sa != sb || sa == 0) {
+            return Integer.compare(sa, sb);
+        }
+        long ea = exponent(a, as, ae, fa);
+        long eb = exponent(b, bs, be, fb);
+        if (ea != eb) {
+            return Long.compare(ea, eb) * sa;
+        }
+        int la = lastNonZero(a, fa, ae);
+        int lb = lastNonZero(b, fb, be);
+        int i = fa;
+        int k = fb;
+        while (true) {
+            while (i <= la && a[i] == '.') {
+                i++;
+            }
+            while (k <= lb && b[k] == '.') {
+                k++;
+            }
+            if (i > la || k > lb) {
+                return (i > la ? (k > lb ? 0 : -1) : 1) * sa;
+            }
+            if (a[i] != b[k]) {
+                return Integer.compare(a[i], b[k]) * sa;
+            }
+            i++;
+            k++;
+        }
+    }
+
+    /** The index of the first non-zero digit of a number text's significand, or -1 if it writes zero. */
+    private static int firstNonZero(byte[] t, int start, int end) {
+        for (int j = start; j < end; j++) {
+            int c = t[j];
+            if (c >= '1' && c <= '9') {
+                return j;
+            }
+            if (c != '-' && c != '0' && c != '.') {
+                return -1;
+            }
+        }
+        return -1;
+    }
+
+    /** The index of the last non-zero digit of a number text's significand, at or after its first. */
+    private static int lastNonZero(byte[] t, int first, int end) {
+        int last = first;
+        for (int j = first; j < end; j++) {
+            int c = t[j];
+            if (c >= '1' && c <= '9') {
+                last = j;
+            } else if (c != '0' && c != '.') {
+                break;
+            }
+        }
+        return last;
+    }
+
+    /**
+     * The exponent of a number text written as 0.d1d2d3... * 10^exponent: its integer digits, less the digits before
+     * d1 (at {@code first}), plus its exponent part.
+     */
+    private static long exponent(byte[] t, int start, int end, int first) {
+        long integerDigits = 0;
+        long position = 0;
+        long firstPosition = 0;
+        boolean fraction = false;
+        int j = t[start] == '-' ? start + 1 : start;
+        for (; j < end; j++) {
+            int c = t[j];
+            if (c == '.') {
+                fraction = true;
+                continue;
+            }
+            if (c < '0' || c > '9') {
+                break;
+            }
+            if (!fraction) {
+                integerDigits++;
+            }
+            if (j == first) {
+                firstPosition = position;
+            }
+            position++;
+        }
+        long e = 0;
+        if (j < end && (t[j] == 'e' || t[j] == 'E')) {
+            j++;
+            boolean negative = false;
+            if (t[j] == '+' || t[j] == '-') {
+                negative = t[j] == '-';
+                j++;
+            }
+            for (; j < end && t[j] >= '0' && t[j] <= '9'; j++) {
+                if (e < 1_000_000_000L) {
+                    e = e * 10 + (t[j] - '0');
+                }
+            }
+            if (negative) {
+                e = -e;
+            }
+        }
+        return integerDigits - firstPosition + e;
+    }
+
+    /**
+     * Compares two numbers' representations: negative, zero or positive. It is exact for two integers; the document
+     * forms of compare decide the cases a double's rounding hides.
+     */
     static int compare(int fa, long a, int fb, long b) {
         if (fa == NUM_LONG) {
             if (fb == NUM_LONG) {

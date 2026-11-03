@@ -201,7 +201,9 @@ sub _number {
     # The digits of the largest 64-bit values: shorter integers fit.
     return 0 + $integer if length($integer) < 19;
     my $n = 0 + $integer;
-    return $n if "$n" eq $integer && $n == int($n) && B::svref_2object(\$n)->FLAGS & B::SVf_IOK;
+    # The digits are compared through a copy: making a string of $n itself would make it a string to is_number.
+    my $copy = $n;
+    return $n if "$copy" eq $integer && $n == int($n) && B::svref_2object(\$n)->FLAGS & B::SVf_IOK;
     return Math::BigInt->new($integer);
   }
   return to_double($integer . $rest);

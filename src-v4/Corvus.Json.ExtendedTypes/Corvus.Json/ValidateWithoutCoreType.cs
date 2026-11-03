@@ -914,7 +914,7 @@ public static partial class ValidateWithoutCoreType
         {
             result = context.Context;
 
-            if (!Validate.UriTemplatePattern.IsMatch(input))
+            if (!LinkedFormatChecks.Matches(input, Corvus.Text.Json.Internal.FormatMatchers.MatchUriTemplate))
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
@@ -959,43 +959,7 @@ public static partial class ValidateWithoutCoreType
     {
         string email = (string)instance.AsString;
 
-        bool isMatch = false;
-
-        try
-        {
-            int atIndex = email.LastIndexOf('@');
-            if (atIndex >= 0 && atIndex < email.Length - 1 && email[atIndex + 1] == '[')
-            {
-                // RFC 6531 extends only the local part; RFC 5321 address-literals are unchanged.
-                isMatch = Validate.IsIdnEmailAddressLiteralMatch(email);
-            }
-            else if (Validate.HasOneHostDomain(email, atIndex))
-            {
-                // Normalize the domain
-                email = Validate.IdnEmailReplacePattern.Replace(email, DomainMapper);
-                isMatch = Validate.IdnEmailMatchPattern.IsMatch(email);
-            }
-
-            // Examines the domain part of the email and normalizes it.
-            static string DomainMapper(Match match)
-            {
-                // Pull out and process domain name (throws ArgumentException on invalid)
-                string domainName = Validate.IdnMapping.GetAscii(match.Groups[2].Value);
-
-                // A host name is at most 253 characters as A-labels. .NET's conversion refuses a longer one, and .NET
-                // Framework's allows 254.
-                if (domainName.Length > 253)
-                {
-                    throw new ArgumentException("The domain is longer than 253 characters.");
-                }
-
-                return match.Groups[1].Value + domainName;
-            }
-        }
-        catch (ArgumentException)
-        {
-            isMatch = false;
-        }
+        bool isMatch = LinkedFormatChecks.Matches(instance, Corvus.Text.Json.Internal.FormatMatchers.MatchIdnEmail);
 
         if (!isMatch)
         {
@@ -1047,7 +1011,7 @@ public static partial class ValidateWithoutCoreType
 
         static bool IdnHostnameValidatorUtf8(ReadOnlySpan<byte> input, in Validate.ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
         {
-            bool isMatch = Internal.HostnameValidator.MatchIdnHostname(input);
+            bool isMatch = Corvus.Text.Json.Internal.FormatMatchers.MatchIdnHostname(input);
             result = context.Context;
 
             if (!isMatch)
@@ -1103,7 +1067,7 @@ public static partial class ValidateWithoutCoreType
 
         static bool HostnameValidatorUtf8(ReadOnlySpan<byte> input, in Validate.ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
         {
-            bool isMatch = Internal.HostnameValidator.MatchHostname(input);
+            bool isMatch = Corvus.Text.Json.Internal.FormatMatchers.MatchHostname(input);
             result = context.Context;
 
             if (!isMatch)
@@ -1161,7 +1125,7 @@ public static partial class ValidateWithoutCoreType
         {
             result = context.Context;
 
-            if (!Validate.UuidTemplatePattern.IsMatch(input))
+            if (!LinkedFormatChecks.Matches(input, Corvus.Text.Json.Internal.FormatMatchers.MatchUuid))
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
@@ -1215,7 +1179,7 @@ public static partial class ValidateWithoutCoreType
         {
             result = context.Context;
 
-            if (!Validate.DurationPattern.IsMatch(input))
+            if (!LinkedFormatChecks.Matches(input, Corvus.Text.Json.Internal.FormatMatchers.MatchDuration))
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
@@ -1273,7 +1237,7 @@ public static partial class ValidateWithoutCoreType
         {
             result = context.Context;
 
-            if (!Validate.EmailPattern.IsMatch(input))
+            if (!LinkedFormatChecks.Matches(input, Corvus.Text.Json.Internal.FormatMatchers.MatchEmail))
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
@@ -1331,7 +1295,7 @@ public static partial class ValidateWithoutCoreType
         {
             result = context.Context;
 
-            if (!Validate.JsonRelativePointerPattern.IsMatch(input))
+            if (!LinkedFormatChecks.Matches(input, Corvus.Text.Json.Internal.FormatMatchers.MatchRelativeJsonPointer))
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
@@ -1389,7 +1353,7 @@ public static partial class ValidateWithoutCoreType
         {
             result = context.Context;
 
-            if (!Validate.JsonPointerPattern.IsMatch(input))
+            if (!LinkedFormatChecks.Matches(input, Corvus.Text.Json.Internal.FormatMatchers.MatchJsonPointer))
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
@@ -1713,7 +1677,7 @@ public static partial class ValidateWithoutCoreType
 
         static bool IriReferenceValidatorUtf8(ReadOnlySpan<byte> input, in Validate.ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
         {
-            bool isMatch = Internal.UriValidator.IsValidIriReference(input);
+            bool isMatch = Corvus.Text.Json.Internal.FormatMatchers.MatchIriReference(input);
             result = context.Context;
 
             if (!isMatch)
@@ -1769,7 +1733,7 @@ public static partial class ValidateWithoutCoreType
 
         static bool IriValidatorUtf8(ReadOnlySpan<byte> input, in Validate.ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
         {
-            bool isMatch = Internal.UriValidator.IsValidIri(input);
+            bool isMatch = Corvus.Text.Json.Internal.FormatMatchers.MatchIri(input);
             result = context.Context;
 
             if (!isMatch)
@@ -1825,7 +1789,7 @@ public static partial class ValidateWithoutCoreType
 
         static bool UriValidatorUtf8(ReadOnlySpan<byte> input, in Validate.ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
         {
-            bool isMatch = Internal.UriValidator.IsValidUri(input);
+            bool isMatch = Corvus.Text.Json.Internal.FormatMatchers.MatchUri(input);
             result = context.Context;
 
             if (!isMatch)
@@ -1881,7 +1845,7 @@ public static partial class ValidateWithoutCoreType
 
         static bool UriReferenceValidatorUtf8(ReadOnlySpan<byte> input, in Validate.ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
         {
-            bool isMatch = Internal.UriValidator.IsValidUriReference(input);
+            bool isMatch = Corvus.Text.Json.Internal.FormatMatchers.MatchUriReference(input);
             result = context.Context;
 
             if (!isMatch)
@@ -1926,7 +1890,7 @@ public static partial class ValidateWithoutCoreType
     {
         JsonTime time = instance.As<JsonTime>();
 
-        if (!time.TryGetTime(out _))
+        if (!LinkedFormatChecks.Matches(instance, Corvus.Text.Json.Internal.FormatMatchers.MatchTime))
         {
             if (level >= ValidationLevel.Detailed)
             {
@@ -1965,7 +1929,7 @@ public static partial class ValidateWithoutCoreType
     {
         JsonDate date = instance.As<JsonDate>();
 
-        if (!date.TryGetDate(out _))
+        if (!LinkedFormatChecks.Matches(instance, Corvus.Text.Json.Internal.FormatMatchers.MatchDate))
         {
             if (level >= ValidationLevel.Detailed)
             {
@@ -2025,9 +1989,7 @@ public static partial class ValidateWithoutCoreType
         {
             result = context.Context;
 
-            if (StandardIPAddress.IPAddressParser(input, null, out IPAddress? address) &&
-                address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6 &&
-                !Validate.HasZoneId(input))
+            if (LinkedFormatChecks.Matches(input, Corvus.Text.Json.Internal.FormatMatchers.MatchIPV6))
             {
                 if (context.Level == ValidationLevel.Verbose)
                 {
@@ -2093,9 +2055,7 @@ public static partial class ValidateWithoutCoreType
         {
             result = context.Context;
 
-            if (StandardIPAddress.IPAddressParser(input, null, out IPAddress? address) &&
-                address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork &&
-                Validate.IpV4Pattern.IsMatch(input))
+            if (LinkedFormatChecks.Matches(input, Corvus.Text.Json.Internal.FormatMatchers.MatchIPV4))
             {
                 if (context.Level == ValidationLevel.Verbose)
                 {
@@ -2142,7 +2102,7 @@ public static partial class ValidateWithoutCoreType
     {
         JsonDateTime date = instance.As<JsonDateTime>();
 
-        if (!date.TryGetDateTime(out _))
+        if (!LinkedFormatChecks.Matches(instance, Corvus.Text.Json.Internal.FormatMatchers.MatchDateTime))
         {
             if (level >= ValidationLevel.Detailed)
             {

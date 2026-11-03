@@ -37,13 +37,14 @@ format_bytes(text::String) = C.Bytes(Vector{UInt8}(text))
     @testset "the Unicode formats use Unicode 17" begin
         @test C.EcmaRegex.UNICODE_VERSION == "17.0.0"
         # U+10D4A and U+10D4B are Garay letters, assigned in Unicode 16. U+1C89 is an uppercase letter of Unicode
-        # 16, and IDNA2008 disallows uppercase letters. U+2FFFF is a noncharacter in every version.
+        # 16, which the UTS #46 mapping lowers to U+1C8A. U+2FFFF is a noncharacter in every version, which IDNA2008
+        # disallows in a host name; RFC 6531 allows every character outside ASCII in the local part of an address.
         for (host, want) in ["\U00010D4A\U00010D4B.example" => true, "ᲊ.example" => true,
-            "Ᲊ.example" => false, "\U0002FFFF.example" => false]
+            "Ᲊ.example" => true, "\U0002FFFF.example" => false]
             @test C.is_idn_hostname(format_bytes(host)) == want
         end
         for (address, want) in ["\U00010D4A\U00010D4B@example.com" => true,
-            "\U00016EA0\U00016EBB@example.com" => true, "\U0002FFFF@example.com" => false,
+            "\U00016EA0\U00016EBB@example.com" => true, "\U0002FFFF@example.com" => true,
             "δοκιμή@example.com" => true, "a b@example.com" => false]
             @test C.is_email(format_bytes(address), true) == want
         end

@@ -50,9 +50,9 @@ public class JsonSchemaMatchingStringTests
 
     [TestMethod]
     [DataRow("user@example.com", true)]
-    [DataRow("(allows leading comment)user@example.com", true)]
-    [DataRow("user(allows trailing comment)@example.com", true)]
-    [DataRow("(allows leading comment)user(and allows trailing comment)@example.com", true)]
+    [DataRow("(allows leading comment)user@example.com", false)] // RFC 5321 has no comments: a parenthesis is not an atext character
+    [DataRow("user(allows trailing comment)@example.com", false)] // RFC 5321 has no comments: a parenthesis is not an atext character
+    [DataRow("(allows leading comment)user(and allows trailing comment)@example.com", false)] // RFC 5321 has no comments: a parenthesis is not an atext character
     [DataRow("(user@example.com", false)]
     [DataRow("user(akdjsd@example.com", false)]
     [DataRow("u:ser@example.com", false)]
@@ -113,9 +113,9 @@ public class JsonSchemaMatchingStringTests
 
     [TestMethod]
     [DataRow("用户@例子.广告", true)]
-    [DataRow("(allows leading comment)用户@例子.广告", true)]
-    [DataRow("用户(allows trailing comment)@例子.广告", true)]
-    [DataRow("(allows leading comment)用户(and allows trailing comment)@例子.广告", true)]
+    [DataRow("(allows leading comment)用户@例子.广告", false)] // RFC 5321 has no comments: a parenthesis is not an atext character
+    [DataRow("用户(allows trailing comment)@例子.广告", false)] // RFC 5321 has no comments: a parenthesis is not an atext character
+    [DataRow("(allows leading comment)用户(and allows trailing comment)@例子.广告", false)] // RFC 5321 has no comments: a parenthesis is not an atext character
     [DataRow("(用户@例子.广告", false)]
     [DataRow("用户(sdk@例子.广告", false)]
     [DataRow("ಬೆಂಬಲ@ಡೇಟಾಮೇಲ್.ಭಾರತ", true)]
@@ -401,8 +401,8 @@ public class JsonSchemaMatchingStringTests
     [DataRow("relative/påth/to/résource", true)]
     [DataRow("../père/mère", true)]
     [DataRow("./current/dîrectory", true)]
-    [DataRow("スキーム://ホスト.ドメイン/パス", true)]
-    [DataRow("протокол://хост.домен/путь", true)]
+    [DataRow("スキーム://ホスト.ドメイン/パス", false)] // A scheme is ASCII, and the first segment of a relative-path reference has no colon (RFC 3987)
+    [DataRow("протокол://хост.домен/путь", false)] // A scheme is ASCII, and the first segment of a relative-path reference has no colon (RFC 3987)
     public void MatchIriReference_ValidatesIriReference(string value, bool expected)
     {
         var collector = new DummyResultsCollector();
@@ -559,7 +559,7 @@ public class JsonSchemaMatchingStringTests
     // Percent-encoding stress tests
     [DataRow("http://example.com/%20%21%22%23%24%25%26%27%28%29", true)]
     [DataRow("http://example.com/a%2Fb%2Fc", true)]
-    [DataRow("http://example.com/%C2%A9", false)] // UTF-8 encoded may not be valid in strict URI mode
+    [DataRow("http://example.com/%C2%A9", true)] // Percent-encoded UTF-8 is pct-encoded (RFC 3986 section 2.1)
     [DataRow("http://example.com/%", false)] // Incomplete percent-encoding
     [DataRow("http://example.com/%2", false)] // Incomplete percent-encoding
     [DataRow("http://example.com/%ZZ", false)] // Invalid hex
@@ -621,20 +621,20 @@ public class JsonSchemaMatchingStringTests
     // Unicode and IRI test cases (IRI parsing optimization)
     [DataRow("/пуṫḩ/ẅἰṫḩ/υηἰċøժε", false)] // Unicode paths fail in strict URI reference mode
     [DataRow("//хост.example.com/пуṫḩ", false)]
-    // IPv6 address test cases (UNC paths not permitted)
-    [DataRow("//[2001:db8::1]/path", false)]
-    [DataRow("//[::1]:8080/path", false)]
+    // Network-path references with an IP-literal host (RFC 3986 section 4.2: relative-part = "//" authority path-abempty)
+    [DataRow("//[2001:db8::1]/path", true)]
+    [DataRow("//[::1]:8080/path", true)]
     [DataRow("//[2001:db8::1", false)]
     // Authority parsing edge cases
     [DataRow("//user:pass@host.com:8080/path", true)] // These are valid relative reference
     [DataRow("//user@host.com/path", true)] // These are valid relative reference
     [DataRow("//host.com:8080/path", true)] // These are valid relative reference
-    [DataRow("//[v1.1]:8080/", false)] // But this one isn't
+    [DataRow("//[v1.1]:8080/", true)] // An IPvFuture literal (RFC 3986 section 3.2.2)
     // Scheme validation edge cases
     [DataRow("custom-scheme://example.com", true)]
     [DataRow("x-custom+scheme://example.com", true)]
-    [DataRow("123://example.com", true)] // Parser allows scheme starting with digit in URI reference
-    [DataRow("-scheme://example.com", true)] // Parser allows scheme starting with hyphen in URI reference
+    [DataRow("123://example.com", false)] // Not a scheme, which starts with a letter; and the first segment of a relative-path reference has no colon (RFC 3986 section 4.2)
+    [DataRow("-scheme://example.com", false)] // Not a scheme, which starts with a letter; and the first segment of a relative-path reference has no colon (RFC 3986 section 4.2)
     public void MatchUriReference_ValidatesUriReference(string value, bool expected)
     {
         var collector = new DummyResultsCollector();
@@ -711,7 +711,7 @@ public class JsonSchemaMatchingStringTests
     [DataRow("{+path}/here", true)]
     [DataRow("here?ref={+path}", true)]
     [DataRow("{var}", true)]
-    [DataRow("'{var}'", false)]
+    [DataRow("'{var}'", true)] // The apostrophe is a literal (RFC 6570 erratum 6937)
     [DataRow("{hello}", true)]
     [DataRow("http://ƒøø.ßår/?∂éœ={var}#πîüx", true)]
     [DataRow("#ƒräg\\mênt/{var}", false)]

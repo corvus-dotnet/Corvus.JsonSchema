@@ -420,28 +420,27 @@ function eval_number(e::Evaluator, n::SchemaNode, x::Int)::Bool
         keyword!(e, m, message, "format") && return false
         ok = ok && m
     end
-    flag, dat = flags(d, x), data(d, x)
     b = n.minimum
     if is_set(b)
-        m = compare_numbers(flag, dat, flags(b.d, b.n), data(b.d, b.n)) >= 0
+        m = compare_values(d, x, b.d, b.n) >= 0
         bound_keyword!(e, b, m, "The value was expected to be greater than or equal to", "minimum") && return false
         ok = ok && m
     end
     b = n.maximum
     if is_set(b)
-        m = compare_numbers(flag, dat, flags(b.d, b.n), data(b.d, b.n)) <= 0
+        m = compare_values(d, x, b.d, b.n) <= 0
         bound_keyword!(e, b, m, "The value was expected to be less than or equal to", "maximum") && return false
         ok = ok && m
     end
     b = n.exclusive_minimum
     if is_set(b)
-        m = compare_numbers(flag, dat, flags(b.d, b.n), data(b.d, b.n)) > 0
+        m = compare_values(d, x, b.d, b.n) > 0
         bound_keyword!(e, b, m, "The value was expected to be greater than", "exclusiveMinimum") && return false
         ok = ok && m
     end
     b = n.exclusive_maximum
     if is_set(b)
-        m = compare_numbers(flag, dat, flags(b.d, b.n), data(b.d, b.n)) < 0
+        m = compare_values(d, x, b.d, b.n) < 0
         bound_keyword!(e, b, m, "The value was expected to be less than", "exclusiveMaximum") && return false
         ok = ok && m
     end

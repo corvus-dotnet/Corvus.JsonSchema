@@ -257,9 +257,9 @@ function plan_node(p::Program, id::NodeId, n::SchemaNode)
 
     # Numbers.
     f = format_check_for(true)
-    f === nothing || push!(b.number, NumberOp(NUMBER_FORMAT, 0x00, 0, NO_DIVISOR, f))
+    f === nothing || push!(b.number, NumberOp(NUMBER_FORMAT, NO_VALUE, NO_DIVISOR, f))
     function bound(k::UInt8, v::ValueRef)
-        is_set(v) && push!(b.number, NumberOp(k, flags(v.d, v.n), data(v.d, v.n), NO_DIVISOR, FormatCheck()))
+        is_set(v) && push!(b.number, NumberOp(k, v, NO_DIVISOR, FormatCheck()))
         return nothing
     end
     bound(NUMBER_MINIMUM, n.minimum)
@@ -267,7 +267,7 @@ function plan_node(p::Program, id::NodeId, n::SchemaNode)
     bound(NUMBER_EXCLUSIVE_MINIMUM, n.exclusive_minimum)
     bound(NUMBER_EXCLUSIVE_MAXIMUM, n.exclusive_maximum)
     if is_set(n.multiple_of)
-        push!(b.number, NumberOp(NUMBER_MULTIPLE_OF, 0x00, 0, n.divisor::Divisor, FormatCheck()))
+        push!(b.number, NumberOp(NUMBER_MULTIPLE_OF, NO_VALUE, n.divisor::Divisor, FormatCheck()))
     end
 
     # Strings.
@@ -1146,18 +1146,17 @@ end
 
 function run_number(e::Evaluator, ops::Vector{NumberOp}, x::Int)::Bool
     d = e.d
-    flag, dat = flags(d, x), data(d, x)
     for i in eachindex(ops)
         o = ops[i]
         k = o.kind
         ok = if k == NUMBER_MINIMUM
-            compare_numbers(flag, dat, o.flag, o.data) >= 0
+            compare_values(d, x, o.bound.d, o.bound.n) >= 0
         elseif k == NUMBER_MAXIMUM
-            compare_numbers(flag, dat, o.flag, o.data) <= 0
+            compare_values(d, x, o.bound.d, o.bound.n) <= 0
         elseif k == NUMBER_EXCLUSIVE_MINIMUM
-            compare_numbers(flag, dat, o.flag, o.data) > 0
+            compare_values(d, x, o.bound.d, o.bound.n) > 0
         elseif k == NUMBER_EXCLUSIVE_MAXIMUM
-            compare_numbers(flag, dat, o.flag, o.data) < 0
+            compare_values(d, x, o.bound.d, o.bound.n) < 0
         elseif k == NUMBER_MULTIPLE_OF
             divides(o.divisor, d, x)
         else

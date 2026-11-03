@@ -10,7 +10,7 @@ use JSON::Schema::Corvus::Error;
 use JSON::Schema::Corvus::Json ();
 use JSON::Schema::Corvus::ResultsCollector;
 
-our $VERSION = 'v0.1.0';
+our $VERSION = 'v0.1.1';
 
 my %OPTIONS = map { $_ => 1 } qw(
   default_dialect assert_format assert_format_in_legacy_drafts assert_content formats resolve_document base_uri

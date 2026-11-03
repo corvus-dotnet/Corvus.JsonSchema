@@ -92,9 +92,8 @@ const NO_DIVISOR = Divisor(false, 0, -1, 0, Rational{BigInt}(0))
 
 struct NumberOp
     kind::UInt8
-    # The bound's representation.
-    flag::UInt8
-    data::UInt64
+    # The bound.
+    bound::ValueRef
     divisor::Divisor
     format::FormatCheck
 end

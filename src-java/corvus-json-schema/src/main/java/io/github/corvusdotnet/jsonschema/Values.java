@@ -25,7 +25,7 @@ final class Values {
             case BOOLEAN:
                 return a.bool(x) == b.bool(y);
             case NUMBER:
-                return Numbers.compare(a.flags(x), a.data(x), b.flags(y), b.data(y)) == 0;
+                return Numbers.compare(a, x, b, y) == 0;
             case STRING:
                 return a.stringEquals(x, b, y);
             case ARRAY: {

@@ -318,20 +318,22 @@ let run_number e (ops : number_op array) x =
   let d = e.d in
   let flag = flags d x and data = data d x in
   let floats = floats d in
+  let source = source d and start = number_start d x in
   let i = ref 0 in
   let ok = ref true in
   while !ok && !i < Array.length ops do
     let o = ops.(!i) in
     let k = o.n_kind in
     ok :=
-      if k = number_minimum then Numbers.compare flag data floats o.n_flag o.n_data o.n_floats >= 0
-      else if k = number_maximum then Numbers.compare flag data floats o.n_flag o.n_data o.n_floats <= 0
-      else if k = number_exclusive_minimum then Numbers.compare flag data floats o.n_flag o.n_data o.n_floats > 0
-      else if k = number_exclusive_maximum then Numbers.compare flag data floats o.n_flag o.n_data o.n_floats < 0
+      if k <= number_exclusive_maximum then begin
+        let c = Numbers.compare_exact flag data floats source start o.n_flag o.n_data o.n_floats o.n_source o.n_start in
+        if k = number_minimum then c >= 0
+        else if k = number_maximum then c <= 0
+        else if k = number_exclusive_minimum then c > 0
+        else c < 0
+      end
       else if k = number_multiple_of then
-        match o.n_divisor with
-        | Some divisor -> Numbers.divides divisor flag data (source d) (number_start d x)
-        | None -> true
+        match o.n_divisor with Some divisor -> Numbers.divides divisor flag data source start | None -> true
       else check_number_format o.n_format e x;
     incr i
   done;

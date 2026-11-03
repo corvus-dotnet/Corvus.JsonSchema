@@ -334,9 +334,10 @@ public class JsonSchemaEvaluationCoverageTests
     }
 
     [TestMethod]
-    public void MatchIdnEmail_NonLetterDigitMarkAtStart_ReturnsFalse()
+    public void MatchIdnEmail_NonAsciiSymbolAtStart_ReturnsTrue()
     {
-        // U+00A9 (©) at start of local part — OtherPunctuation category, not letter/digit/mark
+        // U+00A9 (©) at the start of the local part. RFC 6531 adds every UTF8-non-ascii character to atext, whatever
+        // its category.
         string email = "\u00a9user@example.com";
 
         var collector = new DummyResultsCollector();
@@ -344,7 +345,7 @@ public class JsonSchemaEvaluationCoverageTests
 
         bool result = JsonSchemaEvaluation.MatchIdnEmail(Encoding.UTF8.GetBytes(email), "dummy"u8, ref context);
 
-        Assert.IsFalse(result);
+        Assert.IsTrue(result);
         context.Dispose();
     }
 

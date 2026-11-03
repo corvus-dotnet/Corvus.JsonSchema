@@ -48,11 +48,14 @@ final class SchemaNode {
         final int flag;
         final long bits;
         final String text;
+        /** The text as written, in UTF-8 (which is ASCII for a number). */
+        final byte[] utf8;
 
         Num(JsonDocument doc, int node) {
             flag = doc.flags(node);
             bits = doc.data(node);
             text = doc.numberText(node);
+            utf8 = text.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
         }
     }
 

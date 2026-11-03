@@ -60,6 +60,10 @@ class FormatLimitsTest {
      * The answers the formats gave before their regular expressions were replaced, for the format instances of the
      * JSON-Schema-Test-Suite, texts written for each rule of each grammar, and generated texts: 12,927 answers.
      * The same build answered a further 1.4 million generated texts the same way as the build that replaced it.
+     * In 0.1.4, 112 of the answers changed where the unified JSON-Schema-Test-Suite found the checks wrong: a quoted
+     * email local part takes only printable ASCII, an idn-email local part any character outside ASCII, an
+     * idn-hostname is mapped by UTS #46 first, and a uri-template literal may hold an apostrophe but not a stray
+     * percent sign.
      */
     @Test
     void theFormatsAnswerAsTheyDid() throws IOException {

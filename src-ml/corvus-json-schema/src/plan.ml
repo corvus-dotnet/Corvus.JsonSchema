@@ -271,7 +271,16 @@ let plan_node (p : Program.t) id (n : Node.t) =
             else Some { custom = None; fc_kind = n.format_kind; legacy = Dialect.rank n.dialect <= 1 }
     in
     let number_op kind =
-      { n_kind = kind; n_flag = 0; n_data = 0; n_floats = Float.Array.create 0; n_divisor = None; n_format = no_format }
+      {
+        n_kind = kind;
+        n_flag = 0;
+        n_data = 0;
+        n_floats = Float.Array.create 0;
+        n_source = Bytes.empty;
+        n_start = 0;
+        n_divisor = None;
+        n_format = no_format;
+      }
     in
 
     (* Numbers. *)
@@ -287,6 +296,8 @@ let plan_node (p : Program.t) id (n : Node.t) =
             n_flag = Document.flags v.d v.n;
             n_data = Document.data v.d v.n;
             n_floats = Document.floats v.d;
+            n_source = Document.source v.d;
+            n_start = Document.number_start v.d v.n;
           }
           :: !number
     in

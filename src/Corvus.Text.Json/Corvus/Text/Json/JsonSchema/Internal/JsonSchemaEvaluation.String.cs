@@ -138,39 +138,6 @@ public static partial class JsonSchemaEvaluation
     public static readonly JsonSchemaMessageProvider WarningBase64Content = static (buffer, out written) => WriteWarning(ExpectedBase64Content, buffer, out written);
 
     /// <summary>
-    /// Gets the allowed characters for the local part of an email address.
-    /// </summary>
-    private static ReadOnlySpan<byte> AllowedLocalCharacters => "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$%&'*+-/=?^_`{|}~"u8;
-
-    /// <summary>
-    /// Gets the allowed characters for the local part of an email address.
-    /// </summary>
-    private static ReadOnlySpan<byte> AllowedLocalCharactersInQuotedString => "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$%&'*+-/=?^_`{|}~\"@. \r\n\t"u8;
-
-    private static ReadOnlySpan<int> DisallowedIdn =>
-            [0x0640, 0x07FA, 0x302E, 0x302F,
-        0x3031, 0x3032, 0x3033, 0x3034,
-        0x3035, 0x303B];
-
-    private static ReadOnlySpan<int> ViramaTable =>
-            [0x094D, 0x09CD, 0x0A4D, 0x0ACD,
-        0x0B4D, 0x0BCD, 0x0C4D, 0x0CCD,
-        0x0D3B, 0x0D3C, 0x0D4D, 0x0DCA,
-        0x0E3A, 0x0EBA, 0x0F84, 0x1039,
-        0x103A, 0x1714, 0x1715, 0x1734,
-        0x17D2, 0x1A60, 0x1B44, 0x1BAA,
-        0x1BAB, 0x1BF2, 0x1BF3, 0x2D7F,
-        0xA806, 0xA82C, 0xA8C4, 0xA953,
-        0xA9C0, 0xAAF6, 0xABED, 0x10A3F,
-        0x11046, 0x11070, 0x1107F, 0x110B9,
-        0x11133, 0x11134, 0x111C0, 0x11235,
-        0x112EA, 0x1134D, 0x11442, 0x114C2,
-        0x115BF, 0x1163F, 0x116B6, 0x1172B,
-        0x11839, 0x1193D, 0x1193E, 0x119E0,
-        0x11A34, 0x11A47, 0x11A99, 0x11C3F,
-        0x11D44, 0x11D45, 0x11D97];
-
-    /// <summary>
     /// Validates that a string length equals the given value.
     /// </summary>
     /// <param name="value">The UTF-8 encoded string value to validate.</param>
@@ -634,7 +601,7 @@ public static partial class JsonSchemaEvaluation
     [CLSCompliant(false)]
     public static bool MatchDate(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
     {
-        if (!JsonElementHelpers.TryParseLocalDate(value, out _))
+        if (!FormatMatchers.MatchDate(value))
         {
             context.EvaluatedKeyword(false, messageProvider: ExpectedDate, keyword);
             return false;
@@ -654,7 +621,7 @@ public static partial class JsonSchemaEvaluation
     [CLSCompliant(false)]
     public static bool MatchDateTime(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
     {
-        if (!JsonElementHelpers.TryParseOffsetDateTime(value, out _))
+        if (!FormatMatchers.MatchDateTime(value))
         {
             context.EvaluatedKeyword(false, messageProvider: ExpectedDateTime, keyword);
             return false;
@@ -674,7 +641,7 @@ public static partial class JsonSchemaEvaluation
     [CLSCompliant(false)]
     public static bool MatchDuration(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
     {
-        if (!JsonElementHelpers.TryParsePeriod(value, out _))
+        if (!MatchDuration(value))
         {
             context.EvaluatedKeyword(false, messageProvider: ExpectedDuration, keyword);
             return false;
@@ -937,7 +904,7 @@ public static partial class JsonSchemaEvaluation
     [CLSCompliant(false)]
     public static bool MatchTime(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
     {
-        if (!JsonElementHelpers.TryParseOffsetTime(value, out _))
+        if (!FormatMatchers.MatchTime(value))
         {
             context.EvaluatedKeyword(false, messageProvider: ExpectedTime, keyword);
             return false;
@@ -1149,7 +1116,7 @@ public static partial class JsonSchemaEvaluation
     [CLSCompliant(false)]
     public static bool WarnDate(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
     {
-        if (!JsonElementHelpers.TryParseLocalDate(value, out _))
+        if (!FormatMatchers.MatchDate(value))
         {
             context.EvaluatedKeyword(true, WarningDate, keyword);
             return true;
@@ -1169,7 +1136,7 @@ public static partial class JsonSchemaEvaluation
     [CLSCompliant(false)]
     public static bool WarnDateTime(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
     {
-        if (!JsonElementHelpers.TryParseOffsetDateTime(value, out _))
+        if (!FormatMatchers.MatchDateTime(value))
         {
             context.EvaluatedKeyword(true, WarningDateTime, keyword);
             return true;
@@ -1189,7 +1156,7 @@ public static partial class JsonSchemaEvaluation
     [CLSCompliant(false)]
     public static bool WarnDuration(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
     {
-        if (!JsonElementHelpers.TryParsePeriod(value, out _))
+        if (!MatchDuration(value))
         {
             context.EvaluatedKeyword(true, WarningDuration, keyword);
             return true;
@@ -1429,7 +1396,7 @@ public static partial class JsonSchemaEvaluation
     [CLSCompliant(false)]
     public static bool WarnTime(ReadOnlySpan<byte> value, ReadOnlySpan<byte> keyword, ref JsonSchemaContext context)
     {
-        if (!JsonElementHelpers.TryParseOffsetTime(value, out _))
+        if (!FormatMatchers.MatchTime(value))
         {
             context.EvaluatedKeyword(true, WarningTime, keyword);
             return true;
@@ -1579,683 +1546,71 @@ public static partial class JsonSchemaEvaluation
         return true;
     }
 
-    /// <summary>
-    /// Validates that a decoded UTF-8 hostname value conforms to the hostname format requirements.
-    /// </summary>
-    /// <param name="value">The decoded UTF-8 hostname value to validate.</param>
-    /// <returns><see langword="true"/> if the value is a valid decoded hostname; otherwise, <see langword="false"/>.</returns>
+    // The format checks themselves are in FormatMatchers, which the V4 engine shares.
+
+    /// <inheritdoc cref="FormatMatchers.MatchDecodedHostname(ReadOnlySpan{byte})"/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static bool MatchDecodedHostname(ReadOnlySpan<byte> value)
-    {
-        bool wasLastDot = false;
-        int i = 0;
-        Rune previousRune = default;
-        bool hasHiraganaKatakanaOrHan = false;
-        bool hasKatakankaMiddleDot = false;
-        bool hasArabicIndicDigits = false;
-        bool hasExtendedArabicIndicDigits = false;
-        int runeCount = 0;
-        int labelStart = 0;
-        bool labelHasNonAscii = false;
-        bool labelFirstSet = false;
-        bool labelFirstIsL = false;
-        bool labelFirstIsRal = false;
-        bool labelHasL = false;
-        bool labelHasRal = false;
-        bool labelHasEuropeanDigit = false;
-        bool domainIsBidi = false;
-        bool bidiViolation = false;
-        int nameLength = 0;
-        while (i < value.Length)
-        {
-            // Increment the rune count to make it 1-based
-            runeCount++;
+    internal static bool MatchDecodedHostname(ReadOnlySpan<byte> value) => FormatMatchers.MatchDecodedHostname(value);
 
-            byte byteValue = value[i];
-            Rune.DecodeFromUtf8(value.Slice(i), out Rune rune, out int bytesConsumed);
-
-            StrongBidiCategory bidiCategory = rune.Value < 0x80
-                ? (((byteValue | 0x20) >= (byte)'a' && (byteValue | 0x20) <= (byte)'z') ? StrongBidiCategory.StrongLeftToRight : StrongBidiCategory.Other)
-                : CharUnicodeInfo.GetBidiCategory(value, i, out _);
-
-            if (i == 0)
-            {
-                System.Globalization.UnicodeCategory category = Rune.GetUnicodeCategory(rune);
-                if (category == System.Globalization.UnicodeCategory.SpacingCombiningMark ||
-                    category == System.Globalization.UnicodeCategory.EnclosingMark ||
-                    category == System.Globalization.UnicodeCategory.NonSpacingMark)
-                {
-                    return false;
-                }
-            }
-
-            i += bytesConsumed;
-
-            hasHiraganaKatakanaOrHan |= IsHiraganaKatakanaOrHanNotMiddleDot(rune.Value);
-            hasArabicIndicDigits |= IsArabicIndicDigit(rune.Value);
-            hasExtendedArabicIndicDigits |= IsExtendedArabicIndicDigit(rune.Value);
-
-            bool isDotRune = byteValue == (byte)'.' || rune.Value == 0x3002 || rune.Value == 0xFF0E || rune.Value == 0xFF61;
-
-            if (!isDotRune)
-            {
-                // Track the RFC 5893 Bidi properties of the label. The rules are evaluated at
-                // the end of each label, and enforced only when the domain turns out to be a
-                // Bidi domain name (it contains at least one RTL character anywhere).
-                if (!labelFirstSet)
-                {
-                    labelFirstSet = true;
-                    labelFirstIsL = bidiCategory == StrongBidiCategory.StrongLeftToRight;
-                    labelFirstIsRal = bidiCategory == StrongBidiCategory.StrongRightToLeft;
-                }
-
-                labelHasL |= bidiCategory == StrongBidiCategory.StrongLeftToRight;
-                labelHasRal |= bidiCategory == StrongBidiCategory.StrongRightToLeft;
-                labelHasEuropeanDigit |= (byteValue >= (byte)'0' && byteValue <= (byte)'9') || IsExtendedArabicIndicDigit(rune.Value);
-                labelHasNonAscii |= rune.Value > 0x7F;
-                domainIsBidi |= bidiCategory == StrongBidiCategory.StrongRightToLeft || IsArabicIndicDigit(rune.Value);
-            }
-
-            if (wasLastDot)
-            {
-                if (!Rune.IsLetter(rune))
-                {
-                    return false;
-                }
-            }
-
-            if (DisallowedIdn.IndexOf(rune.Value) >= 0)
-            {
-                // Disallowed characters in IDN
-                return false;
-            }
-
-            if (!Rune.IsLetterOrDigit(rune))
-            {
-                if (isDotRune)
-                {
-                    if (hasKatakankaMiddleDot && !hasHiraganaKatakanaOrHan)
-                    {
-                        // If we have a Katakana middle dot, it must be have a Hiragana, Katakana or Han character.
-                        return false;
-                    }
-
-                    if (hasArabicIndicDigits && hasExtendedArabicIndicDigits)
-                    {
-                        // You are not permitted both arabic indic AND extended arabic indic
-                        return false;
-                    }
-
-                    if (!AddALabelLength(value.Slice(labelStart, i - bytesConsumed - labelStart), labelHasNonAscii, ref nameLength))
-                    {
-                        // The A-label form of this U-label exceeds the 63-octet label limit (RFC 5890)
-                        return false;
-                    }
-
-                    // The dot, which is one character as A-labels whichever of the four dots it is.
-                    nameLength++;
-
-                    if (labelFirstSet)
-                    {
-                        bidiViolation |= IsBidiLabelViolation(labelFirstIsL, labelFirstIsRal, labelHasL, labelHasRal, hasArabicIndicDigits, labelHasEuropeanDigit);
-                    }
-
-                    hasHiraganaKatakanaOrHan = false;
-                    hasKatakankaMiddleDot = false;
-                    hasArabicIndicDigits = false;
-                    hasExtendedArabicIndicDigits = false;
-                    labelStart = i;
-                    labelHasNonAscii = false;
-                    labelFirstSet = false;
-                    labelFirstIsL = false;
-                    labelFirstIsRal = false;
-                    labelHasL = false;
-                    labelHasRal = false;
-                    labelHasEuropeanDigit = false;
-                    wasLastDot = true;
-                    previousRune = rune;
-                    continue;
-                }
-
-                hasKatakankaMiddleDot |= (rune.Value == 0x30FB);
-
-                // First we do all the items that are allowed at the first character
-                Rune lookahead = default;
-
-                if (rune.Value == 0x0375)
-                {
-                    // If we have a Greek Keraia, it must be followed by a Greek character.
-                    // If we are the last character, that's a fail
-                    if (i >= value.Length)
-                    {
-                        return false;
-                    }
-
-                    Rune.DecodeFromUtf8(value.Slice(i), out lookahead, out _);
-
-                    // If the next character is not Greek, that's a fail
-                    if (!IsGreek(lookahead.Value))
-                    {
-                        return false;
-                    }
-
-                    wasLastDot = false;
-                    previousRune = rune;
-                    continue;
-                }
-
-                // Middle dot
-                if (rune.Value == 0x00B7)
-                {
-                    if (previousRune.Value != 0x006C)
-                    {
-                        return false;
-                    }
-
-                    if (lookahead.Value == 0)
-                    {
-                        Rune.DecodeFromUtf8(value.Slice(i), out lookahead, out _);
-                        if (lookahead.Value != 0x006C)
-                        {
-                            return false;
-                        }
-                    }
-                }
-
-                // These are all the tests which require preceding characters
-                if (byteValue == (byte)'-')
-                {
-                    if (i == bytesConsumed || i >= value.Length)
-                    {
-                        return false;
-                    }
-
-                    // Positions 3 and 4 must not be '--'
-                    if (runeCount == 4 && previousRune.Value == 0x002d)
-                    {
-                        return false;
-                    }
-
-                    wasLastDot = false;
-                    previousRune = rune;
-                    continue;
-                }
-
-                if (rune.Value < 0x80)
-                {
-                    // ASCII other than letters, digits, '.' and '-' (all handled above) is not valid
-                    // in a hostname label; without this, symbols like '[', ':' or '_' would fall
-                    // through the Unicode contextual rules below and be accepted.
-                    return false;
-                }
-
-                // ZERO WIDTH JOINER not preceded by Virama
-                if (rune.Value == 0x200D && !IsVirama(previousRune.Value))
-                {
-                    return false;
-                }
-
-                // ZERO WIDTH NON-JOINER must be preceded by Virama, or occur in a joining
-                // context (RFC 5892 Appendix A.1). This applies at every occurrence.
-                if (rune.Value == 0x200C &&
-                    !IsVirama(previousRune.Value) &&
-                    !IsZwnjInJoiningContext(value, labelStart, i - bytesConsumed, i))
-                {
-                    return false;
-                }
-
-                // If we are Geresh or Gershayim, the previous rune must be Hebrew
-                if ((rune.Value == 0x05F3 || rune.Value == 0x05F4) && !IsHebrew(previousRune.Value))
-                {
-                    return false;
-                }
-
-                if (rune.Value > 0x7F && !IsPermittedNonLetterOrDigit(rune.Value))
-                {
-                    System.Globalization.UnicodeCategory category = Rune.GetUnicodeCategory(rune);
-                    if (category != System.Globalization.UnicodeCategory.NonSpacingMark &&
-                        category != System.Globalization.UnicodeCategory.SpacingCombiningMark &&
-                        category != System.Globalization.UnicodeCategory.EnclosingMark)
-                    {
-                        // IDNA2008 disallows punctuation, symbols and other non-letter,
-                        // non-digit, non-mark code points in a U-label, except the contextual
-                        // code points handled above.
-                        return false;
-                    }
-                }
-            }
-
-            wasLastDot = false;
-            previousRune = rune;
-        }
-
-        if (hasKatakankaMiddleDot && !hasHiraganaKatakanaOrHan)
-        {
-            // If we have a Katakana middle dot, it must be have a Hiragana, Katakana or Han character.
-            return false;
-        }
-
-        if (hasArabicIndicDigits && hasExtendedArabicIndicDigits)
-        {
-            // You are not permitted both Arabic Indic AND extended Arabic Indic
-            return false;
-        }
-
-        if (!AddALabelLength(value.Slice(labelStart), labelHasNonAscii, ref nameLength))
-        {
-            // The A-label form of this U-label exceeds the 63-octet label limit (RFC 5890)
-            return false;
-        }
-
-        if (nameLength > MaxHostnameLength)
-        {
-            // The name as A-labels is longer than 253 characters (RFC 5890 and RFC 1034)
-            return false;
-        }
-
-        if (labelFirstSet)
-        {
-            bidiViolation |= IsBidiLabelViolation(labelFirstIsL, labelFirstIsRal, labelHasL, labelHasRal, hasArabicIndicDigits, labelHasEuropeanDigit);
-        }
-
-        if (domainIsBidi && bidiViolation)
-        {
-            // RFC 5893 Bidi rule violation in a Bidi domain name
-            return false;
-        }
-
-        return true;
-    }
-
-    /// <summary>
-    /// Validates that a string value is a valid email address format.
-    /// </summary>
-    /// <param name="value">The UTF-8 encoded string value to validate.</param>
-    /// <returns><see langword="true"/> if the value is a valid email address; otherwise, <see langword="false"/>.</returns>
-    internal static bool MatchEmail(ReadOnlySpan<byte> value)
-    {
-        // There is no limit on the address as a whole, or on its local part: only the domain has one (253 characters,
-        // as a host name). The other ports limit only the domain too (#1029).
-        if (value.Length < 3)
-        {
-            return false;
-        }
-
-        int atIndex = value.LastIndexOf((byte)'@');
-        if (atIndex <= 0 || atIndex == value.Length - 1)
-        {
-            return false;
-        }
-
-        // Local part
-        ReadOnlySpan<byte> segment = value.Slice(0, atIndex);
-
-        if (!MatchEmailLocalPart(segment))
-        {
-            return false;
-        }
-
-        // Domain part
-        segment = value.Slice(atIndex + 1);
-
-        if (segment[0] == (byte)'[')
-        {
-            return MatchAddressLiteral(segment);
-        }
-
-        return MatchHostname(segment);
-    }
-
-    /// <summary>
-    /// Validates that an email domain segment is a valid RFC 5321 address-literal.
-    /// </summary>
-    /// <param name="segment">The UTF-8 encoded domain segment, including the enclosing brackets.</param>
-    /// <returns><see langword="true"/> if the segment is a valid address-literal; otherwise, <see langword="false"/>.</returns>
-    /// <remarks>
-    /// RFC 5321 §4.1.3: <c>address-literal = "[" ( IPv4-address-literal / IPv6-address-literal / General-address-literal ) "]"</c>.
-    /// General-address-literal tags are not accepted here; only IPv4 and IPv6 literals validate, matching the
-    /// JSON Schema test suite's expectations for the <c>email</c> and <c>idn-email</c> formats.
-    /// </remarks>
+    /// <inheritdoc cref="FormatMatchers.MatchDuration(ReadOnlySpan{byte})"/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool MatchAddressLiteral(ReadOnlySpan<byte> segment)
-    {
-        if (segment.Length < 3 || segment[segment.Length - 1] != (byte)']')
-        {
-            return false;
-        }
+    internal static bool MatchDuration(ReadOnlySpan<byte> value) => FormatMatchers.MatchDuration(value);
 
-        ReadOnlySpan<byte> addressLiteral = segment.Slice(1, segment.Length - 2);
-
-        if (addressLiteral.StartsWith("IPv6:"u8))
-        {
-            return MatchIPV6(addressLiteral.Slice(5));
-        }
-
-        return MatchIPV4AddressLiteral(addressLiteral);
-    }
-
-    /// <summary>
-    /// Validates that a value is a valid RFC 5321 IPv4-address-literal.
-    /// </summary>
-    /// <param name="value">The UTF-8 encoded value to validate, without the enclosing brackets.</param>
-    /// <returns><see langword="true"/> if the value is a valid IPv4-address-literal; otherwise, <see langword="false"/>.</returns>
-    /// <remarks>
-    /// RFC 5321 §4.1.3: <c>IPv4-address-literal = Snum 3("." Snum)</c> where <c>Snum = 1*3DIGIT</c> representing a
-    /// decimal value in the range 0 through 255. Unlike the RFC 3986 dec-octet rule used for the <c>ipv4</c> format,
-    /// Snum permits leading zeros, and they do not change the base — so this cannot be delegated to
-    /// <see cref="IPAddressParser.IsValidIPV4(ReadOnlySpan{byte}, bool)"/> in either canonical mode (which rejects
-    /// leading zeros) or non-canonical mode (which treats a leading zero as octal and accepts hex and shortened forms).
-    /// </remarks>
-    private static bool MatchIPV4AddressLiteral(ReadOnlySpan<byte> value)
-    {
-        int dots = 0;
-        int digits = 0;
-        int octetValue = 0;
-
-        for (int i = 0; i < value.Length; i++)
-        {
-            byte current = value[i];
-
-            if (current == (byte)'.')
-            {
-                if (digits == 0 || dots == 3)
-                {
-                    return false;
-                }
-
-                dots++;
-                digits = 0;
-                octetValue = 0;
-                continue;
-            }
-
-            uint digit = (uint)(current - (byte)'0');
-
-            if (digit > 9 || digits == 3)
-            {
-                return false;
-            }
-
-            digits++;
-            octetValue = (octetValue * 10) + (int)digit;
-
-            if (octetValue > 255)
-            {
-                return false;
-            }
-        }
-
-        return dots == 3 && digits != 0;
-    }
-
-    /// <summary>
-    /// The most characters a host name has as A-labels, not counting a final dot (RFC 1034 and RFC 5890).
-    /// </summary>
-    private const int MaxHostnameLength = 253;
-
-    /// <summary>
-    /// The most characters a label has as an A-label (RFC 5890).
-    /// </summary>
-    private const int MaxLabelLength = 63;
-
-    /// <summary>
-    /// The most UTF-8 bytes a host name has in any form. A name is <see cref="MaxHostnameLength"/> characters at most
-    /// as A-labels, and no label is shorter as an A-label than it has characters: an ASCII letter is itself there,
-    /// any other character is a digit or more, and <c>xn--</c> comes before them. So a name has 253 characters at
-    /// most, each of four bytes at most, in its Unicode form, in its A-label form or in a mix of the two. A longer
-    /// string is not a host name, and is not read.
-    /// </summary>
-    private const int MaxHostnameBytes = 4 * MaxHostnameLength;
-
-    /// <summary>
-    /// Validates that a string value is a valid hostname format.
-    /// </summary>
-    /// <param name="value">The UTF-8 encoded string value to validate.</param>
-    /// <returns><see langword="true"/> if the value is a valid hostname; otherwise, <see langword="false"/>.</returns>
+    /// <inheritdoc cref="FormatMatchers.MatchEmail(ReadOnlySpan{byte})"/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static bool MatchHostname(ReadOnlySpan<byte> value)
-    {
-        if (value.Length > MaxHostnameLength)
-        {
-            return false;
-        }
+    internal static bool MatchEmail(ReadOnlySpan<byte> value) => FormatMatchers.MatchEmail(value);
 
-        // The A-labels of the name decode to its Unicode form, which can be longer (see MaxHostnameBytes).
-        Span<byte> decoded = stackalloc byte[MaxHostnameBytes];
-        int i = 0;
-        int characterCount = 0;
-        byte lastAscii = 0;
-        bool decodePunicode = false;
-        while (i < value.Length)
-        {
-            if (value[i] > 0x7F)
-            {
-                // This is not ASCII, so give up
-                return false;
-            }
-
-            if (lastAscii == (byte)'-' && value[i] == (byte)'-')
-            {
-                // Detect punycode ACE prefix "xn--" at positions 3-4 of a label
-                if (characterCount == 3 &&
-                    (value[i - 3] == (byte)'x' || value[i - 3] == (byte)'X') &&
-                    (value[i - 2] == (byte)'n' || value[i - 2] == (byte)'N'))
-                {
-                    decodePunicode = true;
-                    break;
-                }
-
-                // RFC 1123 allows consecutive hyphens — continue processing
-            }
-
-            lastAscii = value[i];
-
-            if (lastAscii == (byte)'.')
-            {
-                if (characterCount > 63)
-                {
-                    return false;
-                }
-
-                characterCount = 0;
-                i++;
-                continue;
-            }
-
-            if (!char.IsLetterOrDigit((char)lastAscii) && !(characterCount != 0 && lastAscii == (byte)'-'))
-            {
-                return false;
-            }
-
-            characterCount++;
-            i++;
-        }
-
-        if (decodePunicode)
-        {
-            if (!IdnMapping.GetUnicodeOfAnyNameLength(value, decoded, out int written))
-            {
-                return false;
-            }
-
-            scoped ReadOnlySpan<byte> segment = decoded.Slice(0, written);
-
-            return MatchDecodedHostname(segment);
-        }
-
-        if (characterCount == 0 || characterCount > 63)
-        {
-            return false;
-        }
-
-        if (lastAscii == '-' || lastAscii == '.')
-        {
-            return false;
-        }
-
-        if (value[0] == '.')
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    /// <summary>
-    /// Validates that a string value is a valid internationalized domain name (IDN) email address format.
-    /// </summary>
-    /// <param name="value">The UTF-8 encoded string value to validate.</param>
-    /// <returns><see langword="true"/> if the value is a valid IDN email address; otherwise, <see langword="false"/>.</returns>
+    /// <inheritdoc cref="FormatMatchers.MatchHostname(ReadOnlySpan{byte})"/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static bool MatchIdnEmail(ReadOnlySpan<byte> value)
-    {
-        // There is no limit on the address as a whole, or on its local part: only the domain has one, the limit of a
-        // host name (253 characters as A-labels), which a domain of U-labels can meet with more than 320 bytes of UTF-8
-        // in the address. The other ports limit only the domain too (#1029).
-        if (value.Length < 3)
-        {
-            return false;
-        }
+    internal static bool MatchHostname(ReadOnlySpan<byte> value) => FormatMatchers.MatchHostname(value);
 
-        int atIndex = value.LastIndexOf((byte)'@');
-
-        if (atIndex <= 0 || atIndex == value.Length - 1)
-        {
-            return false;
-        }
-
-        // Local part
-        ReadOnlySpan<byte> segment = value.Slice(0, atIndex);
-
-        if (!MatchEmailLocalPartUnicode(segment))
-        {
-            return false;
-        }
-
-        // Domain part
-        segment = value.Slice(atIndex + 1);
-
-        if (segment[0] == (byte)'[')
-        {
-            // RFC 6531 extends only the local part; the RFC 5321 address-literal production is unchanged.
-            // This must not fall through to MatchIdnHostname, which does not reject '[', ':' or ']'.
-            return MatchAddressLiteral(segment);
-        }
-
-        return MatchIdnHostname(segment);
-    }
-
-    /// <summary>
-    /// Validates that a string value is a valid internationalized domain name (IDN) hostname format.
-    /// </summary>
-    /// <param name="value">The UTF-8 encoded string value to validate.</param>
-    /// <returns><see langword="true"/> if the value is a valid IDN hostname; otherwise, <see langword="false"/>.</returns>
+    /// <inheritdoc cref="FormatMatchers.MatchIPV4(ReadOnlySpan{byte})"/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static bool MatchIdnHostname(ReadOnlySpan<byte> value)
-    {
-        // The limit of 253 is on the name as A-labels, which MatchDecodedHostname counts. A name of U-labels can have
-        // more UTF-8 bytes than that, and fewer.
-        if (value.Length > MaxHostnameBytes)
-        {
-            return false;
-        }
+    internal static bool MatchIPV4(ReadOnlySpan<byte> value) => FormatMatchers.MatchIPV4(value);
 
-        Span<byte> decoded = stackalloc byte[MaxHostnameBytes];
-
-        if (!IdnMapping.GetUnicodeOfAnyNameLength(value, decoded, out int written))
-        {
-            return false;
-        }
-
-        scoped ReadOnlySpan<byte> segment = decoded.Slice(0, written);
-
-        return MatchDecodedHostname(segment);
-    }
-
-    /// <summary>
-    /// Validates that a string value is a valid IPv4 address format.
-    /// </summary>
-    /// <param name="value">The UTF-8 encoded string value to validate.</param>
-    /// <returns><see langword="true"/> if the value is a valid IPv4 address; otherwise, <see langword="false"/>.</returns>
+    /// <inheritdoc cref="FormatMatchers.MatchIPV6(ReadOnlySpan{byte})"/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static bool MatchIPV4(ReadOnlySpan<byte> value)
-    {
-        if (value.Length > IPAddressParser.MaxIPv4StringLength)
-        {
-            return false;
-        }
+    internal static bool MatchIPV6(ReadOnlySpan<byte> value) => FormatMatchers.MatchIPV6(value);
 
-        return IPAddressParser.IsValidIPV4(value);
-    }
-
-    /// <summary>
-    /// Validates that a string value is a valid IPv6 address format.
-    /// </summary>
-    /// <param name="value">The UTF-8 encoded string value to validate.</param>
-    /// <returns><see langword="true"/> if the value is a valid IPv6 address; otherwise, <see langword="false"/>.</returns>
+    /// <inheritdoc cref="FormatMatchers.MatchIdnEmail(ReadOnlySpan{byte})"/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static bool MatchIPV6(ReadOnlySpan<byte> value)
-    {
-        if (value.Length > IPAddressParser.MaxIPv6StringLength)
-        {
-            return false;
-        }
+    internal static bool MatchIdnEmail(ReadOnlySpan<byte> value) => FormatMatchers.MatchIdnEmail(value);
 
-        return IPAddressParser.IsValidIPV6(value);
-    }
-
-    /// <summary>
-    /// Validates that a string value is a valid Internationalized Resource Identifier (IRI) format.
-    /// </summary>
-    /// <param name="value">The UTF-8 encoded string value to validate.</param>
-    /// <returns><see langword="true"/> if the value is a valid IRI; otherwise, <see langword="false"/>.</returns>
+    /// <inheritdoc cref="FormatMatchers.MatchIdnHostname(ReadOnlySpan{byte})"/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static bool MatchIri(ReadOnlySpan<byte> value)
-    {
-        // Uri.TryCreate considers full-qualified file paths to be acceptable as absolute Uris.
-        // This means that on Linux "/abc" is considered an acceptable absolute Uri! (This is
-        // conceptually equivalent to "C:\abc" being an absolute Uri on Windows, but it's more
-        // of a problem because a lot of relative Uris of the kind you come across on the web
-        // look exactly like Unix file paths.)
-        // https://github.com/dotnet/runtime/issues/22718
-        // However, this only needs to be a problem if you insist that the Uri is absolute.
-        // If you accept either absolute or relative Uris, it will interpret "/abc" as a
-        // relative Uri on either Windows or Linux. It only interprets it as an absolute Uri
-        // if you pass UriKind.Absolute when parsing.
-        // This is why we take the peculiar-looking step of passing UriKind.RelativeOrAbsolute
-        // and then rejecting relative Uris. This causes this method to reject "/abc" on all
-        // platforms. Back when we passed UriKind.Absolute, this code incorrectly accepted
-        // "abc".
-        if (!Utf8UriTools.Validate(value, Utf8UriKind.RelativeOrAbsolute, requireAbsolute: true, allowIri: true, allowUNCPath: false))
-        {
-            // We may need the extra tests here
-            return false;
-        }
+    internal static bool MatchIdnHostname(ReadOnlySpan<byte> value) => FormatMatchers.MatchIdnHostname(value);
 
-        return true;
-    }
-
-    /// <summary>
-    /// Validates that a string value is a valid Internationalized Resource Identifier (IRI) reference format.
-    /// </summary>
-    /// <param name="value">The UTF-8 encoded string value to validate.</param>
-    /// <returns><see langword="true"/> if the value is a valid IRI reference; otherwise, <see langword="false"/>.</returns>
+    /// <inheritdoc cref="FormatMatchers.MatchIri(ReadOnlySpan{byte})"/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static bool MatchIriReference(ReadOnlySpan<byte> value)
-    {
-        return Utf8UriTools.Validate(value, Utf8UriKind.RelativeOrAbsolute, requireAbsolute: false, allowIri: true, allowUNCPath: false);
-    }
+    internal static bool MatchIri(ReadOnlySpan<byte> value) => FormatMatchers.MatchIri(value);
 
-    /// <summary>
-    /// Validates that a string value is a valid JSON Pointer format.
-    /// </summary>
-    /// <param name="value">The UTF-8 encoded string value to validate.</param>
-    /// <returns><see langword="true"/> if the value is a valid JSON Pointer; otherwise, <see langword="false"/>.</returns>
+    /// <inheritdoc cref="FormatMatchers.MatchIriReference(ReadOnlySpan{byte})"/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static bool MatchJsonPointer(ReadOnlySpan<byte> value)
-    {
-        return Utf8JsonPointerTools.Validate(value);
-    }
+    internal static bool MatchIriReference(ReadOnlySpan<byte> value) => FormatMatchers.MatchIriReference(value);
+
+    /// <inheritdoc cref="FormatMatchers.MatchJsonPointer(ReadOnlySpan{byte})"/>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static bool MatchJsonPointer(ReadOnlySpan<byte> value) => FormatMatchers.MatchJsonPointer(value);
+
+    /// <inheritdoc cref="FormatMatchers.MatchRelativeJsonPointer(ReadOnlySpan{byte})"/>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static bool MatchRelativeJsonPointer(ReadOnlySpan<byte> value) => FormatMatchers.MatchRelativeJsonPointer(value);
+
+    /// <inheritdoc cref="FormatMatchers.MatchUri(ReadOnlySpan{byte})"/>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static bool MatchUri(ReadOnlySpan<byte> value) => FormatMatchers.MatchUri(value);
+
+    /// <inheritdoc cref="FormatMatchers.MatchUriReference(ReadOnlySpan{byte})"/>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static bool MatchUriReference(ReadOnlySpan<byte> value) => FormatMatchers.MatchUriReference(value);
+
+    /// <inheritdoc cref="FormatMatchers.MatchUriTemplate(ReadOnlySpan{byte})"/>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static bool MatchUriTemplate(ReadOnlySpan<byte> value) => FormatMatchers.MatchUriTemplate(value);
+
+    /// <inheritdoc cref="FormatMatchers.MatchUuid(ReadOnlySpan{byte})"/>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static bool MatchUuid(ReadOnlySpan<byte> value) => FormatMatchers.MatchUuid(value);
 
     /// <summary>
     /// Validates that a string value is a valid ECMA-262 regular expression, read with today's grammar.
@@ -2282,503 +1637,6 @@ public static partial class JsonSchemaEvaluation
     internal static bool MatchRegex(ReadOnlySpan<byte> value, Corvus.Ecma262.RegularExpressions.RegexEdition edition, Corvus.Ecma262.RegularExpressions.RegexUnicodeVersion unicodeVersion)
     {
         return Corvus.Ecma262.RegularExpressions.Regex.IsValidPattern(value, Corvus.Ecma262.RegularExpressions.RegexFlags.Unicode, edition, unicodeVersion);
-    }
-
-    /// <summary>
-    /// Validates that a string value is a valid relative JSON Pointer format.
-    /// </summary>
-    /// <param name="value">The UTF-8 encoded string value to validate.</param>
-    /// <returns><see langword="true"/> if the value is a valid relative JSON Pointer; otherwise, <see langword="false"/>.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static bool MatchRelativeJsonPointer(ReadOnlySpan<byte> value)
-    {
-        return Utf8JsonPointerTools.ValidateRelative(value);
-    }
-
-    /// <summary>
-    /// Validates that a string value is a valid URI format.
-    /// </summary>
-    /// <param name="value">The UTF-8 encoded string value to validate.</param>
-    /// <returns><see langword="true"/> if the value is a valid URI; otherwise, <see langword="false"/>.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static bool MatchUri(ReadOnlySpan<byte> value)
-    {
-        // Uri.TryCreate considers full-qualified file paths to be acceptable as absolute Uris.
-        // This means that on Linux "/abc" is considered an acceptable absolute Uri! (This is
-        // conceptually equivalent to "C:\abc" being an absolute Uri on Windows, but it's more
-        // of a problem because a lot of relative Uris of the kind you come across on the web
-        // look exactly like Unix file paths.)
-        // https://github.com/dotnet/runtime/issues/22718
-        // However, this only needs to be a problem if you insist that the Uri is absolute.
-        // If you accept either absolute or relative Uris, it will interpret "/abc" as a
-        // relative Uri on either Windows or Linux. It only interprets it as an absolute Uri
-        // if you pass UriKind.Absolute when parsing.
-        // This is why we take the peculiar-looking step of passing UriKind.RelativeOrAbsolute
-        // and then rejecting relative Uris. This causes this method to reject "/abc" on all
-        // platforms. Back when we passed UriKind.Absolute, this code incorrectly accepted
-        // "abc".
-        if (!Utf8UriTools.Validate(value, Utf8UriKind.RelativeOrAbsolute, requireAbsolute: true, allowIri: false, allowUNCPath: false))
-        {
-            // We may need the extra tests here
-            return false;
-        }
-
-        return true;
-    }
-
-    /// <summary>
-    /// Validates that a string value is a valid URI reference format (absolute or relative URI).
-    /// </summary>
-    /// <param name="value">The UTF-8 encoded string value to validate.</param>
-    /// <returns><see langword="true"/> if the value is a valid URI reference; otherwise, <see langword="false"/>.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static bool MatchUriReference(ReadOnlySpan<byte> value)
-    {
-        if (!Utf8UriTools.Validate(value, Utf8UriKind.RelativeOrAbsolute, requireAbsolute: false, allowIri: false, allowUNCPath: false))
-        {
-            // We may need the extra tests for empty fragment etc.
-            return false;
-        }
-
-        return true;
-    }
-
-    /// <summary>
-    /// Validates that a string value is a valid URI template format.
-    /// </summary>
-    /// <param name="value">The UTF-8 encoded string value to validate.</param>
-    /// <returns><see langword="true"/> if the value is a valid URI template; otherwise, <see langword="false"/>.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static bool MatchUriTemplate(ReadOnlySpan<byte> value)
-    {
-        return Utf8UriTemplate.Validate(value);
-    }
-
-    /// <summary>
-    /// Validates that a string value is a valid UUID format.
-    /// </summary>
-    /// <param name="value">The UTF-8 encoded string value to validate.</param>
-    /// <returns><see langword="true"/> if the value is a valid UUID; otherwise, <see langword="false"/>.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static bool MatchUuid(ReadOnlySpan<byte> value)
-    {
-        return Utf8Parser.TryParse(value, out Guid _, out int bytesConsumed) && bytesConsumed == value.Length;
-    }
-
-    private static bool IsArabicIndicDigit(int value) => (value >= 0x0660 && value <= 0x0669);
-
-    private static bool IsExtendedArabicIndicDigit(int value) => (value >= 0x06F0 && value <= 0x06F9);
-
-    private static bool IsGreek(int value) => (value >= 0x0370 && value <= 0x03FF) || (value >= 0x1F00 && value <= 0x1FFF);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool IsHebrew(int value) => (value >= 0x0590 && value <= 0x05FF);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool IsHiraganaKatakanaOrHanNotMiddleDot(int value)
-    {
-        // Don't allow middle dot
-        if (value == 0x30FB)
-        {
-            return false;
-        }
-
-        return
-            (value >= 0x30A0 && value <= 0x30FF) ||
-            (value >= 0x3040 && value <= 0x309F) ||
-            (value >= 0x3400 && value <= 0x4DB5) ||
-            (value >= 0x4E00 && value <= 0x9FCB) ||
-            (value >= 0xF900 && value <= 0xFA6A);
-    }
-
-    private static bool IsVirama(int value) => ViramaTable.IndexOf(value) >= 0;
-
-    // The RFC 5892 §2.6 PVALID exceptions and the contextual code points that are given their
-    // own rules in MatchDecodedHostname. These are permitted even though they are not letters,
-    // digits or marks.
-    private static bool IsPermittedNonLetterOrDigit(int value) =>
-        value == 0x00B7 || value == 0x0375 || value == 0x05F3 || value == 0x05F4 ||
-        value == 0x06FD || value == 0x06FE || value == 0x0F0B || value == 0x200C ||
-        value == 0x200D || value == 0x3007 || value == 0x30FB;
-
-    // Joining-type approximations for the ZWNJ contextual rule (RFC 5892 Appendix A.1),
-    // covering the Arabic script where the rule applies in practice.
-    private static bool IsDualJoiningArabic(int value) =>
-        value == 0x0620 || value == 0x0626 || value == 0x0628 ||
-        (value >= 0x062A && value <= 0x062E) ||
-        (value >= 0x0633 && value <= 0x063A) ||
-        (value >= 0x0641 && value <= 0x0647) ||
-        value == 0x0649 || value == 0x064A ||
-        value == 0x067E || value == 0x0686 || value == 0x06A9 || value == 0x06AF || value == 0x06CC;
-
-    private static bool IsRightJoiningArabic(int value) =>
-        (value >= 0x0622 && value <= 0x0625) || value == 0x0627 || value == 0x0629 ||
-        (value >= 0x062F && value <= 0x0632) || value == 0x0648 ||
-        (value >= 0x0688 && value <= 0x0699) || value == 0x06C0 ||
-        (value >= 0x06C3 && value <= 0x06CB) || value == 0x06CD || value == 0x06D2 || value == 0x06D3;
-
-    private static bool IsZwnjInJoiningContext(ReadOnlySpan<byte> value, int labelStart, int zwnjStart, int zwnjEnd)
-    {
-        // RFC 5892 Appendix A.1: ZWNJ is permitted between characters that join across it — a
-        // left- or dual-joining character before it and a right- or dual-joining character
-        // after it, in both directions skipping transparent (non-spacing mark) characters.
-        int index = zwnjStart;
-        bool satisfiedBefore = false;
-        while (index > labelStart)
-        {
-            int start = index - 1;
-            while (start > labelStart && (value[start] & 0xC0) == 0x80)
-            {
-                start--;
-            }
-
-            Rune.DecodeFromUtf8(value.Slice(start), out Rune rune, out _);
-
-            if (Rune.GetUnicodeCategory(rune) == System.Globalization.UnicodeCategory.NonSpacingMark)
-            {
-                index = start;
-                continue;
-            }
-
-            satisfiedBefore = IsDualJoiningArabic(rune.Value);
-            break;
-        }
-
-        if (!satisfiedBefore)
-        {
-            return false;
-        }
-
-        int forward = zwnjEnd;
-        while (forward < value.Length)
-        {
-            Rune.DecodeFromUtf8(value.Slice(forward), out Rune rune, out int consumed);
-
-            if (Rune.GetUnicodeCategory(rune) == System.Globalization.UnicodeCategory.NonSpacingMark)
-            {
-                forward += consumed;
-                continue;
-            }
-
-            return IsDualJoiningArabic(rune.Value) || IsRightJoiningArabic(rune.Value);
-        }
-
-        return false;
-    }
-
-    // RFC 5893 §2 Bidi rules, evaluated per label. The first character determines the label
-    // direction (rule 1: it must be L, R or AL); an LTR label may not contain RTL characters
-    // (rule 5); an RTL label may not contain LTR characters (rule 2) and may not mix European
-    // and Arabic-Indic digits (rule 4).
-    private static bool IsBidiLabelViolation(bool labelFirstIsL, bool labelFirstIsRal, bool labelHasL, bool labelHasRal, bool labelHasArabicIndicDigits, bool labelHasEuropeanDigit)
-    {
-        return (!labelFirstIsL && !labelFirstIsRal) ||
-            (labelFirstIsL && labelHasRal) ||
-            (labelFirstIsRal && labelHasL) ||
-            (labelHasArabicIndicDigits && labelHasEuropeanDigit);
-    }
-
-    /// <summary>
-    /// Adds the length of a label as an A-label to the length of the name, and says whether the label is within the
-    /// limit of 63 characters of an A-label (RFC 5890). An ASCII label is its own A-label.
-    /// </summary>
-    private static bool AddALabelLength(ReadOnlySpan<byte> label, bool hasNonAscii, ref int nameLength)
-    {
-        int length = hasNonAscii ? ALabelLength(label) : label.Length;
-        nameLength += length;
-        return !hasNonAscii || length <= MaxLabelLength;
-    }
-
-    /// <summary>
-    /// The length of the A-label (Punycode) form of a U-label, or <see cref="MaxLabelLength"/> + 1 when it is longer
-    /// than the 63 characters RFC 5890 allows, found by running the RFC 3492 encoding algorithm and counting what it
-    /// writes, without writing it.
-    /// </summary>
-    private static int ALabelLength(ReadOnlySpan<byte> label)
-    {
-        Span<int> codePoints = stackalloc int[63];
-        int count = 0;
-        int basicCount = 0;
-        int i = 0;
-
-        while (i < label.Length)
-        {
-            Rune.DecodeFromUtf8(label.Slice(i), out Rune rune, out int consumed);
-            i += consumed;
-
-            if (count == codePoints.Length)
-            {
-                // More than 63 code points cannot fit in 63 octets once encoded.
-                return MaxLabelLength + 1;
-            }
-
-            codePoints[count++] = rune.Value;
-
-            if (rune.Value < 0x80)
-            {
-                basicCount++;
-            }
-        }
-
-        // "xn--", the copied basic characters, and the delimiter if there are any.
-        int length = 4 + basicCount + (basicCount > 0 ? 1 : 0);
-
-        if (length > MaxLabelLength)
-        {
-            return MaxLabelLength + 1;
-        }
-
-        int handled = basicCount;
-        int delta = 0;
-        int n = 0x80;
-        int bias = 72;
-        bool firstTime = true;
-
-        while (handled < count)
-        {
-            int m = int.MaxValue;
-
-            for (int j = 0; j < count; j++)
-            {
-                if (codePoints[j] >= n && codePoints[j] < m)
-                {
-                    m = codePoints[j];
-                }
-            }
-
-            delta += (m - n) * (handled + 1);
-            n = m;
-
-            for (int j = 0; j < count; j++)
-            {
-                int c = codePoints[j];
-
-                if (c < n)
-                {
-                    delta++;
-                }
-                else if (c == n)
-                {
-                    int q = delta;
-
-                    for (int k = 36; ; k += 36)
-                    {
-                        int t = k <= bias ? 1 : (k >= bias + 26 ? 26 : k - bias);
-
-                        if (q < t)
-                        {
-                            break;
-                        }
-
-                        if (++length > MaxLabelLength)
-                        {
-                            return MaxLabelLength + 1;
-                        }
-
-                        q = (q - t) / (36 - t);
-                    }
-
-                    if (++length > MaxLabelLength)
-                    {
-                        return MaxLabelLength + 1;
-                    }
-
-                    bias = PunycodeAdapt(delta, handled + 1, firstTime);
-                    firstTime = false;
-                    delta = 0;
-                    handled++;
-                }
-            }
-
-            delta++;
-            n++;
-        }
-
-        return length;
-    }
-
-    private static int PunycodeAdapt(int delta, int numPoints, bool firstTime)
-    {
-        // RFC 3492 §6.1 with the standard base=36, tmin=1, tmax=26, damp=700, skew=38.
-        delta = firstTime ? delta / 700 : delta / 2;
-        delta += delta / numPoints;
-
-        int k = 0;
-        while (delta > 455)
-        {
-            delta /= 35;
-            k += 36;
-        }
-
-        return k + ((36 * delta) / (delta + 38));
-    }
-
-    private static bool MatchEmailLocalPart(ReadOnlySpan<byte> segment)
-    {
-        // No limit on the length of the local part, as in the other ports (#1029).
-        // Skip an opening comment
-        if (segment[0] == (byte)'(')
-        {
-            int closeBracket = segment.IndexOf((byte)')');
-            if (closeBracket < 0)
-            {
-                return false;
-            }
-
-            segment = segment.Slice(closeBracket + 1);
-
-            if (segment.Length == 0)
-            {
-                return false;
-            }
-        }
-
-        int lastDot = -1;
-
-        if (segment[0] == '\"')
-        {
-            if (segment[segment.Length - 1] != '\"')
-            {
-                return false;
-            }
-
-            for (int i = 1; i < segment.Length - 1; i++)
-            {
-                byte c = segment[i];
-
-                if (AllowedLocalCharactersInQuotedString.IndexOf(c) < 0)
-                {
-                    // Invalid character in quoted string local part
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        for (int i = 0; i < segment.Length; i++)
-        {
-            byte c = segment[i];
-
-            if (c == (byte)'.')
-            {
-                if (i == 0 || i == segment.Length - 1 || lastDot == i - 1)
-                {
-                    // Dot at the start or end, or two dots in a row
-                    return false;
-                }
-
-                lastDot = i;
-            }
-            else if (c == (byte)'(')
-            {
-                // This is an end comment.
-                int closeBracket = segment.IndexOf((byte)')');
-                return closeBracket >= 0 && closeBracket == segment.Length - 1;
-            }
-            else if (AllowedLocalCharacters.IndexOf(c) < 0)
-            {
-                // Invalid character in local part
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private static bool MatchEmailLocalPartUnicode(ReadOnlySpan<byte> segment)
-    {
-        // No limit on the length of the local part, as in the other ports (#1029).
-        // Skip an opening comment
-        if (segment[0] == (byte)'(')
-        {
-            int closeBracket = segment.IndexOf((byte)')');
-            if (closeBracket < 0)
-            {
-                return false;
-            }
-
-            segment = segment.Slice(closeBracket + 1);
-
-            if (segment.Length == 0)
-            {
-                return false;
-            }
-        }
-
-        if (segment[0] == (byte)'\"')
-        {
-            if (segment.Length < 2 || segment[segment.Length - 1] != (byte)'\"')
-            {
-                return false;
-            }
-
-            int quoted = 1;
-            while (quoted < segment.Length - 1)
-            {
-                byte c = segment[quoted];
-
-                if (c > 0x7F)
-                {
-                    // RFC 6531 extends qtextSMTP with UTF8-non-ascii.
-                    Rune.DecodeFromUtf8(segment.Slice(quoted), out _, out int consumed);
-                    quoted += consumed;
-                    continue;
-                }
-
-                if (AllowedLocalCharactersInQuotedString.IndexOf(c) < 0)
-                {
-                    // Invalid character in quoted string local part
-                    return false;
-                }
-
-                quoted++;
-            }
-
-            return true;
-        }
-
-        int lastDot = -1;
-        for (int i = 0; i < segment.Length; i++)
-        {
-            byte c = segment[i];
-            if (c == (byte)'.')
-            {
-                if (i == 0 || i == segment.Length - 1 || lastDot == i - 1)
-                {
-                    // Dot at the start or end, or two dots in a row
-                    return false;
-                }
-
-                lastDot = i;
-            }
-            else if (c == (byte)'(')
-            {
-                // This is an end comment.
-                int closeBracket = segment.IndexOf((byte)')');
-                return closeBracket >= 0 && closeBracket == segment.Length - 1;
-            }
-            else if (AllowedLocalCharacters.IndexOf(c) < 0)
-            {
-                // This could be a unicode character, so let's check
-                Rune.DecodeFromUtf8(segment.Slice(i), out Rune rune, out int bytesConsumed);
-                if (!Rune.IsLetterOrDigit(rune))
-                {
-                    System.Globalization.UnicodeCategory category = Rune.GetUnicodeCategory(rune);
-                    if (i == 0 ||
-                        (category != System.Globalization.UnicodeCategory.SpacingCombiningMark &&
-                         category != System.Globalization.UnicodeCategory.EnclosingMark &&
-                         category != System.Globalization.UnicodeCategory.NonSpacingMark))
-                    {
-                        return false;
-                    }
-                }
-
-                i += bytesConsumed - 1; // Adjust i to account for the bytes consumed by the rune
-            }
-        }
-
-        return true;
     }
 
     /// <summary>

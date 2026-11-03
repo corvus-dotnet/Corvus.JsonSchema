@@ -3,7 +3,6 @@ package jsonschema
 import (
 	"math"
 	"regexp"
-	"strconv"
 	"strings"
 	"sync"
 	"unicode/utf8"
@@ -1049,7 +1048,13 @@ const maxIDNHostnameBytes = 4 * 253
 // read: the check decodes and encodes Punycode and walks around every joiner and every katakana middle dot, which
 // take time that grows with the square of a label, so it must not be given a label of any length.
 func isIDNHostname(s string) bool {
-	return len(s) <= maxIDNHostnameBytes && idnHostname(s)
+	if len(s) > maxIDNHostnameBytes {
+		return false
+	}
+	// UTS #46 maps the name before it is checked: it removes the ignored code points and replaces the mapped ones,
+	// such as the fullwidth forms, which can produce an "xn--" A-label to decode.
+	mapped := uts46Map(s)
+	return len(mapped) <= maxIDNHostnameBytes && idnHostname(mapped)
 }
 
 // idnHostname is the check itself, for a string of any length.
@@ -1129,34 +1134,20 @@ func splitLabels(s string) []string {
 	return append(labels, s[start:])
 }
 
+// RFC 5321 Local-part: a dot-string of atext, or a quoted string of qtextSMTP (%d32-33 / %d35-91 / %d93-126) and
+// quoted pairs (a backslash and one of %d32-126). There are no comments. RFC 6531 extends atext and qtextSMTP with
+// UTF8-non-ascii (every character outside ASCII, whatever its category), but not the quoted pair.
 const emailAtoms = "[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+"
-const emailQuoted = `"(?:[^"\\\r\n]|\\.)*"`
+const emailQuoted = `"(?:[\x20\x21\x23-\x5B\x5D-\x7E]|\\[\x20-\x7E])*"`
+const idnEmailAtoms = "[A-Za-z0-9!#$%&'*+/=?^_`{|}~\\x{80}-\\x{10FFFF}-]+"
+const idnEmailQuoted = `"(?:[\x20\x21\x23-\x5B\x5D-\x7E\x{80}-\x{10FFFF}]|\\[\x20-\x7E])*"`
 
 var (
 	emailLocalRegexp = sync.OnceValue(func() *regexp.Regexp {
 		return regexp.MustCompile(`^(?:` + emailAtoms + `(?:\.` + emailAtoms + `)*|` + emailQuoted + `)$`)
 	})
 	idnEmailLocalRegexp = sync.OnceValue(func() *regexp.Regexp {
-		// An atom of an internationalized local part (RFC 6531 extends atext of RFC 5322) is taken here to be a
-		// letter, a mark or a number of any script, or one of the ASCII atom characters, as in the other ports of the
-		// evaluator. The class is written out as the ranges of the ucd tables. A \p class would be read by the regexp
-		// package with the Unicode data of the Go toolchain.
-		var class strings.Builder
-		class.WriteByte('[')
-		var ranges []rune
-		for _, t := range []*ucd.Table{ucd.Letter(), ucd.Mark(), ucd.Number()} {
-			ranges = t.AppendRanges(ranges)
-		}
-		for i := 0; i < len(ranges); i += 2 {
-			class.WriteString(`\x{`)
-			class.WriteString(strconv.FormatInt(int64(ranges[i]), 16))
-			class.WriteString(`}-\x{`)
-			class.WriteString(strconv.FormatInt(int64(ranges[i+1]), 16))
-			class.WriteByte('}')
-		}
-		class.WriteString("!#$%&'*+/=?^_`{|}~-]+")
-		idnEmailAtoms := class.String()
-		return regexp.MustCompile(`^(?:` + idnEmailAtoms + `(?:\.` + idnEmailAtoms + `)*|` + emailQuoted + `)$`)
+		return regexp.MustCompile(`^(?:` + idnEmailAtoms + `(?:\.` + idnEmailAtoms + `)*|` + idnEmailQuoted + `)$`)
 	})
 )
 
@@ -1243,6 +1234,10 @@ func uriRegexpSource(iri, reference bool) string {
 	return "^(?:" + body + ")$"
 }
 
+const uriTemplateLiteral = `(?:[\x21\x23\x24\x26-\x3B\x3D\x3F-\x5B\x5D\x5F\x61-\x7A\x7E\x{A0}-\x{D7FF}\x{E000}-\x{FDCF}\x{FDF0}-\x{FFEF}` +
+	`\x{10000}-\x{1FFFD}\x{20000}-\x{2FFFD}\x{30000}-\x{3FFFD}\x{40000}-\x{4FFFD}\x{50000}-\x{5FFFD}\x{60000}-\x{6FFFD}` +
+	`\x{70000}-\x{7FFFD}\x{80000}-\x{8FFFD}\x{90000}-\x{9FFFD}\x{A0000}-\x{AFFFD}\x{B0000}-\x{BFFFD}\x{C0000}-\x{CFFFD}` +
+	`\x{D0000}-\x{DFFFD}\x{E1000}-\x{EFFFD}\x{F0000}-\x{FFFFD}\x{100000}-\x{10FFFD}]|%[0-9A-Fa-f]{2})`
 const uriTemplateVar = `(?:[A-Za-z0-9_]|%[0-9A-Fa-f]{2})(?:\.?(?:[A-Za-z0-9_]|%[0-9A-Fa-f]{2}))*(?::[1-9][0-9]{0,3}|\*)?`
 
 var (
@@ -1258,8 +1253,10 @@ var (
 	iriReferenceRegexp = sync.OnceValue(func() *regexp.Regexp {
 		return regexp.MustCompile(uriRegexpSource(true, true))
 	})
+	// RFC 6570: literals = %x21 / %x23-24 / %x26-3B / %x3D / %x3F-5B / %x5D / %x5F / %x61-7A / %x7E / ucschar /
+	// iprivate / pct-encoded. RFC 6570 printed %x26 / %x28-3B, leaving out the apostrophe; erratum 6937 corrects it.
 	uriTemplateRegexp = sync.OnceValue(func() *regexp.Regexp {
-		return regexp.MustCompile(`^(?:[^\x00-\x20"'<>\\^` + "`" + `{|}]|\{[+#./;?&=,!@|]?` + uriTemplateVar +
+		return regexp.MustCompile(`^(?:` + uriTemplateLiteral + `|\{[+#./;?&=,!@|]?` + uriTemplateVar +
 			`(?:,` + uriTemplateVar + `)*\})*$`)
 	})
 )

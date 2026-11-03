@@ -2,6 +2,17 @@
 
 The version history of `corvus-json-schema` for OCaml (`src-ml/corvus-json-schema`), the OCaml port of the Corvus.Text.Json V5 runtime evaluator. It is versioned independently of the Corvus NuGet packages, whose history is in the Corvus.JsonSchema repository's [VERSIONHISTORY.md](https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/VERSIONHISTORY.md).
 
+## V0.1.2
+
+V0.1.2 fixes the `format` checks that the JSON-Schema-Test-Suite's unified layout found wrong, and compares numbers exactly. There are no API changes beyond `Formats.uts46_map`. Versions 0.1.0 and 0.1.1 are affected.
+
+### Bug fixes
+
+- **`idn-hostname` applies the UTS #46 mapping.** The name (and the domain of an `idn-email` address) is mapped by UTS #46 (Unicode 17.0.0) before it is checked, so ignored code points such as U+200B are removed and fullwidth letters are read as ASCII, which can make an `xn--` A-label to decode; an uppercase letter outside ASCII is lowered, so it is no longer refused. A name of more than 1,012 UTF-8 bytes is refused before it is read. The table is written by `tools/gen-uts46-data.ps1`, from the same `IdnaMappingTable.txt` as the other engines'.
+- **`email` and `idn-email` follow RFC 5321 and RFC 6531.** A quoted local part takes printable ASCII and quoted pairs of printable ASCII only. An `idn-email` local part takes any character outside ASCII, whatever its category, where only letters, marks and numbers were allowed.
+- **`uri-template` takes the RFC 6570 literals**, with the apostrophe that erratum 6937 adds, so a `%` must begin a complete percent-encoded triplet and a delete character is refused.
+- **Numbers compare exactly as the decimals their JSON text writes.** `const`, `enum`, `uniqueItems`, `minimum`, `maximum`, `exclusiveMinimum` and `exclusiveMaximum` compared a number of more digits than a float holds by its nearest float, so `0.123456789123456788` equalled a `const` of `0.123456789123456789`, and `-18446744073709551616` met a `minimum` of `-18446744073709551615`. The parsed values still decide every comparison they can, and the text decides the rest, without allocating.
+
 ## V0.1.1
 
 V0.1.1 makes a match of a pattern with a limit allocate nothing on every configuration of the compiler. There are no API changes. Version 0.1.0 is affected.

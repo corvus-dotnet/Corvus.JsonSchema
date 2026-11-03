@@ -181,7 +181,11 @@ val is_hostname : Bytes.t -> int -> int -> bool
 (** A host name whose A-labels are valid. It allocates when a label starts with ["xn--"]. *)
 
 val is_idn_hostname : Bytes.t -> int -> int -> bool
-(** An internationalized host name. It allocates. *)
+(** An internationalized host name, after the UTS #46 mapping. It allocates. *)
+
+val uts46_map : Bytes.t -> int -> int -> Bytes.t option
+(** The UTS #46 mapping (Unicode IDNA Compatibility Processing, section 4 step 1) that idn-hostname and idn-email apply
+    to a name before they check it, or [None] when no code point of the name is ignored or mapped. *)
 
 val is_email : Bytes.t -> int -> int -> bool
 (** An e-mail address. It allocates when a label of its domain starts with ["xn--"]. *)

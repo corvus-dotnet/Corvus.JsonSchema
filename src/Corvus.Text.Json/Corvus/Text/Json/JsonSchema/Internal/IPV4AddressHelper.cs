@@ -151,7 +151,8 @@ internal static partial class IPv4AddressHelper
             ++start;
         }
 
-        bool res = (dots == 3) && haveNumber;
+        // The last octet has no '.' after it, so check it for a leading zero here (dec-octet has none).
+        bool res = (dots == 3) && haveNumber && !(number > 0 && firstCharIsZero);
         if (res)
         {
             end = start;

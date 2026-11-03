@@ -225,6 +225,55 @@ let numbers_are_compared_exactly_for_multiple_of () =
   expect_valid v {|0.075|} false;
   expect_valid (must_compile {|{ "multipleOf": 0.0001 }|}) {|0.0075|} true
 
+let numbers_are_compared_exactly_beyond_a_float () =
+  List.iter
+    (fun (schema, instance, want) ->
+      let v = must_compile schema in
+      expect_valid v instance want;
+      expect_agreement v schema [ instance ])
+    [
+      ({|{ "const": 0.123456789123456789 }|}, {|0.123456789123456789|}, true);
+      ({|{ "const": 0.123456789123456789 }|}, {|0.123456789123456788|}, false);
+      ({|{ "enum": [0.123456789123456789] }|}, {|0.123456789123456790|}, false);
+      ({|{ "maximum": 972783798187987123879878123.18878137 }|}, {|972783798187987123879878123.188781371|}, false);
+      ({|{ "exclusiveMaximum": 972783798187987123879878123.18878137 }|}, {|972783798187987123879878123.188781369|}, true);
+      ({|{ "minimum": -18446744073709551615 }|}, {|-18446744073709551616|}, false);
+      ( {|{ "exclusiveMinimum": -972783798187987123879878123.18878137 }|},
+        {|-972783798187987123879878123.188781369|},
+        true );
+      ({|{ "uniqueItems": true }|}, {|[0.123456789123456788, 0.123456789123456789]|}, true);
+      ({|{ "uniqueItems": true }|}, {|[1, 1.0]|}, false);
+    ];
+  let text = Bytes.of_string in
+  List.iter
+    (fun (a, b, want) ->
+      Check.equal_int
+        (Printf.sprintf "compare_text %s %s" a b)
+        ~expected:want
+        (Corvus_json_schema__Numbers.compare_text (text a) 0 (text b) 0);
+      Check.equal_int
+        (Printf.sprintf "compare_text %s %s" b a)
+        ~expected:(-want)
+        (Corvus_json_schema__Numbers.compare_text (text b) 0 (text a) 0))
+    [
+      ("0.123456789123456788", "0.123456789123456789", -1);
+      ("0.12345678912345678900", "0.123456789123456789", 0);
+      ("-18446744073709551616", "-18446744073709551615", -1);
+      ("1152921504606846977", "1152921504606846977.5", -1);
+      ("1152921504606846977", "1152921504606846976.5", 1);
+      ("1", "1.0", 0);
+      ("100", "1e2", 0);
+      ("0.00", "0", 0);
+      ("-0", "0", 0);
+      ("-0.0", "0.0e5", 0);
+      ("1e300", "1E+300", 0);
+      ("0.01e2", "1", 0);
+      ("12.5e-1", "1.25", 0);
+      ("1e-400", "0", 1);
+      ("-1e-400", "0", -1);
+      ("9.99", "10", -1);
+    ]
+
 (* Go runs eight goroutines, which validate with one validator at once. Here they are threads, which every OCaml this
    package builds on has. On OCaml 4 one thread runs at a time and they are switched between at any allocation or
    poll. The same test with domains, which run in parallel on OCaml 5, is concurrent_domains_test.ml.
@@ -669,6 +718,7 @@ let () =
   test "compilation_errors" compilation_errors;
   test "in_place_recursion_beyond_max_depth_is_an_error" in_place_recursion_beyond_max_depth_is_an_error;
   test "numbers_are_compared_exactly_for_multiple_of" numbers_are_compared_exactly_for_multiple_of;
+  test "numbers_are_compared_exactly_beyond_a_float" numbers_are_compared_exactly_beyond_a_float;
   test "validators_are_safe_for_concurrent_use" validators_are_safe_for_concurrent_use;
   test "discriminated_one_of_and_any_of_agree_with_exhaustive_evaluation"
     discriminated_one_of_and_any_of_agree_with_exhaustive_evaluation;
