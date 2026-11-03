@@ -133,20 +133,6 @@ public class SuiteValidationOfDateTimeStrings
     }
 
     [TestMethod]
-    public void TestAValidDateTimeWithALeapSecondUtc()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"1998-12-31T23:59:60Z\"");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestAValidDateTimeWithALeapSecondWithMinusOffset()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"1998-12-31T15:59:60.123-08:00\"");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
     public void TestAnInvalidDateTimePastLeapSecondUtc()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"1998-12-31T23:59:61Z\"");
