@@ -1,6 +1,6 @@
-//! Drives the harness over IHOP as Bowtie does (start, dialect, run with the suite's remotes as the registry, stop):
-//! every required case of the JSON-Schema-Test-Suite, and the annotation suite's assertions, compared with the
-//! expected results. No containers.
+//! Drives the harness over IHOP as Bowtie does (start, dialect, run with each test case's externalSchemas as the
+//! registry, stop): every required case of the JSON-Schema-Test-Suite, and the annotation suite's assertions, compared
+//! with the expected results. No containers.
 
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
@@ -8,12 +8,12 @@ use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
 
 use serde_json::{Map, Value, json};
 
-const DRAFTS: [(&str, &str, &str); 5] = [
-    ("draft4", "http://json-schema.org/draft-04/schema#", "4"),
-    ("draft6", "http://json-schema.org/draft-06/schema#", "6"),
-    ("draft7", "http://json-schema.org/draft-07/schema#", "7"),
-    ("draft2019-09", "https://json-schema.org/draft/2019-09/schema", "2019"),
-    ("draft2020-12", "https://json-schema.org/draft/2020-12/schema", "2020"),
+const DRAFTS: [(&str, &str, u32); 5] = [
+    ("draft4", "http://json-schema.org/draft-04/schema#", 4),
+    ("draft6", "http://json-schema.org/draft-06/schema#", 6),
+    ("draft7", "http://json-schema.org/draft-07/schema#", 7),
+    ("draft2019-09", "https://json-schema.org/draft/2019-09/schema", 2019),
+    ("draft2020-12", "https://json-schema.org/draft/2020-12/schema", 2020),
 ];
 
 struct Harness {
@@ -54,30 +54,45 @@ fn suite_root() -> Option<PathBuf> {
     let root = std::env::var_os("JSON_SCHEMA_TEST_SUITE")
         .map(PathBuf::from)
         .unwrap_or_else(|| Path::new(env!("CARGO_MANIFEST_DIR")).join("../../JSON-Schema-Test-Suite"));
-    root.join("tests").exists().then_some(root)
+    root.join("validation").join("tests").exists().then_some(root)
 }
 
 fn read_json(path: &Path) -> Value {
     serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap()
 }
 
-/// Bowtie's registry: every remote, keyed by its http://localhost:1234/ URI.
-fn registry(root: &Path) -> Value {
-    fn walk(dir: &Path, base: &Path, out: &mut Map<String, Value>) {
-        for entry in std::fs::read_dir(dir).unwrap().flatten() {
-            let path = entry.path();
-            if path.is_dir() {
-                walk(&path, base, out);
-            } else if path.extension().is_some_and(|x| x == "json") {
-                let rel = path.strip_prefix(base).unwrap().to_string_lossy().replace('\\', "/");
-                out.insert(format!("http://localhost:1234/{rel}"), read_json(&path));
-            }
+/// Bowtie's registry for a test case: its externalSchemas, keyed by their retrieval URIs.
+fn registry(case: &Value) -> Value {
+    case.get("externalSchemas").cloned().unwrap_or_else(|| Value::Object(Map::new()))
+}
+
+/// Whether a test case's `compatibility` admits the release, by the algorithm of the suite's validation/README.md.
+fn compatible(compatibility: Option<&str>, release: u32) -> bool {
+    let Some(compatibility) = compatibility else { return true };
+    let mut valid = true;
+    for constraint in compatibility.split(',') {
+        let (op, version) = if let Some(v) = constraint.strip_prefix("<=") {
+            ("<=", v)
+        } else if let Some(v) = constraint.strip_prefix('=') {
+            ("=", v)
+        } else {
+            ("", constraint)
+        };
+        let version: u32 = version.trim().parse().unwrap();
+        valid = match op {
+            "<=" => release <= version,
+            "=" => release == version,
+            _ => release >= version,
+        };
+        if release <= version {
+            break;
         }
     }
-    let mut out = Map::new();
-    let remotes = root.join("remotes");
-    walk(&remotes, &remotes, &mut out);
-    Value::Object(out)
+    valid
+}
+
+fn has_tag(case: &Value, tag: &str) -> bool {
+    case["tags"].as_array().is_some_and(|tags| tags.iter().any(|t| t == tag))
 }
 
 fn json_files(dir: &Path) -> Vec<PathBuf> {
@@ -96,13 +111,20 @@ fn required_suite_over_ihop() {
         eprintln!("JSON-Schema-Test-Suite not found; skipping");
         return;
     };
-    let registry = registry(&root);
     let mut harness = Harness::start();
     let (mut seq, mut total, mut failures) = (0, 0, Vec::new());
-    for (draft, dialect, _) in DRAFTS {
+    for (draft, dialect, release) in DRAFTS {
         assert_eq!(harness.send(&json!({ "cmd": "dialect", "dialect": dialect }))["ok"], true);
-        for file in json_files(&root.join("tests").join(draft)) {
-            for group in read_json(&file).as_array().unwrap() {
+        for file in json_files(&root.join("validation").join("tests")) {
+            let file_name = file.file_name().unwrap().to_string_lossy().to_string();
+            for group in read_json(&file)["tests"].as_array().unwrap() {
+                if !compatible(group["compatibility"].as_str(), release) {
+                    continue;
+                }
+                // The harness treats format as an annotation in every dialect, as Bowtie expects.
+                if has_tag(group, "format-assertion") {
+                    continue;
+                }
                 seq += 1;
                 let tests: Vec<Value> = group["tests"]
                     .as_array()
@@ -113,7 +135,7 @@ fn required_suite_over_ihop() {
                 let request = json!({
                     "cmd": "run",
                     "seq": seq,
-                    "case": { "description": group["description"], "schema": group["schema"], "registry": registry, "tests": tests },
+                    "case": { "description": group["description"], "schema": group["schema"], "registry": registry(group), "tests": tests },
                 });
                 let response = harness.send(&request);
                 assert_eq!(response["seq"], seq);
@@ -122,10 +144,8 @@ fn required_suite_over_ihop() {
                     let result = &response["results"][i];
                     if response["errored"] == true || result["valid"] != test["valid"] {
                         failures.push(format!(
-                            "{draft}/{}: {} / {}: {response}",
-                            file.file_name().unwrap().to_string_lossy(),
-                            group["description"],
-                            test["description"]
+                            "{draft}/{file_name}: {} / {}: {response}",
+                            group["description"], test["description"]
                         ));
                     }
                 }
@@ -134,16 +154,7 @@ fn required_suite_over_ihop() {
     }
     harness.stop();
     assert!(failures.is_empty(), "{} of {total} failed:\n{}", failures.len(), failures.join("\n"));
-    assert!(total > 4000, "only {total} tests ran");
-}
-
-fn compatible(level: &str, compat: &str) -> bool {
-    const ORDER: [&str; 6] = ["3", "4", "6", "7", "2019", "2020"];
-    let level = ORDER.iter().position(|x| *x == level).unwrap();
-    match compat.strip_prefix("<=") {
-        Some(max) => ORDER.iter().position(|x| *x == max).is_some_and(|max| level <= max),
-        None => ORDER.iter().position(|x| *x == compat).is_some_and(|min| level >= min),
-    }
+    assert!(total > 5000, "only {total} tests ran");
 }
 
 /// JSON equality with numbers compared by value.
@@ -169,16 +180,13 @@ fn annotation_suite_over_ihop() {
         eprintln!("annotation tests not found; skipping");
         return;
     }
-    let registry = registry(&root);
     let mut harness = Harness::start();
     let (mut seq, mut total, mut failures) = (0, 0, Vec::new());
-    for (_, dialect, level) in DRAFTS {
+    for (_, dialect, release) in DRAFTS {
         assert_eq!(harness.send(&json!({ "cmd": "dialect", "dialect": dialect }))["ok"], true);
         for file in json_files(&dir) {
             for group in read_json(&file)["suite"].as_array().unwrap() {
-                if let Some(compat) = group["compatibility"].as_str()
-                    && !compatible(level, compat)
-                {
+                if !compatible(group["compatibility"].as_str(), release) {
                     continue;
                 }
                 seq += 1;
@@ -192,7 +200,7 @@ fn annotation_suite_over_ihop() {
                     "cmd": "run",
                     "seq": seq,
                     "output": "annotations",
-                    "case": { "description": group["description"], "schema": group["schema"], "registry": registry, "tests": tests },
+                    "case": { "description": group["description"], "schema": group["schema"], "registry": registry(group), "tests": tests },
                 });
                 let response = harness.send(&request);
                 for (i, test) in group["tests"].as_array().unwrap().iter().enumerate() {
