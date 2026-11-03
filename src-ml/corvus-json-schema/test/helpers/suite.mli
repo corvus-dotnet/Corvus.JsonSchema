@@ -37,15 +37,36 @@ val items : Json.t -> int -> int list
 val properties : Json.t -> int -> (string * int) list
 (** [properties d n] is the names and values of an object value. *)
 
-val remote_resolver : string -> string -> Corvus_json_schema.Document.t option
-(** [remote_resolver root] resolves the suite's remotes ([http://localhost:1234/...]) from its remotes directory. *)
+val tests_dir : string -> string
+(** [tests_dir root] is the directory of the suite's validation tests ([validation/tests]), in which every dialect's
+    cases are, the optional ones in [optional]. *)
 
-type group = { description : string; schema : string; tests : case list }
-(** A group of tests of a suite file: a schema and the instances to evaluate against it. *)
+val compatible : string option -> int -> bool
+(** [compatible compatibility release] says whether a test case's [compatibility] (a comma-separated list of minimums,
+    [<=] maximums and [=] releases, from the smallest release to the largest) admits the release, by the algorithm of
+    the suite's validation/README.md. A test case without one is compatible with every release. *)
+
+type group = {
+  description : string;
+  compatibility : string option;
+  tags : string list;
+  external_schemas : (string * string) list;  (** The schemas the test case references, as JSON text by URI. *)
+  schema : string;
+  tests : case list;
+}
+(** A test case of a suite file: a schema and the instances to evaluate against it, the releases it applies to, its tags
+    (whether it expects format to be asserted), and the schemas it references. *)
 
 and case = { case_description : string; data : string; valid : bool }
 
+val has_tag : group -> string -> bool
+(** [has_tag group tag] says whether a test case has a tag. *)
+
+val case_resolver : group -> (string -> Corvus_json_schema.Document.t option) option
+(** [case_resolver group] serves a test case's external schemas at their retrieval URIs, or is [None] when it has none.
+*)
+
 val groups : string -> group list
-(** [groups path] reads the groups of a suite file.
+(** [groups path] reads the test cases of a suite file.
 
     @raise Failure when the file cannot be read or is not JSON. *)
