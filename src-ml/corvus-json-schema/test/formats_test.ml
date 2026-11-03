@@ -357,15 +357,16 @@ let test_unicode_formats_use_unicode_17 () =
   let address name want =
     check (Printf.sprintf "isEmail(\"%s\", idn)" (show name)) (check_kind Formats.idn_email name false) want
   in
-  (* U+10D4A and U+10D4B are Garay letters, assigned in Unicode 16. U+1C89 is an uppercase letter of Unicode 16, and
-     IDNA2008 disallows uppercase letters. U+2FFFF is a noncharacter in every version. *)
+  (* U+10D4A and U+10D4B are Garay letters, assigned in Unicode 16. U+1C89 is an uppercase letter of Unicode 16, which
+     the UTS #46 mapping lowers to U+1C8A. U+2FFFF is a noncharacter in every version, which IDNA2008 disallows in a
+     host name; RFC 6531 allows every character outside ASCII in the local part of an address. *)
   host (u [ 0x10d4a; 0x10d4b ] ^ ".example") true;
   host (u [ 0x1c8a ] ^ ".example") true;
-  host (u [ 0x1c89 ] ^ ".example") false;
+  host (u [ 0x1c89 ] ^ ".example") true;
   host (u [ 0x2ffff ] ^ ".example") false;
   address (u [ 0x10d4a; 0x10d4b ] ^ "@example.com") true;
   address (u [ 0x16ea0; 0x16ebb ] ^ "@example.com") true;
-  address (u [ 0x2ffff ] ^ "@example.com") false;
+  address (u [ 0x2ffff ] ^ "@example.com") true;
   (* "dokimi" in Greek letters. *)
   address (u [ 0x3b4; 0x3bf; 0x3ba; 0x3b9; 0x3bc; 0x3ae ] ^ "@example.com") true;
   address "a b@example.com" false
@@ -420,6 +421,63 @@ let test_content () =
   decode "QU-D" false "";
   decode "QU_D" false "";
   decode "Q=JD" false ""
+
+(* The cases of the unified JSON-Schema-Test-Suite that the checks got wrong (the descriptions are the suite's), and
+   the UTS #46 mapping that idn-hostname and idn-email apply. *)
+let test_unified_suite_formats () =
+  let run f text = f (Bytes.of_string text) 0 (String.length text) in
+  List.iter
+    (fun (name, f, text, want, description) -> check (name ^ ": " ^ description) (run f text) want)
+    [
+      ( "email",
+        Formats.is_email,
+        "\"test\\\xc2\xa9\"@iana.org",
+        false,
+        "a non-ASCII character in a quoted pair is not valid" );
+      ("email", Formats.is_email, "\"\\a\"@iana.org", true, "a quoted pair in the local part is valid");
+      ("idn-email", Formats.is_idn_email, "\xc2\x85@example.com", true, "a C1 control in the local part is valid");
+      ("idn-email", Formats.is_idn_email, "\xef\xbf\xbf@example.com", true, "a noncharacter in the local part is valid");
+      ("idn-hostname", Formats.is_idn_hostname, "a\xe2\x80\x8bb", true, "a zero width space is ignored by the mapping");
+      ( "idn-hostname",
+        Formats.is_idn_hostname,
+        String.concat "" (List.init 63 (fun _ -> "\xef\xbd\x81")),
+        true,
+        "a label of 63 fullwidth characters is valid after mapping" );
+      ( "idn-hostname",
+        Formats.is_idn_hostname,
+        "\xef\xbd\x98\xef\xbd\x8e--nxasmq6b",
+        true,
+        "an ACE prefix produced by the mapping step is decoded as an A-label" );
+      ( "idn-hostname",
+        Formats.is_idn_hostname,
+        String.concat "" (List.init 507 (fun _ -> "\xc3\xa9")),
+        false,
+        "a name of more than 1,012 UTF-8 bytes is refused" );
+      ("uri-template", Formats.is_uri_template, "a'b", true, "an apostrophe in a literal is valid");
+      ("uri-template", Formats.is_uri_template, "a%", false, "a literal with a lone percent sign is invalid");
+      ( "uri-template",
+        Formats.is_uri_template,
+        "a%4",
+        false,
+        "a literal with an incomplete percent-encoded triplet is invalid" );
+      ("uri-template", Formats.is_uri_template, "a%GG", false, "a literal with non-hex percent encoding is invalid");
+      ("uri-template", Formats.is_uri_template, "a\x7fb", false, "a delete character in a literal is invalid");
+    ];
+  let map text =
+    let b = Bytes.of_string text in
+    match Formats.uts46_map b 0 (Bytes.length b) with None -> text | Some mapped -> Bytes.to_string mapped
+  in
+  List.iter
+    (fun (text, want) -> Check.equal_string (Printf.sprintf "UTS #46 maps %S" text) ~expected:want (map text))
+    [
+      ("example.com", "example.com");
+      ("a\xe2\x80\x8bb", "ab");
+      ("\xef\xbd\x81\xef\xbd\x82", "ab");
+      ("ex\xc2\xadample", "example");
+      ("a\xe2\x80\x8db", "a\xe2\x80\x8db");
+    ];
+  Check.equal_string "the Unicode version of the UTS #46 mapping" ~expected:"17.0.0"
+    Corvus_json_schema__Uts46_data.unicode_version
 
 (* The formats each dialect knows, with their names and messages. *)
 let test_format_kinds () =
@@ -743,6 +801,8 @@ let () =
   test_unicode_format_strings ();
   Check.section "punycode";
   test_punycode ();
+  Check.section "unified";
+  test_unified_suite_formats ();
   Check.section "allocations";
   test_allocations ();
   if !vectors_path <> "" then begin

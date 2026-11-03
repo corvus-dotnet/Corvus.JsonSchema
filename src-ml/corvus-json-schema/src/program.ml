@@ -88,10 +88,13 @@ let no_format = { custom = None; fc_kind = Formats.unknown; legacy = false }
 
 type number_op = {
   n_kind : int;
-  (* The bound's representation: its flags, its data word and the floats of its document. *)
+  (* The bound's representation: its flags, its data word and the floats of its document; and its text, at n_start
+     in its document's source. *)
   n_flag : int;
   n_data : int;
   n_floats : Float.Array.t;
+  n_source : Bytes.t;
+  n_start : int;
   n_divisor : Numbers.divisor option;
   n_format : format_check;
 }

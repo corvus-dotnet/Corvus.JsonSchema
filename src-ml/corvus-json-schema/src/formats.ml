@@ -606,9 +606,6 @@ type idn_tables = {
   greek : Ucd.table;
   arabic_like : Ucd.table;
   kana_or_han : Ucd.table;
-  (* letter_mark_number is the groups L, M and N together, for the local part of an internationalized e-mail
-     address. *)
-  letter_mark_number : Ucd.table;
 }
 
 (* idn is the tables. The Go source builds them when a host name check first needs them. Here the module builds them
@@ -632,7 +629,6 @@ let idn =
     greek = sc "Greek";
     arabic_like = Ucd.union [ sc "Arabic"; sc "Syriac"; sc "Thaana"; sc "Nko" ];
     kana_or_han = Ucd.union [ sc "Hiragana"; sc "Katakana"; sc "Han" ];
-    letter_mark_number = Ucd.union [ Ucd.letter; Ucd.mark; Ucd.number ];
   }
 
 let is_disallowed_exception r =
@@ -942,7 +938,12 @@ let idn_label b from stop unicode is_bidi =
       if a_label_length > 63 then -1 else a_label_length
   end
 
-let idn_hostname_ok b from stop =
+(* The most UTF-8 bytes an idn-hostname may have before it is read: four for each character of the 253 of a host name.
+   The check decodes and encodes Punycode and walks around every joiner and katakana middle dot, which take time that
+   grows with the square of a label, so it must not be given a label of any length. *)
+let max_idn_hostname_bytes = 4 * 253
+
+let idn_hostname_checked b from stop =
   if from >= stop then false
   else begin
     (* The labels: the host name split at every label separator, keeping empty labels. *)
@@ -984,6 +985,16 @@ let idn_hostname_ok b from stop =
     !ok && !ascii_length - 1 <= 253
   end
 
+(* idn_hostname_ok applies the UTS #46 mapping to the name before it is checked: it removes the ignored code points and
+   replaces the mapped ones, such as the fullwidth forms, which can produce an "xn--" A-label to decode. *)
+let idn_hostname_ok b from stop =
+  if stop - from > max_idn_hostname_bytes then false
+  else
+    match Uts46.map ~decode:decode_rune ~rune_of ~size_of b from stop with
+    | None -> idn_hostname_checked b from stop
+    | Some mapped ->
+        Bytes.length mapped <= max_idn_hostname_bytes && idn_hostname_checked mapped 0 (Bytes.length mapped)
+
 (* ------------------------------------------------------------------------------------------------------------------ *)
 (* E-mail addresses *)
 
@@ -996,10 +1007,10 @@ let is_email_atom c =
       true
   | _ -> false
 
-(* email_quoted_ok reads the rest of a quoted local part from position i, after its opening quote: characters that are
-   not a quote, a backslash or a line break, or a backslash and any character but a line feed, then a quote that ends
-   the text. *)
-let email_quoted_ok b i stop =
+(* email_quoted_ok reads the rest of a quoted local part from position i, after its opening quote, by RFC 5321:
+   qtextSMTP (%d32-33 / %d35-91 / %d93-126) and quoted pairs (a backslash and one of %d32-126), then a quote that ends
+   the text. RFC 6531 adds every character outside ASCII to qtextSMTP (idn_local), but not to the quoted pair. *)
+let email_quoted_ok b i stop idn_local =
   let i = ref i in
   (* -1 while the characters are being read. *)
   let result = ref (-1) in
@@ -1009,20 +1020,22 @@ let email_quoted_ok b i stop =
       let c = at b !i in
       if c = 0x22 then result := if !i = stop - 1 then 1 else 0
       else if c = 0x5c then
-        if !i + 1 >= stop || at b (!i + 1) = 10 then result := 0
-        else i := !i + 1 + size_of (decode_rune b (!i + 1) stop)
-      else if c = 13 || c = 10 then result := 0
+        if !i + 1 >= stop then result := 0
+        else
+          let d = at b (!i + 1) in
+          if d < 0x20 || d > 0x7e then result := 0 else i := !i + 2
+      else if c >= rune_self then if idn_local then i := !i + size_of (decode_rune b !i stop) else result := 0
+      else if c < 0x20 || c = 0x7f then result := 0
       else incr i
   done;
   !result = 1
 
-(* email_local_ok reads the local part of an e-mail address: atoms separated by single dots, or a quoted string. An
-   atom of an internationalized local part (RFC 6531 extends atext of RFC 5322) is taken here to be a letter, a mark
-   or a number of any script, or one of the ASCII atom characters, as in the other ports of the evaluator. The Go
-   source reads the same grammar with two regular expressions. *)
+(* email_local_ok reads the local part of an e-mail address: atoms separated by single dots, or a quoted string. RFC
+   6531 extends atext of RFC 5322 with every character outside ASCII (UTF8-non-ascii), whatever its category, for an
+   internationalized local part. The Go source reads the same grammar with two regular expressions. *)
 let email_local_ok b from stop idn_local =
   if from >= stop then false
-  else if at b from = 0x22 then email_quoted_ok b (from + 1) stop
+  else if at b from = 0x22 then email_quoted_ok b (from + 1) stop idn_local
   else begin
     let atom_length = ref 0 in
     let i = ref from in
@@ -1041,10 +1054,8 @@ let email_local_ok b from stop idn_local =
       end
       else if not idn_local then ok := false
       else begin
-        let d = decode_rune b !i stop in
-        if not (Ucd.contains idn.letter_mark_number (rune_of d)) then ok := false;
         incr atom_length;
-        i := !i + size_of d
+        i := !i + size_of (decode_rune b !i stop)
       end
     done;
     !ok && !atom_length <> 0
@@ -1284,9 +1295,26 @@ let uri_template_var b i stop =
 let is_uri_template_operator c =
   match Char.chr c with '+' | '#' | '.' | '/' | ';' | '?' | '&' | '=' | ',' | '!' | '@' | '|' -> true | _ -> false
 
-(* The characters a URI template has no literal for. "{" opens an expression. *)
-let is_uri_template_not_literal c =
-  c <= 0x20 || match Char.chr c with '"' | '\'' | '<' | '>' | '\\' | '^' | '`' | '|' | '}' -> true | _ -> false
+(* is_uri_template_ascii_literal is whether an ASCII character is a literal of RFC 6570: %x21 / %x23-24 / %x26-3B /
+   %x3D / %x3F-5B / %x5D / %x5F / %x61-7A / %x7E. RFC 6570 printed %x26 / %x28-3B, leaving out the apostrophe; erratum
+   6937 corrects it. A % begins a pct-encoded triplet, which is read on its own. *)
+let is_uri_template_ascii_literal c =
+  c = 0x21
+  || (c >= 0x23 && c <= 0x24)
+  || (c >= 0x26 && c <= 0x3b)
+  || c = 0x3d
+  || (c >= 0x3f && c <= 0x5b)
+  || c = 0x5d || c = 0x5f
+  || (c >= 0x61 && c <= 0x7a)
+  || c = 0x7e
+
+(* is_uri_template_ucschar is whether a code point outside ASCII is a literal of RFC 6570: ucschar or iprivate. *)
+let is_uri_template_ucschar r =
+  (r >= 0xa0 && r <= 0xd7ff)
+  || (r >= 0xe000 && r <= 0xfdcf)
+  || (r >= 0xfdf0 && r <= 0xffef)
+  || (r >= 0x10000 && r <= 0xefffd && r land 0xffff <= 0xfffd && not (r >= 0xe0000 && r <= 0xe0fff))
+  || (r >= 0xf0000 && r <= 0x10fffd && r land 0xffff <= 0xfffd)
 
 (* uri_template_ok reads an RFC 6570 URI template: literal characters and expressions in braces. *)
 let uri_template_ok b from stop =
@@ -1309,8 +1337,12 @@ let uri_template_ok b from stop =
         else ok := false
       done
     end
-    else if is_uri_template_not_literal c then ok := false
-    else incr i
+    else if c = 0x25 then
+      if !i + 2 < stop && is_hex_digit (at b (!i + 1)) && is_hex_digit (at b (!i + 2)) then i := !i + 3 else ok := false
+    else if c < rune_self then if is_uri_template_ascii_literal c then incr i else ok := false
+    else
+      let d = decode_rune b !i stop in
+      if is_uri_template_ucschar (rune_of d) then i := !i + size_of d else ok := false
   done;
   !ok
 
@@ -1354,6 +1386,7 @@ let is_ipv6 text off len = ipv6_ok text off (off + len)
 let is_legacy_hostname text off len = legacy_hostname_ok text off (off + len)
 let is_hostname text off len = hostname_ok text off (off + len)
 let is_idn_hostname text off len = idn_hostname_ok text off (off + len)
+let uts46_map text off len = Uts46.map ~decode:decode_rune ~rune_of ~size_of text off (off + len)
 let is_email text off len = email_ok text off (off + len) false
 let is_idn_email text off len = email_ok text off (off + len) true
 let is_uri text off len = uri_ok text off (off + len) false false
