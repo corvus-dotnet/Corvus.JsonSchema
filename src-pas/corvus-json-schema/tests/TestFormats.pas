@@ -3,9 +3,10 @@ program TestFormats;
 
 // The tests of the format checks.
 //
-// The first part is the format tests of the JSON-Schema-Test-Suite (tests/<draft>/optional/format/*.json), run as
-// suite_test.go of the Go module runs them: for draft 4, 6, 7, 2019-09 and 2020-12, each with the formats and the
-// host name rules of its dialect. A value that is not a string is valid for every format, and so is every value for
+// The first part is the format tests of the JSON-Schema-Test-Suite (validation/tests/format-*.json and
+// validation/tests/optional/format-*.json), run as suite_test.go of the Go module runs them: for draft 4, 6, 7,
+// 2019-09 and 2020-12, each with the formats and the host name rules of its dialect, every case its compatibility
+// admits but those that expect format to be an annotation. A value that is not a string is valid for every format, and so is every value for
 // a format the dialect does not know. A case that fails and whose description contains "leap second" is counted as
 // skipped and not as a failure, exactly as in the Go runner. No case is skipped before it has run.
 //
@@ -404,15 +405,65 @@ type
   TDraft = record
     Name: UTF8String;
     Dialect: Int32;
+    Release: Int32;
   end;
 
 const
   SuiteDrafts: array[0..4] of TDraft = (
-    (Name: 'draft4'; Dialect: FormatDialectDraft4), (Name: 'draft6'; Dialect: FormatDialectDraft6),
-    (Name: 'draft7'; Dialect: FormatDialectDraft7), (Name: 'draft2019-09'; Dialect: FormatDialectDraft201909),
-    (Name: 'draft2020-12'; Dialect: FormatDialectDraft202012));
+    (Name: 'draft4'; Dialect: FormatDialectDraft4; Release: 4),
+    (Name: 'draft6'; Dialect: FormatDialectDraft6; Release: 6),
+    (Name: 'draft7'; Dialect: FormatDialectDraft7; Release: 7),
+    (Name: 'draft2019-09'; Dialect: FormatDialectDraft201909; Release: 2019),
+    (Name: 'draft2020-12'; Dialect: FormatDialectDraft202012; Release: 2020));
 
-procedure RunSuiteFile(const Path, FileLabel: UTF8String; Dialect: Int32);
+// SuiteCompatible reports whether a test case's compatibility (a comma-separated list of minimums, <= maximums and =
+// releases, from the smallest release to the largest) admits the release, by the algorithm of the suite's
+// validation/README.md. A test case without one is compatible with every release.
+function SuiteCompatible(const R: TJsonReader; TestCase, Release: Int32): Boolean;
+var
+  N, Number, Comma: Int32;
+  Rest, Constraint, Op: UTF8String;
+begin
+  Result := True;
+  N := Member(R, TestCase, 'compatibility');
+  if (N < 0) or (R.Nodes[N].Kind <> JsonString) then Exit;
+  Rest := R.Nodes[N].Text;
+  while Rest <> '' do begin
+    Comma := Pos(',', Rest);
+    if Comma = 0 then begin
+      Constraint := Rest;
+      Rest := '';
+    end else begin
+      Constraint := Copy(Rest, 1, Comma - 1);
+      Rest := Copy(Rest, Comma + 1, Length(Rest) - Comma);
+    end;
+    Op := '';
+    if Copy(Constraint, 1, 2) = '<=' then Op := '<='
+    else if Copy(Constraint, 1, 1) = '=' then Op := '=';
+    Number := StrToInt(Trim(string(Copy(Constraint, Length(Op) + 1, Length(Constraint) - Length(Op)))));
+    if Op = '<=' then Result := Release <= Number
+    else if Op = '=' then Result := Release = Number
+    else Result := Release >= Number;
+    if Release <= Number then Break;
+  end;
+end;
+
+// HasTag reports whether a test case has a tag.
+function HasTag(const R: TJsonReader; TestCase: Int32; const Tag: UTF8String): Boolean;
+var
+  N: Int32;
+begin
+  Result := False;
+  N := Member(R, TestCase, 'tags');
+  if (N < 0) or (R.Nodes[N].Kind <> JsonArray) then Exit;
+  N := R.Nodes[N].FirstChild;
+  while N >= 0 do begin
+    if (R.Nodes[N].Kind = JsonString) and Utf8Equal(R.Nodes[N].Text, Tag) then Exit(True);
+    N := R.Nodes[N].NextSibling;
+  end;
+end;
+
+procedure RunSuiteFile(const Path, FileLabel: UTF8String; Dialect, Release: Int32);
 var
   R: TJsonReader;
   Bytes: TBytes;
@@ -433,7 +484,9 @@ begin
   R.Count := 0;
   R.Failed := False;
   Root := ReadValue(R);
-  if R.Failed or (R.Nodes[Root].Kind <> JsonArray) then begin
+  if not R.Failed and (R.Nodes[Root].Kind = JsonObject) then Root := Member(R, Root, 'tests')
+  else Root := -1;
+  if (Root < 0) or (R.Nodes[Root].Kind <> JsonArray) then begin
     Inc(Failures);
     WriteLn('FAIL: cannot parse ', Path);
     Exit;
@@ -442,6 +495,12 @@ begin
   Legacy := Dialect <= FormatDialectDraft6;
   Group := R.Nodes[Root].FirstChild;
   while Group >= 0 do begin
+    // A case whose compatibility does not admit the dialect, or that expects format to be an annotation, does not
+    // apply to these checks, which assert format.
+    if not SuiteCompatible(R, Group, Release) or HasTag(R, Group, 'format-annotation') then begin
+      Group := R.Nodes[Group].NextSibling;
+      Continue;
+    end;
     GroupName := '';
     Description := Member(R, Group, 'description');
     if Description >= 0 then GroupName := R.Nodes[Description].Text;
@@ -497,7 +556,7 @@ begin
         Inc(SuitePassed);
         Inc(Tallies[T].Passed);
       end else if ContainsLower(TestName, 'leap second') then begin
-        // Leap seconds are skipped in the format run, as in the Go and C# runners.
+        // Leap seconds are skipped where format is asserted, as in the Go and C# runners.
         Inc(SuiteSkipped);
         Inc(Tallies[T].Skipped);
         WriteLn('skipped: ', FileLabel, ' [', GroupName, '] ', TestName);
@@ -514,21 +573,26 @@ begin
 end;
 
 procedure RunSuite(const Root: UTF8String);
+const
+  Directories: array[0..1] of UTF8String = ('', 'optional/');
 var
-  D, I, J, Count: Int32;
+  D, I, J, K, Count: Int32;
   Dir, Name: UTF8String;
   Names: array of UTF8String;
   Search: TSearchRec;
 begin
-  for D := 0 to High(SuiteDrafts) do begin
-    Dir := Root + '/tests/' + SuiteDrafts[D].Name + '/optional/format/';
+  for K := 0 to High(Directories) do begin
+    Dir := Root + '/validation/tests/' + Directories[K];
     Names := nil;
     Count := 0;
-    if FindFirst(Dir + '*.json', faAnyFile, Search) = 0 then begin
+    if FindFirst(Dir + 'format-*.json', faAnyFile, Search) = 0 then begin
       repeat
-        SetLength(Names, Count + 1);
-        Names[Count] := UTF8String(Search.Name);
-        Inc(Count);
+        // format-assertion.json is about the format-assertion vocabulary, not about the format checks.
+        if Search.Name <> 'format-assertion.json' then begin
+          SetLength(Names, Count + 1);
+          Names[Count] := UTF8String(Search.Name);
+          Inc(Count);
+        end;
       until FindNext(Search) <> 0;
       FindClose(Search);
     end;
@@ -542,9 +606,10 @@ begin
       end;
       Names[J] := Name;
     end;
-    for I := 0 to Count - 1 do begin
-      RunSuiteFile(Dir + Names[I], SuiteDrafts[D].Name + '/optional/format/' + Names[I], SuiteDrafts[D].Dialect);
-    end;
+    for D := 0 to High(SuiteDrafts) do
+      for I := 0 to Count - 1 do
+        RunSuiteFile(Dir + Names[I], SuiteDrafts[D].Name + '/' + Directories[K] + Names[I], SuiteDrafts[D].Dialect,
+          SuiteDrafts[D].Release);
   end;
 end;
 
