@@ -80,6 +80,22 @@ doc_equal(a::Document, b::Document) = C.values_equal(a, a.root, b, b.root)
         end
     end
 
+    @testset "numbers compare as the decimals their texts write" begin
+        for (a, b, want) in [("0.123456789123456788", "0.123456789123456789", -1),
+            ("0.12345678912345678900", "0.123456789123456789", 0), ("-18446744073709551616", "-18446744073709551615", -1),
+            ("18446744073709551616", "18446744073709551615", 1), ("1152921504606846977", "1152921504606846977.5", -1),
+            ("1152921504606846977", "1152921504606846976.5", 1), ("1152921504606846977", "1152921504606846977.0", 0),
+            ("18446744073709551615", "18446744073709551615.5", -1), ("1", "1.0", 0), ("100", "1e2", 0),
+            ("0.00", "0", 0), ("-0", "0", 0), ("-0.0", "0.0e5", 0), ("1e300", "1E+300", 0), ("0.01e2", "1", 0),
+            ("12.5e-1", "1.25", 0), ("1e-400", "0", 1), ("-1e-400", "0", -1), ("9.99", "10", -1)]
+            da, db = parse_document(a), parse_document(b)
+            @test C.compare_values(da, da.root, db, db.root) == want
+            @test C.compare_values(db, db.root, da, da.root) == -want
+            ta, tb = Vector{UInt8}(a), Vector{UInt8}(b)
+            @test C.compare_number_text(ta, 0, length(ta), tb, 0, length(tb)) == want
+        end
+    end
+
     @testset "multipleOf is exact" begin
         for (x, d, want) in [("0.0075", "0.0001", true), ("0.00751", "0.0001", false), ("4.5", "1.5", true),
             ("35", "1.5", false), ("10", "5", true), ("1e308", "0.123456789", false), ("1e308", "0.5", true),

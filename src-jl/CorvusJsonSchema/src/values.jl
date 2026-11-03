@@ -10,7 +10,7 @@ function values_equal(a::Document, x::Int, b::Document, y::Int)
     elseif k == KIND_BOOL
         return boolean(a, x) == boolean(b, y)
     elseif k == KIND_NUMBER
-        return compare_numbers(flags(a, x), data(a, x), flags(b, y), data(b, y)) == 0
+        return compare_values(a, x, b, y) == 0
     elseif k == KIND_STRING
         return count(a, x) == count(b, y) && bytes_equal(str(a, x), str(b, y))
     elseif k == KIND_ARRAY

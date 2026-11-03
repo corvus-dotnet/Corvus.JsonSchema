@@ -469,8 +469,6 @@ struct IdnTables
     greek::CodeRanges
     arabic_like::CodeRanges
     kana_or_han::CodeRanges
-    # The groups L, M and N together, for the local part of an internationalized e-mail address.
-    letter_mark_number::CodeRanges
 end
 
 const IDN_TABLES = Ref{Union{Nothing,IdnTables}}(nothing)
@@ -491,7 +489,7 @@ function idn()
             union_ranges(gc("Cc"), gc("Cf"), gc("Zs"), gc("Cn")),
             gc("M"), gc("Mn"), union_ranges(gc("Mn"), gc("Me")), union_ranges(gc("L"), gc("Mc")),
             sc("Hebrew"), sc("Greek"), union_ranges(sc("Arabic"), sc("Syriac"), sc("Thaana"), sc("Nko")),
-            union_ranges(sc("Hiragana"), sc("Katakana"), sc("Han")), union_ranges(gc("L"), gc("M"), gc("N")))
+            union_ranges(sc("Hiragana"), sc("Katakana"), sc("Han")))
         IDN_TABLES[] = built
         return built
     end::IdnTables
@@ -783,6 +781,10 @@ function is_idn_hostname(s::Bytes)
     # label, and looks through a label for the characters a rule names, which takes time and memory that grow
     # faster than the label: so they are of this length at most.
     s.len > MAX_IDN_HOSTNAME_BYTES && return false
+    # UTS #46 maps the name before it is checked: it removes the ignored code points and replaces the mapped ones,
+    # such as the fullwidth forms, which can produce an "xn--" A-label to decode.
+    s = uts46_map(s)
+    (s.len == 0 || s.len > MAX_IDN_HOSTNAME_BYTES) && return false
     # The labels, split at every label separator, keeping empty labels.
     labels = Vector{UInt32}[UInt32[]]
     for c in code_points(s)
@@ -838,27 +840,29 @@ const EMAIL_ATOM_SET = let s = set_union(set_union(char_range(UInt8('0'), UInt8(
     s
 end
 
-# Reads the local part of an e-mail address: atoms separated by single dots, or a quoted string. An atom of an
-# internationalized local part (RFC 6531 extends atext of RFC 5322) is taken here to be a letter, a mark or a number
-# of any script, or one of the ASCII atom characters, as in the other ports of the evaluator.
+# Reads the local part of an e-mail address (RFC 5321): atoms separated by single dots, or a quoted string of
+# printable ASCII other than the quote and the backslash, and quoted pairs of a backslash and a printable ASCII
+# character. RFC 6531 extends atext and the quoted string, but not the quoted pair, with every character outside
+# ASCII, whatever its category.
 function email_local_ok(s::Bytes, idn_local::Bool)
     n = s.len
     n == 0 && return false
     if at(s, 0) == UInt8('"')
-        # "(?:[^"\\\r\n]|\\.)*" where "." is any character but a line feed.
         i = 1
         while i < n
             c = at(s, i)
             if c == UInt8('"')
                 return i == n - 1
             elseif c == UInt8('\\')
-                (i + 1 >= n || at(s, i + 1) == UInt8('\n')) && return false
-                _, size = decode_rune(s, i + 1)
-                i += 1 + size
-            elseif c == UInt8('\r') || c == UInt8('\n')
-                return false
-            else
+                (i + 1 < n && 0x20 <= at(s, i + 1) <= 0x7e) || return false
+                i += 2
+            elseif c < 0x80
+                0x20 <= c <= 0x7e || return false
                 i += 1
+            else
+                idn_local || return false
+                _, size = decode_rune(s, i)
+                i += size
             end
         end
         return false
@@ -877,8 +881,7 @@ function email_local_ok(s::Bytes, idn_local::Bool)
             i += 1
         else
             idn_local || return false
-            r, size = decode_rune(s, i)
-            ranges_contain(idn().letter_mark_number, r) || return false
+            _, size = decode_rune(s, i)
             atom_length += 1
             i += size
         end
@@ -1139,14 +1142,25 @@ function is_uri_template(s::Bytes)
                     return false
                 end
             end
-        elseif c <= 0x20 || c in codeunits("\"'<>\\^`|}")
-            return false
-        else
+        elseif c == UInt8('%')
+            (i + 2 < n && is_hex_digit(at(s, i + 1)) && is_hex_digit(at(s, i + 2))) || return false
+            i += 3
+        elseif c < 0x80
+            is_template_literal(c) || return false
             i += 1
+        else
+            r, size = decode_rune(s, i)
+            (is_ucschar(r) || is_iprivate(r)) || return false
+            i += size
         end
     end
     return true
 end
+
+# An ASCII literal of a URI template (RFC 6570): %x21 / %x23-24 / %x26-3B / %x3D / %x3F-5B / %x5D / %x5F / %x61-7A /
+# %x7E. RFC 6570 printed %x26 / %x28-3B, leaving out the apostrophe; erratum 6937 corrects it.
+is_template_literal(c::UInt8) = c == 0x21 || c == 0x23 || c == 0x24 || (0x26 <= c <= 0x3b) || c == 0x3d ||
+                                (0x3f <= c <= 0x5b) || c == 0x5d || c == 0x5f || (0x61 <= c <= 0x7a) || c == 0x7e
 
 # Reads an RFC 6901 JSON pointer: segments that each start with "/", where "~" is followed by 0 or 1.
 function is_json_pointer(s::Bytes)
