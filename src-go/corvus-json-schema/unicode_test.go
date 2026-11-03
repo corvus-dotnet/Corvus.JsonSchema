@@ -114,13 +114,14 @@ func TestNoToolchainUnicodeData(t *testing.T) {
 // TestUnicodeFormatsUseUnicode17 checks format answers that differ between Unicode 15, which the unicode package of
 // Go 1.25 and 1.26 holds, and the Unicode 17 of internal/ucd.
 func TestUnicodeFormatsUseUnicode17(t *testing.T) {
-	// U+10D4A and U+10D4B are Garay letters, assigned in Unicode 16. U+1C89 is an uppercase letter of Unicode 16, and
-	// IDNA2008 disallows uppercase letters. U+2FFFF is a noncharacter in every version.
+	// U+10D4A and U+10D4B are Garay letters, assigned in Unicode 16. U+1C89 is an uppercase letter of Unicode 16, which
+	// the UTS #46 mapping lowers to U+1C8A. U+2FFFF is a noncharacter in every version, which IDNA2008 disallows in a
+	// host name; RFC 6531 allows every character outside ASCII in the local part of an address.
 	for _, c := range []struct {
 		host string
 		want bool
 	}{
-		{"\U00010D4A\U00010D4B.example", true}, {"\u1C8A.example", true}, {"\u1C89.example", false},
+		{"\U00010D4A\U00010D4B.example", true}, {"\u1C8A.example", true}, {"\u1C89.example", true},
 		{"\U0002FFFF.example", false},
 	} {
 		if got := isIDNHostname(c.host); got != c.want {
@@ -132,7 +133,7 @@ func TestUnicodeFormatsUseUnicode17(t *testing.T) {
 		want    bool
 	}{
 		{"\U00010D4A\U00010D4B@example.com", true}, {"\U00016EA0\U00016EBB@example.com", true},
-		{"\U0002FFFF@example.com", false}, {"δοκιμή@example.com", true}, {"a b@example.com", false},
+		{"\U0002FFFF@example.com", true}, {"δοκιμή@example.com", true}, {"a b@example.com", false},
 	} {
 		if got := isEmail(c.address, true); got != c.want {
 			t.Errorf("isEmail(%+q) = %v, want %v", c.address, got, c.want)

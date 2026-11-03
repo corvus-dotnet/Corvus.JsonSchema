@@ -21,7 +21,7 @@ func valuesEqual(a *Document, x int, b *Document, y int) bool {
 	case kindBool:
 		return a.boolean(x) == b.boolean(y)
 	case kindNumber:
-		return compareNumbers(a.flags(x), a.data(x), b.flags(y), b.data(y)) == 0
+		return compareValues(a, x, b, y) == 0
 	case kindString:
 		return a.count(x) == b.count(y) && string(a.str(x)) == string(b.str(y))
 	case kindArray:

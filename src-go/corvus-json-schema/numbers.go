@@ -14,7 +14,124 @@ const (
 	two64 = 0x1p64
 )
 
-// compareNumbers compares two numbers exactly: negative, zero or positive.
+// compareValues compares the numbers x of a and y of b exactly, as the decimals their texts write: negative, zero or
+// positive. The parsed representations decide it when they can: two integers always, and a float with a float or
+// with an integer that a float64 holds exactly when they differ (rounding to a float64 keeps the order, so different
+// floats come from different decimals in the same order). Otherwise, the texts decide it, so 0.123456789123456788 is
+// less than 0.123456789123456789 although both read as the same float64.
+func compareValues(a *Document, x int, b *Document, y int) int {
+	fa, va, fb, vb := a.flags(x), a.data(x), b.flags(y), b.data(y)
+	c := compareNumbers(fa, va, fb, vb)
+	if fa != numFloat && fb != numFloat {
+		return c
+	}
+	if c != 0 && holdsExactly(fa, va) && holdsExactly(fb, vb) {
+		return c
+	}
+	return compareNumberText(a.numberText(x), b.numberText(y))
+}
+
+// holdsExactly reports whether a float64 holds the value of a number's representation exactly (always for a float).
+func holdsExactly(flag uint8, v uint64) bool {
+	switch flag {
+	case numInt:
+		i := int64(v)
+		return i >= -(1<<53) && i <= 1<<53
+	case numUint:
+		// Floats in [2^63, 2^64) are multiples of 2^11.
+		return v&(1<<11-1) == 0
+	}
+	return true
+}
+
+// compareNumberText compares two JSON number texts exactly, as the decimals they write: negative, zero or positive.
+func compareNumberText(a, b []byte) int {
+	sa, ea, da := decimalParts(a)
+	sb, eb, db := decimalParts(b)
+	if sa != sb {
+		return compareInt(int64(sa), int64(sb))
+	}
+	if sa == 0 {
+		return 0
+	}
+	c := 0
+	switch {
+	case ea != eb:
+		c = compareInt(ea, eb)
+	default:
+		c = compareDigits(da, db)
+	}
+	return c * sa
+}
+
+// decimalParts reads a JSON number text as sign * 0.d1d2d3... * 10^exponent: the sign (-1, 0 for zero, or 1), the
+// exponent, and the significant digits from d1 to the last non-zero digit (which may include the decimal point).
+func decimalParts(t []byte) (sign int, exponent int64, digits []byte) {
+	j := 0
+	sign = 1
+	if j < len(t) && t[j] == '-' {
+		sign = -1
+		j++
+	}
+	integerDigits := int64(0)
+	position, firstPosition := int64(0), int64(0)
+	first, last := -1, -1
+	fraction := false
+	for ; j < len(t); j++ {
+		c := t[j]
+		if c == '.' {
+			fraction = true
+			continue
+		}
+		if c < '0' || c > '9' {
+			break
+		}
+		if !fraction {
+			integerDigits++
+		}
+		if c != '0' {
+			if first < 0 {
+				first, firstPosition = j, position
+			}
+			last = j
+		}
+		position++
+	}
+	if first < 0 {
+		return 0, 0, nil
+	}
+	e, _ := textExponent(t, j)
+	return sign, integerDigits - firstPosition + e, t[first : last+1]
+}
+
+// compareDigits compares two runs of significant digits (each from its first to its last non-zero digit, ignoring a
+// decimal point) as the fractions 0.d1d2d3...
+func compareDigits(a, b []byte) int {
+	i, k := 0, 0
+	for {
+		for i < len(a) && a[i] == '.' {
+			i++
+		}
+		for k < len(b) && b[k] == '.' {
+			k++
+		}
+		switch {
+		case i == len(a) && k == len(b):
+			return 0
+		case i == len(a):
+			return -1
+		case k == len(b):
+			return 1
+		case a[i] != b[k]:
+			return compareInt(int64(a[i]), int64(b[k]))
+		}
+		i++
+		k++
+	}
+}
+
+// compareNumbers compares two numbers' representations: negative, zero or positive. It is exact for two integers;
+// compareValues decides the cases a float's rounding hides.
 func compareNumbers(fa uint8, a uint64, fb uint8, b uint64) int {
 	switch fa {
 	case numInt:

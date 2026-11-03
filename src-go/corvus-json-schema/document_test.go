@@ -142,6 +142,58 @@ func TestNumbers(t *testing.T) {
 	}
 }
 
+func TestCompareValuesIsExact(t *testing.T) {
+	// Numbers whose float64 forms hide the difference: the texts decide them.
+	for _, c := range []struct {
+		a, b string
+		want int
+	}{
+		{"0.123456789123456788", "0.123456789123456789", -1}, {"0.123456789123456790", "0.123456789123456789", 1},
+		{"0.123456789123456789", "0.123456789123456789", 0}, {"0.12345678912345678900", "0.123456789123456789", 0},
+		{"-18446744073709551616", "-18446744073709551615", -1}, {"18446744073709551616", "18446744073709551615", 1},
+		{"972783798187987123879878123.188781369", "972783798187987123879878123.18878137", -1},
+		{"-972783798187987123879878123.188781369", "-972783798187987123879878123.18878137", 1},
+		{"1152921504606846977", "1152921504606846977.5", -1}, {"1152921504606846977", "1152921504606846976.5", 1},
+		{"1152921504606846977", "1152921504606846977.0", 0}, {"18446744073709551615", "18446744073709551615.5", -1},
+		{"1", "1.0", 0}, {"100", "1e2", 0}, {"0.00", "0", 0}, {"-0", "0", 0}, {"-0.0", "0.0e5", 0},
+		{"1e300", "1E+300", 0}, {"0.01e2", "1", 0},
+		{"12.5e-1", "1.25", 0}, {"1e-400", "0", 1}, {"-1e-400", "0", -1}, {"9.99", "10", -1},
+	} {
+		a, b := mustParse(t, c.a), mustParse(t, c.b)
+		if got := compareValues(a, a.root, b, b.root); got != c.want {
+			t.Errorf("compareValues(%s, %s) = %d, want %d", c.a, c.b, got, c.want)
+		}
+		if got := compareValues(b, b.root, a, a.root); got != -c.want {
+			t.Errorf("compareValues(%s, %s) = %d, want %d", c.b, c.a, got, -c.want)
+		}
+	}
+}
+
+func TestHighPrecisionNumbersCompareExactly(t *testing.T) {
+	for _, c := range []struct {
+		schema, instance string
+		want             bool
+	}{
+		{`{"const": 0.123456789123456789}`, `0.123456789123456789`, true},
+		{`{"const": 0.123456789123456789}`, `0.123456789123456788`, false},
+		{`{"enum": [0.123456789123456789]}`, `0.123456789123456790`, false},
+		{`{"maximum": 972783798187987123879878123.18878137}`, `972783798187987123879878123.188781371`, false},
+		{`{"exclusiveMaximum": 972783798187987123879878123.18878137}`, `972783798187987123879878123.188781369`, true},
+		{`{"minimum": -18446744073709551615}`, `-18446744073709551616`, false},
+		{`{"exclusiveMinimum": -972783798187987123879878123.18878137}`, `-972783798187987123879878123.188781369`, true},
+		{`{"uniqueItems": true}`, `[0.123456789123456788, 0.123456789123456789]`, true},
+		{`{"uniqueItems": true}`, `[1, 1.0]`, false},
+	} {
+		v := mustCompile(t, c.schema)
+		if got := v.IsValidString(c.instance); got != c.want {
+			t.Errorf("%s against %s = %v, want %v", c.instance, c.schema, got, c.want)
+		}
+		if got, err := v.EvaluateString(c.instance, NewResultsCollector(Basic)); err != nil || got != c.want {
+			t.Errorf("%s against %s, collecting = %v (%v), want %v", c.instance, c.schema, got, err, c.want)
+		}
+	}
+}
+
 func TestMultipleOfIsExact(t *testing.T) {
 	for _, c := range []struct {
 		x, d string

@@ -2,6 +2,12 @@
 
 The version history of `github.com/corvus-dotnet/Corvus.JsonSchema/src-go/corvus-json-schema`, the Go port of the Corvus.Text.Json V5 runtime evaluator. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md).
 
+## V0.1.4
+
+V0.1.4 fixes the `format` checks that the JSON-Schema-Test-Suite's unified layout found wrong. `idn-hostname` (and the domain of `idn-email`) applies the UTS #46 mapping (Unicode 17.0.0) before it checks a name, so ignored code points such as U+200B are removed and fullwidth letters are read as ASCII; an uppercase letter outside ASCII is lowered, so it is no longer refused. `email` follows RFC 5321 in a quoted local part (printable ASCII and quoted pairs of printable ASCII only), and `idn-email` RFC 6531: any character outside ASCII in the local part, whatever its category, where only letters, marks and numbers were allowed. `uri-template` takes the RFC 6570 literals, with the apostrophe that erratum 6937 adds, so a `%` must begin a complete percent-encoded triplet and a delete character is refused. The UTS #46 table is written by `gen-uts46-data.ps1`, from the same `IdnaMappingTable.txt` as the .NET engine's and the Rust crate's.
+
+V0.1.4 also compares numbers exactly as the decimals their JSON text writes. `const`, `enum`, `uniqueItems`, `minimum`, `maximum`, `exclusiveMinimum` and `exclusiveMaximum` compared a number of more digits than a `float64` holds by its nearest `float64`, so `0.123456789123456788` equalled a `const` of `0.123456789123456789`, and `-18446744073709551616` met a `minimum` of `-18446744073709551615`. The parsed values still decide every comparison they can, and the text decides the rest, without allocating.
+
 ## V0.1.3
 
 V0.1.3 fixes wrong results for two kinds of pattern, and patterns that took the engine longer than anyone would wait. It also refuses patterns that are not valid and were accepted. And it puts limits on what one pattern can cost, since a schema and an instance may both come from outside. The API gains an option and two errors. Versions 0.1.0 to 0.1.2 are affected.
