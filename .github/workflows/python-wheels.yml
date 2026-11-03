@@ -62,7 +62,7 @@ jobs:
             "$py" -m pip install -q pytest
             "$py" -m pip install -q --no-index --find-links src-py/corvus-json-schema-rs/dist corvus-json-schema-rs
             "$py" -m pytest -q src-py/corvus-json-schema-rs/tests
-            "$py" src-py/corvus-json-schema/tests/suite.py --impl corvus_json_schema_rs --exclude draft4/optional/zeroTerminatedFloats.json
+            "$py" src-py/corvus-json-schema/tests/suite.py --impl corvus_json_schema_rs --exclude draft4/optional/zero-terminated-floats.json
           done
       - name: Test (musl)
         if: ${{ matrix.container }}
@@ -71,7 +71,7 @@ jobs:
             pip install -q pytest &&
             pip install -q --no-index --find-links src-py/corvus-json-schema-rs/dist corvus-json-schema-rs &&
             python -m pytest -q src-py/corvus-json-schema-rs/tests &&
-            python src-py/corvus-json-schema/tests/suite.py --impl corvus_json_schema_rs --exclude draft4/optional/zeroTerminatedFloats.json'
+            python src-py/corvus-json-schema/tests/suite.py --impl corvus_json_schema_rs --exclude draft4/optional/zero-terminated-floats.json'
       - name: Upload
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
