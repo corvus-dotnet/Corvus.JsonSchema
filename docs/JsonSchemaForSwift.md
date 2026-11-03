@@ -4,8 +4,9 @@
 Swift: draft 4, 6, 7, 2019-09 and 2020-12. It is a Swift API over the [C library](JsonSchemaForC.md), and gives the
 same results and annotations as every other Corvus implementation.
 
-- **Conformant.** Passes the whole JSON-Schema-Test-Suite (required, optional and `optional/format`, every draft) except
-  `draft4/optional/zeroTerminatedFloats.json`, as JSON text, as parsed documents and through a collector.
+- **Conformant.** Passes the whole JSON-Schema-Test-Suite (required and optional, every draft) except
+  `draft4/optional/zero-terminated-floats.json` and the high-precision cases of `optional/bignum.json` (whose digits
+  the C library's serde_json values do not hold), as JSON text, as parsed documents and through a collector.
 - **Fast.** JSON text is parsed into per-thread buffers and validated in place; in the steady state a validation
   allocates nothing.
 - **Results and annotations.** Basic, Detailed and Verbose results, and annotations.

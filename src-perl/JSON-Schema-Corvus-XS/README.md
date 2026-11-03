@@ -5,8 +5,8 @@ A JSON Schema validator for Perl (draft 4, 6, 7, 2019-09 and 2020-12), a binding
 [Alien::CorvusJsonSchema](../Alien-CorvusJsonSchema) finds or installs. [JSON::Schema::Corvus](../JSON-Schema-Corvus)
 is the same evaluator in pure Perl, with the same API.
 
-- **Conformant**: passes all of the JSON-Schema-Test-Suite (required, optional and `optional/format`, every draft)
-  as JSON text, as a parsed document, through a results collector and as Perl data, and all of its annotation tests.
+- **Conformant**: passes all of the JSON-Schema-Test-Suite (required and optional, every draft) but the
+  high-precision cases of `optional/bignum.json`, whose decimals it holds to the precision of a double, as JSON text, as a parsed document, through a results collector and as Perl data, and all of its annotation tests.
 - **Results and annotations**: a results collector at the basic, detailed or verbose level gives the same rows
   (locations, messages, order) as the other Corvus evaluators, and the annotations grouped by location, keyword and
   schema location.

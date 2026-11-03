@@ -4,8 +4,9 @@
 4, 6, 7, 2019-09 and 2020-12. It is a native extension over the [Rust crate](JsonSchemaForRust.md), and gives the same
 results and annotations as every other Corvus implementation.
 
-- **Conformant.** Passes the whole JSON-Schema-Test-Suite (required, optional and `optional/format`, every draft)
-  except `draft4/optional/zeroTerminatedFloats.json`, read in place, as JSON text and through a collector.
+- **Conformant.** Passes the whole JSON-Schema-Test-Suite (required and optional, every draft)
+  except `draft4/optional/zero-terminated-floats.json` and the high-precision cases of `optional/bignum.json` (whose
+  digits the crate's serde_json values do not hold), read in place, as JSON text and through a collector.
 - **Fast.** Ruby values are read in place, with nothing converted or copied, and JSON text is validated without
   creating Ruby objects for it.
 - **Results and annotations.** Basic, Detailed and Verbose results, and annotations.

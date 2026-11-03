@@ -8,8 +8,8 @@ dependencies beyond the compiler's run-time library.
 Free Pascal 3.2.2 or later is the compiler it is built and tested with. The source is in the Delphi dialect and is
 written to be Delphi-compatible, but it has not been compiled with Delphi.
 
-- **Conformant**: passes all 7,966 tests of the JSON-Schema-Test-Suite (required, optional and `optional/format`,
-  every draft), with the same single exclusion as the C# runner (`draft4/optional/zeroTerminatedFloats.json`), and all
+- **Conformant**: passes all 8,611 tests of the JSON-Schema-Test-Suite (required, optional and `optional/format`,
+  every draft), with the same single exclusion as the C# runner (`draft4/optional/zero-terminated-floats.json`), and all
   217 assertions of the suite's annotation tests.
 - **Compiled to plans**: a schema compiles once into a node graph and fail-fast plans, each holding only the checks
   its subschema needs, with an object's keywords fused into one pass over its properties.

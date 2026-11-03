@@ -12,8 +12,9 @@ one API between them:
   [Alien::CorvusJsonSchema](https://metacpan.org/dist/Alien-CorvusJsonSchema) finds or installs. It is faster still,
   and parses JSON text in C.
 
-Both pass the whole JSON-Schema-Test-Suite (required, optional and `optional/format`, every draft) as JSON text, as
-parsed documents, through a results collector and as Perl data, and the suite's annotation tests, and give the same
+Both pass the whole JSON-Schema-Test-Suite (required and optional, every draft) but the high-precision cases of
+`optional/bignum.json` (Perl values, and the XS package's C library, hold a decimal to the precision of a double) as
+JSON text, as parsed documents, through a results collector and as Perl data, and the suite's annotation tests, and give the same
 results and annotations as every other Corvus implementation. They need Perl 5.26 or later. The XS package is tested on
 Linux (x86_64 and aarch64, glibc and musl), macOS and Windows with Strawberry Perl.
 

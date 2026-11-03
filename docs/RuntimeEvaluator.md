@@ -83,7 +83,7 @@ results into `IJsonSchemaResultsCollector` with evaluation path, schema location
 
 `tests/.../Suite/JsonSchemaTestSuiteTests.cs` runs every file under `tests/draft4`, `draft6`, `draft7`,
 `draft2019-09`, `draft2020-12` (required, `optional/` and `optional/format/` with format assertion on).
-No file is excluded and no failure is ignored, so it runs all 7,967 cases, `draft4/optional/zeroTerminatedFloats.json`
+No file is excluded and no failure is ignored, so it runs all 7,967 cases, `draft4/optional/zero-terminated-floats.json`
 and the leap-second cases among them. A `date-time` with a second of `60` is valid only at 23:59:60 UTC on a day that
 ended with a leap second, and a `time` with one only at 23:59:60 UTC. `AnnotationSuiteTests.cs` runs the annotation
 suite through a verbose collector and `JsonSchemaAnnotationProducer`.
@@ -93,8 +93,8 @@ The runners of the other evaluators differ:
 | Runner | Cases run | Files skipped | Failures ignored |
 |---|---:|---|---|
 | C# | 7,967 | none | none |
-| TypeScript | 7,966 | `draft4/optional/zeroTerminatedFloats.json` (`JSON.parse` reads `1.0` as `1`) | none |
-| Rust | 7,966 | `draft4/optional/zeroTerminatedFloats.json` | none |
+| TypeScript | 7,966 | `draft4/optional/zero-terminated-floats.json` (`JSON.parse` reads `1.0` as `1`) | none |
+| Rust | 7,966 | `draft4/optional/zero-terminated-floats.json` | none |
 
 ## Flag-mode optimisations (after reading Blaze's compiler)
 

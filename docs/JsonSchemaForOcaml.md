@@ -12,8 +12,8 @@ A schema is compiled once into a node graph and fail-fast plans: each plan holds
 and an object's keywords are fused into one pass over its properties. Any number of instances can then be validated
 against it.
 
-- **Conformant.** Passes the whole JSON-Schema-Test-Suite (required, optional and `optional/format`, every draft) except
-  `draft4/optional/zeroTerminatedFloats.json`, and all of its annotation tests.
+- **Conformant.** Passes the whole JSON-Schema-Test-Suite (required and optional, every draft) except
+  `draft4/optional/zero-terminated-floats.json`, and all of its annotation tests.
 - **Results and annotations.** Basic, Detailed and Verbose results, and annotations, the same as every other Corvus
   implementation.
 - **Allocation-free validation.** In the steady state, validating a parsed document, or JSON text, allocates nothing

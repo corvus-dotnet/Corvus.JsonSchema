@@ -4,8 +4,9 @@
 draft 4, 6, 7, 2019-09 and 2020-12. It is an R package over the [Rust crate](JsonSchemaForRust.md), and gives the same
 results and annotations as every other Corvus implementation.
 
-- **Conformant.** Passes the whole JSON-Schema-Test-Suite (required, optional and `optional/format`, every draft)
-  except `draft4/optional/zeroTerminatedFloats.json`, as JSON text and read in place from R values.
+- **Conformant.** Passes the whole JSON-Schema-Test-Suite (required and optional, every draft)
+  except `draft4/optional/zero-terminated-floats.json` and the high-precision cases of `optional/bignum.json` (whose
+  digits the crate's serde_json values do not hold), as JSON text and read in place from R values.
 - **Fast.** R lists and vectors are read in place, with nothing converted or copied, and JSON text is validated
   without creating R values for it.
 - **Results and annotations.** Basic, detailed and verbose results, and annotations, as data frames.

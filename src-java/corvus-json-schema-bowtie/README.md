@@ -20,9 +20,10 @@ document's own accessors.
 ```
 
 `IhopTest` starts the harness in its own JVM and drives it over IHOP exactly as Bowtie does. It sends every required
-case of the JSON-Schema-Test-Suite for draft 4, 6, 7, 2019-09 and 2020-12 with the suite's remotes as the registry,
-and the suite's annotation tests, and compares both with the expected results. It needs the library in the local
-Maven repository (`./mvnw install` in `../corvus-json-schema`).
+case of the JSON-Schema-Test-Suite for draft 4, 6, 7, 2019-09 and 2020-12 (those that do not expect format to be
+asserted, which the harness treats as an annotation) with each test case's `externalSchemas` as the registry, and the
+suite's annotation tests, and compares both with the expected results. It needs the library in the local Maven
+repository (`./mvnw install` in `../corvus-json-schema`).
 
 ## Running it under Bowtie
 
