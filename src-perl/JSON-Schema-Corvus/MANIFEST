@@ -19,6 +19,8 @@ lib/JSON/Schema/Corvus/Regex/Vm.pm
 lib/JSON/Schema/Corvus/ResultsCollector.pm
 lib/JSON/Schema/Corvus/Runtime.pm
 lib/JSON/Schema/Corvus/Uri.pm
+lib/JSON/Schema/Corvus/Uts46.pm
+lib/JSON/Schema/Corvus/Uts46Data.pm
 LICENSE
 Makefile.PL
 MANIFEST			This list of files
@@ -27,7 +29,9 @@ README.md
 t/00-load.t
 t/annotations.t
 t/api.t
+t/formats-unified.t
 t/lib/SuiteSupport.pm
 t/suite.t
 THIRD-PARTY-NOTICES.txt
+tools/gen-uts46-data.ps1
 tools/gen_unicode.py

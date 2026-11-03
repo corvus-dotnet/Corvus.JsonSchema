@@ -277,6 +277,18 @@ subtest 'Perl data' => sub {
   ok $unicode->is_valid_json('"café"'), 'or as characters';
 };
 
+subtest 'integers of 19 and 20 digits' => sub {
+  # An integer that fits in 64 bits but has 19 or 20 digits is still a number after it is read (it was made a string
+  # when its text was compared with the digits).
+  my $maximum = compile('{"maximum": 18446744073709551615}');
+  ok !$maximum->is_valid_json('18446744073709551616'), 'a maximum of 2^64 - 1 refuses 2^64';
+  ok $maximum->is_valid_json('18446744073709551615'), 'and takes 2^64 - 1';
+  my $type = compile('{"type": "integer", "const": 9223372036854775807}');
+  ok $type->is_valid_json('9223372036854775807'), 'an instance of 2^63 - 1 is an integer equal to the constant';
+  ok !$type->is_valid_json('"9223372036854775807"'), 'and the string of its digits is not';
+  ok compile('{"type": "number"}')->is_valid_json('12345678901234567890'), 'a 20-digit instance is a number';
+};
+
 subtest 'threads' => sub {
   plan skip_all => 'this Perl has no threads' unless eval { require threads; 1 };
   my $validator = compile('{"type": "integer"}');

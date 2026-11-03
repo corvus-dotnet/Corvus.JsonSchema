@@ -9,6 +9,7 @@ use strict;
 use warnings;
 use Math::BigInt ();
 use JSON::Schema::Corvus::Json ();
+use JSON::Schema::Corvus::Uts46 ();
 
 sub _ascii { $_[0] !~ /[^\x00-\x7f]/ }
 
@@ -323,8 +324,24 @@ sub _zwnj_joining_context {
   return $left >= 0 && $right < @$cps && $is_joiner->($cps->[$left]) && $is_joiner->($cps->[$right]) ? 1 : 0;
 }
 
+# The most UTF-8 bytes an idn-hostname may have before it is read: four for each character of the 253 of a host name.
+# The check decodes and encodes Punycode and walks around every joiner and katakana middle dot, which take time that
+# grows with the square of a label, so it must not be given a label of any length.
+my $MAX_IDN_HOSTNAME_BYTES = 4 * 253;
+
+sub _utf8_length {
+  my ($s) = @_;
+  utf8::encode($s);
+  return length $s;
+}
+
 sub idn_hostname {
   my ($s) = @_;
+  return 0 if _utf8_length($s) > $MAX_IDN_HOSTNAME_BYTES;
+  # UTS #46 maps the name before it is checked: it removes the ignored code points and replaces the mapped ones, such
+  # as the fullwidth forms, which can produce an "xn--" A-label to decode.
+  $s = JSON::Schema::Corvus::Uts46::map_name($s);
+  return 0 if _utf8_length($s) > $MAX_IDN_HOSTNAME_BYTES;
   return 0 if length $s == 0;
   # Label separators: full stop, ideographic full stop, fullwidth full stop, halfwidth ideographic full stop.
   my @labels = split /[.\x{3002}\x{ff0e}\x{ff61}]/, $s, -1;
@@ -353,8 +370,11 @@ sub idn_hostname {
   return $ascii_length - 1 <= 253 ? 1 : 0;
 }
 
-my $EMAIL_LOCAL_RE = qr/\A(?:[A-Za-z0-9!#\$%&'*+\/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#\$%&'*+\/=?^_`{|}~-]+)*|"(?:[^"\\\r\n]|\\.)*")\z/s;
-my $IDN_EMAIL_LOCAL_RE = qr/\A(?:[\p{L}\p{M}\p{N}!#\$%&'*+\/=?^_`{|}~-]+(?:\.[\p{L}\p{M}\p{N}!#\$%&'*+\/=?^_`{|}~-]+)*|"(?:[^"\\\r\n]|\\.)*")\z/s;
+# RFC 5321 Local-part: a dot-string of atext, or a quoted string of qtextSMTP (%d32-33 / %d35-91 / %d93-126) and quoted
+# pairs (a backslash and one of %d32-126). There are no comments. RFC 6531 extends atext and qtextSMTP with
+# UTF8-non-ascii (every character outside ASCII, whatever its category), but not the quoted pair.
+my $EMAIL_LOCAL_RE = qr/\A(?:[A-Za-z0-9!#\$%&'*+\/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#\$%&'*+\/=?^_`{|}~-]+)*|"(?:[\x20\x21\x23-\x5B\x5D-\x7E]|\\[\x20-\x7E])*")\z/;
+my $IDN_EMAIL_LOCAL_RE = qr/\A(?:[A-Za-z0-9!#\$%&'*+\/=?^_`{|}~\x{80}-\x{10FFFF}-]+(?:\.[A-Za-z0-9!#\$%&'*+\/=?^_`{|}~\x{80}-\x{10FFFF}-]+)*|"(?:[\x20\x21\x23-\x5B\x5D-\x7E\x{80}-\x{10FFFF}]|\\[\x20-\x7E])*")\z/;
 
 sub _email_domain {
   my ($domain, $idn) = @_;
@@ -433,7 +453,13 @@ sub iri_reference { $_[0] =~ _uri_re(1, 1) ? 1 : 0 }
 
 my $VARCHAR = '(?:[A-Za-z0-9_]|%[0-9A-Fa-f]{2})';
 my $VARSPEC = "$VARCHAR(?:\\.?$VARCHAR)*(?::[1-9][0-9]{0,3}|\\*)?";
-my $URI_TEMPLATE_SOURCE = "\\A(?:[^\\x00-\\x20\"'<>\\\\^`{|}]|\\{[+#./;?&=,!\@|]?$VARSPEC(?:,$VARSPEC)*\\})*\\z";
+# RFC 6570: literals = %x21 / %x23-24 / %x26-3B / %x3D / %x3F-5B / %x5D / %x5F / %x61-7A / %x7E / ucschar / iprivate /
+# pct-encoded. RFC 6570 printed %x26 / %x28-3B, leaving out the apostrophe; erratum 6937 corrects it.
+my $LITERAL = '(?:[\x21\x23\x24\x26-\x3B\x3D\x3F-\x5B\x5D\x5F\x61-\x7A\x7E\x{A0}-\x{D7FF}\x{E000}-\x{FDCF}\x{FDF0}-\x{FFEF}'
+  . '\x{10000}-\x{1FFFD}\x{20000}-\x{2FFFD}\x{30000}-\x{3FFFD}\x{40000}-\x{4FFFD}\x{50000}-\x{5FFFD}\x{60000}-\x{6FFFD}'
+  . '\x{70000}-\x{7FFFD}\x{80000}-\x{8FFFD}\x{90000}-\x{9FFFD}\x{A0000}-\x{AFFFD}\x{B0000}-\x{BFFFD}\x{C0000}-\x{CFFFD}'
+  . '\x{D0000}-\x{DFFFD}\x{E1000}-\x{EFFFD}\x{F0000}-\x{FFFFD}\x{100000}-\x{10FFFD}]|%[0-9A-Fa-f]{2})';
+my $URI_TEMPLATE_SOURCE = "\\A(?:$LITERAL|\\{[+#./;?&=,!\@|]?$VARSPEC(?:,$VARSPEC)*\\})*\\z";
 my $URI_TEMPLATE_RE = qr/$URI_TEMPLATE_SOURCE/;
 
 sub uri_template { $_[0] =~ $URI_TEMPLATE_RE ? 1 : 0 }
