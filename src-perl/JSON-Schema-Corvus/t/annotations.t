@@ -10,33 +10,18 @@ use lib "$FindBin::Bin/lib";
 use File::Spec;
 use JSON::PP ();
 use Test::More;
-use SuiteSupport qw(suite_root remote_resolver read_text);
+use SuiteSupport qw(suite_root compatible read_text);
 use JSON::Schema::Corvus;
 
 my $root = suite_root() or plan skip_all => 'the JSON-Schema-Test-Suite is not there (set JSON_SCHEMA_TEST_SUITE)';
 
-my @drafts = (['draft4', '4'], ['draft6', '6'], ['draft7', '7'], ['draft2019-09', '2019'], ['draft2020-12', '2020']);
-my @order = qw(3 4 6 7 2019 2020);
-my %position = map { $order[$_] => $_ + 1 } 0 .. $#order;
-my $resolver = remote_resolver(File::Spec->catdir($root, 'remotes'));
+my @drafts = (['draft4', 4], ['draft6', 6], ['draft7', 7], ['draft2019-09', 2019], ['draft2020-12', 2020]);
 my $decoder = JSON::PP->new->allow_bignum->utf8;
 my $collector = JSON::Schema::Corvus::ResultsCollector->new('verbose');
 my $directory = File::Spec->catdir($root, qw(annotations tests));
 opendir my $dh, $directory or die "cannot read $directory: $!";
 my @names = sort grep { /\.json\z/ } readdir $dh;
 my ($total, $failed) = (0, 0);
-
-# Whether a group marked with compatibility applies to the draft at level: "2019" means 2019-09 and later, and "<=7"
-# means draft 7 and earlier.
-sub compatible {
-  my ($level, $compatibility) = @_;
-  if ($compatibility =~ /\A<=(.+)\z/) {
-    my $limit = $position{$1} or return 0;
-    return $position{$level} <= $limit;
-  }
-  my $limit = $position{$compatibility} or return 0;
-  return $position{$level} >= $limit;
-}
 
 sub fail_assertion {
   my ($what) = @_;
@@ -45,14 +30,18 @@ sub fail_assertion {
 }
 
 for my $draft (@drafts) {
-  my ($dialect, $level) = @$draft;
+  my ($dialect, $release) = @$draft;
   for my $name (@names) {
     my $label = "$dialect/$name";
     my $file = $decoder->decode(read_text(File::Spec->catfile($directory, $name)));
     for my $group (@{ $file->{suite} }) {
-      next if defined $group->{compatibility} && !compatible($level, $group->{compatibility});
+      next unless compatible($group->{compatibility}, $release);
+      my $schemas = $group->{externalSchemas};
+      my $resolver = $schemas
+        ? sub { exists $schemas->{ $_[0] } ? JSON::PP->new->allow_bignum->encode($schemas->{ $_[0] }) : undef } : undef;
       my $validator = eval {
-        JSON::Schema::Corvus->compile($group->{schema}, default_dialect => $dialect, resolve_document => $resolver);
+        JSON::Schema::Corvus->compile($group->{schema}, default_dialect => $dialect,
+          ($resolver ? (resolve_document => $resolver) : ()));
       };
       unless ($validator) {
         fail_assertion("$label [$group->{description}]: $@");

@@ -1,7 +1,7 @@
 package SuiteSupport;
 
 # Support for the tests that run the JSON-Schema-Test-Suite: finding it, reading its files with each value's exact
-# JSON text, and serving its remote documents.
+# JSON text, deciding which test cases apply to a release, and serving each test case's external schemas.
 
 use strict;
 use warnings;
@@ -9,12 +9,12 @@ use Exporter 'import';
 use File::Spec;
 use JSON::PP ();
 
-our @EXPORT_OK = qw(suite_root read_cases remote_resolver read_text);
+our @EXPORT_OK = qw(suite_root read_cases compatible case_resolver read_text);
 
 # The suite's directory: JSON_SCHEMA_TEST_SUITE, or the repository's submodule. undef when it is not there, and a
 # failure when JSON_SCHEMA_TEST_SUITE names a directory that is not the suite (CI sets it, so the suite must run).
 sub suite_root {
-  my $probe = sub { -f File::Spec->catfile($_[0], qw(tests draft2020-12 type.json)) };
+  my $probe = sub { -f File::Spec->catfile($_[0], qw(validation tests type.json)) };
   if (defined $ENV{JSON_SCHEMA_TEST_SUITE}) {
     return $ENV{JSON_SCHEMA_TEST_SUITE} if $probe->($ENV{JSON_SCHEMA_TEST_SUITE});
     die "JSON_SCHEMA_TEST_SUITE is $ENV{JSON_SCHEMA_TEST_SUITE}, which is not the JSON-Schema-Test-Suite\n";
@@ -30,15 +30,17 @@ sub read_text {
   return scalar <$file>;
 }
 
-# A test file as a list of groups, each { description, schema => raw JSON text, tests => [ { description, data =>
-# raw JSON text, valid } ] }. The raw text is a slice of the file's bytes, so numbers are exactly as written.
+# A test file as a list of test cases, each { description, compatibility, tags => [ ... ], external_schemas => { uri
+# => raw JSON text }, schema => raw JSON text, tests => [ { description, data => raw JSON text, valid } ] }. The raw
+# text is a slice of the file's bytes, so numbers are exactly as written.
 sub read_cases {
   my ($path) = @_;
   my $text = read_text($path);
   my $pos = 0;
   my $tree = _value(\$text, \$pos);
+  my %file = _members($tree);
   my @groups;
-  for my $group (@{ $tree->{items} }) {
+  for my $group (@{ $file{tests}{items} }) {
     my %g = _members($group);
     my @tests;
     for my $test (@{ $g{tests}{items} }) {
@@ -49,9 +51,39 @@ sub read_cases {
         valid       => _raw(\$text, $t{valid}) eq 'true',
       };
     }
-    push @groups, { description => _decode(\$text, $g{description}), schema => _raw(\$text, $g{schema}), tests => \@tests };
+    my %external = $g{externalSchemas} ? map { $_->[0] => _raw(\$text, $_->[1]) } @{ $g{externalSchemas}{members} } : ();
+    push @groups, {
+      description      => _decode(\$text, $g{description}),
+      compatibility    => $g{compatibility} ? _decode(\$text, $g{compatibility}) : undef,
+      tags             => $g{tags} ? _decode(\$text, $g{tags}) : [],
+      external_schemas => \%external,
+      schema           => _raw(\$text, $g{schema}),
+      tests            => \@tests,
+    };
   }
   return \@groups;
+}
+
+# Whether a test case's compatibility (a comma-separated list of minimums, <= maximums and = releases, from the
+# smallest release to the largest) admits the release, by the algorithm of the suite's validation/README.md.
+sub compatible {
+  my ($compatibility, $release) = @_;
+  return 1 unless defined $compatibility;
+  my $valid = 1;
+  for my $constraint (split /,/, $compatibility) {
+    my ($op, $version) = $constraint =~ /\A(<=|=)?\s*([0-9]+)\s*\z/ or die "compatibility $compatibility";
+    $op //= '';
+    $valid = $op eq '<=' ? $release <= $version : $op eq '=' ? $release == $version : $release >= $version;
+    last if $release <= $version;
+  }
+  return $valid ? 1 : 0;
+}
+
+# A resolver that serves a test case's external schemas (raw JSON text by retrieval URI), or undef if it has none.
+sub case_resolver {
+  my ($schemas) = @_;
+  return undef unless %$schemas;
+  return sub { $schemas->{ $_[0] } };
 }
 
 sub _members {
@@ -126,17 +158,6 @@ sub _value {
   }
   $node->{end} = $$pos;
   return $node;
-}
-
-# A resolver that serves the suite's remotes at http://localhost:1234/.
-sub remote_resolver {
-  my ($remotes) = @_;
-  return sub {
-    my ($uri) = @_;
-    return undef unless $uri =~ m{\Ahttp://localhost:1234/(.+)\z};
-    my $path = File::Spec->catfile($remotes, split m{/}, $1);
-    return -f $path ? read_text($path) : undef;
-  };
 }
 
 1;
