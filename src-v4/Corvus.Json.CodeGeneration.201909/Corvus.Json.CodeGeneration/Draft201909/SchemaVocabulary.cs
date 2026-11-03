@@ -229,13 +229,17 @@ internal sealed class SchemaVocabulary : IVocabulary
     }
 
     /// <summary>
-    /// The format-annotation vocabulary for draft 2019-09.
+    /// The format vocabulary for draft 2019-09.
     /// </summary>
+    /// <remarks>
+    /// In draft 2019-09, <c>format</c> is an annotation unless the implementation is configured to assert it
+    /// (section 7.2.1 of the validation specification), so the keyword is the annotation form, as in Corvus.Text.Json.
+    /// </remarks>
     public sealed class Format : IVocabulary
     {
         private static readonly IKeyword[] KeywordsBacking =
             [
-                FormatWithAssertionKeyword.Instance,
+                FormatWithAnnotationKeyword.Instance,
             ];
 
         private Format()
@@ -243,15 +247,15 @@ internal sealed class SchemaVocabulary : IVocabulary
         }
 
         /// <summary>
-        /// Gets the singleton instance of the Draft 2019-09 format-annotation vocabulary.
+        /// Gets the singleton instance of the Draft 2019-09 format vocabulary.
         /// </summary>
         public static IVocabulary Instance { get; } = new Format();
 
         /// <inheritdoc/>
-        public string Uri => "https://json-schema.org/draft/2019-09/vocab/format-annotation";
+        public string Uri => "https://json-schema.org/draft/2019-09/vocab/format";
 
         /// <inheritdoc/>
-        public ReadOnlySpan<byte> UriUtf8 => "https://json-schema.org/draft/2019-09/vocab/format-annotation"u8;
+        public ReadOnlySpan<byte> UriUtf8 => "https://json-schema.org/draft/2019-09/vocab/format"u8;
 
         /// <inheritdoc/>
         public IEnumerable<IKeyword> Keywords => KeywordsBacking;
@@ -259,7 +263,7 @@ internal sealed class SchemaVocabulary : IVocabulary
         /// <inheritdoc/>
         public bool ValidateSchemaInstance(JsonElement schemaInstance)
         {
-            // TODO: use the generated 2019-09 format-annotation validator.
+            // TODO: use the generated 2019-09 format validator.
             return true;
         }
 

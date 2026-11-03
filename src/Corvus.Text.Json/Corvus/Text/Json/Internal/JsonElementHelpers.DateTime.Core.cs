@@ -17,7 +17,11 @@ namespace Corvus.Text.Json.Internal;
 /// <summary>
 /// Core helper methods for parsing date and time components from ISO 8601 formatted strings.
 /// </summary>
+#if CORVUS_JSON_EXTENDEDTYPES && !CORVUS_TEXT_JSON_CODEGENERATION
+internal static partial class JsonElementHelpers
+#else
 public static partial class JsonElementHelpers
+#endif
 {
     /// <summary>
     /// Parses a date string in ISO 8601 format (YYYY-MM-DD) and extracts the year, month, and day components.
@@ -84,6 +88,20 @@ public static partial class JsonElementHelpers
 
         // Add the 8 characters back on!
         indexOfOffset += 8;
+
+        // RFC 3339 time-offset is "Z" or a numeric offset with both hours and minutes ("+HH:MM").
+        int offsetLength = text.Length - indexOfOffset;
+        if (offsetLength != 1 && offsetLength != 6)
+        {
+            hours = 0;
+            minutes = 0;
+            seconds = 0;
+            milliseconds = 0;
+            microseconds = 0;
+            nanoseconds = 0;
+            offsetSeconds = 0;
+            return false;
+        }
 
         if (!ParseTimeCore(text[..indexOfOffset], out hours, out minutes, out seconds, out milliseconds, out microseconds, out nanoseconds))
         {
@@ -158,7 +176,8 @@ public static partial class JsonElementHelpers
     }
 
     /// <summary>
-    /// Parses a time string in ISO 8601 format (HH:MM:SS[.nnnnnnnnn]) and extracts the time components.
+    /// Parses a time string in ISO 8601 format (HH:MM:SS[.nnnnnnnnn...]) and extracts the time components. Fraction
+    /// digits beyond the nanosecond are accepted and truncated.
     /// </summary>
     /// <param name="text">The UTF-8 encoded text containing the time string to parse.</param>
     /// <param name="hours">When this method returns, contains the hours component of the time (0-23).</param>
@@ -170,7 +189,7 @@ public static partial class JsonElementHelpers
     /// <returns><see langword="true"/> if the time was successfully parsed; otherwise, <see langword="false"/>.</returns>
     public static bool ParseTimeCore(ReadOnlySpan<byte> text, out int hours, out int minutes, out int seconds, out int milliseconds, out int microseconds, out int nanoseconds)
     {
-        if (text.Length > 18 ||
+        if (text.Length < 8 ||
             text[2] != ':' ||
             text[5] != ':' ||
             IsNotNumeric(text[0]) ||
@@ -267,6 +286,22 @@ public static partial class JsonElementHelpers
 
                 nanoseconds += (text[i] - '0') * multiplier;
                 multiplier /= 10;
+            }
+
+            // RFC 3339 time-secfrac is "." 1*DIGIT, with no limit on the number of digits. Digits beyond the
+            // nanosecond are below the precision of the value, so they are checked and then truncated.
+            for (int i = 18; i < text.Length; ++i)
+            {
+                if (IsNotNumeric(text[i]))
+                {
+                    hours = 0;
+                    minutes = 0;
+                    seconds = 0;
+                    milliseconds = 0;
+                    microseconds = 0;
+                    nanoseconds = 0;
+                    return false;
+                }
             }
         }
 

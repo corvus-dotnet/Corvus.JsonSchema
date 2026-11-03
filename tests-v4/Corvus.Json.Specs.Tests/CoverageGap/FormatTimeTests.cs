@@ -61,7 +61,7 @@ public class FormatTimeTests
 
     [TestMethod]
     [DataRow("a@b.c", true)]
-    [DataRow("a@b.c\n", true, DisplayName = "one line end after the address is not read")]
+    [DataRow("a@b.c\n", false, DisplayName = "a line end after the address")]
     [DataRow("a@\u00e9.com", true)]
     [DataRow("\u00e9@\u00e9.com", true)]
     [DataRow("a@[1.2.3.4]", true)]
@@ -71,13 +71,13 @@ public class FormatTimeTests
     [DataRow("a@", false)]
     [DataRow("a@\n", false)]
     [DataRow("@b.c", false)]
-    [DataRow("a@b", false, DisplayName = "a domain of one label")]
+    [DataRow("a@b", true, DisplayName = "a domain of one label")]
     [DataRow("a@b@c.d", false, DisplayName = "two at signs")]
     [DataRow("a@b\n@c.d", false, DisplayName = "two at signs on two lines")]
     [DataRow("a@b\nc.d", false, DisplayName = "a line end in the domain")]
     [DataRow("a b@c.d", false)]
     [DataRow("a@c .d", false)]
-    public void IdnEmailAnswersAsItDid(string text, bool expected)
+    public void IdnEmailAnswersAsTheSuiteDoes(string text, bool expected)
     {
         var value = new JsonString(text);
         foreach (Check check in ChecksOf("idn-email"))

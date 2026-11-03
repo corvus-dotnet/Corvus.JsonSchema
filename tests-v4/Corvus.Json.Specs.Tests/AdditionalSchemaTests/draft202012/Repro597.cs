@@ -35,7 +35,7 @@ public class SuiteValidateDateTimeWithAndWithoutMinutesOnTheOffset
     {
         using var doc = JsonDocument.Parse("\"2025-04-09T12:00:00\\u002B01\"");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
     [TestMethod]
@@ -99,7 +99,7 @@ public class SuiteValidateTimeWithAndWithoutMinutesOnTheOffset
     {
         using var doc = JsonDocument.Parse("\"12:00:00\\u002B01\"");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
     [TestMethod]

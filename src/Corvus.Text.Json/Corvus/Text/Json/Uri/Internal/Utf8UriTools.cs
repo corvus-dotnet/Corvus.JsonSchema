@@ -26,6 +26,18 @@ namespace Corvus.Text.Json.Internal;
 internal static class Utf8UriTools
 {
     /// <summary>
+    /// Determines whether a value matches the grammar of the kind of reference requested.
+    /// </summary>
+    /// <param name="value">The UTF-8 encoded value.</param>
+    /// <param name="requireAbsolute">Whether the value must be an absolute <c>URI</c> (or <c>IRI</c>) rather than a reference.</param>
+    /// <param name="allowIri">Whether to allow the characters RFC 3987 adds.</param>
+    /// <returns><see langword="true"/> if the value matches.</returns>
+    internal static bool MatchesGrammar(ReadOnlySpan<byte> value, bool requireAbsolute, bool allowIri)
+    {
+        return requireAbsolute ? Utf8UriGrammar.MatchAbsolute(value, allowIri) : Utf8UriGrammar.MatchReference(value, allowIri);
+    }
+
+    /// <summary>
     /// The maximum size for a URI buffer.
     /// </summary>
     internal const int c_MaxUriBufferSize = 0xFFF0;
@@ -1815,6 +1827,14 @@ internal static class Utf8UriTools
     /// <returns><see langword="true"/> if the URI was parsed successfully; otherwise, <see langword="false"/>.</returns>
     internal static bool ParseUriInfo(ReadOnlySpan<byte> uriString, Utf8UriKind uriKind, bool requireAbsolute, bool allowIri, out Utf8UriOffset uriInfo, out Flags resultFlags)
     {
+        // The reference must match the RFC 3986 (or RFC 3987) grammar before it is parsed into its components.
+        if (!MatchesGrammar(uriString, requireAbsolute || uriKind == Utf8UriKind.Absolute, allowIri))
+        {
+            uriInfo = default;
+            resultFlags = Flags.Zero;
+            return false;
+        }
+
         Utf8UriParser? syntax = null;
         Flags flags = Flags.Zero;
         Utf8UriParsingError err = ParseScheme(uriString, ref flags, ref syntax);
@@ -1831,9 +1851,13 @@ internal static class Utf8UriTools
         {
             if (uriKind != Utf8UriKind.Absolute && !requireAbsolute && err <= Utf8UriParsingError.LastRelativeUriOkErrIndex)
             {
-                // If it looks as a relative Uri, custom factory is ignored
+                // A relative reference. Its characters and its parts were checked against the grammar above, so all
+                // that is left is to find its query and fragment.
                 resultFlags = flags | Flags.UserEscaped;
-                return GetUriInfoForRelativeReference(uriString, allowIri, out uriInfo);
+                Utf8UriOffset info = default;
+                GetUriInfoForQueryAndFragment(uriString, ref info, out _, out _);
+                uriInfo = info;
+                return true;
             }
 
             uriInfo = default;
@@ -1873,6 +1897,13 @@ internal static class Utf8UriTools
     /// <returns><see langword="true"/> if the URI is valid; otherwise, <see langword="false"/>.</returns>
     internal static bool Validate(ReadOnlySpan<byte> uriString, Utf8UriKind uriKind, bool requireAbsolute, bool allowIri, bool allowUNCPath)
     {
+        // The reference must match the RFC 3986 (or RFC 3987) grammar, which is what the JSON Schema uri,
+        // uri-reference, iri and iri-reference formats require.
+        if (!MatchesGrammar(uriString, requireAbsolute || uriKind == Utf8UriKind.Absolute, allowIri))
+        {
+            return false;
+        }
+
         Utf8UriParser? syntax = null;
         Flags flags = Flags.Zero;
         Utf8UriParsingError err = ParseScheme(uriString, ref flags, ref syntax);
@@ -1885,11 +1916,8 @@ internal static class Utf8UriTools
         // We won't use User factory for these errors
         if (uriKind != Utf8UriKind.Absolute && err != Utf8UriParsingError.None)
         {
-            // If it looks as a relative Uri, custom factory is ignored
-            if (!requireAbsolute && err <= Utf8UriParsingError.LastRelativeUriOkErrIndex)
-                return ValidateRelativeReference(uriString, allowIri);
-
-            return false;
+            // A relative reference, which matched the grammar above.
+            return !requireAbsolute && err <= Utf8UriParsingError.LastRelativeUriOkErrIndex;
         }
 
         // Cannot be relative Uri if came here

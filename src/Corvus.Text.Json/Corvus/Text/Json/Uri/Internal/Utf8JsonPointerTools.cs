@@ -6,12 +6,17 @@
 // The .NET Foundation licensed this code under the MIT license.
 // https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
+#if CORVUS_JSON_EXTENDEDTYPES
+// Corvus.Text.Json imports System.Text for the whole project; the V4 engine does not.
+using System.Text;
+
+#endif
 namespace Corvus.Text.Json.Internal;
 
 /// <summary>
 /// Provides methods for validating JSON Pointer strings.
 /// </summary>
-internal static class Utf8JsonPointerTools
+internal static partial class Utf8JsonPointerTools
 {
     /// <summary>
     /// Validates whether the specified byte span represents a valid JSON Pointer.
@@ -168,52 +173,5 @@ internal static class Utf8JsonPointerTools
         static bool IsDigit(byte b) => b >= (byte)'0' && b <= (byte)'9';
 
         static bool IsNonZeroDigit(byte b) => b >= (byte)'1' && b <= (byte)'9';
-    }
-
-    /// <summary>
-    /// Decodes the ~ encoding in a reference.
-    /// </summary>
-    /// <param name="encodedFragment">The encoded reference.</param>
-    /// <param name="fragment">The span into which to write the result.</param>
-    /// <returns>The length of the decoded reference.</returns>
-    public static int DecodePointer(ReadOnlySpan<byte> encodedFragment, Span<byte> fragment)
-    {
-        int readIndex = 0;
-        int writeIndex = 0;
-
-        while (readIndex < encodedFragment.Length)
-        {
-            if (encodedFragment[readIndex] != '~')
-            {
-                fragment[writeIndex] = encodedFragment[readIndex];
-                readIndex++;
-                writeIndex++;
-            }
-            else
-            {
-                if (readIndex >= encodedFragment.Length - 1)
-                {
-                    ThrowHelper.ThrowInvalidOperation_JsonPointer_Expected_Digit_After_Escape_Character_Found_End();
-                }
-
-                if (encodedFragment[readIndex + 1] == '0')
-                {
-                    fragment[writeIndex] = (byte)'~';
-                }
-                else if (encodedFragment[readIndex + 1] == '1')
-                {
-                    fragment[writeIndex] = (byte)'/';
-                }
-                else
-                {
-                    ThrowHelper.ThrowInvalidOperation_JsonPointer_Expected_Digit_After_Escape_Character();
-                }
-
-                readIndex += 2;
-                writeIndex++;
-            }
-        }
-
-        return writeIndex;
     }
 }

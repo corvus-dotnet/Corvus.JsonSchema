@@ -303,19 +303,22 @@ Generated types and generated standalone evaluators have the same 1 second, fixe
 
 ## Format checks
 
-A `format` that is asserted is checked by a scanner written for it (`JsonSchemaEvaluation.Match*`). No check is a
-.NET `Regex`, so none is under the match timeout, and none needs to be: each takes time in proportion to the
-string, and most read nothing of a string longer than the format allows. The interpreter, generated code
-(`CodeGeneration`) and the types of the code generators all run the same checks.
+A `format` that is asserted is checked by a scanner written for it (`FormatMatchers`, which
+`JsonSchemaEvaluation.Match*` call). No check is a .NET `Regex`, so none is under the match timeout, and none needs
+to be: each takes time in proportion to the string, and most read nothing of a string longer than the format
+allows. The interpreter, generated code (`CodeGeneration`), the types of the code generators and the V4 engine
+(`Corvus.Json.ExtendedTypes`, which compiles the same source files) all run the same checks, and each check reads
+the grammar the format names, as the JSON-Schema-Test-Suite tests it.
 
 | Format | How it is checked | What bounds it |
 |---|---|---|
-| `date` | `JsonElementHelpers.TryParseLocalDate` | A string of any other length than 10 bytes is refused unread. |
-| `date-time`, `time`, `duration` | `JsonElementHelpers.TryParseOffsetDateTime`, `TryParseOffsetTime`, `TryParsePeriod` | One pass over the string. |
-| `email`, `idn-email` | A scanner for the local part, then the check of `hostname` or `idn-hostname`, or of an address in brackets | A string over 320 bytes is refused unread (RFC 5321: 64 for the local part, 255 for the domain, and the at sign). |
-| `hostname`, `idn-hostname` | A scanner. A name with an `xn--` label, and every `idn-hostname`, is first decoded by the library's own `IdnMapping` into 256 bytes on the stack | A string over 253 bytes is refused unread. The bound is of bytes, so a name of fewer than 253 characters that are not ASCII can be over it. |
-| `ipv4`, `ipv6` | `IPAddressParser` | A string over 15 bytes, or over 65, is refused unread. |
-| `uri`, `uri-reference`, `iri`, `iri-reference` | `Utf8UriTools.Validate`, a port of the parser of `System.Uri` | A string of 65,520 bytes or more is refused unread, which is the limit of `System.Uri`. |
+| `date` | The RFC 3339 `full-date`, with the days of the month | A string of any other length than 10 bytes is refused unread. |
+| `date-time`, `time` | The RFC 3339 `date-time` and `full-time`. A second fraction may have any number of digits, and a numeric offset has hours and minutes (`+01:00`, not `+01`) | One pass over the string. |
+| `duration` | The RFC 3339 Appendix A grammar. A component may have any number of digits | One pass over the string. |
+| `email`, `idn-email` | The RFC 5321 local part (a dot-string, or a quoted string with quoted pairs, and no comments), which RFC 6531 extends with every character outside ASCII for `idn-email`; then the check of `hostname` or `idn-hostname`, or of an IPv4 or IPv6 address literal (the `IPv6:` tag in any case) | No limit on the local part or the whole address ([#1029](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1029)); the domain has the limit of a host name. |
+| `hostname`, `idn-hostname` | A scanner: labels of 1 to 63 characters that do not start or end with a hyphen. An `idn-hostname` first has the UTS #46 mapping applied (Unicode 17.0.0: ignored code points removed, mapped ones replaced, as `gen-uts46-data.ps1` writes them), and a name with an `xn--` label is decoded by the library's own `IdnMapping` on the stack | A `hostname` over 253 bytes, or an `idn-hostname` over 1,012 (253 characters of at most 4 bytes), is refused unread. |
+| `ipv4`, `ipv6` | `IPAddressParser`. An IPv6 address has no brackets, and an IPv4 part in it has no leading zeros | A string over 15 bytes, or over 65, is refused unread. |
+| `uri`, `uri-reference`, `iri`, `iri-reference` | `Utf8UriGrammar`, the RFC 3986 and RFC 3987 grammars. The `Utf8Uri`, `Utf8UriReference`, `Utf8Iri` and `Utf8IriReference` types check the same grammar before they parse a reference into its parts | One pass over the string. |
 | `uri-template` | `Utf8UriTemplate.Validate` | One pass over the string. |
 | `json-pointer`, `relative-json-pointer` | `Utf8JsonPointerTools` | One pass over the string. |
 | `uuid` | `Utf8Parser.TryParse` for a `Guid` | It reads the 36 bytes of a UUID and no more. |

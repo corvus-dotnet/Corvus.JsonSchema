@@ -1,5 +1,16 @@
 # Version History
 
+## V5.8.3
+
+V5.8.3 makes every `format` check read the grammar the format names, as the JSON-Schema-Test-Suite now tests it, and makes the V4 engine use the same checks as V5.
+
+### Bug fixes
+
+- **The `format` checks follow the grammars the formats name.** The JSON-Schema-Test-Suite is moving to a layout that tests each format against its RFC more closely, and 38 of its tests found the checks wrong. `date-time` and `time` take any number of second-fraction digits, and a numeric offset needs minutes (`+01:00`; `+01` is not RFC 3339). `duration` is checked against the RFC 3339 Appendix A grammar, so a component may have any number of digits. `email` follows RFC 5321: a quoted local part may hold quoted pairs, a local part may not hold a comment, the `IPv6:` tag of an address literal matches in any case, and the domain may not have an empty label or a label that ends with a hyphen. `idn-email` follows RFC 6531, which allows any character outside ASCII in the local part. `idn-hostname` (and the domain of `idn-email`) applies the UTS #46 mapping before it checks the name, so ignored code points such as U+200B are removed and fullwidth letters are read as ASCII. `ipv6` refuses an address in brackets and a leading zero in an embedded IPv4 octet. `uri`, `uri-reference`, `iri` and `iri-reference` are the RFC 3986 and RFC 3987 grammars, which the `Utf8Uri`, `Utf8UriReference`, `Utf8Iri` and `Utf8IriReference` types also check before they parse; a network-path reference with an IP-literal host, such as `//[2001:db8::1]/p`, is valid. `uri-template` allows the apostrophe in a literal (RFC 6570 erratum 6937).
+- **V4 uses V5's format checks.** `Corvus.Json.ExtendedTypes` compiles V5's format checks from the same source, so the two engines give the same answer for every format. V4's own host name and URI validators are removed; one of them accepted `#\foo\bar` as an `idn-hostname`. The linked types are internal, so the package gains no public types.
+- **V4 writes an offset with hours and minutes.** `JsonDateTime` and `JsonTime` wrote an offset of whole hours as `+01`, which is not RFC 3339. They write `+01:00`. Issue [#597](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/597) made `+01` valid in V4.3.7; it is not valid again, as RFC 3339 and the test suite require.
+- **In V4, `format` is an annotation by default in draft 2019-09.** A schema without `$schema` asserted `format` in draft 2019-09, because the draft's format vocabulary used the assertion form of the keyword. It now uses the annotation form, as draft 2020-12 and V5 do. Generation with `alwaysAssertFormat` (the default) still asserts it.
+
 ## V5.8.2
 
 V5.8.2 stops validation throwing on a string that is not well-formed text, lets a generation set the match limit of its regular expressions, and gives generated types `ApplyDefaults()`, read-only collections for arrays and JSON Patch support. It also fixes a number of smaller issues from the backlog.

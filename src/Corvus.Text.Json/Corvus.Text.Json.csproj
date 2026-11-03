@@ -329,6 +329,7 @@
     <Compile Include="Corvus\Text\Json\Document\JsonValueKind.cs" />
     <Compile Include="Corvus\Text\Json\Internal\JsonElementHelpers.DateTime.cs" />
     <Compile Include="Corvus\Text\Json\Internal\Number.cs" />
+    <Compile Include="Corvus\Text\Json\JsonSchema\Internal\FormatMatchers.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\JsonSchemaEvaluation.String.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\JsonSchemaEvaluation.Composition.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\JsonSchemaEvaluation.cs" />
@@ -376,8 +377,10 @@
     <Compile Include="Corvus\Text\Json\Uri\Utf8Uri.EscapeDataString.cs" />
     <Compile Include="Corvus\Text\Json\Uri\Internal\Utf8IriHelper.cs" />
     <Compile Include="Corvus\Text\Json\Uri\Internal\Utf8JsonPointerTools.cs" />
+    <Compile Include="Corvus\Text\Json\Uri\Internal\Utf8JsonPointerTools.Decode.cs" />
     <Compile Include="Corvus\Text\Json\Uri\Internal\Utf8UriOffset.cs" />
     <Compile Include="Corvus\Text\Json\Uri\Internal\Utf8UriTools.cs" />
+    <Compile Include="Corvus\Text\Json\Uri\Internal\Utf8UriGrammar.cs" />
     <Compile Include="Corvus\Text\Json\Uri\Utf8UriComponents.cs" />
     <Compile Include="Corvus\Text\Json\Uri\Internal\Utf8UriDomainNameHelper.cs" />
     <Compile Include="Corvus\Text\Json\Uri\Internal\Utf8UriFormat.cs" />
@@ -431,6 +434,8 @@
     <Compile Include="Corvus\Globalization\CharUnicodeInfoData.cs" />
     <Compile Include="Corvus\Globalization\IdnMapping.Unicode.UTF8.cs" />
     <Compile Include="Corvus\Globalization\IdnMapping.Ascii.cs" />
+    <Compile Include="Corvus\Globalization\Uts46Mapping.cs" />
+    <Compile Include="Corvus\Globalization\Uts46MappingData.cs" />
     <Compile Include="Corvus\Globalization\StrongBidiCategory.cs" />
   </ItemGroup>
   <!-- Include files under StringResourcesPath by convention unless OmitResources is set. -->

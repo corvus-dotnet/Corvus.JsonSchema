@@ -11,14 +11,28 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
+#if CORVUS_JSON_EXTENDEDTYPES
+
+// Corvus.Text.Json imports System.Text for the whole project; the V4 engine does not.
+using System.Text;
+
+// Linked into the V4 engine (Corvus.Json.ExtendedTypes), which has its own public Corvus.Globalization types.
+namespace Corvus.Text.Json.Internal.Globalization;
+#else
+
 namespace Corvus.Globalization;
+#endif
 
 /// <summary>
 /// This class implements a set of methods for retrieving character type
 /// information. Character type information is independent of culture
 /// and region.
 /// </summary>
+#if CORVUS_JSON_EXTENDEDTYPES
+internal static partial class CharUnicodeInfo
+#else
 public static partial class CharUnicodeInfo
+#endif
 {
     internal const char HIGH_SURROGATE_END = '\udbff';
 
@@ -45,7 +59,7 @@ public static partial class CharUnicodeInfo
     {
         if ((uint)index >= (uint)s.Length)
         {
-            ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.index);
+            global::System.ThrowHelper.ThrowArgumentOutOfRangeException(global::System.ExceptionArgument.index);
         }
 
         return GetBidiCategoryNoBoundsChecks((uint)GetCodePointFromString(s, index));
@@ -55,7 +69,7 @@ public static partial class CharUnicodeInfo
     {
         if ((uint)index >= (uint)s.Length)
         {
-            ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.index);
+            global::System.ThrowHelper.ThrowArgumentOutOfRangeException(global::System.ExceptionArgument.index);
         }
 
         return GetBidiCategoryNoBoundsChecks((uint)GetCodePointFromString(s, index, out consumed));

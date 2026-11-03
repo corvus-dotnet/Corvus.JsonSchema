@@ -6,7 +6,17 @@
 // The .NET Foundation licensed this code under the MIT license.
 // https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
+#if CORVUS_JSON_EXTENDEDTYPES
+
+// Corvus.Text.Json imports System.Text for the whole project; the V4 engine does not.
+using System.Text;
+
+// Linked into the V4 engine (Corvus.Json.ExtendedTypes), which has its own public Corvus.Globalization types.
+namespace Corvus.Text.Json.Internal.Globalization;
+#else
+
 namespace Corvus.Globalization;
+#endif
 
 // Corresponds to the "strong" categories from https:// www.unicode.org/reports/tr44/#Bidi_Class_Values.
 // For our purposes, each code point is strongly left-to-right ("L"), strongly right-to-left ("R", "AL"),

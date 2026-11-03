@@ -13,6 +13,14 @@ namespace Corvus.Json.Internal;
 /// </summary>
 public static class StandardDateFormat
 {
+    // RFC 3339 numeric offsets have both hours and minutes ("+01:00"). The ExtendedIso patterns write the general
+    // offset form, which leaves out zero minutes ("+01"); these are those patterns with an RFC 3339 offset.
+    private static readonly OffsetDateTimePattern Rfc3339DateTimePattern =
+        OffsetDateTimePattern.CreateWithInvariantCulture("uuuu'-'MM'-'dd'T'HH':'mm':'ss;FFFFFFFFFo<Z+HH:mm>");
+
+    private static readonly OffsetTimePattern Rfc3339TimePattern =
+        OffsetTimePattern.CreateWithInvariantCulture("HH':'mm':'ss;FFFFFFFFFo<Z+HH:mm>");
+
     /// <summary>
     /// Convert a date to a string for the <c>date</c> format.
     /// </summary>
@@ -30,7 +38,7 @@ public static class StandardDateFormat
     /// <returns>The ISO formatted date-time as a string.</returns>
     public static string FormatDateTime(in OffsetDateTime value)
     {
-        return OffsetDateTimePattern.ExtendedIso.Format(value);
+        return Rfc3339DateTimePattern.Format(value);
     }
 
     /// <summary>
@@ -40,7 +48,7 @@ public static class StandardDateFormat
     /// <returns>The ISO formatted time as a string.</returns>
     public static string FormatTime(OffsetTime value)
     {
-        return OffsetTimePattern.ExtendedIso.Format(value);
+        return Rfc3339TimePattern.Format(value);
     }
 
     /// <summary>

@@ -129,4 +129,5 @@
   <ItemGroup>
     <Folder Include="Community.HighPerformance\Buffers\Views\" />
   </ItemGroup>
+  <Import Project="..\Corvus.Json.ExtendedTypes\LinkedFormatChecks.props" />
 </Project>

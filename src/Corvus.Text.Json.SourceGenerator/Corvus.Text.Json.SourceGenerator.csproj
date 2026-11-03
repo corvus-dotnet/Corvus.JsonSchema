@@ -353,4 +353,9 @@
     <None Include="Corvus.Text.Json.SourceGenerator.targets" Pack="true" PackagePath="build" Visible="false" />
     <None Include="Corvus.Text.Json.SourceGenerator.GeneratedCode.editorconfig" Pack="true" PackagePath="build" Visible="false" />
   </ItemGroup>
+  <PropertyGroup>
+    <!-- This project compiles JsonElementHelpers.DateTime.Core.cs itself (below). -->
+    <CorvusLinkedFormatChecksHasDateCore>true</CorvusLinkedFormatChecksHasDateCore>
+  </PropertyGroup>
+  <Import Project="$(CorvusV4Path)Corvus.Json.ExtendedTypes\LinkedFormatChecks.props" />
 </Project>

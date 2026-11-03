@@ -10,7 +10,7 @@
       {
         "description": "data: \u00222025-04-09T12:00:00\u002B01\u0022",
         "data": "2025-04-09T12:00:00\u002B01",
-        "valid": true
+        "valid": false
       },
       {
         "description": "data: \u00222025-04-09T12:00:00\u002B01:00\u0022",
@@ -31,7 +31,7 @@
       {
         "description": "data: \u002212:00:00\u002B01\u0022",
         "data": "12:00:00\u002B01",
-        "valid": true
+        "valid": false
       },
       {
         "description": "data: \u002212:00:00\u002B01:00\u0022",

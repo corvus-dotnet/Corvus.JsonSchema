@@ -47,6 +47,7 @@
     <CoreLibSharedDir>..\..\System.Private.CoreLib\src\</CoreLibSharedDir>
     <CommonPath>..\..\Common\src\</CommonPath>
   </PropertyGroup>
+  <Import Project="LinkedFormatChecks.props" />
   <ItemGroup>
     <Compile Include="$(CommonPath)System\HexConverter.cs" Link="Common\System\HexConverter.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Collections\Generic\ValueListBuilder.cs" Link="Common\System\Collections\Generic\ValueListBuilder.cs" />

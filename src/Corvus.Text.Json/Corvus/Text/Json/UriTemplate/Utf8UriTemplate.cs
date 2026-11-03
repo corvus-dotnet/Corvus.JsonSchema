@@ -64,12 +64,13 @@ internal static class Utf8UriTemplate
         false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false  // 240-255
     };
 
-    // literals = %x21 / %x23-24 / %x26 / %x28-3B / %x3D / %x3F-5B / %x5D / %x5F / %x61-7A / %x7E / ucschar / pct-encoded
-    // RFC 6570 explicitly excludes whitespace characters
+    // literals = %x21 / %x23-24 / %x26-3B / %x3D / %x3F-5B / %x5D / %x5F / %x61-7A / %x7E / ucschar / pct-encoded
+    // RFC 6570 printed %x26 / %x28-3B, leaving out the apostrophe (%x27); RFC 6570 erratum 6937 corrects this to
+    // %x26-3B, as the JSON-Schema-Test-Suite expects. RFC 6570 explicitly excludes whitespace characters.
     private static readonly bool[] IsLiteralLookup = {
         false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, // 0-15
         false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, // 16-31
-        false, true,  false, true,  true,  false, true,  false, true,  true,  true,  true,  true,  true,  true,  true,  // 32-47  ('!'=33, '#'=35, '$'=36, '&'=38, '('=40, ')'=41, '*'=42, '+'=43, ','=44, '-'=45, '.'=46, '/'=47)
+        false, true,  false, true,  true,  false, true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  // 32-47  ('!'=33, '#'=35, '$'=36, '&'=38, '\''=39, '('=40, ')'=41, '*'=42, '+'=43, ','=44, '-'=45, '.'=46, '/'=47)
         true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  false, true,  false, true,  // 48-63  ('0'-'9'=48-57, ':'=58, ';'=59, '='=61, '?'=63)
         true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  // 64-79  ('@'=64, 'A'-'O'=65-79)
         true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  false, true,  false, true,  // 80-95  ('P'-'Z'=80-90, '['=91, ']'=93, '_'=95)

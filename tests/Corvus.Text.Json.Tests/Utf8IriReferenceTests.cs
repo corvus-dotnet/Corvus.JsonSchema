@@ -410,10 +410,10 @@ public partial class Utf8IriReferenceTests
     [DataRow("custom+scheme://example.com", true)] // Plus in scheme
     [DataRow("custom-scheme://example.com", true)] // Hyphen in scheme
     [DataRow("custom.scheme://example.com", true)] // Dot in scheme
-    [DataRow("123scheme://example.com", true)] // Scheme starting with digit should be invalid, but is treated as a relative IRI path
-    [DataRow("+scheme://example.com", true)] // Scheme starting with plus should be invalid, but is treated as a relative IRI path
-    [DataRow("-scheme://example.com", true)] // Scheme starting with hyphen should be invalid, but is treated as a relative IRI path
-    [DataRow(".scheme://example.com", true)] // Scheme starting with dot should be invalid, but is treated as a relative IRI path
+    [DataRow("123scheme://example.com", false)] // Not a scheme, which starts with a letter; and the first segment of a relative-path reference has no colon (RFC 3986 section 4.2)
+    [DataRow("+scheme://example.com", false)] // Not a scheme, which starts with a letter; and the first segment of a relative-path reference has no colon (RFC 3986 section 4.2)
+    [DataRow("-scheme://example.com", false)] // Not a scheme, which starts with a letter; and the first segment of a relative-path reference has no colon (RFC 3986 section 4.2)
+    [DataRow(".scheme://example.com", false)] // Not a scheme, which starts with a letter; and the first segment of a relative-path reference has no colon (RFC 3986 section 4.2)
     public void CreateIri_EdgeCaseIris_HandlesCorrectly(string iri, bool shouldBeValid)
     {
         byte[] iriBytes = Encoding.UTF8.GetBytes(iri);
@@ -463,7 +463,7 @@ public partial class Utf8IriReferenceTests
     [DataRow("http://example.com/path/./current", true)] // Single dot segment
     [DataRow("http://example.com/path//double/slash", true)] // Double slashes in path
     [DataRow("http://example.com\\windows\\path", false)] // Backslashes should be invalid in HTTP
-    [DataRow("file:///C:\\Windows\\Path", true)] // Backslashes in file URLs might be valid
+    [DataRow("file:///C:\\Windows\\Path", false)] // A backslash is not a URI character (RFC 3986)
     [DataRow("http://example.com/path?a=1&b=2&c=3", true)] // Multiple query parameters
     [DataRow("http://example.com/path?query=value#frag1#frag2", false)] // Fragment containing hash should be encoded
     [DataRow("http://example.com:80/path", true)] // Default HTTP port explicitly specified
@@ -516,12 +516,12 @@ public partial class Utf8IriReferenceTests
 
     [TestMethod]
     [DataRow("", true)] // Empty string
-    [DataRow(" ", true)] // Just whitespace
+    [DataRow(" ", false)] // A space is not a URI character (RFC 3986)
     [DataRow("\t", false)] // Tab character
     [DataRow("\n", false)] // Newline character
     [DataRow("\r", false)] // Carriage return
-    [DataRow("http://example.com ", true)] // Trailing whitespace permitted
-    [DataRow(" http://example.com", true)] // Leading whitespace permitted
+    [DataRow("http://example.com ", false)] // A space is not a URI character (RFC 3986)
+    [DataRow(" http://example.com", false)] // A space is not a URI character (RFC 3986)
     [DataRow("http://example.com/\u0000", false)] // Null character
     [DataRow("http://example.com/\u001F", false)] // Control character
     [DataRow("http://example.com/\u007F", false)] // DEL character
