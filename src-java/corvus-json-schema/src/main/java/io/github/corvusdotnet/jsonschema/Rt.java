@@ -59,8 +59,8 @@ final class Rt {
     // Numbers
 
     /** Compares a number value with a constant: negative, zero or positive. */
-    static int compare(JsonDocument d, int x, int flag, long bits) {
-        return Numbers.compare(d.flags(x), d.data(x), flag, bits);
+    static int compare(JsonDocument d, int x, SchemaNode.Num bound) {
+        return Numbers.compare(d, x, bound);
     }
 
     static boolean multipleOf(JsonDocument d, int x, Numbers.Divisor divisor) {

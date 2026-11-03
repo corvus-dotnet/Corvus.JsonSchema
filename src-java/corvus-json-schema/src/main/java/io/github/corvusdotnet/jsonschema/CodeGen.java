@@ -1016,9 +1016,8 @@ final class CodeGen {
         private void compareNumber(SchemaNode.Num bound) {
             mv.visitVarInsn(ALOAD, D);
             mv.visitVarInsn(ILOAD, X);
-            pushInt(bound.flag);
-            mv.visitLdcInsn(bound.bits);
-            rt("compare", "(" + DOC + "IIJ)I");
+            constant(bound, "L" + PKG + "SchemaNode$Num;");
+            rt("compare", "(" + DOC + "IL" + PKG + "SchemaNode$Num;)I");
         }
 
         private void numberSection(SchemaNode n) {

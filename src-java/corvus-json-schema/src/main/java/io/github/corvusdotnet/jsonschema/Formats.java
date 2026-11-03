@@ -677,29 +677,14 @@ final class Formats {
         if (!idn) {
             return false;
         }
-        // Letters, marks and numbers (the general categories L, M and N).
-        switch (Character.getType(c)) {
-            case Character.UPPERCASE_LETTER:
-            case Character.LOWERCASE_LETTER:
-            case Character.TITLECASE_LETTER:
-            case Character.MODIFIER_LETTER:
-            case Character.OTHER_LETTER:
-            case Character.NON_SPACING_MARK:
-            case Character.ENCLOSING_MARK:
-            case Character.COMBINING_SPACING_MARK:
-            case Character.DECIMAL_DIGIT_NUMBER:
-            case Character.LETTER_NUMBER:
-            case Character.OTHER_NUMBER:
-                return true;
-            default:
-                return false;
-        }
+        // RFC 6531 extends atext with UTF8-non-ascii: every character outside ASCII, whatever its category.
+        return true;
     }
 
     /**
-     * The local part of an email address, s[0, to): atoms separated by single dots, or a quoted string, in which a
-     * backslash takes the character after it (which is not a line terminator) and no quote, backslash, carriage
-     * return or line feed stands by itself.
+     * The local part of an email address, s[0, to): atoms separated by single dots, or a quoted string (RFC 5321) of
+     * printable ASCII other than the quote and the backslash, and quoted pairs of a backslash and a printable ASCII
+     * character. RFC 6531 adds every character outside ASCII to the quoted string, but not to the quoted pair.
      */
     static boolean emailLocalPart(CharSequence s, int to, boolean idn) {
         if (to == 0) {
@@ -717,11 +702,11 @@ final class Formats {
                         return false;
                     }
                     char e = s.charAt(i + 1);
-                    if (e == '\n' || e == '\r' || e == 0x85 || e == 0x2028 || e == 0x2029) {
+                    if (e < 0x20 || e > 0x7e) {
                         return false;
                     }
                     i += 2;
-                } else if (c == '\r' || c == '\n') {
+                } else if (c < 0x80 ? c < 0x20 || c > 0x7e : !idn) {
                     return false;
                 } else {
                     i++;
@@ -1063,11 +1048,33 @@ final class Formats {
                         return false;
                     }
                 }
-            } else if (c <= 0x20 || "\"'<>\\^`|}".indexOf(c) >= 0) {
-                return false;
+            } else if (c == '%') {
+                if (i + 1 >= n || !is(s.charAt(i), HEX) || !is(s.charAt(i + 1), HEX)) {
+                    return false;
+                }
+                i += 2;
+            } else if (c < 0x80) {
+                if (!isTemplateLiteral(c)) {
+                    return false;
+                }
+            } else {
+                int cp = Character.codePointAt(s, i - 1);
+                i += Character.charCount(cp) - 1;
+                if (!isUcsChar(cp) && !isPrivate(cp)) {
+                    return false;
+                }
             }
         }
         return true;
+    }
+
+    /**
+     * An ASCII literal of a URI template (RFC 6570): %x21 / %x23-24 / %x26-3B / %x3D / %x3F-5B / %x5D / %x5F /
+     * %x61-7A / %x7E. RFC 6570 printed %x26 / %x28-3B, leaving out the apostrophe; erratum 6937 corrects it.
+     */
+    private static boolean isTemplateLiteral(char c) {
+        return c == 0x21 || c == 0x23 || c == 0x24 || (c >= 0x26 && c <= 0x3b) || c == 0x3d || (c >= 0x3f && c <= 0x5b)
+                || c == 0x5d || c == 0x5f || (c >= 0x61 && c <= 0x7a) || c == 0x7e;
     }
 
     /** A JSON Pointer (RFC 6901) over s[from, to): tokens that each follow a slash, with ~ only as ~0 or ~1. */

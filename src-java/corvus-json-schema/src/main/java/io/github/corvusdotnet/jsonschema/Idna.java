@@ -544,6 +544,35 @@ final class Idna {
 
     /** The {@code idn-hostname} format over s[from, to). */
     boolean idnHostname(CharSequence s, int from, int to) {
+        // A host name has 253 characters at most as A-labels, each of at most 4 bytes of UTF-8 in any form. A longer
+        // string is not one, and is not mapped or read further (the bound of the other ports, before the mapping).
+        if (utf8Length(s, from, to, MAX_HOSTNAME_BYTES) > MAX_HOSTNAME_BYTES) {
+            return false;
+        }
+        // UTS #46 maps the name before it is checked: it removes the ignored code points and replaces the mapped ones,
+        // such as the fullwidth forms, which can produce an "xn--" A-label to decode.
+        String mapped = Uts46.map(s, from, to);
+        if (mapped != null) {
+            return idnHostnameUnmapped(mapped, 0, mapped.length());
+        }
+        return idnHostnameUnmapped(s, from, to);
+    }
+
+    /** The most bytes of UTF-8 a host name has in any form: 253 characters of at most 4 bytes. */
+    private static final int MAX_HOSTNAME_BYTES = 4 * 253;
+
+    /** The bytes of UTF-8 in s[from, to), counted up to a little past {@code limit}. */
+    private static int utf8Length(CharSequence s, int from, int to, int limit) {
+        int bytes = 0;
+        for (int i = from; i < to && bytes <= limit; i++) {
+            char c = s.charAt(i);
+            bytes += c < 0x80 ? 1 : c < 0x800 ? 2 : Character.isSurrogate(c) ? 2 : 3;
+        }
+        return bytes;
+    }
+
+    /** The checks of {@code idn-hostname} over s[from, to), once UTS #46 has mapped it. */
+    private boolean idnHostnameUnmapped(CharSequence s, int from, int to) {
         if (from == to) {
             return false;
         }
