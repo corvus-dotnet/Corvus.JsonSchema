@@ -80,6 +80,25 @@ begin
   Check(Actual = Expected, X + ' multipleOf ' + Divisor + ' -> ' + BoolToStr(Actual, True));
 end;
 
+procedure CompareExactly(const A, B: UTF8String; Expected: Int32);
+var
+  DA, DB: TDocument;
+  E: TParseError;
+  Actual, Reversed, Text: Int32;
+begin
+  if not ParseDocumentString(A, DA, E) or not ParseDocumentString(B, DB, E) then begin
+    Check(False, A + ' or ' + B + ' did not parse');
+    Exit;
+  end;
+  Actual := CompareValues(DocFlags(DA, DA.Root), DocData(DA, DA.Root), DA.Source, DocNumberStart(DA, DA.Root),
+    DocFlags(DB, DB.Root), DocData(DB, DB.Root), DB.Source, DocNumberStart(DB, DB.Root));
+  Reversed := CompareValues(DocFlags(DB, DB.Root), DocData(DB, DB.Root), DB.Source, DocNumberStart(DB, DB.Root),
+    DocFlags(DA, DA.Root), DocData(DA, DA.Root), DA.Source, DocNumberStart(DA, DA.Root));
+  Text := CompareNumberText(BytesOf(A), 0, BytesOf(B), 0);
+  Check((Actual = Expected) and (Reversed = -Expected) and (Text = Expected), A + ' compared exactly with ' + B
+    + ' -> ' + IntToStr(Actual) + ', ' + IntToStr(Reversed) + ', ' + IntToStr(Text));
+end;
+
 procedure Compare(const A, B: UTF8String; Expected: Int32);
 var
   DA, DB: TDocument;
@@ -232,6 +251,27 @@ begin
   Compare('0.5', '0', 1);
   Compare('-0.5', '0', -1);
   Compare('-0', '0', 0);
+
+  { Numbers compare exactly as the decimals their texts write, beyond what a Double holds. }
+  CompareExactly('0.123456789123456788', '0.123456789123456789', -1);
+  CompareExactly('0.12345678912345678900', '0.123456789123456789', 0);
+  CompareExactly('-18446744073709551616', '-18446744073709551615', -1);
+  CompareExactly('18446744073709551616', '18446744073709551615', 1);
+  CompareExactly('1152921504606846977', '1152921504606846977.5', -1);
+  CompareExactly('1152921504606846977', '1152921504606846976.5', 1);
+  CompareExactly('1152921504606846977', '1152921504606846977.0', 0);
+  CompareExactly('18446744073709551615', '18446744073709551615.5', -1);
+  CompareExactly('1', '1.0', 0);
+  CompareExactly('100', '1e2', 0);
+  CompareExactly('0.00', '0', 0);
+  CompareExactly('-0', '0', 0);
+  CompareExactly('-0.0', '0.0e5', 0);
+  CompareExactly('1e300', '1E+300', 0);
+  CompareExactly('0.01e2', '1', 0);
+  CompareExactly('12.5e-1', '1.25', 0);
+  CompareExactly('1e-400', '0', 1);
+  CompareExactly('-1e-400', '0', -1);
+  CompareExactly('9.99', '10', -1);
 
   { multipleOf is decided on the decimal digits. }
   Multiple('10', '2', True);

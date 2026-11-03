@@ -830,9 +830,6 @@ type
     LetterOrSpacingMark: TUcdTable;
     // The scripts the contextual rules of RFC 5892 and the Bidi rule of RFC 5893 name.
     Hebrew, Greek, ArabicLike, KanaOrHan: TUcdTable;
-    // LetterMarkNumber is the groups L, M and N together, for the local part of an internationalized e-mail
-    // address.
-    LetterMarkNumber: TUcdTable;
   end;
 
 var
@@ -855,7 +852,6 @@ begin
   Idn.Greek := UcdScript('Greek')^;
   Idn.ArabicLike := UcdUnion([UcdScript('Arabic'), UcdScript('Syriac'), UcdScript('Thaana'), UcdScript('Nko')]);
   Idn.KanaOrHan := UcdUnion([UcdScript('Hiragana'), UcdScript('Katakana'), UcdScript('Han')]);
-  Idn.LetterMarkNumber := UcdUnion([UcdCategory('L'), UcdCategory('M'), UcdCategory('N')]);
 end;
 
 function IsDisallowedException(R: Int32): Boolean;
@@ -1263,7 +1259,108 @@ const
 // IDNHostnameOK checks an internationalized host name. A string over MaxIDNHostnameBytes is not one, and is not
 // read: the check decodes and encodes Punycode and walks around every joiner and every katakana middle dot, which
 // take time that grows with the square of a label, so it must not be given a label of any length.
+// ---------------------------------------------------------------------------------------------------------------------
+// The mapping step of UTS #46 (Unicode IDNA Compatibility Processing, section 4 step 1), which idn-hostname and
+// idn-email apply to a name before they check it. An "ignored" code point is removed and a "mapped" one is replaced by
+// its mapping. Every other code point is kept: "valid" and "deviation" ones (nontransitional processing, so ZERO WIDTH
+// JOINER and ZERO WIDTH NON-JOINER stay and meet the contextual rules of RFC 5892), and "disallowed" ones, which the
+// IDNA2008 checks that follow refuse. ASCII is kept as it is: its mapping only lowercases the letters, which does not
+// change whether a name is valid. The normalization step (step 2) is not applied: a name that is not in Normalization
+// Form C is valid as a host name, as the JSON-Schema-Test-Suite expects. The table is the one the .NET engine and the
+// Rust crate use, written by gen-uts46-data.ps1.
+
+{$I Corvus.JsonSchema.Uts46.inc}
+
+// Uts46Find returns the index of the entry for a code point outside ASCII, or -1 if it is neither ignored nor mapped.
+function Uts46Find(C: Int32): Int32;
+var
+  Low, High, Middle, At, First, Last: Int32;
+begin
+  Low := 0;
+  High := Length(Uts46Entries) div 8;
+  while Low < High do begin
+    Middle := (Low + High) shr 1;
+    At := Middle * 8;
+    First := (Int32(Uts46Entries[At]) shl 16) or (Int32(Uts46Entries[At + 1]) shl 8) or Uts46Entries[At + 2];
+    Last := First + ((Int32(Uts46Entries[At + 3]) shl 8) or Uts46Entries[At + 4]);
+    if C < First then High := Middle
+    else if C > Last then Low := Middle + 1
+    else begin
+      Result := At;
+      Exit;
+    end;
+  end;
+  Result := -1;
+end;
+
+// Uts46Map writes the mapped form of S[From .. Stop-1] to Mapped and returns True, or returns False, writing nothing,
+// when nothing in it is mapped or ignored (so the common case allocates nothing).
+function Uts46Map(const S: TBytes; From, Stop: Int32; var Mapped: TBytes): Boolean;
+var
+  I, R, Size, Entry, N, Pass, Len, Offset: Int32;
+begin
+  Result := False;
+  I := From;
+  while I < Stop do begin
+    if S[I] < RuneSelf then begin
+      Inc(I);
+      Continue;
+    end;
+    R := DecodeRune(S, I, Stop, Size);
+    if Uts46Find(R) >= 0 then begin
+      Result := True;
+      Break;
+    end;
+    Inc(I, Size);
+  end;
+  if not Result then Exit;
+  // The first pass measures the mapped name, the second writes it.
+  for Pass := 0 to 1 do begin
+    N := 0;
+    I := From;
+    while I < Stop do begin
+      if S[I] < RuneSelf then begin
+        if Pass = 1 then Mapped[N] := S[I];
+        Inc(N);
+        Inc(I);
+        Continue;
+      end;
+      R := DecodeRune(S, I, Stop, Size);
+      Entry := Uts46Find(R);
+      if Entry < 0 then begin
+        if Pass = 1 then Move(S[I], Mapped[N], Size);
+        Inc(N, Size);
+      end else begin
+        Offset := (Int32(Uts46Entries[Entry + 5]) shl 8) or Uts46Entries[Entry + 6];
+        Len := Uts46Entries[Entry + 7];
+        if (Pass = 1) and (Len > 0) then Move(Uts46Pool[Offset], Mapped[N], Len);
+        Inc(N, Len);
+      end;
+      Inc(I, Size);
+    end;
+    if Pass = 0 then SetLength(Mapped, N);
+  end;
+end;
+
+function IDNHostnameMappedOK(const S: TBytes; From, Stop: Int32): Boolean; forward;
+
 function IDNHostnameOK(const S: TBytes; From, Stop: Int32): Boolean;
+var
+  Mapped: TBytes;
+begin
+  Result := False;
+  if (From >= Stop) or (Stop - From > MaxIDNHostnameBytes) then Exit;
+  // UTS #46 maps the name before it is checked: it removes the ignored code points and replaces the mapped ones, such
+  // as the fullwidth forms, which can produce an "xn--" A-label to decode.
+  Mapped := nil;
+  if Uts46Map(S, From, Stop, Mapped) then
+    Result := IDNHostnameMappedOK(Mapped, 0, Length(Mapped))
+  else
+    Result := IDNHostnameMappedOK(S, From, Stop);
+end;
+
+// IDNHostnameMappedOK is the check itself, once UTS #46 has mapped the name.
+function IDNHostnameMappedOK(const S: TBytes; From, Stop: Int32): Boolean;
 var
   LabelFrom, LabelStop: array of Int32;
   UnicodeLabels: array of TRunes;
@@ -1359,10 +1456,10 @@ const
     Ord('%'), Ord('&'), Ord(''''), Ord('*'), Ord('+'), Ord('/'), Ord('='), Ord('?'), Ord('^'), Ord('_'), Ord('`'),
     Ord('{'), Ord('|'), Ord('}'), Ord('~'), Ord('-')];
 
-// EmailLocalOK reads the local part of an e-mail address: atoms separated by single dots, or a quoted string. An atom
-// of an internationalized local part (RFC 6531 extends atext of RFC 5322) is taken here to be a letter, a mark or a
-// number of any script, or one of the ASCII atom characters, as in the other ports of the evaluator. The Go source
-// reads the same grammar with two regular expressions.
+// EmailLocalOK reads the local part of an e-mail address (RFC 5321): atoms separated by single dots, or a quoted
+// string of printable ASCII other than the quote and the backslash, and quoted pairs of a backslash and a printable
+// ASCII character. RFC 6531 extends atext and the quoted string, but not the quoted pair, with every character outside
+// ASCII, whatever its category.
 function EmailLocalOK(const S: TBytes; From, Stop: Int32; IdnLocal: Boolean): Boolean;
 var
   I, AtomLength, R, Size: Int32;
@@ -1371,8 +1468,6 @@ begin
   Result := False;
   if From >= Stop then Exit;
   if S[From] = Ord('"') then begin
-    // A quote, then characters that are not a quote, a backslash or a line break, or a backslash and any character
-    // but a line feed, then a quote that ends the text.
     I := From + 1;
     while I < Stop do begin
       C := S[I];
@@ -1380,11 +1475,16 @@ begin
         Result := I = Stop - 1;
         Exit;
       end else if C = Ord('\') then begin
-        if (I + 1 >= Stop) or (S[I + 1] = 10) then Exit;
-        DecodeRune(S, I + 1, Stop, Size);
-        Inc(I, 1 + Size);
-      end else if (C = 13) or (C = 10) then Exit
-      else Inc(I);
+        if (I + 1 >= Stop) or (S[I + 1] < $20) or (S[I + 1] > $7E) then Exit;
+        Inc(I, 2);
+      end else if C < RuneSelf then begin
+        if (C < $20) or (C > $7E) then Exit;
+        Inc(I);
+      end else begin
+        if not IdnLocal then Exit;
+        DecodeRune(S, I, Stop, Size);
+        Inc(I, Size);
+      end;
     end;
     Exit;
   end;
@@ -1402,8 +1502,7 @@ begin
       Inc(I);
     end else begin
       if not IdnLocal then Exit;
-      R := DecodeRune(S, I, Stop, Size);
-      if not Idn.LetterMarkNumber.Contains(R) then Exit;
+      DecodeRune(S, I, Stop, Size);
       Inc(AtomLength);
       Inc(I, Size);
     end;
@@ -1657,14 +1756,15 @@ end;
 const
   UriTemplateOperators = [Ord('+'), Ord('#'), Ord('.'), Ord('/'), Ord(';'), Ord('?'), Ord('&'), Ord('='), Ord(','),
     Ord('!'), Ord('@'), Ord('|')];
-  // The characters a URI template has no literal for. "{" opens an expression.
-  UriTemplateNotLiteral = [0..$20, Ord('"'), Ord(''''), Ord('<'), Ord('>'), Ord('\'), Ord('^'), Ord('`'), Ord('|'),
-    Ord('}')];
+  // The ASCII literals of a URI template (RFC 6570): %x21 / %x23-24 / %x26-3B / %x3D / %x3F-5B / %x5D / %x5F /
+  // %x61-7A / %x7E. RFC 6570 printed %x26 / %x28-3B, leaving out the apostrophe; erratum 6937 corrects it. A
+  // percent sign begins a percent-encoded triplet, and "{" opens an expression.
+  UriTemplateLiteral = [$21, $23, $24, $26..$3B, $3D, $3F..$5B, $5D, $5F, $61..$7A, $7E];
 
 // UriTemplateOK reads an RFC 6570 URI template: literal characters and expressions in braces.
 function UriTemplateOK(const S: TBytes; From, Stop: Int32): Boolean;
 var
-  I: Int32;
+  I, R, Size: Int32;
   C: Byte;
 begin
   Result := False;
@@ -1683,8 +1783,18 @@ begin
           Break;
         end else Exit;
       end;
-    end else if C in UriTemplateNotLiteral then Exit
-    else Inc(I);
+    end else if C = Ord('%') then begin
+      if (I + 2 >= Stop) or not IsHexDigit(S[I + 1]) or not IsHexDigit(S[I + 2]) then Exit;
+      Inc(I, 3);
+    end else if C < RuneSelf then begin
+      if not (C in UriTemplateLiteral) then Exit;
+      Inc(I);
+    end else begin
+      // Beyond ASCII, ucschar and iprivate.
+      R := DecodeRune(S, I, Stop, Size);
+      if not (IsUcsChar(R) or IsIPrivate(R)) then Exit;
+      Inc(I, Size);
+    end;
   end;
   Result := True;
 end;

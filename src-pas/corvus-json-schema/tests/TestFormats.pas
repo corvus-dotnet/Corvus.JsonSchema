@@ -566,15 +566,16 @@ procedure TestUnicodeFormatsUseUnicode17;
   end;
 
 begin
-  // U+10D4A and U+10D4B are Garay letters, assigned in Unicode 16. U+1C89 is an uppercase letter of Unicode 16, and
-  // IDNA2008 disallows uppercase letters. U+2FFFF is a noncharacter in every version.
+  // U+10D4A and U+10D4B are Garay letters, assigned in Unicode 16. U+1C89 is an uppercase letter of Unicode 16, which
+  // the UTS #46 mapping lowers to U+1C8A. U+2FFFF is a noncharacter in every version, which IDNA2008 disallows in a host
+  // name; RFC 6531 allows every character outside ASCII in the local part of an address.
   Host(U([$10D4A, $10D4B]) + '.example', True);
   Host(U([$1C8A]) + '.example', True);
-  Host(U([$1C89]) + '.example', False);
+  Host(U([$1C89]) + '.example', True);
   Host(U([$2FFFF]) + '.example', False);
   Address(U([$10D4A, $10D4B]) + '@example.com', True);
   Address(U([$16EA0, $16EBB]) + '@example.com', True);
-  Address(U([$2FFFF]) + '@example.com', False);
+  Address(U([$2FFFF]) + '@example.com', True);
   // "dokimi" in Greek letters.
   Address(U([$3B4, $3BF, $3BA, $3B9, $3BC, $3AE]) + '@example.com', True);
   Address('a b@example.com', False);
@@ -607,6 +608,33 @@ begin
     Move(S[1], Result[At], Length(S));
     Inc(At, Length(S));
   end;
+end;
+
+// TestUnifiedSuiteFormats checks the cases of the unified JSON-Schema-Test-Suite that the format checks got wrong (the
+// descriptions are the suite's).
+procedure TestUnifiedSuiteFormats;
+
+  procedure Expect(Kind: TFormatKind; const Text: UTF8String; Want: Boolean; const Description: UTF8String);
+  begin
+    Check(FormatKindName(Kind) + ': ' + Description, CheckKind(Kind, Text, False), Want);
+  end;
+
+begin
+  Expect(FormatKindEmail, '"test\' + U([$A9]) + '"@iana.org', False, 'a non-ASCII character in a quoted pair is not valid');
+  Expect(FormatKindEmail, '"\a"@iana.org', True, 'a quoted pair in the local part is valid');
+  Expect(FormatKindIDNEmail, U([$85]) + '@example.com', True, 'a C1 control in the local part is valid');
+  Expect(FormatKindIDNEmail, U([$FFFF]) + '@example.com', True, 'a noncharacter in the local part is valid');
+  Expect(FormatKindIDNHostname, 'a' + U([$200B]) + 'b', True, 'a zero width space is ignored by the mapping');
+  Expect(FormatKindIDNHostname, Times(U([$FF41]), 63), True, 'a label of 63 fullwidth characters is valid after mapping');
+  Expect(FormatKindIDNHostname, U([$FF58, $FF4E]) + '--nxasmq6b', True,
+    'an ACE prefix produced by the mapping step is decoded as an A-label');
+  Expect(FormatKindURITemplate, 'a''b', True, 'an apostrophe in a literal is valid');
+  Expect(FormatKindURITemplate, 'a%', False, 'a literal with a lone percent sign is invalid');
+  Expect(FormatKindURITemplate, 'a%4', False, 'a literal with an incomplete percent-encoded triplet is invalid');
+  Expect(FormatKindURITemplate, 'a%GG', False, 'a literal with non-hex percent encoding is invalid');
+  Expect(FormatKindURITemplate, 'a' + Chr($7F) + 'b', False, 'a delete character in a literal is invalid');
+  // A name padded past the bound with ignored code points is not mapped down to a short name.
+  Expect(FormatKindIDNHostname, Times(U([$200B]), 400) + 'a', False, 'a name over the bound before the mapping');
 end;
 
 // TestALongStringIsNotAnInternationalizedHostName of formats_bounds_test.go. The check of an internationalized host
@@ -943,6 +971,7 @@ begin
   TestContent;
   TestNumbers;
   TestUnicodeFormatsUseUnicode17;
+  TestUnifiedSuiteFormats;
   TestUnicodeFormatStrings;
   TestALongStringIsNotAnInternationalizedHostName;
   TestTheLongestHostNames;

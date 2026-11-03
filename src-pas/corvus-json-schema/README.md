@@ -38,7 +38,7 @@ The archive (a `.zip` or a `.tar.gz`) unpacks to `corvus-json-schema-<version>`.
 directory for units and include files:
 
 ```sh
-fpc -Fucorvus-json-schema-0.1.1/src -Ficorvus-json-schema-0.1.1/src yourprogram.pas
+fpc -Fucorvus-json-schema-0.1.2/src -Ficorvus-json-schema-0.1.2/src yourprogram.pas
 ```
 
 The one unit a program names in its `uses` clause is `Corvus.JsonSchema`. The samples below are written for the

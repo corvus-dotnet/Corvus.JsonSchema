@@ -486,6 +486,37 @@ begin
   ExpectValid(MustCompile('{ "multipleOf": 0.0001 }'), '0.0075', True);
 end;
 
+procedure TestNumbersAreComparedExactlyBeyondADouble;
+type
+  TCase = record
+    Schema, Instance: UTF8String;
+    Want: Boolean;
+  end;
+const
+  Cases: array[0 .. 8] of TCase = (
+    (Schema: '{ "const": 0.123456789123456789 }'; Instance: '0.123456789123456789'; Want: True),
+    (Schema: '{ "const": 0.123456789123456789 }'; Instance: '0.123456789123456788'; Want: False),
+    (Schema: '{ "enum": [0.123456789123456789] }'; Instance: '0.123456789123456790'; Want: False),
+    (Schema: '{ "maximum": 972783798187987123879878123.18878137 }'; Instance: '972783798187987123879878123.188781371';
+      Want: False),
+    (Schema: '{ "exclusiveMaximum": 972783798187987123879878123.18878137 }';
+      Instance: '972783798187987123879878123.188781369'; Want: True),
+    (Schema: '{ "minimum": -18446744073709551615 }'; Instance: '-18446744073709551616'; Want: False),
+    (Schema: '{ "exclusiveMinimum": -972783798187987123879878123.18878137 }';
+      Instance: '-972783798187987123879878123.188781369'; Want: True),
+    (Schema: '{ "uniqueItems": true }'; Instance: '[0.123456789123456788, 0.123456789123456789]'; Want: True),
+    (Schema: '{ "uniqueItems": true }'; Instance: '[1, 1.0]'; Want: False));
+var
+  I: Int32;
+  V: IJsonSchemaValidator;
+begin
+  for I := 0 to High(Cases) do begin
+    V := MustCompile(Cases[I].Schema);
+    ExpectValid(V, Cases[I].Instance, Cases[I].Want);
+    ExpectAgreement(V, Cases[I].Schema, [Cases[I].Instance]);
+  end;
+end;
+
 { Threads. }
 type
   TValidatingThread = class(TThread)
@@ -1376,6 +1407,7 @@ begin
   TestNotOnAnInPlaceCycleStopsAtMaxDepth;
   TestASeparatedListKeepsAnAnchorInsideIt;
   TestNumbersAreComparedExactlyForMultipleOf;
+  TestNumbersAreComparedExactlyBeyondADouble;
   TestValidatorsAreSafeForConcurrentUse;
   TestDiscriminatedOneOfAndAnyOfAgreeWithExhaustiveEvaluation;
   TestDiscriminatorsKeyNullAndNumbersByValue;

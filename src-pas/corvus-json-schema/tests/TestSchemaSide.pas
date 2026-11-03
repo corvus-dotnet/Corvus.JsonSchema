@@ -1294,14 +1294,15 @@ var
   Lowered: UTF8String;
 begin
   { U+10D4A and U+10D4B are Garay letters, assigned in Unicode 16. U+1C89 is an uppercase letter of Unicode 16,
-    and IDNA2008 disallows uppercase letters. U+2FFFF is a noncharacter in every version. }
+    which the UTS #46 mapping lowers to U+1C8A. U+2FFFF is a noncharacter in every version, which IDNA2008
+    disallows in a host name; RFC 6531 allows every character outside ASCII in the local part of an address. }
   Host(Rune($10D4A) + Rune($10D4B) + '.example', True);
   Host(Rune($1C8A) + '.example', True);
-  Host(Rune($1C89) + '.example', False);
+  Host(Rune($1C89) + '.example', True);
   Host(Rune($2FFFF) + '.example', False);
   Address(Rune($10D4A) + Rune($10D4B) + '@example.com', True);
   Address(Rune($16EA0) + Rune($16EBB) + '@example.com', True);
-  Address(Rune($2FFFF) + '@example.com', False);
+  Address(Rune($2FFFF) + '@example.com', True);
   Address('δοκιμή@example.com', True);
   Address('a b@example.com', False);
   { Only the letters A to Z are lowered when a URI is normalized. (The text wanted is a variable: a comparison

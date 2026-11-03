@@ -1426,13 +1426,17 @@ begin
   for I := 0 to Length(Ops) - 1 do begin
     case Ops[I].Kind of
       NumberMinimum:
-        Ok := CompareNumbers(Flag, Data, Ops[I].Flag, Ops[I].Data) >= 0;
+        Ok := CompareValues(Flag, Data, D^.Source, DocNumberStart(D^, X), Ops[I].Flag, Ops[I].Data,
+          Ops[I].Source, Ops[I].Start) >= 0;
       NumberMaximum:
-        Ok := CompareNumbers(Flag, Data, Ops[I].Flag, Ops[I].Data) <= 0;
+        Ok := CompareValues(Flag, Data, D^.Source, DocNumberStart(D^, X), Ops[I].Flag, Ops[I].Data,
+          Ops[I].Source, Ops[I].Start) <= 0;
       NumberExclusiveMinimum:
-        Ok := CompareNumbers(Flag, Data, Ops[I].Flag, Ops[I].Data) > 0;
+        Ok := CompareValues(Flag, Data, D^.Source, DocNumberStart(D^, X), Ops[I].Flag, Ops[I].Data,
+          Ops[I].Source, Ops[I].Start) > 0;
       NumberExclusiveMaximum:
-        Ok := CompareNumbers(Flag, Data, Ops[I].Flag, Ops[I].Data) < 0;
+        Ok := CompareValues(Flag, Data, D^.Source, DocNumberStart(D^, X), Ops[I].Flag, Ops[I].Data,
+          Ops[I].Source, Ops[I].Start) < 0;
       NumberMultipleOf:
         Ok := DivisorDivides(Ops[I].Divisor, Flag, Data, D^.Source, DocNumberStart(D^, X));
     else
@@ -2008,8 +2012,9 @@ var
 
   function Compare(const B: TValueRef): Int32;
   begin
-    Result := CompareNumbers(DocFlags(D^, X), DocData(D^, X), DocFlags(E.P^.Documents[B.Doc], B.N),
-      DocData(E.P^.Documents[B.Doc], B.N));
+    Result := CompareValues(DocFlags(D^, X), DocData(D^, X), D^.Source, DocNumberStart(D^, X),
+      DocFlags(E.P^.Documents[B.Doc], B.N), DocData(E.P^.Documents[B.Doc], B.N), E.P^.Documents[B.Doc].Source,
+      DocNumberStart(E.P^.Documents[B.Doc], B.N));
   end;
 
 begin

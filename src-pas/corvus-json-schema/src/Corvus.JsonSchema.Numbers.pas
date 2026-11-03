@@ -56,8 +56,20 @@ function IsInfinite(D: Double): Boolean; inline;
   rounded. False when the number is beyond the range of a Double. }
 function DecimalToDouble(const B: TBytes; Start, Stop: Int32; out D: Double): Boolean;
 
-{ CompareNumbers compares two numbers exactly: negative, zero or positive. }
+{ CompareNumbers compares two numbers' representations: negative, zero or positive. It is exact for two integers;
+  CompareValues decides the cases a Double's rounding hides. }
 function CompareNumbers(FA: Byte; A: UInt64; FB: Byte; B: UInt64): Int32;
+{ CompareValues compares two numbers exactly, as the decimals their texts write: negative, zero or positive. Each is
+  given as its representation and its text, which starts at TA[AStart] or TB[BStart]. The representations decide it
+  when they can: two integers always, and a Double with a Double or with an integer that a Double holds exactly when
+  they differ (rounding to a Double keeps the order, so different Doubles come from different decimals in the same
+  order). Otherwise the texts decide it, so 0.123456789123456788 is less than 0.123456789123456789 although both read
+  as the same Double. }
+function CompareValues(FA: Byte; A: UInt64; const TA: TBytes; AStart: Int32; FB: Byte; B: UInt64; const TB: TBytes;
+  BStart: Int32): Int32;
+{ CompareNumberText compares the JSON number texts that start at TA[AStart] and TB[BStart] exactly, as the decimals
+  they write: negative, zero or positive. }
+function CompareNumberText(const TA: TBytes; AStart: Int32; const TB: TBytes; BStart: Int32): Int32;
 { IsIntegerNumber reports whether a number is an integer (what the integer type accepts). }
 function IsIntegerNumber(Flag: Byte; V: UInt64): Boolean;
 
@@ -662,6 +674,156 @@ begin
     NumFlagInt: Result := 1;
   else
     Result := CompareUintFloat(A, DoubleFromBits(B));
+  end;
+end;
+
+{ HoldsExactly reports whether a Double holds the value of a number's representation exactly (always for a Double). }
+function HoldsExactly(Flag: Byte; V: UInt64): Boolean;
+begin
+  case Flag of
+    NumFlagInt: Result := (Int64(V) >= -(Int64(1) shl 53)) and (Int64(V) <= Int64(1) shl 53);
+    { Doubles in [2^63, 2^64) are multiples of 2^11. }
+    NumFlagUint: Result := V and ((UInt64(1) shl 11) - 1) = 0;
+  else
+    Result := True;
+  end;
+end;
+
+function CompareValues(FA: Byte; A: UInt64; const TA: TBytes; AStart: Int32; FB: Byte; B: UInt64; const TB: TBytes;
+  BStart: Int32): Int32;
+begin
+  Result := CompareNumbers(FA, A, FB, B);
+  if (FA <> NumFlagFloat) and (FB <> NumFlagFloat) then
+    Exit;
+  if (Result <> 0) and HoldsExactly(FA, A) and HoldsExactly(FB, B) then
+    Exit;
+  Result := CompareNumberText(TA, AStart, TB, BStart);
+end;
+
+{ FirstNonZero is the index of the first non-zero digit of the significand of the number text at T[Start], or -1 if
+  it writes zero. }
+function FirstNonZero(const T: TBytes; Start: Int32): Int32;
+var
+  J: Int32;
+begin
+  Result := -1;
+  J := Start;
+  while J < Length(T) do begin
+    case T[J] of
+      Ord('1') .. Ord('9'): begin
+        Result := J;
+        Exit;
+      end;
+      Ord('-'), Ord('0'), Ord('.'): Inc(J);
+    else
+      Exit;
+    end;
+  end;
+end;
+
+{ LastNonZero is the index of the last non-zero digit of a number text's significand, at or after its first. }
+function LastNonZero(const T: TBytes; First: Int32): Int32;
+var
+  J: Int32;
+begin
+  Result := First;
+  J := First;
+  while J < Length(T) do begin
+    case T[J] of
+      Ord('1') .. Ord('9'): Result := J;
+      Ord('0'), Ord('.'): ;
+    else
+      Exit;
+    end;
+    Inc(J);
+  end;
+end;
+
+{ DecimalExponent is the exponent of the number text at T[Start] written as 0.d1d2d3... * 10^exponent, with d1 at
+  T[First]: its integer digits, less the digits before d1, plus its exponent part. }
+function DecimalExponent(const T: TBytes; Start, First: Int32): Int64;
+var
+  J: Int32;
+  IntegerDigits, Position, FirstPosition: Int64;
+  Fraction: Boolean;
+begin
+  IntegerDigits := 0;
+  Position := 0;
+  FirstPosition := 0;
+  Fraction := False;
+  J := Start;
+  if T[J] = Ord('-') then
+    Inc(J);
+  while J < Length(T) do begin
+    if T[J] = Ord('.') then
+      Fraction := True
+    else if (T[J] >= Ord('0')) and (T[J] <= Ord('9')) then begin
+      if not Fraction then
+        Inc(IntegerDigits);
+      if J = First then
+        FirstPosition := Position;
+      Inc(Position);
+    end
+    else
+      Break;
+    Inc(J);
+  end;
+  Result := IntegerDigits - FirstPosition + ReadExponent(T, J, Length(T));
+end;
+
+function CompareNumberText(const TA: TBytes; AStart: Int32; const TB: TBytes; BStart: Int32): Int32;
+var
+  FirstA, FirstB, LastA, LastB, I, K, SignA, SignB: Int32;
+  ExponentA, ExponentB: Int64;
+begin
+  FirstA := FirstNonZero(TA, AStart);
+  FirstB := FirstNonZero(TB, BStart);
+  if FirstA < 0 then
+    SignA := 0
+  else if TA[AStart] = Ord('-') then
+    SignA := -1
+  else
+    SignA := 1;
+  if FirstB < 0 then
+    SignB := 0
+  else if TB[BStart] = Ord('-') then
+    SignB := -1
+  else
+    SignB := 1;
+  if (SignA <> SignB) or (SignA = 0) then begin
+    Result := CompareInt(SignA, SignB);
+    Exit;
+  end;
+  ExponentA := DecimalExponent(TA, AStart, FirstA);
+  ExponentB := DecimalExponent(TB, BStart, FirstB);
+  if ExponentA <> ExponentB then begin
+    Result := CompareInt(ExponentA, ExponentB) * SignA;
+    Exit;
+  end;
+  LastA := LastNonZero(TA, FirstA);
+  LastB := LastNonZero(TB, FirstB);
+  I := FirstA;
+  K := FirstB;
+  while True do begin
+    while (I <= LastA) and (TA[I] = Ord('.')) do
+      Inc(I);
+    while (K <= LastB) and (TB[K] = Ord('.')) do
+      Inc(K);
+    if (I > LastA) or (K > LastB) then begin
+      if I <= LastA then
+        Result := SignA
+      else if K <= LastB then
+        Result := -SignA
+      else
+        Result := 0;
+      Exit;
+    end;
+    if TA[I] <> TB[K] then begin
+      Result := CompareInt(TA[I], TB[K]) * SignA;
+      Exit;
+    end;
+    Inc(I);
+    Inc(K);
   end;
 end;
 

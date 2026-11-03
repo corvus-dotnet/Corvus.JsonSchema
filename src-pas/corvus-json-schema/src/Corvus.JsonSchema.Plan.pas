@@ -105,9 +105,11 @@ type
 
   TNumberOp = record
     Kind: TNumberOpKind;
-    { The bound's representation. }
+    { The bound's representation, and the document text its number text starts in at Start. }
     Flag: Byte;
     Data: UInt64;
+    Source: TBytes;
+    Start: Int32;
     Divisor: TDivisor;
     Format: TFormatCheckOp;
   end;
@@ -1110,6 +1112,8 @@ var
       B^.Number[M].Kind := Kind;
       B^.Number[M].Flag := DocFlags(P.Documents[V.Doc], V.N);
       B^.Number[M].Data := DocData(P.Documents[V.Doc], V.N);
+      B^.Number[M].Source := P.Documents[V.Doc].Source;
+      B^.Number[M].Start := DocNumberStart(P.Documents[V.Doc], V.N);
     end;
   end;
 

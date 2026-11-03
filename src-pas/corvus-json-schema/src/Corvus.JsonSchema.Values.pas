@@ -61,7 +61,9 @@ begin
   case Kind of
     KindNull: Result := True;
     KindBool: Result := DocBoolean(A, X) = DocBoolean(B, Y);
-    KindNumber: Result := CompareNumbers(DocFlags(A, X), DocData(A, X), DocFlags(B, Y), DocData(B, Y)) = 0;
+    KindNumber:
+      Result := CompareValues(DocFlags(A, X), DocData(A, X), A.Source, DocNumberStart(A, X), DocFlags(B, Y),
+        DocData(B, Y), B.Source, DocNumberStart(B, Y)) = 0;
     KindString: Result := StringsEqual(A, X, B, Y);
     KindArray: begin
       Result := False;
