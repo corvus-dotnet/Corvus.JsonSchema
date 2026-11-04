@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use parent 'Alien::Base';
 
-our $VERSION = 'v0.1.0';
+our $VERSION = 'v0.1.1';
 
 1;
 
@@ -23,7 +23,7 @@ In a F<Makefile.PL>:
 
   WriteMakefile(
     Alien::Base::Wrapper->mm_args,
-    CONFIGURE_REQUIRES => { 'Alien::CorvusJsonSchema' => 'v0.1.0' },
+    CONFIGURE_REQUIRES => { 'Alien::CorvusJsonSchema' => 'v0.1.1' },
     ...
   );
 
@@ -38,7 +38,7 @@ This distribution finds or installs the corvus-json-schema C library, a JSON Sch
 L<JSON::Schema::Corvus::XS>. See L<https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/src-rs/corvus-json-schema-capi>
 for the library and its API.
 
-An installed C library, version 0.1.4 or later, that C<pkg-config> finds as C<corvus-json-schema> is used as it is.
+An installed C library, version 0.1.6 or later, that C<pkg-config> finds as C<corvus-json-schema> is used as it is.
 Otherwise the C library's release package for the platform (Linux on x86_64 and aarch64 with glibc or musl, macOS,
 and Windows on x64 and arm64 with Strawberry Perl) is downloaded from its GitHub release, checked against the SHA-256
 digest this distribution records, and installed with it. There the static library is linked, except on Windows,

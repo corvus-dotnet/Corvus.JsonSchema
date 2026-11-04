@@ -25,7 +25,7 @@ cpanm JSON::Schema::Corvus::XS    # on the C library
 ```
 
 Installing the XS package installs Alien::CorvusJsonSchema first. That uses the C library if `pkg-config` finds it
-(version 0.1.4 or later), and otherwise downloads the C library's release package for the platform, checks it against
+(version 0.1.6 or later), and otherwise downloads the C library's release package for the platform, checks it against
 the SHA-256 digest the distribution records, and links it statically. Building needs a C compiler.
 
 ## Validate
