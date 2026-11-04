@@ -254,11 +254,6 @@ internal static class TestCaseGenerator
 
                 string json = File.ReadAllText(file);
                 using JsonDocument doc = JsonDocument.Parse(json);
-                if (doc.RootElement.ValueKind != JsonValueKind.Array)
-                {
-                    // Not a test file: a schema that other tests load by path (e.g. issue957-swagger.json).
-                    continue;
-                }
 
                 // The unified layout is an object whose "tests" array holds the test cases, each
                 // with a "compatibility" range; the legacy layout is a bare array of test cases.

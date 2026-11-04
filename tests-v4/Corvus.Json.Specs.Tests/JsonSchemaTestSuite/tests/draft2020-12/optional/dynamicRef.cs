@@ -11,7 +11,7 @@ namespace JsonSchemaTestSuite.Draft202012.Optional.DynamicRef;
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteDynamicRefSkipsOverIntermediateResourcesPointerReferenceAcrossResourceBoundary
+public class SuiteDynamicRefSkipsOverIntermediateResourcesPointerReferenceAcrossResourceBoundary2020
 {
     private static Fixture? s_fixture;
 
@@ -59,9 +59,9 @@ public class SuiteDynamicRefSkipsOverIntermediateResourcesPointerReferenceAcross
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional/dynamicRef.json",
-                "#/0/schema",
+                "#/tests/1/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalDynamicRef",
-                "DynamicRefSkipsOverIntermediateResourcesPointerReferenceAcrossResourceBoundary",
+                "DynamicRefSkipsOverIntermediateResourcesPointerReferenceAcrossResourceBoundary2020",
                 validateFormat: false,
                 optionalAsNullable: false,
                 useImplicitOperatorString: false);
