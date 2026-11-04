@@ -11,6 +11,13 @@ The attached notices are provided for information only.
 License notice for the Unicode Character Database
 -------------------------------
 
+src/uts46_data.rs of the corvus-json-schema crate holds a table derived from
+IdnaMappingTable.txt of Unicode 17.0.0
+(https://www.unicode.org/Public/17.0.0/idna/IdnaMappingTable.txt), the data of
+UTS #46, Unicode IDNA Compatibility Processing: the code points it maps or
+ignores, and their mappings. That data file is licensed under the Unicode
+License V3, as the data files below are.
+
 The extension is built on the corvus-json-schema Rust crate, and a packaged
 build of the extension holds the compiled crate. That crate matches patterns
 with the corvus-regex-ecma262 crate, which is compiled in with it.

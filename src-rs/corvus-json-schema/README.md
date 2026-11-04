@@ -201,3 +201,7 @@ This runs:
 ## License
 
 Apache 2.0.
+
+`src/uts46_data.rs` holds a table derived from the UTS #46 IDNA mapping data of Unicode 17.0.0, which is under the
+Unicode License V3. [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt), which the published crate holds, has that
+notice. `corvus-regex-ecma262` carries the notices of the tables it holds.

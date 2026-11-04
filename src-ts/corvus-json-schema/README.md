@@ -245,3 +245,11 @@ Code-generation heuristics can be varied for experiments with environment variab
 `CORVUS_TS_UNROLL` (optional properties checked by direct lookup, default 3), `CORVUS_TS_UNROLL_REQUIRED` (required-only
 objects unrolled up to this size, default 24), `CORVUS_TS_SWITCH` (names dispatched by a plain `switch`, default 4),
 `CORVUS_TS_DISPATCH_MAP=1` (dispatch through a `Map` instead of by length).
+
+## License
+
+Apache 2.0.
+
+`src/uts46-data.ts` holds a table derived from the UTS #46 IDNA mapping data of Unicode 17.0.0, which is under the
+Unicode License V3. [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt), which the published package holds, has that
+notice.
