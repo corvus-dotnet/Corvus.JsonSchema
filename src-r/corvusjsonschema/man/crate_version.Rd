@@ -8,7 +8,7 @@ The version of the \code{corvus-json-schema} Rust crate the package was built fr
 crate_version()
 }
 \value{
-One string, such as \code{"0.1.7"}.
+One string, such as \code{"0.2.1"}.
 }
 \examples{
 crate_version()

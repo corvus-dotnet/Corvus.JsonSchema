@@ -210,6 +210,20 @@ stopifnot(!is_valid(compile_schema(email, default_dialect = "draft7", assert_for
 stopifnot(is_valid(compile_schema(email, default_dialect = "draft7", assert_format = FALSE,
                                   assert_format_in_legacy_drafts = TRUE), "x"))
 
+# The format checks of crate 0.2.1 follow the grammars the JSON-Schema-Test-Suite tests: idn-hostname applies the
+# UTS #46 mapping (fullwidth letters are read as ASCII, and U+200B is ignored), a quoted pair in an email address takes
+# printable ASCII only, and a % in a uri-template literal must begin a complete triplet.
+format_valid <- function(format, text) {
+  is_valid_json(compile_schema(sprintf('{"format": "%s"}', format), assert_format = TRUE), text)
+}
+stopifnot(format_valid("idn-hostname", '"\\uff45\\uff58\\uff41\\uff4d\\uff50\\uff4c\\uff45.com"'))
+stopifnot(format_valid("idn-hostname", '"a\\u200bb.example"'))
+stopifnot(!format_valid("email", '"\\"test\\\\\\u00a9\\"@iana.org"'))
+stopifnot(format_valid("email", '"\\"\\\\a\\"@iana.org"'))
+stopifnot(!format_valid("uri-template", '"a%"'))
+stopifnot(format_valid("uri-template", '"a\'b"'))
+stopifnot(identical(crate_version(), "0.2.1"))
+
 content <- '{"contentEncoding": "base64"}'
 stopifnot(!is_valid(compile_schema(content, default_dialect = "draft7"), "***"))
 stopifnot(is_valid(compile_schema(content, default_dialect = "draft7", assert_content = FALSE), "***"))

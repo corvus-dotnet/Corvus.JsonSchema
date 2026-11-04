@@ -35,7 +35,7 @@ END
 
 xs_ok { xs => $xs, verbose => 1 }, with_subtest {
   my $version = main::version();
-  ok $version >= ((0 << 16) | (1 << 8) | 4), sprintf('the C library is 0.1.4 or later (%d.%d.%d)',
+  ok $version >= ((0 << 16) | (1 << 8) | 6), sprintf('the C library is 0.1.6 or later (%d.%d.%d)',
     $version >> 16, ($version >> 8) & 0xff, $version & 0xff);
   is main::validates('{"type": "integer"}', '3'), 1, 'an integer is valid';
   is main::validates('{"type": "integer"}', '"3"'), 0, 'a string is not';

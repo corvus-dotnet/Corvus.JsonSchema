@@ -1,5 +1,11 @@
 Revision history for Alien-CorvusJsonSchema
 
+v0.1.1  2026-11-04
+  - Installs the release package of C library 0.1.6, and needs an installed library to be 0.1.6 or later. 0.1.6's
+    format checks follow the grammars the JSON-Schema-Test-Suite tests (UTS #46 for idn-hostname, RFC 5321 and RFC
+    6531 for email and idn-email, the RFC 6570 literals for uri-template), so JSON::Schema::Corvus::XS gets them
+    when it is built.
+
 v0.1.0  2026-10-20
   - First release: finds the corvus-json-schema C library with pkg-config, or installs the release package of
     C library 0.1.4 for Linux (x86_64, aarch64; glibc, musl), macOS and Windows (x64, arm64; Strawberry Perl).
