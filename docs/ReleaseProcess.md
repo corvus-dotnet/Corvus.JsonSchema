@@ -74,8 +74,10 @@ Publishing is conditional based on whether the build was triggered by a tag:
 
 | Trigger | NuGet source | API key |
 |---------|-------------|---------|
-| Tag (`refs/tags/*`) | `https://api.nuget.org/v3/index.json` | `NUGET_APIKEY` secret |
+| Tag (`refs/tags/*`), or a manual run with `forcePublicNugetDestination` | `https://api.nuget.org/v3/index.json` | [NuGet.org Trusted Publishing](https://learn.microsoft.com/nuget/nuget-org/trusted-publishing): a short-lived key for the GitHub Actions OIDC token |
 | Branch / PR | `https://nuget.pkg.github.com/{owner}/index.json` | `BUILD_PUBLISHER_PAT` secret |
+
+Trusted Publishing needs a policy on NuGet.org for the `corvus-dotnet/Corvus.JsonSchema` repository and the `build.yml` workflow. The `NUGET_TRUSTED_PUBLISHING_USER` repository variable holds the NuGet.org profile name of the user who created the policy. If that user leaves the package owner's organisation on NuGet.org, the policy stops working, and a new one is needed.
 
 This means:
 - **Stable releases** go to NuGet.org when a version tag is pushed

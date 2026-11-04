@@ -6,6 +6,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write  # deploy to the gh-pages branch
+  packages: read  # build.ps1 installs ZeroFailed from GitHub Packages
+  pull-requests: read  # list the open pull requests whose previews are kept
+
 jobs:
   build:
     name: Build/Deploy Documentation Site

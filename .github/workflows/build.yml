@@ -35,7 +35,7 @@ permissions:
   actions: write  # enable cache clean-up
   checks: write  # enable test result annotations
   contents: write  # enable creating releases and GitHub Pages branch deployment
-  id-token: write  # enable OIDC authentication
+  id-token: write  # enable OIDC authentication, including NuGet.org Trusted Publishing
   issues: read
   packages: write  # enable publishing packages
   pages: write  # enable GitHub Pages environment
@@ -89,11 +89,18 @@ jobs:
       with:
         environmentVariablesYaml: |
           ZF_NUGET_PUBLISH_SOURCE: ${{ (startsWith(github.ref, 'refs/tags/') || github.event.inputs.forcePublicNugetDestination == 'true') && 'https://api.nuget.org/v3/index.json' || format('https://nuget.pkg.github.com/{0}/index.json', github.repository_owner) }}
+          # nuget.org publishing uses Trusted Publishing: the publish job exchanges the workflow's OIDC token for a
+          # short-lived API key, under the nuget.org policy for this repository and build.yml that the user named in
+          # the NUGET_TRUSTED_PUBLISHING_USER variable created. GitHub Packages publishing still uses NUGET_API_KEY,
+          # so the same condition as ZF_NUGET_PUBLISH_SOURCE turns it on.
+          ZF_BUILD_DOTNET_NUGET_USE_TRUSTED_PUBLISHING: ${{ (startsWith(github.ref, 'refs/tags/') || github.event.inputs.forcePublicNugetDestination == 'true') && 'true' || 'false' }}
+          ZF_BUILD_DOTNET_NUGET_TRUSTED_PUBLISHING_USER: ${{ vars.NUGET_TRUSTED_PUBLISHING_USER }}
           BUILDVAR_BuildWebsite: "false"
           BUILDVAR_IsPreviewDeployment: "${{ github.event_name == 'pull_request' }}"
           BUILDVAR_BasePathPrefix: "${{ github.event_name == 'pull_request' && format('/{0}/pr-preview/pr-{1}', github.event.repository.name, github.event.pull_request.number) || format('/{0}', github.event.repository.name) }}"
         secretsYaml: |
-          NUGET_API_KEY: "${{ startsWith(github.ref, 'refs/tags/') && secrets.NUGET_APIKEY || secrets.BUILD_PUBLISHER_PAT }}"
+          # Only for GitHub Packages: nuget.org publishing uses Trusted Publishing (ZF_BUILD_DOTNET_NUGET_USE_TRUSTED_PUBLISHING)
+          NUGET_API_KEY: "${{ !(startsWith(github.ref, 'refs/tags/') || github.event.inputs.forcePublicNugetDestination == 'true') && secrets.BUILD_PUBLISHER_PAT || '' }}"
           # TODO: Review approach to enable Vellum to be downloaded
           VELLUM_DOWNLOAD_TOKEN: "${{ secrets.ENDJIN_PACKAGES_TOKEN }}"
         secretsEncryptionKey: ${{ secrets.SHARED_WORKFLOW_KEY }}
@@ -218,6 +225,7 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: read
+      packages: read  # build.ps1 installs ZeroFailed from GitHub Packages
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
