@@ -83,8 +83,11 @@ that is valid for an hour, through ZeroFailed.Build.DotNet's `PublishNuGetPackag
 
 - a Trusted Publishing policy on nuget.org, owned by the `corvus-dotnet` organisation, for the repository owner
   `corvus-dotnet`, the repository `Corvus.JsonSchema` and the workflow file `build.yml` (no environment);
-- the repository variable `NUGET_TRUSTED_PUBLISHING_USER`, set to the nuget.org profile name (not the email address)
-  of the user who created the policy, who must stay a member of the organisation.
+- the organisation variable `ZF_BUILD_DOTNET_NUGET_TRUSTED_PUBLISHING_USER`, set to the nuget.org profile name (not
+  the email address) of the user who created the policy (`endjin-nuget`), who must stay a member of the organisation.
+  `build.yml` passes it to the build, and turns Trusted Publishing on only for a nuget.org destination: the
+  organisation variable `ZF_BUILD_DOTNET_NUGET_USE_TRUSTED_PUBLISHING` is true for every build, but branch builds
+  publish to GitHub Packages with a key.
 
 This means:
 - **Stable releases** go to NuGet.org when a version tag is pushed
