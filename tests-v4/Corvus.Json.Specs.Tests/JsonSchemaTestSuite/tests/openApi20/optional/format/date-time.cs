@@ -113,6 +113,46 @@ public class SuiteValidationOfDateTimeStrings
     }
 
     [TestMethod]
+    public void TestAValidDateTimeWithALeapSecondUTC()
+    {
+        using var doc = JsonDocument.Parse("\"1998-12-31T23:59:60Z\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestAValidDateTimeWithALeapSecondWithMinusOffset()
+    {
+        using var doc = JsonDocument.Parse("\"1998-12-31T15:59:60.123-08:00\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestAnInvalidDateTimePastLeapSecondUTC()
+    {
+        using var doc = JsonDocument.Parse("\"1998-12-31T23:59:61Z\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestAnInvalidDateTimeWithLeapSecondOnAWrongMinuteUTC()
+    {
+        using var doc = JsonDocument.Parse("\"1998-12-31T23:58:60Z\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestAnInvalidDateTimeWithLeapSecondOnAWrongHourUTC()
+    {
+        using var doc = JsonDocument.Parse("\"1998-12-31T22:59:60Z\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
     public void TestAnInvalidDayInDateTimeString()
     {
         using var doc = JsonDocument.Parse("\"1990-02-31T15:59:59.123-08:00\"");

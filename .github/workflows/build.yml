@@ -90,10 +90,12 @@ jobs:
         environmentVariablesYaml: |
           ZF_NUGET_PUBLISH_SOURCE: ${{ (startsWith(github.ref, 'refs/tags/') || github.event.inputs.forcePublicNugetDestination == 'true') && 'https://api.nuget.org/v3/index.json' || format('https://nuget.pkg.github.com/{0}/index.json', github.repository_owner) }}
           # NuGet.org takes a short-lived key from Trusted Publishing (GitHub Actions OIDC), which the Publish job asks
-          # for: no long-lived key is stored. The policy on nuget.org (owner corvus-dotnet) names this repository and
-          # build.yml, and NUGET_TRUSTED_PUBLISHING_USER is the nuget.org profile name of the user who created it.
+          # for: no long-lived key is stored. The nuget.org user that owns the publishing policy for this repository
+          # and build.yml comes from the organisation variable. Trusted Publishing is on only when the destination is
+          # nuget.org: the organisation variable ZF_BUILD_DOTNET_NUGET_USE_TRUSTED_PUBLISHING is true for every build,
+          # but other builds publish to GitHub Packages with BUILD_PUBLISHER_PAT.
           ZF_BUILD_DOTNET_NUGET_USE_TRUSTED_PUBLISHING: "${{ startsWith(github.ref, 'refs/tags/') || github.event.inputs.forcePublicNugetDestination == 'true' }}"
-          ZF_BUILD_DOTNET_NUGET_TRUSTED_PUBLISHING_USER: "${{ vars.NUGET_TRUSTED_PUBLISHING_USER }}"
+          ZF_BUILD_DOTNET_NUGET_TRUSTED_PUBLISHING_USER: "${{ vars.ZF_BUILD_DOTNET_NUGET_TRUSTED_PUBLISHING_USER }}"
           BUILDVAR_BuildWebsite: "false"
           BUILDVAR_IsPreviewDeployment: "${{ github.event_name == 'pull_request' }}"
           BUILDVAR_BasePathPrefix: "${{ github.event_name == 'pull_request' && format('/{0}/pr-preview/pr-{1}', github.event.repository.name, github.event.pull_request.number) || format('/{0}', github.event.repository.name) }}"

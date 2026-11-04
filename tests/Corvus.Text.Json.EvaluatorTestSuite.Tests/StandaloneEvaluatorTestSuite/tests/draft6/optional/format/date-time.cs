@@ -96,6 +96,41 @@ public class SuiteValidationOfDateTimeStrings
     }
 
     [TestMethod]
+    public void TestAValidDateTimeWithALeapSecondUtc()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"1998-12-31T23:59:60Z\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestAValidDateTimeWithALeapSecondWithMinusOffset()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"1998-12-31T15:59:60.123-08:00\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestAnInvalidDateTimePastLeapSecondUtc()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"1998-12-31T23:59:61Z\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestAnInvalidDateTimeWithLeapSecondOnAWrongMinuteUtc()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"1998-12-31T23:58:60Z\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestAnInvalidDateTimeWithLeapSecondOnAWrongHourUtc()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"1998-12-31T22:59:60Z\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
     public void TestAnInvalidHourInDateTimeString()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"1990-12-31T24:00:00Z\"");

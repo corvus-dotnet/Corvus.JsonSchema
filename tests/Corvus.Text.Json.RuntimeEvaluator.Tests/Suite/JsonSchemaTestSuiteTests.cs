@@ -13,8 +13,6 @@ public class JsonSchemaTestSuiteTests
     /// </summary>
     private static readonly HashSet<string> ExcludedFiles = new(StringComparer.Ordinal);
 
-    private static readonly string[] LeapSecondFragments = ["leap second", "60"];
-
     public static IEnumerable<object[]> RequiredFiles()
     {
         foreach (string draft in SuiteRunner.Drafts)
@@ -72,19 +70,13 @@ public class JsonSchemaTestSuiteTests
     [DynamicData(nameof(FormatFiles), DynamicDataDisplayName = nameof(DisplayName))]
     public void Format(string draft, string name, string file)
     {
-        AssertFile(file, draft, assertFormat: true, skipLeapSeconds: true);
+        AssertFile(file, draft, assertFormat: true);
     }
 
-    private static void AssertFile(string file, string draft, bool assertFormat, bool skipLeapSeconds = false)
+    private static void AssertFile(string file, string draft, bool assertFormat)
     {
         List<SuiteRunner.CaseResult> results = SuiteRunner.RunFile(file, draft, assertFormat);
         List<SuiteRunner.CaseResult> failures = results.Where(r => !r.Passed).ToList();
-        if (skipLeapSeconds)
-        {
-            // Leap seconds are not supported by the shared date/time parsers (as in Corvus.JsonSchema).
-            failures = failures.Where(f => !f.Test.Contains("leap second", StringComparison.OrdinalIgnoreCase)).ToList();
-        }
-
         if (failures.Count > 0)
         {
             Assert.Fail($"{failures.Count}/{results.Count} cases failed in {Path.GetFileName(file)}:\n{SuiteRunner.Describe(failures)}");
