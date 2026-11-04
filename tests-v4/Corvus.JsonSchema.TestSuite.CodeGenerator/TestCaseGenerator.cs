@@ -240,6 +240,11 @@ internal static class TestCaseGenerator
 
                 string json = File.ReadAllText(file);
                 using JsonDocument doc = JsonDocument.Parse(json);
+                if (doc.RootElement.ValueKind != JsonValueKind.Array)
+                {
+                    // Not a test file: a schema that other tests load by path (e.g. issue957-swagger.json).
+                    continue;
+                }
 
                 int suiteIndex = 0;
                 foreach (JsonElement testSuiteElement in doc.RootElement.EnumerateArray())
