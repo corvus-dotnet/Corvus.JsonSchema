@@ -2,6 +2,19 @@
 
 The version history of the `corvusjsonschema` R package. It is versioned independently of the Corvus NuGet packages and of the [corvus-json-schema](../../src-rs/corvus-json-schema/VERSIONHISTORY.md) Rust crate it is built on.
 
+## V0.1.3
+
+V0.1.3 takes version 0.2.1 of the corvus-json-schema crate (it was built on 0.1.7). The R interface is unchanged. Versions 0.1.0 to 0.1.2 are affected by what it fixes.
+
+### Bug fixes
+
+- **The `format` checks follow the grammars the JSON-Schema-Test-Suite tests.** `idn-hostname` (and the domain of `idn-email`) applies the UTS #46 mapping (Unicode 17.0.0) before it checks a name, so ignored code points such as U+200B are removed and fullwidth letters are read as ASCII; an uppercase letter outside ASCII is lowered, so it is no longer refused. `email` follows RFC 5321 in a quoted local part (printable ASCII and quoted pairs of printable ASCII only), and `idn-email` RFC 6531 (any character outside ASCII in the local part, whatever its category). `uri-template` takes the RFC 6570 literals, with the apostrophe that erratum 6937 adds, so a `%` must begin a complete percent-encoded triplet and a delete character is refused.
+
+### Other changes
+
+- **Patterns are matched by the `corvus-regex-ecma262` crate**, whose answers are V8's for the whole of the ECMA-262 regular expression test data, and read in the grammar of the dialect: under 2019-09 and 2020-12 a `pattern`, a `patternProperties` name and a string checked by the `regex` format are read with ECMAScript 2020, so a modifier group such as `(?i:...)`, a group name used by two groups, or a property that is not in the tables of 2020 is not valid there. The crate's [version history](../../src-rs/corvus-json-schema/VERSIONHISTORY.md) (V0.2.0 and V0.2.1) has the detail. The limits on a match and on the size of a pattern are as they were.
+- `inst/THIRD-PARTY-NOTICES.txt` gives the notice of the Unicode data in the tables of `corvus-regex-ecma262` and in the crate's UTS #46 table.
+
 ## V0.1.2
 
 V0.1.2 takes version 0.1.7 of the corvus-json-schema crate. That fixes wrong results for several forms of pattern and a validation that did not end, replaces the crate's regular expression engine, and gives every match of a pattern a limit of time. Nothing that was there has changed. There is one new option and there are two new conditions. Versions 0.1.0 and 0.1.1 are affected.
