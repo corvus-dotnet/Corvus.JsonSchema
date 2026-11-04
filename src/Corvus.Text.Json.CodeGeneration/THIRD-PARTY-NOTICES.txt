@@ -12,6 +12,14 @@ The attached notices are provided for information only.
 License notice for the Unicode Character Database
 -------------------------------
 
+Uts46MappingData.cs, which is compiled into the assemblies of
+Corvus.Text.Json, Corvus.Json.ExtendedTypes and the source generators that
+check formats, holds a table derived from IdnaMappingTable.txt of Unicode
+17.0.0 (https://www.unicode.org/Public/17.0.0/idna/IdnaMappingTable.txt), the
+data of UTS #46, Unicode IDNA Compatibility Processing: the code points it
+maps or ignores, and their mappings. That data file is licensed under the
+Unicode License V3, as the data files below are.
+
 EcmaRegexUnicodeData.cs, which is compiled into this package's assembly,
 holds tables derived from the data files of the Unicode Character Database,
 version 17.0.0 (https://www.unicode.org/Public/17.0.0/ucd/): the

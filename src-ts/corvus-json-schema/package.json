@@ -45,6 +45,7 @@
   "files": [
     "dist",
     "src",
+    "THIRD-PARTY-NOTICES.txt",
     "VERSIONHISTORY.md"
   ],
   "engines": {

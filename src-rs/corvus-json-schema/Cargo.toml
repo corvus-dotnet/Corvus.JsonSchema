@@ -14,7 +14,7 @@ categories = ["encoding", "parser-implementations"]
 # The published crate: the library and its documents. The tests read the repository's JSON-Schema-Test-Suite
 # submodule and the C# metaschemas, so they only run from a checkout. LICENSE is a copy of the repository's (CI checks
 # it matches).
-include = ["src/**", "Cargo.toml", "README.md", "LICENSE"]
+include = ["src/**", "Cargo.toml", "README.md", "LICENSE", "THIRD-PARTY-NOTICES.txt"]
 
 [dependencies]
 corvus-regex-ecma262 = "0.2.7"
