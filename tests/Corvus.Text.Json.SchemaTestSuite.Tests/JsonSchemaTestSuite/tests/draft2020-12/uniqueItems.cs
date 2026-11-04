@@ -139,26 +139,12 @@ public class SuiteUniqueItemsValidation
     [TestMethod]
     public void Test1AndTrueAreUnique()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, true]");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void Test0AndFalseAreUnique()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[0, false]");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void Test1AndTrueAreUnique1()
-    {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[[1], [true]]");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
-    public void Test0AndFalseAreUnique1()
+    public void Test0AndFalseAreUnique()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[[0], [false]]");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
@@ -334,20 +320,6 @@ public class SuiteUniqueItemsFalseValidation
     public void TestNonUniqueArrayOfArraysIsValid()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[[\"foo\"], [\"foo\"]]");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void Test1AndTrueAreUnique()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, true]");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void Test0AndFalseAreUnique()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[0, false]");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 

@@ -2030,7 +2030,7 @@ public class SuiteUnevaluatedPropertiesRefInsideAllOfOneOf
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteDynamicEvalationInsideNestedRefs
+public class SuiteDynamicEvaluationInsideNestedRefs
 {
     private static Fixture? s_fixture;
 

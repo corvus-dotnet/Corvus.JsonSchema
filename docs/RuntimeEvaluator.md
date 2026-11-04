@@ -81,21 +81,23 @@ results into `IJsonSchemaResultsCollector` with evaluation path, schema location
 
 ## Conformance
 
-`tests/.../Suite/JsonSchemaTestSuiteTests.cs` runs every file under `tests/draft4`, `draft6`, `draft7`,
-`draft2019-09`, `draft2020-12` (required, `optional/` and `optional/format/` with format assertion on).
-No file is excluded, so it runs all 7,967 cases, `draft4/optional/zero-terminated-floats.json` among them. Failures
-on the 73 leap-second cases in the `time`/`date-time` format files are ignored, because the shared Corvus date and
-time parsers reject leap seconds (see [Known gaps and next steps](#known-gaps-and-next-steps)); 28 of those cases expect a leap second to be
-accepted, and the other 45 expect an invalid one to be rejected. `AnnotationSuiteTests.cs` runs the annotation
-suite through a verbose collector and `JsonSchemaAnnotationProducer`.
+`tests/.../Suite/JsonSchemaTestSuiteTests.cs` runs the suite's one tree of every dialect's cases
+(`validation/tests` and `validation/tests/optional`) for draft 4, 6, 7, 2019-09 and 2020-12. Each case's
+`compatibility` selects the drafts it applies to, its `tags` say whether `format` is asserted (a `format-annotation`
+case does not apply up to draft 7, where the evaluator asserts `format` by default), and its `externalSchemas` are
+served to that case alone. No file is excluded, so it runs all 8,687 cases, `draft4/optional/zero-terminated-floats.json`
+among them. Failures on the 72 leap-second cases that assert `format` are ignored, because the shared Corvus date and
+time parsers reject leap seconds (see [Known gaps and next steps](#known-gaps-and-next-steps)); 28 of those cases
+expect a leap second to be accepted, and the other 44 expect an invalid one to be rejected. `AnnotationSuiteTests.cs`
+runs the annotation suite through a verbose collector and `JsonSchemaAnnotationProducer`.
 
 The runners of the other evaluators differ:
 
-| Runner | Cases run | Files skipped | Failures ignored |
+| Runner | Cases run | Left out | Failures ignored |
 |---|---:|---|---|
-| C# | 7,967 | none | the 73 leap-second cases |
-| TypeScript | 7,966 | `draft4/optional/zero-terminated-floats.json` (`JSON.parse` reads `1.0` as `1`) | none |
-| Rust | 7,966 | `draft4/optional/zero-terminated-floats.json` | none |
+| C# | 8,687 | nothing | the 72 leap-second cases |
+| TypeScript | 8,633 | `draft4/optional/zero-terminated-floats.json` (`JSON.parse` reads `1.0` as `1`), and the high-precision cases of `optional/bignum.json` (a JavaScript number is a double) | none |
+| Rust | 8,638 | `draft4/optional/zero-terminated-floats.json`, and the high-precision cases of `optional/bignum.json` (serde_json values hold a number to the precision of an `f64`) | none |
 
 ## Flag-mode optimisations (after reading Blaze's compiler)
 

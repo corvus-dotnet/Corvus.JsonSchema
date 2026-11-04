@@ -4,8 +4,8 @@ A JSON Schema evaluator for Java and Kotlin (draft 4, 6, 7, 2019-09 and 2020-12)
 runtime evaluator (`Corvus.Text.Json.RuntimeEvaluator`) and its Rust and TypeScript ports. Java 17 or later; one jar
 with no dependencies.
 
-- **Conformant**: passes all 8,611 tests of the JSON-Schema-Test-Suite (required, optional and `optional/format`,
-  every draft), with the same single exclusion as the C# runner (`draft4/optional/zero-terminated-floats.json`), and all
+- **Conformant**: passes all 8,686 tests of the JSON-Schema-Test-Suite (required and optional, every
+  draft), with the same single exclusion as the C# runner (`draft4/optional/zero-terminated-floats.json`), and all
   of the suite's annotation tests.
 - **Fast**: a schema compiles to JVM bytecode, one method per subschema holding only the checks it needs, which the JIT
   then optimises as it would hand-written code. See [Performance](#performance).

@@ -443,14 +443,6 @@ public class SuiteValidationOfDurationStrings
     }
 
     [TestMethod]
-    public void TestMonthsAndDaysCanAppearWithoutYears()
-    {
-        using var doc = JsonDocument.Parse("\"P1M2D\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
     public void TestHoursAndMinutesCanAppearWithoutSeconds()
     {
         using var doc = JsonDocument.Parse("\"PT1H2M\"");

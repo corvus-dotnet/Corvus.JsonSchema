@@ -266,7 +266,7 @@ const
   DraftDialects: array[0..4] of TJsonSchemaDialect = (Draft4, Draft6, Draft7, Draft201909, Draft202012);
   DraftReleases: array[0..4] of Int32 = (4, 6, 7, 2019, 2020);
   { The number of test cases the suite has, less the exclusion: a smaller count means a stale or partial run. }
-  ExpectedTotal = 8611;
+  ExpectedTotal = 8686;
 var
   Root, Tests, DraftFilter, Name: UTF8String;
   Files, OptionalFiles: TUTF8StringArray;

@@ -26,7 +26,10 @@ class TestSuite < Minitest::Test
     ["bignum.json", "above the exclusive minimum is valid"],
     ["bignum.json", "just below the minimum is invalid"],
     ["bignum.json", "a slightly smaller decimal is invalid"],
-    ["bignum.json", "a slightly larger decimal is invalid"]
+    ["bignum.json", "a slightly larger decimal is invalid"],
+    ["bignum.json", "distinct high-precision decimals are unique"],
+    ["bignum.json", "arrays containing distinct decimals are unique"],
+    ["bignum.json", "objects containing distinct decimals are unique"]
   ].freeze
 
   # Whether a test case's compatibility (a comma-separated list of minimums, <= maximums and = releases, from the

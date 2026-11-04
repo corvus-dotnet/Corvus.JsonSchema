@@ -24,7 +24,10 @@ excluded_cases <- paste("bignum.json", c(
   "just above the maximum is invalid",
   "just below the minimum is invalid",
   "a slightly smaller decimal is invalid",
-  "a slightly larger decimal is invalid"
+  "a slightly larger decimal is invalid",
+  "distinct high-precision decimals are unique",
+  "arrays containing distinct decimals are unique",
+  "objects containing distinct decimals are unique"
 ), sep = "|")
 
 # Whether a test case's compatibility (a comma-separated list of minimums, <= maximums and = releases, from the
@@ -173,6 +176,6 @@ if (length(failures) > 0L) {
   writeLines(failures)
   stop(sprintf("%d of %d cases failed", length(failures), total))
 }
-stopifnot(total == 8573L)
+stopifnot(total == 8633L)
 cat(sprintf("%d cases: every one as JSON text and, but for %d that hold a NUL, read in place from R values\n",
             total, text_only))

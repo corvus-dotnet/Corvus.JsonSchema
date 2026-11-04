@@ -38,7 +38,7 @@ class SuiteTest {
     static final List<String> EXCLUDED_FILES = List.of("draft4/optional/zero-terminated-floats.json");
 
     /** The number of test cases the suite has, less the exclusions: a smaller count means a stale or partial run. */
-    static final int EXPECTED_TOTAL = 8611;
+    static final int EXPECTED_TOTAL = 8686;
 
     static Path suiteRoot() {
         String p = System.getProperty("jsonSchemaTestSuite");

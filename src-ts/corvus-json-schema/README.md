@@ -5,10 +5,9 @@ Corvus.Text.Json V5 standalone evaluator (`Corvus.Text.Json.RuntimeEvaluator`, s
 [docs/RuntimeEvaluator.md](../../docs/RuntimeEvaluator.md)). It compiles a schema once into specialised JavaScript and
 validates parsed JSON values (`JSON.parse` output) against it.
 
-- **Conformant**: passes all 8,555 tests of the JSON-Schema-Test-Suite it runs (required and optional, every draft),
+- **Conformant**: passes all 8,633 tests of the JSON-Schema-Test-Suite it runs (required and optional, every draft),
   with no failure ignored. It leaves out `draft4/optional/zero-terminated-floats.json` (whose `1.0` `JSON.parse` reads
-  as `1`), the high-precision cases of `optional/bignum.json` (a JavaScript number is a double), and the six required
-  leap-second cases that the suite's optional `format-time.json` contradicts.
+  as `1`) and the high-precision cases of `optional/bignum.json` (a JavaScript number is a double).
 - **Fast**: see [Performance](#performance).
 - **Results and annotations**: evaluate with a results collector at the Basic, Detailed or Verbose level for the
   same rows (locations, messages, order) as the C# `JsonSchemaResultsCollector`, and annotations as

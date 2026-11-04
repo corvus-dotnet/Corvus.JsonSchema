@@ -471,6 +471,27 @@ public class SuiteValidationOfInternationalizedHostNames
     }
 
     [TestMethod]
+    public void TestTrailingNewlineIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"example.com\\n\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestLeadingSpaceIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\" example.com\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestSpaceInsideALabelIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"ex ample.com\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
     public void TestFullwidthDigitsAreMappedToAsciiDigits()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\uff11\\uff12\\uff13\"");

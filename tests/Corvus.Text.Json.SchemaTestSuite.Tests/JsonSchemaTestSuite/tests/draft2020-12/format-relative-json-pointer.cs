@@ -287,6 +287,41 @@ public class SuiteValidationOfRelativeJsonPointersRjp
     }
 
     [TestMethod]
+    public void TestValidEscapedSlash1InTheJsonPointerPart()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"0/a~1b\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestValidEscapedTilde0InTheJsonPointerPart()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"0/m~0n\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestMultipleEscapedCharactersInTheJsonPointerPart()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"0/~1~0~0~1~1\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestUsedAsAMemberNameInTheJsonPointerPart()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"1/foo/-\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestMultipleUnescapedTildesInTheJsonPointerPart()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"0/~~\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
     public void TestTrailingNewlineAfterTheNonNegativeInteger()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"1\\n\"");

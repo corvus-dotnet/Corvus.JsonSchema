@@ -15,10 +15,12 @@ program suite_test
   integer, parameter :: dialects(5) = [DRAFT4, DRAFT6, DRAFT7, DRAFT2019_09, DRAFT2020_12]
   integer, parameter :: releases(5) = [4, 6, 7, 2019, 2020]
   character(*), parameter :: excluded = "draft4/optional/zero-terminated-floats.json"
-  character(*), parameter :: excluded_cases(6) = [character(40) :: &
+  character(*), parameter :: excluded_cases(9) = [character(48) :: &
     "below the exclusive maximum is valid", "above the exclusive minimum is valid", &
     "just above the maximum is invalid", "just below the minimum is invalid", &
-    "a slightly smaller decimal is invalid", "a slightly larger decimal is invalid"]
+    "a slightly smaller decimal is invalid", "a slightly larger decimal is invalid", &
+    "distinct high-precision decimals are unique", "arrays containing distinct decimals are unique", &
+    "objects containing distinct decimals are unique"]
   character(:), allocatable :: root, s
   integer :: d, total, failed, skipped, files
 

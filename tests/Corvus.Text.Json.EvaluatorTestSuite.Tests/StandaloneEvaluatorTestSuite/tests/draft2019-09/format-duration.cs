@@ -373,13 +373,6 @@ public class SuiteValidationOfDurationStrings
     }
 
     [TestMethod]
-    public void TestMonthsAndDaysCanAppearWithoutYears()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"P1M2D\"");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
     public void TestHoursAndMinutesCanAppearWithoutSeconds()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"PT1H2M\"");

@@ -546,6 +546,30 @@ public class SuiteValidationOfInternationalizedHostNames
     }
 
     [TestMethod]
+    public void TestTrailingNewlineIsInvalid()
+    {
+        using var doc = JsonDocument.Parse("\"example.com\\n\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestLeadingSpaceIsInvalid()
+    {
+        using var doc = JsonDocument.Parse("\" example.com\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestSpaceInsideALabelIsInvalid()
+    {
+        using var doc = JsonDocument.Parse("\"ex ample.com\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
     public void TestFullwidthDigitsAreMappedToASCIIDigits()
     {
         using var doc = JsonDocument.Parse("\"\\uff11\\uff12\\uff13\"");

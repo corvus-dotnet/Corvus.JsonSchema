@@ -197,6 +197,41 @@ public class SuiteValidationOfRegularExpressions
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
+    [TestMethod]
+    public void TestAnEmptyRegularExpressionIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestAlternationIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"a|b\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestABoundedQuantifierIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"a{2,3}\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestANegatedRangeCharacterClassIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"[^a-z]\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestALazyQuantifierIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"a+?\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
     public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }

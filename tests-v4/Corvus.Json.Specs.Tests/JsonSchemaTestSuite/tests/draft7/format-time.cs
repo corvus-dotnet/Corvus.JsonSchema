@@ -91,7 +91,7 @@ public class SuiteValidationOfNonStringTimeValues
             _driver = DriverFactory.CreateDraft7Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "format-time.json",
-                "#/tests/0/schema",
+                "#/tests/3/schema",
                 "JsonSchemaTestSuiteDraft7FormatTime",
                 "ValidationOfNonStringTimeValues",
                 validateFormat: false,
@@ -157,118 +157,6 @@ public class SuiteValidationOfTimeStrings
     public void TestHourMinuteSecondMustBeTwoDigits()
     {
         using var doc = JsonDocument.Parse("\"8:0030:6Z\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestALeapSecondIsNotAValidTime()
-    {
-        using var doc = JsonDocument.Parse("\"23:59:60Z\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestInvalidLeapSecondZuluWrongHour()
-    {
-        using var doc = JsonDocument.Parse("\"22:59:60Z\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestInvalidLeapSecondZuluWrongMinute()
-    {
-        using var doc = JsonDocument.Parse("\"23:58:60Z\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestALeapSecondWithAZeroTimeOffsetIsNotAValidTime()
-    {
-        using var doc = JsonDocument.Parse("\"23:59:60+00:00\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestInvalidLeapSecondZeroTimeOffsetWrongHour()
-    {
-        using var doc = JsonDocument.Parse("\"22:59:60+00:00\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestInvalidLeapSecondZeroTimeOffsetWrongMinute()
-    {
-        using var doc = JsonDocument.Parse("\"23:58:60+00:00\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestALeapSecondWithAPositiveTimeOffsetIsNotAValidTime()
-    {
-        using var doc = JsonDocument.Parse("\"01:29:60+01:30\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestALeapSecondWithALargePositiveTimeOffsetIsNotAValidTime()
-    {
-        using var doc = JsonDocument.Parse("\"23:29:60+23:30\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestInvalidLeapSecondPositiveTimeOffsetWrongHour()
-    {
-        using var doc = JsonDocument.Parse("\"23:59:60+01:00\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestInvalidLeapSecondPositiveTimeOffsetWrongMinute()
-    {
-        using var doc = JsonDocument.Parse("\"23:59:60+00:30\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestALeapSecondWithANegativeTimeOffsetIsNotAValidTime()
-    {
-        using var doc = JsonDocument.Parse("\"15:59:60-08:00\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestALeapSecondWithALargeNegativeTimeOffsetIsNotAValidTime()
-    {
-        using var doc = JsonDocument.Parse("\"00:29:60-23:30\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestInvalidLeapSecondNegativeTimeOffsetWrongHour()
-    {
-        using var doc = JsonDocument.Parse("\"23:59:60-01:00\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestInvalidLeapSecondNegativeTimeOffsetWrongMinute()
-    {
-        using var doc = JsonDocument.Parse("\"23:59:60-00:30\"");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -540,7 +428,7 @@ public class SuiteValidationOfTimeStrings
             _driver = DriverFactory.CreateDraft7Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "format-time.json",
-                "#/tests/2/schema",
+                "#/tests/5/schema",
                 "JsonSchemaTestSuiteDraft7FormatTime",
                 "ValidationOfTimeStrings",
                 validateFormat: true,

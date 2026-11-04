@@ -233,6 +233,20 @@ public class SuiteValidationOfHostNames
     }
 
     [TestMethod]
+    public void TestLeadingSpaceIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\" example.com\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestSpaceInsideALabelIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"ex ample.com\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
     public void TestInvalidNonAsciiKelvinSignU212a()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u212Aelvin.example.com\"");

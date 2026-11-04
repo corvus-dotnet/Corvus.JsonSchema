@@ -186,8 +186,7 @@ This runs:
   which drafts it applies to and its `tags` whether format is asserted. Every case runs fail-fast and through a
   collector at each level, and the verdicts must agree. `draft4/optional/zero-terminated-floats.json` is left out, and
   so are, by name, the high-precision cases of `optional/bignum.json` (serde_json values hold a number to the
-  precision of an `f64`) and the six required leap-second cases that the suite's optional `format-time.json`
-  contradicts. No failure is ignored: the 8,560 other cases all pass. Use `SUITE_DRAFT` and `SUITE_FILTER` to narrow
+  precision of an `f64`). No failure is ignored: the 8,638 other cases all pass. Use `SUITE_DRAFT` and `SUITE_FILTER` to narrow
   the run.
 - **`tests/annotations.rs`:** the suite's annotation tests.
 - **`tests/results.rs`:** the results-collection expectations shared with the C# and TypeScript evaluators.

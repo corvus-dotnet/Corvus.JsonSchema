@@ -483,3 +483,146 @@ public class SuiteAllIntegersAreMultiplesOf05IfOverflowIsHandled
         }
     }
 }
+
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteUniqueItemsComparisonWithHighPrecision
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestDistinctHighPrecisionDecimalsAreUnique()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[0.123456789123456789, 0.123456789123456790]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestTheSameHighPrecisionDecimalIsNotUnique()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[0.123456789123456789, 0.123456789123456789]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestTrailingZeroesDoNotMakeDecimalsUnique()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[0.123456789123456789, 0.1234567891234567890]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestArraysContainingDistinctDecimalsAreUnique()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[[0.123456789123456789], [0.123456789123456790]]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestArraysContainingTheSameDecimalAreNotUnique()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[[0.123456789123456789], [0.123456789123456789]]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestObjectsContainingDistinctDecimalsAreUnique()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{\"value\": 0.123456789123456789}, {\"value\": 0.123456789123456790}]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestObjectsContainingTheSameDecimalAreNotUnique()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{\"value\": 0.123456789123456789}, {\"value\": 0.123456789123456789}]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests/draft4/optional/bignum.json",
+                "{\n                \"uniqueItems\": true\n            }",
+                "JsonSchemaTestSuite.Draft4.Optional.Bignum",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "http://json-schema.org/draft-04/schema#",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteMultipleOfWithIntegersAbove253
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void Test3e20IsMultipleOf3()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("300000000000000000000");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void Test1e20IsNotMultipleOf3()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("100000000000000000000");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests/draft4/optional/bignum.json",
+                "{\n                \"multipleOf\": 3\n            }",
+                "JsonSchemaTestSuite.Draft4.Optional.Bignum",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "http://json-schema.org/draft-04/schema#",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}

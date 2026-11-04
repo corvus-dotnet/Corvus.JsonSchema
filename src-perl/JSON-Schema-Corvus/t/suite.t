@@ -31,6 +31,9 @@ my %excluded_cases = map { ("bignum.json|$_" => 1) } (
   'above the exclusive minimum is valid',
   'a slightly smaller decimal is invalid',
   'a slightly larger decimal is invalid',
+  'distinct high-precision decimals are unique',
+  'arrays containing distinct decimals are unique',
+  'objects containing distinct decimals are unique',
 );
 my $decoder = JSON::PP->new->allow_nonref->allow_bignum->utf8;
 my $collector = JSON::Schema::Corvus::ResultsCollector->new('verbose');

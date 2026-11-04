@@ -155,6 +155,41 @@ public class SuiteValidationOfRegularExpressions
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
+    [TestMethod]
+    public void TestAnEmptyRegularExpressionIsValid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAlternationIsValid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"a|b\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestABoundedQuantifierIsValid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"a{2,3}\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestANegatedRangeCharacterClassIsValid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"[^a-z]\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestALazyQuantifierIsValid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"a+?\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
     public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }

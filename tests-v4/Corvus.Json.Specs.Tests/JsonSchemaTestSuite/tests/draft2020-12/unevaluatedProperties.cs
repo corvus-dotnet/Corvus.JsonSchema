@@ -2438,7 +2438,7 @@ public class SuiteUnevaluatedPropertiesRefInsideAllOfOneOf
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteDynamicEvalationInsideNestedRefs
+public class SuiteDynamicEvaluationInsideNestedRefs
 {
     private static Fixture? s_fixture;
 
@@ -2640,7 +2640,7 @@ public class SuiteDynamicEvalationInsideNestedRefs
                 "unevaluatedProperties.json",
                 "#/tests/37/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
-                "DynamicEvalationInsideNestedRefs",
+                "DynamicEvaluationInsideNestedRefs",
                 validateFormat: false,
                 optionalAsNullable: false,
                 useImplicitOperatorString: false);
