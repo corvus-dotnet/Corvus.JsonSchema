@@ -27,21 +27,21 @@ public class SuiteMaxPropertiesValidation
     [TestMethod]
     public void TestShorterIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestExactLengthIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1, \"bar\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1, \"bar\": 2 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestTooLongIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1, \"bar\": 2, \"baz\": 3}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1, \"bar\": 2, \"baz\": 3 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -74,9 +74,9 @@ public class SuiteMaxPropertiesValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/maxProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"maxProperties\": 2\n        }",
+                "{ \"maxProperties\": 2 }",
                 "JsonSchemaTestSuite.Draft201909.MaxProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -109,14 +109,14 @@ public class SuiteMaxPropertiesValidationWithADecimal
     [TestMethod]
     public void TestShorterIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestTooLongIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1, \"bar\": 2, \"baz\": 3}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1, \"bar\": 2, \"baz\": 3 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -128,9 +128,9 @@ public class SuiteMaxPropertiesValidationWithADecimal
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/maxProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"maxProperties\": 2.0\n        }",
+                "{ \"maxProperties\": 2.0 }",
                 "JsonSchemaTestSuite.Draft201909.MaxProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -182,9 +182,9 @@ public class SuiteMaxProperties0MeansTheObjectIsEmpty
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/maxProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"maxProperties\": 0\n        }",
+                "{ \"maxProperties\": 0 }",
                 "JsonSchemaTestSuite.Draft201909.MaxProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,

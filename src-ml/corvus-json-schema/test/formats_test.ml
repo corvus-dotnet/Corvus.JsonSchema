@@ -1,8 +1,9 @@
 (* The tests of the format checks, ported from TestFormats.pas of the Object Pascal port.
 
-   The first part is the format tests of the JSON-Schema-Test-Suite (tests/<draft>/optional/format/*.json), run as
-   suite_test.go of the Go module runs them: for draft 4, 6, 7, 2019-09 and 2020-12, each with the formats and the
-   host name rules of its dialect. A value that is not a string is valid for every format, and so is every value for
+   The first part is the format tests of the JSON-Schema-Test-Suite (validation/tests/format-*.json and
+   validation/tests/optional/format-*.json), run as suite_test.go of the Go module runs them: for draft 4, 6, 7, 2019-09
+   and 2020-12, each with the formats and the host name rules of its dialect, every case its compatibility admits but
+   those that expect format to be an annotation. A value that is not a string is valid for every format, and so is every value for
    a format the dialect does not know. A case that fails and whose description contains "leap second" is counted as
    skipped and not as a failure, exactly as in the Go runner. No case is skipped before it has run.
 
@@ -255,19 +256,34 @@ let check_kind kind s legacy = Formats.check_string kind (padded s) (String.leng
 (* ------------------------------------------------------------------------------------------------------------------ *)
 (* The JSON-Schema-Test-Suite *)
 
-(* The drafts of the suite, each with the rank of its dialect. *)
-let suite_drafts = [ ("draft4", 0); ("draft6", 1); ("draft7", 2); ("draft2019-09", 3); ("draft2020-12", 4) ]
+(* The drafts of the suite, each with the rank of its dialect and its release. *)
+let suite_drafts =
+  [ ("draft4", 0, 4); ("draft6", 1, 6); ("draft7", 2, 7); ("draft2019-09", 3, 2019); ("draft2020-12", 4, 2020) ]
+
 let draft6 = 1
 let draft2020_12 = 4
 
-let run_suite_file path file_label dialect =
+let run_suite_file path file_label dialect release =
   match read_file path with
   | None -> Check.fail ("cannot read " ^ path)
   | Some source -> (
       match try parse_json source with Bad_json -> Null with
-      | Array groups ->
+      | Object _ as file_value ->
+          let groups = match member file_value "tests" with Some (Array groups) -> groups | _ -> [] in
           incr suite_files;
           let legacy = dialect <= draft6 in
+          (* A case whose compatibility does not admit the dialect, or that expects format to be an annotation, does not
+             apply to these checks, which assert format. *)
+          let applies group =
+            let compatibility = match member group "compatibility" with Some (String s) -> Some s | _ -> None in
+            let annotation =
+              match member group "tags" with
+              | Some (Array tags) -> List.mem (String "format-annotation") tags
+              | _ -> false
+            in
+            Corvus_json_schema_test_helpers.Suite.compatible compatibility release && not annotation
+          in
+          let groups = List.filter applies groups in
           List.iter
             (fun group ->
               let group_name = match member group "description" with Some (String s) -> s | _ -> "" in
@@ -313,7 +329,7 @@ let run_suite_file path file_label dialect =
                         Check.check "" true
                       end
                       else if contains_lower test_name "leap second" then begin
-                        (* Leap seconds are skipped in the format run, as in the Go and C# runners. *)
+                        (* Leap seconds are skipped where format is asserted, as in the Go and C# runners. *)
                         incr suite_skipped;
                         tally.skipped <- tally.skipped + 1;
                         Printf.printf "skipped: %s [%s] %s\n" file_label group_name test_name
@@ -335,15 +351,27 @@ let run_suite_file path file_label dialect =
 
 let run_suite root =
   List.iter
-    (fun (name, dialect) ->
-      let dir = Filename.concat root (Filename.concat "tests" (Filename.concat name "optional/format")) in
+    (fun directory ->
+      let dir = Filename.concat (Filename.concat (Filename.concat root "validation") "tests") directory in
       let names = try Sys.readdir dir with Sys_error _ -> [||] in
-      let names = List.filter (fun file -> Filename.check_suffix file ".json") (Array.to_list names) in
-      (* The files in the order of their names. *)
+      (* format-assertion.json is about the format-assertion vocabulary, not about the format checks. *)
+      let names =
+        List.filter
+          (fun file ->
+            String.starts_with ~prefix:"format-" file
+            && Filename.check_suffix file ".json" && file <> "format-assertion.json")
+          (Array.to_list names)
+      in
+      let names = List.sort String.compare names in
       List.iter
-        (fun file -> run_suite_file (Filename.concat dir file) (name ^ "/optional/format/" ^ file) dialect)
-        (List.sort String.compare names))
-    suite_drafts
+        (fun (name, dialect, release) ->
+          List.iter
+            (fun file ->
+              let label = if directory = "" then name ^ "/" ^ file else name ^ "/" ^ directory ^ "/" ^ file in
+              run_suite_file (Filename.concat dir file) label dialect release)
+            names)
+        suite_drafts)
+    [ ""; "optional" ]
 
 (* ------------------------------------------------------------------------------------------------------------------ *)
 (* The cases of the Go tests *)

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -16,7 +17,7 @@ func suiteDir() (string, bool) {
 	if root == "" {
 		root = filepath.Join("..", "..", "..", "..", "JSON-Schema-Test-Suite")
 	}
-	tests := filepath.Join(root, "tests")
+	tests := filepath.Join(root, "validation", "tests")
 	info, err := os.Stat(tests)
 	return tests, err == nil && info.IsDir()
 }
@@ -41,31 +42,29 @@ func optionalSuiteCorpus(t *testing.T) []string {
 	return suiteCorpus(t)
 }
 
-// suiteFiles lists the files of the suite that exercise regular expressions, for every draft that has them.
+// suiteFiles lists the files of the suite that exercise regular expressions.
 func suiteFiles(t *testing.T) []string {
 	t.Helper()
 	root := suiteRoot(t)
 	var files []string
 	for _, name := range []string{
-		filepath.Join("optional", "ecmascript-regex.json"), filepath.Join("optional", "format", "regex.json"),
-		"pattern.json", "patternProperties.json", filepath.Join("optional", "non-bmp-regex.json"),
+		filepath.Join("optional", "ecmascript-regex.json"), filepath.Join("optional", "format-regex.json"),
+		"format-regex.json", "pattern.json", "patternProperties.json", filepath.Join("optional", "non-bmp-regex.json"),
 	} {
-		found, err := filepath.Glob(filepath.Join(root, "*", name))
-		if err != nil {
-			t.Fatal(err)
+		file := filepath.Join(root, name)
+		if _, err := os.Stat(file); err != nil {
+			t.Fatalf("%s: %v", file, err)
 		}
-		files = append(files, found...)
+		files = append(files, file)
 	}
 	sort.Strings(files)
-	if len(files) == 0 {
-		t.Fatalf("no regular expression files under %s", root)
-	}
 	return files
 }
 
 type suiteGroup struct {
-	Description string `json:"description"`
-	Schema      any    `json:"schema"`
+	Description string   `json:"description"`
+	Schema      any      `json:"schema"`
+	Tags        []string `json:"tags"`
 	Tests       []struct {
 		Description string `json:"description"`
 		Data        any    `json:"data"`
@@ -196,11 +195,17 @@ func TestSuite(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		var groups []suiteGroup
-		if err := json.Unmarshal(data, &groups); err != nil {
+		var suite struct {
+			Tests []suiteGroup `json:"tests"`
+		}
+		if err := json.Unmarshal(data, &suite); err != nil {
 			t.Fatalf("%s: %v", file, err)
 		}
-		for _, group := range groups {
+		for _, group := range suite.Tests {
+			// The regex format is asserted here: a case that expects it to be an annotation does not apply.
+			if slices.Contains(group.Tags, "format-annotation") {
+				continue
+			}
 			for _, test := range group.Tests {
 				cases++
 				if got := e.valid(group.Schema, test.Data); got != test.Valid {

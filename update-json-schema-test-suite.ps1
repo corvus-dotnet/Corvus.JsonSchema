@@ -7,6 +7,11 @@
     1. Fetches and checks out the latest commit on the submodule's default branch
     2. Deletes old generated test files (generators only create, never delete)
     3. Regenerates V5 test classes (type, evaluator, annotation)
+    4. Regenerates V4 test classes (tests-v4/Corvus.Json.Specs.Tests)
+
+    The suite uses the unified layout: validation/tests/*.json, where each test case states
+    the releases it applies to ("compatibility"), whether it expects format to be asserted
+    ("tags") and any other schemas it references ("externalSchemas").
 
 .PARAMETER Branch
     The branch to update the submodule to. Defaults to 'main'.
@@ -88,6 +93,28 @@ foreach ($dir in $v5OutputDirs) {
     $count = (Get-ChildItem $dir -Filter "*.cs" -Recurse | Measure-Object).Count
     Write-Host "  $([System.IO.Path]::GetFileName($dir)): $count files" -ForegroundColor Green
 }
+
+# 3. Regenerate V4 test classes. The V4 generator deletes its own output directories, and its
+# appsettings.json paths are relative to the repository root, so it runs from there.
+Write-Host ""
+Write-Host "=== Regenerating V4 test classes ===" -ForegroundColor Cyan
+
+Push-Location $repoRoot
+try {
+    Write-Host "  Building V4 generator..."
+    dotnet build "tests-v4/Corvus.JsonSchema.TestSuite.CodeGenerator" -c Release -v q --no-restore
+    if ($LASTEXITCODE -ne 0) { throw "V4 generator build failed" }
+
+    Write-Host "  Running V4 generator..."
+    & dotnet "tests-v4/Corvus.JsonSchema.TestSuite.CodeGenerator/bin/Release/net10.0/Corvus.JsonSchema.TestSuite.CodeGenerator.dll" > $null
+    if ($LASTEXITCODE -ne 0) { throw "V4 generator failed" }
+}
+finally {
+    Pop-Location
+}
+
+$v4Count = (Get-ChildItem "$repoRoot/tests-v4/Corvus.Json.Specs.Tests/JsonSchemaTestSuite" -Filter "*.cs" -Recurse | Measure-Object).Count
+Write-Host "  V4 JsonSchemaTestSuite: $v4Count files" -ForegroundColor Green
 
 # Summary
 Write-Host ""

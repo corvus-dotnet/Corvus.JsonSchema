@@ -14,19 +14,21 @@ namespace JsonSchemaTestSuite.Draft7.Contains;
 public class SuiteContainsKeywordValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -78,7 +80,15 @@ public class SuiteContainsKeywordValidation
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    [TestMethod]
+    public void TestNotArrayOrObjectIsValid()
+    {
+        using var doc = JsonDocument.Parse("42");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -89,7 +99,7 @@ public class SuiteContainsKeywordValidation
             _driver = DriverFactory.CreateDraft7Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "contains.json",
-                "#/0/schema",
+                "#/tests/0/schema",
                 "JsonSchemaTestSuiteDraft7Contains",
                 "ContainsKeywordValidation",
                 validateFormat: false,
@@ -97,10 +107,9 @@ public class SuiteContainsKeywordValidation
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -110,19 +119,21 @@ public class SuiteContainsKeywordValidation
 public class SuiteContainsKeywordWithConstKeyword
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -150,7 +161,7 @@ public class SuiteContainsKeywordWithConstKeyword
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -161,7 +172,7 @@ public class SuiteContainsKeywordWithConstKeyword
             _driver = DriverFactory.CreateDraft7Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "contains.json",
-                "#/1/schema",
+                "#/tests/1/schema",
                 "JsonSchemaTestSuiteDraft7Contains",
                 "ContainsKeywordWithConstKeyword",
                 validateFormat: false,
@@ -169,10 +180,9 @@ public class SuiteContainsKeywordWithConstKeyword
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -182,19 +192,21 @@ public class SuiteContainsKeywordWithConstKeyword
 public class SuiteContainsKeywordWithBooleanSchemaTrue
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -214,7 +226,7 @@ public class SuiteContainsKeywordWithBooleanSchemaTrue
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -225,7 +237,7 @@ public class SuiteContainsKeywordWithBooleanSchemaTrue
             _driver = DriverFactory.CreateDraft7Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "contains.json",
-                "#/2/schema",
+                "#/tests/2/schema",
                 "JsonSchemaTestSuiteDraft7Contains",
                 "ContainsKeywordWithBooleanSchemaTrue",
                 validateFormat: false,
@@ -233,10 +245,9 @@ public class SuiteContainsKeywordWithBooleanSchemaTrue
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -246,19 +257,21 @@ public class SuiteContainsKeywordWithBooleanSchemaTrue
 public class SuiteContainsKeywordWithBooleanSchemaFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -279,14 +292,46 @@ public class SuiteContainsKeywordWithBooleanSchemaFalse
     }
 
     [TestMethod]
-    public void TestNonArraysAreValid()
+    public void TestNonArraysAreValidString()
     {
         using var doc = JsonDocument.Parse("\"contains does not apply to strings\"");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    [TestMethod]
+    public void TestNonArraysAreValidObject()
+    {
+        using var doc = JsonDocument.Parse("{}");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestNonArraysAreValidNumber()
+    {
+        using var doc = JsonDocument.Parse("42");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestNonArraysAreValidBoolean()
+    {
+        using var doc = JsonDocument.Parse("false");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestNonArraysAreValidNull()
+    {
+        using var doc = JsonDocument.Parse("null");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -297,7 +342,7 @@ public class SuiteContainsKeywordWithBooleanSchemaFalse
             _driver = DriverFactory.CreateDraft7Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "contains.json",
-                "#/3/schema",
+                "#/tests/3/schema",
                 "JsonSchemaTestSuiteDraft7Contains",
                 "ContainsKeywordWithBooleanSchemaFalse",
                 validateFormat: false,
@@ -305,10 +350,9 @@ public class SuiteContainsKeywordWithBooleanSchemaFalse
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -318,26 +362,28 @@ public class SuiteContainsKeywordWithBooleanSchemaFalse
 public class SuiteItemsContains
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestMatchesItemsDoesNotMatchContains()
     {
-        using var doc = JsonDocument.Parse("[ 2, 4, 8 ]");
+        using var doc = JsonDocument.Parse("[2, 4, 8]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -345,7 +391,7 @@ public class SuiteItemsContains
     [TestMethod]
     public void TestDoesNotMatchItemsMatchesContains()
     {
-        using var doc = JsonDocument.Parse("[ 3, 6, 9 ]");
+        using var doc = JsonDocument.Parse("[3, 6, 9]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -353,7 +399,7 @@ public class SuiteItemsContains
     [TestMethod]
     public void TestMatchesBothItemsAndContains()
     {
-        using var doc = JsonDocument.Parse("[ 6, 12 ]");
+        using var doc = JsonDocument.Parse("[6, 12]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -361,12 +407,12 @@ public class SuiteItemsContains
     [TestMethod]
     public void TestMatchesNeitherItemsNorContains()
     {
-        using var doc = JsonDocument.Parse("[ 1, 5 ]");
+        using var doc = JsonDocument.Parse("[1, 5]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -377,7 +423,7 @@ public class SuiteItemsContains
             _driver = DriverFactory.CreateDraft7Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "contains.json",
-                "#/4/schema",
+                "#/tests/4/schema",
                 "JsonSchemaTestSuiteDraft7Contains",
                 "ItemsContains",
                 validateFormat: false,
@@ -385,10 +431,9 @@ public class SuiteItemsContains
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -398,19 +443,21 @@ public class SuiteItemsContains
 public class SuiteContainsWithFalseIfSubschema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -430,7 +477,7 @@ public class SuiteContainsWithFalseIfSubschema
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -441,7 +488,7 @@ public class SuiteContainsWithFalseIfSubschema
             _driver = DriverFactory.CreateDraft7Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "contains.json",
-                "#/5/schema",
+                "#/tests/5/schema",
                 "JsonSchemaTestSuiteDraft7Contains",
                 "ContainsWithFalseIfSubschema",
                 validateFormat: false,
@@ -449,10 +496,9 @@ public class SuiteContainsWithFalseIfSubschema
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -462,19 +508,21 @@ public class SuiteContainsWithFalseIfSubschema
 public class SuiteContainsWithNullInstanceElements
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -486,7 +534,7 @@ public class SuiteContainsWithNullInstanceElements
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -497,7 +545,7 @@ public class SuiteContainsWithNullInstanceElements
             _driver = DriverFactory.CreateDraft7Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "contains.json",
-                "#/6/schema",
+                "#/tests/6/schema",
                 "JsonSchemaTestSuiteDraft7Contains",
                 "ContainsWithNullInstanceElements",
                 validateFormat: false,
@@ -505,10 +553,9 @@ public class SuiteContainsWithNullInstanceElements
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

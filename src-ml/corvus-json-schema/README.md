@@ -8,8 +8,8 @@ dependencies outside the OCaml distribution (the standard library, and `unix` fo
 
 OCaml 4.14 or later, on a 64-bit platform. It is tested with OCaml 4.14 and 5.5.
 
-- **Conformant**: passes all 7,966 tests of the JSON-Schema-Test-Suite (required, optional and `optional/format`,
-  every draft), with the same single exclusion as the C# runner (`draft4/optional/zeroTerminatedFloats.json`), and all
+- **Conformant**: passes all 8,686 tests of the JSON-Schema-Test-Suite (required and optional, every
+  draft), with the same single exclusion as the C# runner (`draft4/optional/zero-terminated-floats.json`), and all
   217 assertions of the suite's annotation tests.
 - **Compiled to plans**: a schema compiles once into a node graph and fail-fast plans, each holding only the checks
   its subschema needs, with an object's keywords fused into one pass over its properties.

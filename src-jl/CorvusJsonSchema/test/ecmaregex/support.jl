@@ -102,7 +102,7 @@ function suitetests()
     if isempty(root)
         root = joinpath(@__DIR__, "..", "..", "..", "..", "JSON-Schema-Test-Suite")
     end
-    tests = joinpath(root, "tests")
+    tests = joinpath(root, "validation", "tests")
     return isdir(tests) ? tests : nothing
 end
 

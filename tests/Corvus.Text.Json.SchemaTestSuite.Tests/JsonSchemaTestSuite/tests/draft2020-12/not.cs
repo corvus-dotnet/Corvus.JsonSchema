@@ -46,9 +46,9 @@ public class SuiteNot
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/not.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"not\": {\"type\": \"integer\"}\n        }",
+                "{\n                \"not\": { \"type\": \"integer\" }\n            }",
                 "JsonSchemaTestSuite.Draft202012.Not",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -107,9 +107,9 @@ public class SuiteNotMultipleTypes
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/not.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"not\": {\"type\": [\"integer\", \"boolean\"]}\n        }",
+                "{\n                \"not\": { \"type\": [\"integer\", \"boolean\"] }\n            }",
                 "JsonSchemaTestSuite.Draft202012.Not",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -149,14 +149,14 @@ public class SuiteNotMoreComplexSchema
     [TestMethod]
     public void TestOtherMatch()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestMismatch()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": \"bar\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"bar\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -168,9 +168,9 @@ public class SuiteNotMoreComplexSchema
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/not.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"not\": {\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": {\n                        \"type\": \"string\"\n                    }\n                }\n             }\n        }",
+                "{\n                \"not\": {\n                    \"type\": \"object\",\n                    \"properties\": {\n                        \"foo\": { \"type\": \"string\" }\n                    }\n                }\n            }",
                 "JsonSchemaTestSuite.Draft202012.Not",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -203,14 +203,14 @@ public class SuiteForbiddenProperty
     [TestMethod]
     public void TestPropertyPresent()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1, \"bar\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1, \"bar\": 2 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestPropertyAbsent()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"bar\": 1, \"baz\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"bar\": 1, \"baz\": 2 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -222,9 +222,9 @@ public class SuiteForbiddenProperty
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/not.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": { \n                    \"not\": {}\n                }\n            }\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": { \"not\": {} }\n                }\n            }",
                 "JsonSchemaTestSuite.Draft202012.Not",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -292,7 +292,7 @@ public class SuiteForbidEverythingWithEmptySchema
     [TestMethod]
     public void TestObjectIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": \"bar\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"bar\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -325,9 +325,9 @@ public class SuiteForbidEverythingWithEmptySchema
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/not.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"not\": {}\n        }",
+                "{\n                \"not\": {}\n            }",
                 "JsonSchemaTestSuite.Draft202012.Not",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -395,7 +395,7 @@ public class SuiteForbidEverythingWithBooleanSchemaTrue
     [TestMethod]
     public void TestObjectIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": \"bar\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"bar\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -428,9 +428,9 @@ public class SuiteForbidEverythingWithBooleanSchemaTrue
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/not.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"not\": true\n        }",
+                "{\n                \"not\": true\n            }",
                 "JsonSchemaTestSuite.Draft202012.Not",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -498,7 +498,7 @@ public class SuiteAllowEverythingWithBooleanSchemaFalse
     [TestMethod]
     public void TestObjectIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": \"bar\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"bar\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -531,9 +531,9 @@ public class SuiteAllowEverythingWithBooleanSchemaFalse
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/not.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"not\": false\n        }",
+                "{\n                \"not\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.Not",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -578,9 +578,9 @@ public class SuiteDoubleNegation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/not.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"not\": { \"not\": {} }\n        }",
+                "{\n                \"not\": { \"not\": {} }\n            }",
                 "JsonSchemaTestSuite.Draft202012.Not",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -632,9 +632,9 @@ public class SuiteCollectAnnotationsInsideANotEvenIfCollectionIsDisabled
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/not.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"not\": {\n                \"$comment\": \"this subschema must still produce annotations internally, even though the 'not' will ultimately discard them\",\n                \"anyOf\": [\n                    true,\n                    { \"properties\": { \"foo\": true } }\n                ],\n                \"unevaluatedProperties\": false\n            }\n        }",
+                "{\n                \"not\": {\n                    \"$comment\": \"this subschema must still produce annotations internally, even though the 'not' will ultimately discard them\",\n                    \"anyOf\": [\n                        true,\n                        { \"properties\": { \"foo\": true } }\n                    ],\n                    \"unevaluatedProperties\": false\n                }\n            }",
                 "JsonSchemaTestSuite.Draft202012.Not",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,

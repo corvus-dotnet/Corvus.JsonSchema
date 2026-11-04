@@ -27,14 +27,14 @@ public class SuitePropertyNamesValidation
     [TestMethod]
     public void TestAllPropertyNamesValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"f\": {},\n                    \"foo\": {}\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"f\": {}, \"foo\": {} }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestSomePropertyNamesInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": {},\n                    \"foobar\": {}\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": {}, \"foobar\": {} }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -88,9 +88,9 @@ public class SuitePropertyNamesValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/propertyNames.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"propertyNames\": {\"maxLength\": 3}\n        }",
+                "{\n                \"propertyNames\": { \"maxLength\": 3 }\n            }",
                 "JsonSchemaTestSuite.Draft201909.PropertyNames",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -123,14 +123,14 @@ public class SuitePropertyNamesValidationWithPattern
     [TestMethod]
     public void TestMatchingPropertyNamesValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"a\": {},\n                    \"aa\": {},\n                    \"aaa\": {}\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"a\": {}, \"aa\": {}, \"aaa\": {} }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestNonMatchingPropertyNameIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"aaA\": {}\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"aaA\": {} }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -149,9 +149,9 @@ public class SuitePropertyNamesValidationWithPattern
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/propertyNames.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"propertyNames\": { \"pattern\": \"^a+$\" }\n        }",
+                "{\n                \"propertyNames\": { \"pattern\": \"^a+$\" }\n            }",
                 "JsonSchemaTestSuite.Draft201909.PropertyNames",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -184,7 +184,7 @@ public class SuitePropertyNamesWithBooleanSchemaTrue
     [TestMethod]
     public void TestObjectWithAnyPropertiesIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -203,9 +203,9 @@ public class SuitePropertyNamesWithBooleanSchemaTrue
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/propertyNames.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"propertyNames\": true\n        }",
+                "{ \"propertyNames\": true }",
                 "JsonSchemaTestSuite.Draft201909.PropertyNames",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -238,7 +238,7 @@ public class SuitePropertyNamesWithBooleanSchemaFalse
     [TestMethod]
     public void TestObjectWithAnyPropertiesIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -257,9 +257,9 @@ public class SuitePropertyNamesWithBooleanSchemaFalse
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/propertyNames.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"propertyNames\": false\n        }",
+                "{ \"propertyNames\": false }",
                 "JsonSchemaTestSuite.Draft201909.PropertyNames",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -292,14 +292,14 @@ public class SuitePropertyNamesWithConst
     [TestMethod]
     public void TestObjectWithPropertyFooIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestObjectWithAnyOtherPropertyIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"bar\": 1}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"bar\": 1 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -318,9 +318,9 @@ public class SuitePropertyNamesWithConst
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/propertyNames.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"propertyNames\": {\"const\": \"foo\"}\n        }",
+                "{\n                \"propertyNames\": { \"const\": \"foo\" }\n            }",
                 "JsonSchemaTestSuite.Draft201909.PropertyNames",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -353,21 +353,21 @@ public class SuitePropertyNamesWithEnum
     [TestMethod]
     public void TestObjectWithPropertyFooIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestObjectWithPropertyFooAndBarIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1, \"bar\": 1}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1, \"bar\": 1 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestObjectWithAnyOtherPropertyIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"baz\": 1}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"baz\": 1 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -386,9 +386,9 @@ public class SuitePropertyNamesWithEnum
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2019-09/propertyNames.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"propertyNames\": {\"enum\": [\"foo\", \"bar\"]}\n        }",
+                "{\n                \"propertyNames\": { \"enum\": [\"foo\", \"bar\"] }\n            }",
                 "JsonSchemaTestSuite.Draft201909.PropertyNames",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 optionalAsNullable: false,

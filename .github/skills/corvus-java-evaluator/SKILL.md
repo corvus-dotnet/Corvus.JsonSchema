@@ -35,10 +35,12 @@ Java 17 or later; the wrapper fetches Maven. From `src-java/corvus-json-schema`:
 ./mvnw install -P release -Dgpg.skip   # as CI does: adds the sources and javadoc jars (doclint fails on warnings)
 ```
 
-The suites read the repository's `JSON-Schema-Test-Suite` submodule. Every required, optional and format test must
-pass (`draft4/optional/zeroTerminatedFloats.json` is excluded, as in the C# runner), and all annotation assertions.
-`SuiteTest` also asserts that every suite schema compiles to bytecode; a node that falls back to the interpreter is a
-performance bug, so don't relax that count.
+The suites read the repository's `JSON-Schema-Test-Suite` submodule. Every required, optional and format test must pass
+(`draft4/optional/zero-terminated-floats.json` is excluded, as in the C# runner), and all annotation assertions. Each
+case's `compatibility` selects the drafts it applies to, its `tags` whether format is asserted, and its
+`externalSchemas` are served to that case alone (the unified layout of the suite, `validation/tests`). `SuiteTest` also
+asserts that every suite schema compiles to bytecode; a node that falls back to the interpreter is a performance bug, so
+don't relax that count.
 
 `MetaschemasTest` checks the embedded metaschemas (`src/main/resources`) against `src/Corvus.Text.Json/metaschema`.
 

@@ -48,9 +48,11 @@ JSONSCHEMA_BENCHMARK=<jsonschema-benchmark> go test -p 4 -run TestPlansAgree .  
 ```
 
 The suites read the repository's `JSON-Schema-Test-Suite` submodule (or `JSON_SCHEMA_TEST_SUITE`). Every required,
-optional and format test must pass (`draft4/optional/zeroTerminatedFloats.json` is excluded, as in the C# runner),
-and all annotation assertions. Each case runs fail-fast as a document, as bytes and as a string, and through a
-collector at each level, and the verdicts must agree. `SUITE_DRAFT` and `SUITE_FILTER` narrow the run.
+optional and format test must pass (`draft4/optional/zero-terminated-floats.json` is excluded, as in the C# runner), and
+all annotation assertions. Each case's `compatibility` selects the drafts it applies to, its `tags` whether format is
+asserted, and its `externalSchemas` are served to that case alone (the unified layout of the suite, `validation/tests`).
+Each case runs fail-fast as a document, as bytes and as a string, and through a collector at each level, and the
+verdicts must agree. `SUITE_DRAFT` and `SUITE_FILTER` narrow the run.
 
 `TestEmbeddedMetaschemasAreCurrent` checks the embedded metaschemas (`metaschemas/`) against
 `src/Corvus.Text.Json/metaschema`. `UPDATE_METASCHEMAS=1` copies them again.

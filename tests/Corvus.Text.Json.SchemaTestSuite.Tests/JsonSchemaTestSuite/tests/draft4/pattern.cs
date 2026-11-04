@@ -88,9 +88,9 @@ public class SuitePatternValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/pattern.json",
-                "{\"pattern\": \"^a*$\"}",
+                "{ \"pattern\": \"^a*$\" }",
                 "JsonSchemaTestSuite.Draft4.Pattern",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -135,9 +135,9 @@ public class SuitePatternIsNotAnchored
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/pattern.json",
-                "{\"pattern\": \"a+\"}",
+                "{ \"pattern\": \"a+\" }",
                 "JsonSchemaTestSuite.Draft4.Pattern",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,

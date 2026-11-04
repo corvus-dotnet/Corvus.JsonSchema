@@ -1,5 +1,5 @@
-// Drives bowtie/bowtie_corvus.js over IHOP the way Bowtie does (start, dialect, run with a registry of the suite's
-// remotes, stop) for every required test in the JSON-Schema-Test-Suite, and reports disagreements. No containers.
+// Drives bowtie/bowtie_corvus.js over IHOP the way Bowtie does (start, dialect, run with each case's externalSchemas as
+// the registry, stop) for every required test in the JSON-Schema-Test-Suite, and reports disagreements. No containers.
 //
 //   node test/bowtie-ihop.mjs
 import { spawn } from 'node:child_process';
@@ -11,23 +11,26 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const suiteRoot = process.env.JSON_SCHEMA_TEST_SUITE ?? path.resolve(here, '../../../JSON-Schema-Test-Suite');
 const dialects = {
-  draft4: 'http://json-schema.org/draft-04/schema#',
-  draft6: 'http://json-schema.org/draft-06/schema#',
-  draft7: 'http://json-schema.org/draft-07/schema#',
-  'draft2019-09': 'https://json-schema.org/draft/2019-09/schema',
-  'draft2020-12': 'https://json-schema.org/draft/2020-12/schema',
+  draft4: ['http://json-schema.org/draft-04/schema#', 4],
+  draft6: ['http://json-schema.org/draft-06/schema#', 6],
+  draft7: ['http://json-schema.org/draft-07/schema#', 7],
+  'draft2019-09': ['https://json-schema.org/draft/2019-09/schema', 2019],
+  'draft2020-12': ['https://json-schema.org/draft/2020-12/schema', 2020],
 };
 
-// Bowtie's registry: every remote, keyed by its http://localhost:1234/ URI.
-const registry = {};
-const remotes = path.join(suiteRoot, 'remotes');
-(function walk(dir) {
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) walk(full);
-    else if (entry.name.endsWith('.json')) registry['http://localhost:1234/' + path.relative(remotes, full).split(path.sep).join('/')] = JSON.parse(fs.readFileSync(full, 'utf8'));
+// Whether a test case's compatibility (a comma-separated list of minimums, <= maximums and = releases, from the
+// smallest release to the largest) admits the release, by the algorithm of the suite's validation/README.md.
+function compatible(compatibility, release) {
+  if (compatibility === undefined) return true;
+  let valid = true;
+  for (const constraint of compatibility.split(',')) {
+    const [op, version] = constraint.startsWith('<=') ? ['<=', constraint.slice(2)] : constraint.startsWith('=') ? ['=', constraint.slice(1)] : ['', constraint];
+    const number = Number.parseInt(version.trim(), 10);
+    valid = op === '<=' ? release <= number : op === '=' ? release === number : release >= number;
+    if (release <= number) break;
   }
-})(remotes);
+  return valid;
+}
 
 const harness = spawn(process.execPath, [path.resolve(here, '../bowtie/bowtie_corvus.js')], {
   env: { ...process.env, CORVUS_JSON_SCHEMA: pathToFileURL(path.resolve(here, '../dist/index.js')).href },
@@ -45,17 +48,19 @@ console.log(`${start.implementation.name} ${start.implementation.version} (${sta
 let seq = 0;
 let total = 0;
 const failures = [];
-for (const [draft, uri] of Object.entries(dialects)) {
+const dir = path.join(suiteRoot, 'validation', 'tests');
+for (const [draft, [uri, release]] of Object.entries(dialects)) {
   const ok = await send({ cmd: 'dialect', dialect: uri });
   if (!ok.ok) throw new Error(`dialect ${uri} refused`);
-  const dir = path.join(suiteRoot, 'tests', draft);
   for (const file of fs.readdirSync(dir).filter((f) => f.endsWith('.json')).sort()) {
-    for (const group of JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'))) {
+    for (const group of JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8')).tests) {
+      // The harness treats format as an annotation in every dialect, as Bowtie expects.
+      if (!compatible(group.compatibility, release) || (group.tags ?? []).includes('format-assertion')) continue;
       const request = {
         cmd: 'run',
         seq: ++seq,
         output: 'flag',
-        case: { description: group.description, schema: group.schema, registry, tests: group.tests.map((t) => ({ description: t.description, instance: t.data })) },
+        case: { description: group.description, schema: group.schema, registry: group.externalSchemas ?? {}, tests: group.tests.map((t) => ({ description: t.description, instance: t.data })) },
       };
       const response = await send(request);
       if (response.seq !== seq) throw new Error(`seq mismatch ${response.seq} != ${seq}`);

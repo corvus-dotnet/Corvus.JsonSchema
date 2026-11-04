@@ -28,14 +28,14 @@ public class SuiteMinPropertiesValidation
     [TestMethod]
     public void TestLongerIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"bar\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1, \"bar\": 2 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestExactLengthIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -89,9 +89,9 @@ public class SuiteMinPropertiesValidation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/minProperties.json",
-                "{\"minProperties\": 1}",
+                "{ \"minProperties\": 1 }",
                 "StandaloneEvaluatorTestSuite.Draft6.MinProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -121,7 +121,7 @@ public class SuiteMinPropertiesValidationWithADecimal
     [TestMethod]
     public void TestLongerIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"bar\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1, \"bar\": 2 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -140,9 +140,9 @@ public class SuiteMinPropertiesValidationWithADecimal
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/minProperties.json",
-                "{\"minProperties\": 1.0}",
+                "{ \"minProperties\": 1.0 }",
                 "StandaloneEvaluatorTestSuite.Draft6.MinProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

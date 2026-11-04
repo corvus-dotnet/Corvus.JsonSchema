@@ -68,9 +68,9 @@ public class SuiteMaxLengthValidation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/maxLength.json",
-                "{\"maxLength\": 2}",
+                "{ \"maxLength\": 2 }",
                 "StandaloneEvaluatorTestSuite.Draft7.MaxLength",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -119,9 +119,9 @@ public class SuiteMaxLengthValidationWithADecimal
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/maxLength.json",
-                "{\"maxLength\": 2.0}",
+                "{ \"maxLength\": 2.0 }",
                 "StandaloneEvaluatorTestSuite.Draft7.MaxLength",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

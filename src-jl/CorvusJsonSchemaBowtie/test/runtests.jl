@@ -1,6 +1,6 @@
-# Drives the harness over IHOP as Bowtie does (start, dialect, run with the suite's remotes as the registry, stop),
-# in a separate process: every required case of the JSON-Schema-Test-Suite, and the annotation suite's assertions,
-# compared with the expected results. No containers.
+# Drives the harness over IHOP as Bowtie does (start, dialect, run with each case's externalSchemas as the registry,
+# stop), in a separate process: every required case of the JSON-Schema-Test-Suite, and the annotation suite's
+# assertions, compared with the expected results. No containers.
 #
 #     julia --project=. -t 4 test/runtests.jl
 using Test
@@ -11,11 +11,11 @@ const B = CorvusJsonSchemaBowtie
 const ROOT = normpath(joinpath(@__DIR__, ".."))
 
 const DRAFTS = [
-    ("draft4", "http://json-schema.org/draft-04/schema#", "4"),
-    ("draft6", "http://json-schema.org/draft-06/schema#", "6"),
-    ("draft7", "http://json-schema.org/draft-07/schema#", "7"),
-    ("draft2019-09", "https://json-schema.org/draft/2019-09/schema", "2019"),
-    ("draft2020-12", "https://json-schema.org/draft/2020-12/schema", "2020"),
+    ("draft4", "http://json-schema.org/draft-04/schema#", 4),
+    ("draft6", "http://json-schema.org/draft-06/schema#", 6),
+    ("draft7", "http://json-schema.org/draft-07/schema#", 7),
+    ("draft2019-09", "https://json-schema.org/draft/2019-09/schema", 2019),
+    ("draft2020-12", "https://json-schema.org/draft/2020-12/schema", 2020),
 ]
 
 # The harness in its own process.
@@ -70,7 +70,7 @@ end
 # The JSON-Schema-Test-Suite checkout: the repository's submodule, or JSON_SCHEMA_TEST_SUITE.
 function suite_root()
     root = get(ENV, "JSON_SCHEMA_TEST_SUITE", joinpath(ROOT, "..", "..", "JSON-Schema-Test-Suite"))
-    isdir(joinpath(root, "tests")) ||
+    isdir(joinpath(root, "validation", "tests")) ||
         error("JSON-Schema-Test-Suite not found at $root (set JSON_SCHEMA_TEST_SUITE, or check out the submodule)")
     return root
 end
@@ -78,18 +78,10 @@ end
 json_files(dir::String) = sort!([joinpath(dir, f) for f in readdir(dir) if endswith(f, ".json") &&
                                  isfile(joinpath(dir, f))])
 
-# Bowtie's registry: every remote, keyed by its http://localhost:1234/ URI.
-function registry(root::String)
-    remotes = joinpath(root, "remotes")
-    entries = String[]
-    for (dir, _, files) in walkdir(remotes), file in sort(files)
-        endswith(file, ".json") || continue
-        path = joinpath(dir, file)
-        bytes = read(path)
-        relative = replace(relpath(path, remotes), '\\' => '/')
-        push!(entries, B.quoted("http://localhost:1234/" * relative) * ":" * B.compact(bytes, B.whole_value(bytes)))
-    end
-    return "{" * join(sort!(entries), ",") * "}"
+# Bowtie's registry for a test case: its externalSchemas, keyed by their retrieval URIs.
+function registry(b::Vector{UInt8}, test_case::UnitRange{Int})
+    schemas = B.member(b, test_case, "externalSchemas")
+    return schemas === nothing ? "{}" : B.compact(b, schemas)
 end
 
 # The text of a member that is a string, or a default.
@@ -113,16 +105,31 @@ end
 # JSON equality, with numbers compared by value and objects whatever their members' order, which is what const is.
 same_json(a::String, b::String) = isvalid(compile_schema("{\"const\":" * b * "}"), a)
 
-const COMPATIBILITY_ORDER = ["3", "4", "6", "7", "2019", "2020"]
-
-function compatible(level::String, compatibility::String)
-    at = findfirst(==(level), COMPATIBILITY_ORDER)
-    if startswith(compatibility, "<=")
-        most = findfirst(==(compatibility[3:end]), COMPATIBILITY_ORDER)
-        return most !== nothing && at <= most
+# Reports whether a test case's compatibility (a comma-separated list of minimums, <= maximums and = releases, from the
+# smallest release to the largest) admits the release, by the algorithm of the suite's validation/README.md.
+function compatible(b::Vector{UInt8}, test_case::UnitRange{Int}, release::Int)
+    compatibility = text_of(b, test_case, "compatibility")
+    compatibility == "" && return true
+    valid = true
+    for constraint in split(compatibility, ',')
+        op, version = if startswith(constraint, "<=")
+            "<=", constraint[3:end]
+        elseif startswith(constraint, "=")
+            "=", constraint[2:end]
+        else
+            "", constraint
+        end
+        number = parse(Int, strip(version))
+        valid = op == "<=" ? release <= number : op == "=" ? release == number : release >= number
+        release <= number && break
     end
-    least = findfirst(==(compatibility), COMPATIBILITY_ORDER)
-    return least !== nothing && at >= least
+    return valid
+end
+
+# Reports whether a test case has a tag.
+function has_tag(b::Vector{UInt8}, test_case::UnitRange{Int}, tag::String)
+    tags = B.member(b, test_case, "tags")
+    return tags !== nothing && any(t -> B.text(b, t) == tag, B.items(b, tags))
 end
 
 @testset "Bowtie harness" begin
@@ -175,19 +182,20 @@ end
 
     @testset "the required suite over IHOP" begin
         root = suite_root()
-        remotes = registry(root)
         h = start_harness()
         seq, total, failures = 0, 0, String[]
-        for (directory, dialect, _) in DRAFTS
+        for (directory, dialect, release) in DRAFTS
             set_dialect(h, dialect)
-            for file in json_files(joinpath(root, "tests", directory))
+            for file in json_files(joinpath(root, "validation", "tests"))
                 bytes = read(file)
-                for group in B.items(bytes, B.whole_value(bytes))
+                for group in B.items(bytes, B.member(bytes, B.whole_value(bytes), "tests"))
+                    # The harness treats format as an annotation in every dialect, as Bowtie expects.
+                    (compatible(bytes, group, release) && !has_tag(bytes, group, "format-assertion")) || continue
                     description = text_of(bytes, group, "description")
                     tests = B.items(bytes, B.member(bytes, group, "tests"))
                     seq += 1
                     request = run_request(seq, "", description, B.compact(bytes, B.member(bytes, group, "schema")),
-                        remotes, ["{\"description\":$(B.quoted(text_of(bytes, t, "description")))," *
+                        registry(bytes, group), ["{\"description\":$(B.quoted(text_of(bytes, t, "description")))," *
                                   "\"instance\":$(B.compact(bytes, B.member(bytes, t, "data")))}" for t in tests])
                     b, response = send(h, request)
                     results = results_of(b, response, seq)
@@ -206,7 +214,7 @@ end
         @test stop(h) == 0
         foreach(println, failures)
         @test isempty(failures)
-        @test total > 4000
+        @test total > 5000
         println("$total tests in $seq cases")
     end
 
@@ -214,21 +222,19 @@ end
         root = suite_root()
         dir = joinpath(root, "annotations", "tests")
         isdir(dir) || error("annotation tests not found at $dir")
-        remotes = registry(root)
         h = start_harness()
         seq, total, failures = 0, 0, String[]
-        for (_, dialect, level) in DRAFTS
+        for (_, dialect, release) in DRAFTS
             set_dialect(h, dialect)
             for file in json_files(dir)
                 bytes = read(file)
                 for group in B.items(bytes, B.member(bytes, B.whole_value(bytes), "suite"))
-                    compatibility = text_of(bytes, group, "compatibility")
-                    compatibility != "" && !compatible(level, compatibility) && continue
+                    compatible(bytes, group, release) || continue
                     description = text_of(bytes, group, "description")
                     tests = B.items(bytes, B.member(bytes, group, "tests"))
                     seq += 1
                     request = run_request(seq, "annotations", description,
-                        B.compact(bytes, B.member(bytes, group, "schema")), remotes,
+                        B.compact(bytes, B.member(bytes, group, "schema")), registry(bytes, group),
                         ["{\"description\":\"\",\"instance\":$(B.compact(bytes, B.member(bytes, t, "instance")))}"
                          for t in tests])
                     b, response = send(h, request)

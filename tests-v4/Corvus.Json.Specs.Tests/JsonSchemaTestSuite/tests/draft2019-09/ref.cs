@@ -14,26 +14,28 @@ namespace JsonSchemaTestSuite.Draft201909.Ref;
 public class SuiteRootPointerRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestMatch()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": false}");
+        using var doc = JsonDocument.Parse("{ \"foo\": false }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -41,7 +43,7 @@ public class SuiteRootPointerRef
     [TestMethod]
     public void TestRecursiveMatch()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": {\"foo\": false}}");
+        using var doc = JsonDocument.Parse("{ \"foo\": { \"foo\": false } }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -49,7 +51,7 @@ public class SuiteRootPointerRef
     [TestMethod]
     public void TestMismatch()
     {
-        using var doc = JsonDocument.Parse("{\"bar\": false}");
+        using var doc = JsonDocument.Parse("{ \"bar\": false }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -57,12 +59,12 @@ public class SuiteRootPointerRef
     [TestMethod]
     public void TestRecursiveMismatch()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": {\"bar\": false}}");
+        using var doc = JsonDocument.Parse("{ \"foo\": { \"bar\": false } }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -73,7 +75,7 @@ public class SuiteRootPointerRef
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
-                "#/0/schema",
+                "#/tests/0/schema",
                 "JsonSchemaTestSuiteDraft201909Ref",
                 "RootPointerRef",
                 validateFormat: false,
@@ -81,10 +83,9 @@ public class SuiteRootPointerRef
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -94,26 +95,28 @@ public class SuiteRootPointerRef
 public class SuiteRelativePointerRefToObject
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestMatch()
     {
-        using var doc = JsonDocument.Parse("{\"bar\": 3}");
+        using var doc = JsonDocument.Parse("{ \"bar\": 3 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -121,12 +124,12 @@ public class SuiteRelativePointerRefToObject
     [TestMethod]
     public void TestMismatch()
     {
-        using var doc = JsonDocument.Parse("{\"bar\": true}");
+        using var doc = JsonDocument.Parse("{ \"bar\": true }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -137,7 +140,7 @@ public class SuiteRelativePointerRefToObject
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
-                "#/1/schema",
+                "#/tests/1/schema",
                 "JsonSchemaTestSuiteDraft201909Ref",
                 "RelativePointerRefToObject",
                 validateFormat: false,
@@ -145,74 +148,9 @@ public class SuiteRelativePointerRefToObject
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft201909")]
-[TestClass]
-public class SuiteRelativePointerRefToArray
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestMatchArray()
-    {
-        using var doc = JsonDocument.Parse("[1, 2]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestMismatchArray()
-    {
-        using var doc = JsonDocument.Parse("[1, \"foo\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "ref.json",
-                "#/2/schema",
-                "JsonSchemaTestSuiteDraft201909Ref",
-                "RelativePointerRefToArray",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -222,26 +160,28 @@ public class SuiteRelativePointerRefToArray
 public class SuiteEscapedPointerRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestSlashInvalid()
     {
-        using var doc = JsonDocument.Parse("{\"slash\": \"aoeu\"}");
+        using var doc = JsonDocument.Parse("{ \"slash\": \"aoeu\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -249,7 +189,7 @@ public class SuiteEscapedPointerRef
     [TestMethod]
     public void TestTildeInvalid()
     {
-        using var doc = JsonDocument.Parse("{\"tilde\": \"aoeu\"}");
+        using var doc = JsonDocument.Parse("{ \"tilde\": \"aoeu\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -257,7 +197,7 @@ public class SuiteEscapedPointerRef
     [TestMethod]
     public void TestPercentInvalid()
     {
-        using var doc = JsonDocument.Parse("{\"percent\": \"aoeu\"}");
+        using var doc = JsonDocument.Parse("{ \"percent\": \"aoeu\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -265,7 +205,7 @@ public class SuiteEscapedPointerRef
     [TestMethod]
     public void TestSlashValid()
     {
-        using var doc = JsonDocument.Parse("{\"slash\": 123}");
+        using var doc = JsonDocument.Parse("{ \"slash\": 123 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -273,7 +213,7 @@ public class SuiteEscapedPointerRef
     [TestMethod]
     public void TestTildeValid()
     {
-        using var doc = JsonDocument.Parse("{\"tilde\": 123}");
+        using var doc = JsonDocument.Parse("{ \"tilde\": 123 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -281,12 +221,12 @@ public class SuiteEscapedPointerRef
     [TestMethod]
     public void TestPercentValid()
     {
-        using var doc = JsonDocument.Parse("{\"percent\": 123}");
+        using var doc = JsonDocument.Parse("{ \"percent\": 123 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -297,7 +237,7 @@ public class SuiteEscapedPointerRef
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
-                "#/3/schema",
+                "#/tests/3/schema",
                 "JsonSchemaTestSuiteDraft201909Ref",
                 "EscapedPointerRef",
                 validateFormat: false,
@@ -305,10 +245,9 @@ public class SuiteEscapedPointerRef
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -318,19 +257,21 @@ public class SuiteEscapedPointerRef
 public class SuiteNestedRefs
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -350,7 +291,7 @@ public class SuiteNestedRefs
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -361,7 +302,7 @@ public class SuiteNestedRefs
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
-                "#/4/schema",
+                "#/tests/4/schema",
                 "JsonSchemaTestSuiteDraft201909Ref",
                 "NestedRefs",
                 validateFormat: false,
@@ -369,10 +310,9 @@ public class SuiteNestedRefs
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -382,19 +322,21 @@ public class SuiteNestedRefs
 public class SuiteRefAppliesAlongsideSiblingKeywords
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -422,7 +364,7 @@ public class SuiteRefAppliesAlongsideSiblingKeywords
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -433,7 +375,7 @@ public class SuiteRefAppliesAlongsideSiblingKeywords
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
-                "#/5/schema",
+                "#/tests/5/schema",
                 "JsonSchemaTestSuiteDraft201909Ref",
                 "RefAppliesAlongsideSiblingKeywords",
                 validateFormat: false,
@@ -441,74 +383,9 @@ public class SuiteRefAppliesAlongsideSiblingKeywords
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft201909")]
-[TestClass]
-public class SuiteRemoteRefContainingRefsItself
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestRemoteRefValid()
-    {
-        using var doc = JsonDocument.Parse("{\"minLength\": 1}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestRemoteRefInvalid()
-    {
-        using var doc = JsonDocument.Parse("{\"minLength\": -1}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "ref.json",
-                "#/6/schema",
-                "JsonSchemaTestSuiteDraft201909Ref",
-                "RemoteRefContainingRefsItself",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -518,26 +395,28 @@ public class SuiteRemoteRefContainingRefsItself
 public class SuitePropertyNamedRefThatIsNotAReference
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestPropertyNamedRefValid()
     {
-        using var doc = JsonDocument.Parse("{\"$ref\": \"a\"}");
+        using var doc = JsonDocument.Parse("{ \"$ref\": \"a\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -545,12 +424,12 @@ public class SuitePropertyNamedRefThatIsNotAReference
     [TestMethod]
     public void TestPropertyNamedRefInvalid()
     {
-        using var doc = JsonDocument.Parse("{\"$ref\": 2}");
+        using var doc = JsonDocument.Parse("{ \"$ref\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -561,7 +440,7 @@ public class SuitePropertyNamedRefThatIsNotAReference
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
-                "#/7/schema",
+                "#/tests/6/schema",
                 "JsonSchemaTestSuiteDraft201909Ref",
                 "PropertyNamedRefThatIsNotAReference",
                 validateFormat: false,
@@ -569,10 +448,9 @@ public class SuitePropertyNamedRefThatIsNotAReference
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -582,26 +460,28 @@ public class SuitePropertyNamedRefThatIsNotAReference
 public class SuitePropertyNamedRefContainingAnActualRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestPropertyNamedRefValid()
     {
-        using var doc = JsonDocument.Parse("{\"$ref\": \"a\"}");
+        using var doc = JsonDocument.Parse("{ \"$ref\": \"a\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -609,12 +489,12 @@ public class SuitePropertyNamedRefContainingAnActualRef
     [TestMethod]
     public void TestPropertyNamedRefInvalid()
     {
-        using var doc = JsonDocument.Parse("{\"$ref\": 2}");
+        using var doc = JsonDocument.Parse("{ \"$ref\": 2 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -625,7 +505,7 @@ public class SuitePropertyNamedRefContainingAnActualRef
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
-                "#/8/schema",
+                "#/tests/7/schema",
                 "JsonSchemaTestSuiteDraft201909Ref",
                 "PropertyNamedRefContainingAnActualRef",
                 validateFormat: false,
@@ -633,306 +513,9 @@ public class SuitePropertyNamedRefContainingAnActualRef
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft201909")]
-[TestClass]
-public class SuiteRefToBooleanSchemaTrue
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestAnyValueIsValid()
-    {
-        using var doc = JsonDocument.Parse("\"foo\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "ref.json",
-                "#/9/schema",
-                "JsonSchemaTestSuiteDraft201909Ref",
-                "RefToBooleanSchemaTrue",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft201909")]
-[TestClass]
-public class SuiteRefToBooleanSchemaFalse
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestAnyValueIsInvalid()
-    {
-        using var doc = JsonDocument.Parse("\"foo\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "ref.json",
-                "#/10/schema",
-                "JsonSchemaTestSuiteDraft201909Ref",
-                "RefToBooleanSchemaFalse",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft201909")]
-[TestClass]
-public class SuiteRecursiveReferencesBetweenSchemas
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestValidTree()
-    {
-        using var doc = JsonDocument.Parse("{\r\n                    \"meta\": \"root\",\r\n                    \"nodes\": [\r\n                        {\r\n                            \"value\": 1,\r\n                            \"subtree\": {\r\n                                \"meta\": \"child\",\r\n                                \"nodes\": [\r\n                                    {\"value\": 1.1},\r\n                                    {\"value\": 1.2}\r\n                                ]\r\n                            }\r\n                        },\r\n                        {\r\n                            \"value\": 2,\r\n                            \"subtree\": {\r\n                                \"meta\": \"child\",\r\n                                \"nodes\": [\r\n                                    {\"value\": 2.1},\r\n                                    {\"value\": 2.2}\r\n                                ]\r\n                            }\r\n                        }\r\n                    ]\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestInvalidTree()
-    {
-        using var doc = JsonDocument.Parse("{\r\n                    \"meta\": \"root\",\r\n                    \"nodes\": [\r\n                        {\r\n                            \"value\": 1,\r\n                            \"subtree\": {\r\n                                \"meta\": \"child\",\r\n                                \"nodes\": [\r\n                                    {\"value\": \"string is invalid\"},\r\n                                    {\"value\": 1.2}\r\n                                ]\r\n                            }\r\n                        },\r\n                        {\r\n                            \"value\": 2,\r\n                            \"subtree\": {\r\n                                \"meta\": \"child\",\r\n                                \"nodes\": [\r\n                                    {\"value\": 2.1},\r\n                                    {\"value\": 2.2}\r\n                                ]\r\n                            }\r\n                        }\r\n                    ]\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "ref.json",
-                "#/11/schema",
-                "JsonSchemaTestSuiteDraft201909Ref",
-                "RecursiveReferencesBetweenSchemas",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft201909")]
-[TestClass]
-public class SuiteRefsWithQuote
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestObjectWithNumbersIsValid()
-    {
-        using var doc = JsonDocument.Parse("{\r\n                    \"foo\\\"bar\": 1\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestObjectWithStringsIsInvalid()
-    {
-        using var doc = JsonDocument.Parse("{\r\n                    \"foo\\\"bar\": \"1\"\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "ref.json",
-                "#/12/schema",
-                "JsonSchemaTestSuiteDraft201909Ref",
-                "RefsWithQuote",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft201909")]
-[TestClass]
-public class SuiteRefCreatesNewScopeWhenAdjacentToKeywords
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestReferencedSubschemaDoesnTSeeAnnotationsFromProperties()
-    {
-        using var doc = JsonDocument.Parse("{\r\n                    \"prop1\": \"match\"\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "ref.json",
-                "#/13/schema",
-                "JsonSchemaTestSuiteDraft201909Ref",
-                "RefCreatesNewScopeWhenAdjacentToKeywords",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -942,19 +525,21 @@ public class SuiteRefCreatesNewScopeWhenAdjacentToKeywords
 public class SuiteNaiveReplacementOfRefWithItsDestinationIsNotCorrect
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -982,7 +567,7 @@ public class SuiteNaiveReplacementOfRefWithItsDestinationIsNotCorrect
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -993,7 +578,7 @@ public class SuiteNaiveReplacementOfRefWithItsDestinationIsNotCorrect
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
-                "#/14/schema",
+                "#/tests/8/schema",
                 "JsonSchemaTestSuiteDraft201909Ref",
                 "NaiveReplacementOfRefWithItsDestinationIsNotCorrect",
                 validateFormat: false,
@@ -1001,60 +586,45 @@ public class SuiteNaiveReplacementOfRefWithItsDestinationIsNotCorrect
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
 
 [TestCategory("Draft201909")]
 [TestClass]
-public class SuiteRefsWithRelativeUrisAndDefs
+public class SuiteRefToBooleanSchemaTrue
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
-    public void TestInvalidOnInnerField()
+    public void TestAnyValueIsValid()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"foo\": {\r\n                        \"bar\": 1\r\n                    },\r\n                    \"bar\": \"a\"\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestInvalidOnOuterField()
-    {
-        using var doc = JsonDocument.Parse("{\r\n                    \"foo\": {\r\n                        \"bar\": \"a\"\r\n                    },\r\n                    \"bar\": 1\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestValidOnBothFields()
-    {
-        using var doc = JsonDocument.Parse("{\r\n                    \"foo\": {\r\n                        \"bar\": \"a\"\r\n                    },\r\n                    \"bar\": \"a\"\r\n                }");
+        using var doc = JsonDocument.Parse("\"foo\"");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1065,68 +635,53 @@ public class SuiteRefsWithRelativeUrisAndDefs
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
-                "#/15/schema",
+                "#/tests/9/schema",
                 "JsonSchemaTestSuiteDraft201909Ref",
-                "RefsWithRelativeUrisAndDefs",
+                "RefToBooleanSchemaTrue",
                 validateFormat: false,
                 optionalAsNullable: false,
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
 
 [TestCategory("Draft201909")]
 [TestClass]
-public class SuiteRelativeRefsWithAbsoluteUrisAndDefs
+public class SuiteRefToBooleanSchemaFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
-    public void TestInvalidOnInnerField()
+    public void TestAnyValueIsInvalid()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"foo\": {\r\n                        \"bar\": 1\r\n                    },\r\n                    \"bar\": \"a\"\r\n                }");
+        using var doc = JsonDocument.Parse("\"foo\"");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [TestMethod]
-    public void TestInvalidOnOuterField()
-    {
-        using var doc = JsonDocument.Parse("{\r\n                    \"foo\": {\r\n                        \"bar\": \"a\"\r\n                    },\r\n                    \"bar\": 1\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestValidOnBothFields()
-    {
-        using var doc = JsonDocument.Parse("{\r\n                    \"foo\": {\r\n                        \"bar\": \"a\"\r\n                    },\r\n                    \"bar\": \"a\"\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1137,60 +692,61 @@ public class SuiteRelativeRefsWithAbsoluteUrisAndDefs
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
-                "#/16/schema",
+                "#/tests/10/schema",
                 "JsonSchemaTestSuiteDraft201909Ref",
-                "RelativeRefsWithAbsoluteUrisAndDefs",
+                "RefToBooleanSchemaFalse",
                 validateFormat: false,
                 optionalAsNullable: false,
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
 
 [TestCategory("Draft201909")]
 [TestClass]
-public class SuiteIdMustBeResolvedAgainstNearestParentNotJustImmediateParent
+public class SuiteRecursiveReferencesBetweenSchemas
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
-    public void TestNumberIsValid()
+    public void TestValidTree()
     {
-        using var doc = JsonDocument.Parse("1");
+        using var doc = JsonDocument.Parse("{\n                        \"meta\": \"root\",\n                        \"nodes\": [\n                            {\n                                \"value\": 1,\n                                \"subtree\": {\n                                    \"meta\": \"child\",\n                                    \"nodes\": [\n                                        { \"value\": 1.1 },\n                                        { \"value\": 1.2 }\n                                    ]\n                                }\n                            },\n                            {\n                                \"value\": 2,\n                                \"subtree\": {\n                                    \"meta\": \"child\",\n                                    \"nodes\": [\n                                        { \"value\": 2.1 },\n                                        { \"value\": 2.2 }\n                                    ]\n                                }\n                            }\n                        ]\n                    }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
     [TestMethod]
-    public void TestNonNumberIsInvalid()
+    public void TestInvalidTree()
     {
-        using var doc = JsonDocument.Parse("\"a\"");
+        using var doc = JsonDocument.Parse("{\n                        \"meta\": \"root\",\n                        \"nodes\": [\n                            {\n                                \"value\": 1,\n                                \"subtree\": {\n                                    \"meta\": \"child\",\n                                    \"nodes\": [\n                                        { \"value\": \"string is invalid\" },\n                                        { \"value\": 1.2 }\n                                    ]\n                                }\n                            },\n                            {\n                                \"value\": 2,\n                                \"subtree\": {\n                                    \"meta\": \"child\",\n                                    \"nodes\": [\n                                        { \"value\": 2.1 },\n                                        { \"value\": 2.2 }\n                                    ]\n                                }\n                            }\n                        ]\n                    }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1201,60 +757,62 @@ public class SuiteIdMustBeResolvedAgainstNearestParentNotJustImmediateParent
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
-                "#/17/schema",
+                "#/tests/11/schema",
                 "JsonSchemaTestSuiteDraft201909Ref",
-                "IdMustBeResolvedAgainstNearestParentNotJustImmediateParent",
+                "RecursiveReferencesBetweenSchemas",
                 validateFormat: false,
                 optionalAsNullable: false,
-                useImplicitOperatorString: false);
+                useImplicitOperatorString: false,
+                externalSchemasPath: "#/tests/11/externalSchemas");
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
 
 [TestCategory("Draft201909")]
 [TestClass]
-public class SuiteOrderOfEvaluationIdAndRef
+public class SuiteRefsWithQuote
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
-    public void TestDataIsValidAgainstFirstDefinition()
+    public void TestObjectWithNumbersIsValid()
     {
-        using var doc = JsonDocument.Parse("5");
+        using var doc = JsonDocument.Parse("{ \"foo\\\"bar\": 1 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
     [TestMethod]
-    public void TestDataIsInvalidAgainstFirstDefinition()
+    public void TestObjectWithStringsIsInvalid()
     {
-        using var doc = JsonDocument.Parse("50");
+        using var doc = JsonDocument.Parse("{ \"foo\\\"bar\": \"1\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1265,60 +823,53 @@ public class SuiteOrderOfEvaluationIdAndRef
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
-                "#/18/schema",
+                "#/tests/12/schema",
                 "JsonSchemaTestSuiteDraft201909Ref",
-                "OrderOfEvaluationIdAndRef",
+                "RefsWithQuote",
                 validateFormat: false,
                 optionalAsNullable: false,
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
 
 [TestCategory("Draft201909")]
 [TestClass]
-public class SuiteOrderOfEvaluationIdAndAnchorAndRef
+public class SuiteRefCreatesNewScopeWhenAdjacentToKeywords
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
-    public void TestDataIsValidAgainstFirstDefinition()
+    public void TestReferencedSubschemaDoesnTSeeAnnotationsFromProperties()
     {
-        using var doc = JsonDocument.Parse("5");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestDataIsInvalidAgainstFirstDefinition()
-    {
-        using var doc = JsonDocument.Parse("50");
+        using var doc = JsonDocument.Parse("{ \"prop1\": \"match\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1329,594 +880,17 @@ public class SuiteOrderOfEvaluationIdAndAnchorAndRef
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
-                "#/19/schema",
+                "#/tests/13/schema",
                 "JsonSchemaTestSuiteDraft201909Ref",
-                "OrderOfEvaluationIdAndAnchorAndRef",
+                "RefCreatesNewScopeWhenAdjacentToKeywords",
                 validateFormat: false,
                 optionalAsNullable: false,
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft201909")]
-[TestClass]
-public class SuiteOrderOfEvaluationIdAndRefOnNestedSchema
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestDataIsValidAgainstNestedSibling()
-    {
-        using var doc = JsonDocument.Parse("5");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestDataIsInvalidAgainstNestedSibling()
-    {
-        using var doc = JsonDocument.Parse("\"a\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "ref.json",
-                "#/20/schema",
-                "JsonSchemaTestSuiteDraft201909Ref",
-                "OrderOfEvaluationIdAndRefOnNestedSchema",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft201909")]
-[TestClass]
-public class SuiteSimpleURNBaseURIWithRefViaTheURN
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestValidUnderTheURNIDedSchema()
-    {
-        using var doc = JsonDocument.Parse("{\"foo\": 37}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestInvalidUnderTheURNIDedSchema()
-    {
-        using var doc = JsonDocument.Parse("{\"foo\": 12}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "ref.json",
-                "#/21/schema",
-                "JsonSchemaTestSuiteDraft201909Ref",
-                "SimpleURNBaseURIWithRefViaTheURN",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft201909")]
-[TestClass]
-public class SuiteSimpleURNBaseURIWithJSONPointer
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestAStringIsValid()
-    {
-        using var doc = JsonDocument.Parse("{\"foo\": \"bar\"}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestANonStringIsInvalid()
-    {
-        using var doc = JsonDocument.Parse("{\"foo\": 12}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "ref.json",
-                "#/22/schema",
-                "JsonSchemaTestSuiteDraft201909Ref",
-                "SimpleURNBaseURIWithJSONPointer",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft201909")]
-[TestClass]
-public class SuiteURNBaseURIWithNSS
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestAStringIsValid()
-    {
-        using var doc = JsonDocument.Parse("{\"foo\": \"bar\"}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestANonStringIsInvalid()
-    {
-        using var doc = JsonDocument.Parse("{\"foo\": 12}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "ref.json",
-                "#/23/schema",
-                "JsonSchemaTestSuiteDraft201909Ref",
-                "URNBaseURIWithNSS",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft201909")]
-[TestClass]
-public class SuiteURNBaseURIWithRComponent
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestAStringIsValid()
-    {
-        using var doc = JsonDocument.Parse("{\"foo\": \"bar\"}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestANonStringIsInvalid()
-    {
-        using var doc = JsonDocument.Parse("{\"foo\": 12}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "ref.json",
-                "#/24/schema",
-                "JsonSchemaTestSuiteDraft201909Ref",
-                "URNBaseURIWithRComponent",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft201909")]
-[TestClass]
-public class SuiteURNBaseURIWithQComponent
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestAStringIsValid()
-    {
-        using var doc = JsonDocument.Parse("{\"foo\": \"bar\"}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestANonStringIsInvalid()
-    {
-        using var doc = JsonDocument.Parse("{\"foo\": 12}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "ref.json",
-                "#/25/schema",
-                "JsonSchemaTestSuiteDraft201909Ref",
-                "URNBaseURIWithQComponent",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft201909")]
-[TestClass]
-public class SuiteURNBaseURIWithURNAndJSONPointerRef
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestAStringIsValid()
-    {
-        using var doc = JsonDocument.Parse("{\"foo\": \"bar\"}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestANonStringIsInvalid()
-    {
-        using var doc = JsonDocument.Parse("{\"foo\": 12}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "ref.json",
-                "#/26/schema",
-                "JsonSchemaTestSuiteDraft201909Ref",
-                "URNBaseURIWithURNAndJSONPointerRef",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft201909")]
-[TestClass]
-public class SuiteURNBaseURIWithURNAndAnchorRef
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestAStringIsValid()
-    {
-        using var doc = JsonDocument.Parse("{\"foo\": \"bar\"}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestANonStringIsInvalid()
-    {
-        using var doc = JsonDocument.Parse("{\"foo\": 12}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "ref.json",
-                "#/27/schema",
-                "JsonSchemaTestSuiteDraft201909Ref",
-                "URNBaseURIWithURNAndAnchorRef",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft201909")]
-[TestClass]
-public class SuiteURNRefWithNestedPointerRef
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestAStringIsValid()
-    {
-        using var doc = JsonDocument.Parse("\"bar\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestANonStringIsInvalid()
-    {
-        using var doc = JsonDocument.Parse("12");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "ref.json",
-                "#/28/schema",
-                "JsonSchemaTestSuiteDraft201909Ref",
-                "URNRefWithNestedPointerRef",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -1926,19 +900,21 @@ public class SuiteURNRefWithNestedPointerRef
 public class SuiteRefToIf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -1958,7 +934,7 @@ public class SuiteRefToIf
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1969,7 +945,7 @@ public class SuiteRefToIf
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
-                "#/29/schema",
+                "#/tests/14/schema",
                 "JsonSchemaTestSuiteDraft201909Ref",
                 "RefToIf",
                 validateFormat: false,
@@ -1977,10 +953,9 @@ public class SuiteRefToIf
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -1990,19 +965,21 @@ public class SuiteRefToIf
 public class SuiteRefToThen
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -2022,7 +999,7 @@ public class SuiteRefToThen
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -2033,7 +1010,7 @@ public class SuiteRefToThen
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
-                "#/30/schema",
+                "#/tests/15/schema",
                 "JsonSchemaTestSuiteDraft201909Ref",
                 "RefToThen",
                 validateFormat: false,
@@ -2041,10 +1018,9 @@ public class SuiteRefToThen
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -2054,19 +1030,21 @@ public class SuiteRefToThen
 public class SuiteRefToElse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -2086,7 +1064,7 @@ public class SuiteRefToElse
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -2097,7 +1075,7 @@ public class SuiteRefToElse
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
-                "#/31/schema",
+                "#/tests/16/schema",
                 "JsonSchemaTestSuiteDraft201909Ref",
                 "RefToElse",
                 validateFormat: false,
@@ -2105,202 +1083,9 @@ public class SuiteRefToElse
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft201909")]
-[TestClass]
-public class SuiteRefWithAbsolutePathReference
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestAStringIsValid()
-    {
-        using var doc = JsonDocument.Parse("\"foo\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestAnIntegerIsInvalid()
-    {
-        using var doc = JsonDocument.Parse("12");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "ref.json",
-                "#/32/schema",
-                "JsonSchemaTestSuiteDraft201909Ref",
-                "RefWithAbsolutePathReference",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft201909")]
-[TestClass]
-public class SuiteIdWithFileURIStillResolvesPointersNix
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestNumberIsValid()
-    {
-        using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestNonNumberIsInvalid()
-    {
-        using var doc = JsonDocument.Parse("\"a\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "ref.json",
-                "#/33/schema",
-                "JsonSchemaTestSuiteDraft201909Ref",
-                "IdWithFileURIStillResolvesPointersNix",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft201909")]
-[TestClass]
-public class SuiteIdWithFileURIStillResolvesPointersWindows
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestNumberIsValid()
-    {
-        using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestNonNumberIsInvalid()
-    {
-        using var doc = JsonDocument.Parse("\"a\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "ref.json",
-                "#/34/schema",
-                "JsonSchemaTestSuiteDraft201909Ref",
-                "IdWithFileURIStillResolvesPointersWindows",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -2310,19 +1095,21 @@ public class SuiteIdWithFileURIStillResolvesPointersWindows
 public class SuiteEmptyTokensInRefJsonPointer
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -2342,7 +1129,7 @@ public class SuiteEmptyTokensInRefJsonPointer
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -2353,7 +1140,7 @@ public class SuiteEmptyTokensInRefJsonPointer
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
-                "#/35/schema",
+                "#/tests/17/schema",
                 "JsonSchemaTestSuiteDraft201909Ref",
                 "EmptyTokensInRefJsonPointer",
                 validateFormat: false,
@@ -2361,52 +1148,53 @@ public class SuiteEmptyTokensInRefJsonPointer
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
 
 [TestCategory("Draft201909")]
 [TestClass]
-public class SuiteRefWithRecursiveAnchor
+public class SuiteRemoteRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
-    public void TestExtraItemsAllowedForInnerArrays()
+    public void TestRemoteRefValid()
     {
-        using var doc = JsonDocument.Parse("[\"foo\",[\"bar\" , [] , 8]]");
+        using var doc = JsonDocument.Parse("1");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
     [TestMethod]
-    public void TestExtraItemsDisallowedForRoot()
+    public void TestRemoteRefInvalid()
     {
-        using var doc = JsonDocument.Parse("[\"foo\",[\"bar\" , [] , 8], 8]");
+        using var doc = JsonDocument.Parse("\"a\"");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -2417,18 +1205,290 @@ public class SuiteRefWithRecursiveAnchor
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
-                "#/36/schema",
+                "#/tests/18/schema",
                 "JsonSchemaTestSuiteDraft201909Ref",
-                "RefWithRecursiveAnchor",
+                "RemoteRef",
                 validateFormat: false,
                 optionalAsNullable: false,
-                useImplicitOperatorString: false);
+                useImplicitOperatorString: false,
+                externalSchemasPath: "#/tests/18/externalSchemas");
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteFragmentWithinRemoteRef
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestRemoteFragmentValid()
+    {
+        using var doc = JsonDocument.Parse("1");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestRemoteFragmentInvalid()
+    {
+        using var doc = JsonDocument.Parse("\"a\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft201909Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "ref.json",
+                "#/tests/19/schema",
+                "JsonSchemaTestSuiteDraft201909Ref",
+                "FragmentWithinRemoteRef",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                externalSchemasPath: "#/tests/19/externalSchemas");
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteRefWithinRemoteRef
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestRefWithinRefValid()
+    {
+        using var doc = JsonDocument.Parse("1");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestRefWithinRefInvalid()
+    {
+        using var doc = JsonDocument.Parse("\"a\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft201909Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "ref.json",
+                "#/tests/20/schema",
+                "JsonSchemaTestSuiteDraft201909Ref",
+                "RefWithinRemoteRef",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                externalSchemasPath: "#/tests/20/externalSchemas");
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteRootRefInRemoteRef
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestStringIsValid()
+    {
+        using var doc = JsonDocument.Parse("{ \"name\": \"foo\" }");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestNullIsValid()
+    {
+        using var doc = JsonDocument.Parse("{ \"name\": null }");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestObjectIsInvalid()
+    {
+        using var doc = JsonDocument.Parse("{ \"name\": { \"name\": null } }");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft201909Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "ref.json",
+                "#/tests/21/schema",
+                "JsonSchemaTestSuiteDraft201909Ref",
+                "RootRefInRemoteRef",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                externalSchemasPath: "#/tests/21/externalSchemas");
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteRemoteRefWithRefToDefs
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestInvalid()
+    {
+        using var doc = JsonDocument.Parse("{ \"bar\": 1 }");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestValid()
+    {
+        using var doc = JsonDocument.Parse("{ \"bar\": \"a\" }");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft201909Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "ref.json",
+                "#/tests/22/schema",
+                "JsonSchemaTestSuiteDraft201909Ref",
+                "RemoteRefWithRefToDefs",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                externalSchemasPath: "#/tests/22/externalSchemas");
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
         }
     }
 }

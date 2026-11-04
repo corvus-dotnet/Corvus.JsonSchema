@@ -7,7 +7,7 @@ namespace JsonSchemaTestSuite.Draft7.MultipleOf;
 
 [TestCategory("Draft7")]
 [TestClass]
-public class SuiteByInt
+public class SuiteMultipleOfInt
 {
     private static Fixture? s_fixture;
 
@@ -53,9 +53,9 @@ public class SuiteByInt
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft7/multipleOf.json",
-                "{\"multipleOf\": 2}",
+                "{\n                \"multipleOf\": 2\n            }",
                 "JsonSchemaTestSuite.Draft7.MultipleOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -68,7 +68,7 @@ public class SuiteByInt
 
 [TestCategory("Draft7")]
 [TestClass]
-public class SuiteByNumber
+public class SuiteMultipleOfNumber
 {
     private static Fixture? s_fixture;
 
@@ -121,9 +121,9 @@ public class SuiteByNumber
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft7/multipleOf.json",
-                "{\"multipleOf\": 1.5}",
+                "{\n                \"multipleOf\": 1.5\n            }",
                 "JsonSchemaTestSuite.Draft7.MultipleOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -136,7 +136,7 @@ public class SuiteByNumber
 
 [TestCategory("Draft7")]
 [TestClass]
-public class SuiteBySmallNumber
+public class SuiteMultipleOfSmallNumber
 {
     private static Fixture? s_fixture;
 
@@ -175,9 +175,9 @@ public class SuiteBySmallNumber
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft7/multipleOf.json",
-                "{\"multipleOf\": 0.0001}",
+                "{\n                \"multipleOf\": 0.0001\n            }",
                 "JsonSchemaTestSuite.Draft7.MultipleOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -190,7 +190,7 @@ public class SuiteBySmallNumber
 
 [TestCategory("Draft7")]
 [TestClass]
-public class SuiteFloatDivisionInf
+public class SuiteMultipleOfVerySmallNumber
 {
     private static Fixture? s_fixture;
 
@@ -208,7 +208,61 @@ public class SuiteFloatDivisionInf
     }
 
     [TestMethod]
-    public void TestAlwaysInvalidButNaiveImplementationsMayRaiseAnOverflowError()
+    public void Test4e8IsMultipleOf1e8()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("4e-8");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void Test15e8IsNotMultipleOf1e8()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("1.5e-8");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests/draft7/multipleOf.json",
+                "{\n                \"multipleOf\": 1e-8\n            }",
+                "JsonSchemaTestSuite.Draft7.MultipleOf",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "http://json-schema.org/draft-07/schema#",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteMultipleOfWhenFloatDivisionInf
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestInvalidButNaiveImplementationsMayRaiseAnOverflowError()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("1e308");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
@@ -222,9 +276,9 @@ public class SuiteFloatDivisionInf
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft7/multipleOf.json",
-                "{\"type\": \"integer\", \"multipleOf\": 0.123456789}",
+                "{\n                \"type\": \"integer\",\n                \"multipleOf\": 0.123456789\n            }",
                 "JsonSchemaTestSuite.Draft7.MultipleOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -269,9 +323,9 @@ public class SuiteSmallMultipleOfLargeInteger
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft7/multipleOf.json",
-                "{\"type\": \"integer\", \"multipleOf\": 1e-8}",
+                "{\n                \"type\": \"integer\",\n                \"multipleOf\": 1e-8\n            }",
                 "JsonSchemaTestSuite.Draft7.MultipleOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,

@@ -68,9 +68,9 @@ public class SuiteMinLengthValidation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/minLength.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"minLength\": 2\n        }",
+                "{ \"minLength\": 2 }",
                 "StandaloneEvaluatorTestSuite.Draft202012.MinLength",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -119,9 +119,9 @@ public class SuiteMinLengthValidationWithADecimal
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/minLength.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"minLength\": 2.0\n        }",
+                "{ \"minLength\": 2.0 }",
                 "StandaloneEvaluatorTestSuite.Draft202012.MinLength",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

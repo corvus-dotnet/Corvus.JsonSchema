@@ -68,9 +68,9 @@ public class SuiteMinLengthValidation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/minLength.json",
-                "{\"minLength\": 2}",
+                "{ \"minLength\": 2 }",
                 "StandaloneEvaluatorTestSuite.Draft6.MinLength",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -119,9 +119,9 @@ public class SuiteMinLengthValidationWithADecimal
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/minLength.json",
-                "{\"minLength\": 2.0}",
+                "{ \"minLength\": 2.0 }",
                 "StandaloneEvaluatorTestSuite.Draft6.MinLength",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

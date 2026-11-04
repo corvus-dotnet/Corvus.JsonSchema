@@ -4,8 +4,8 @@ A JSON Schema evaluator for Go (draft 4, 6, 7, 2019-09 and 2020-12), ported from
 evaluator (`Corvus.Text.Json.RuntimeEvaluator`) by way of its Rust port (`src-rs/corvus-json-schema`). Go 1.25 or
 later. It has no dependencies outside the standard library.
 
-- **Conformant**: passes all 7,966 tests of the JSON-Schema-Test-Suite (required, optional and `optional/format`,
-  every draft), with the same single exclusion as the C# runner (`draft4/optional/zeroTerminatedFloats.json`), and all
+- **Conformant**: passes all 8,686 tests of the JSON-Schema-Test-Suite (required and optional, every
+  draft), with the same single exclusion as the C# runner (`draft4/optional/zero-terminated-floats.json`), and all
   of the suite's annotation tests.
 - **Fast**: a schema compiles once into a node graph and fail-fast plans, each holding only the checks its subschema
   needs, with an object's keywords fused into one pass over its properties. See [Performance](#performance).

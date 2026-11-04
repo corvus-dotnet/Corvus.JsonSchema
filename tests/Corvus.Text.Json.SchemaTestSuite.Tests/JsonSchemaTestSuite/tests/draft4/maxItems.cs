@@ -60,9 +60,9 @@ public class SuiteMaxItemsValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/maxItems.json",
-                "{\"maxItems\": 2}",
+                "{ \"maxItems\": 2 }",
                 "JsonSchemaTestSuite.Draft4.MaxItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,

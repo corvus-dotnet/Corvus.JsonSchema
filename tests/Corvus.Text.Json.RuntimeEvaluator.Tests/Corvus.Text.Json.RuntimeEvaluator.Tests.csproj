@@ -12,6 +12,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+    <Compile Include="..\..\Common\tests\TestUtilities\JsonSchemaTestSuite\SuiteCompatibility.cs" Link="Suite\SuiteCompatibility.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
     <PackageReference Include="System.Memory" />

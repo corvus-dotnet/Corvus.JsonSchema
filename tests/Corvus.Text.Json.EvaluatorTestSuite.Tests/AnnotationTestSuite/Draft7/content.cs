@@ -58,7 +58,7 @@ public class SuiteContentMediaTypeIsAnAnnotationForStringInstances
                 "annotations/content.json",
                 "{\n        \"contentMediaType\": \"application/json\"\n      }",
                 "AnnotationTestSuite.Draft7.Content",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -117,7 +117,7 @@ public class SuiteContentEncodingIsAnAnnotationForStringInstances
                 "annotations/content.json",
                 "{\n        \"contentEncoding\": \"base64\"\n      }",
                 "AnnotationTestSuite.Draft7.Content",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

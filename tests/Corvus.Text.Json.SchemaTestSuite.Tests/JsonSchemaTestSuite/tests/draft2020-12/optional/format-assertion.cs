@@ -46,15 +46,16 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithFormatAssertionFalse
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/optional/format-assertion.json",
-                "{\n            \"$id\": \"https://schema/using/format-assertion/false\",\n            \"$schema\": \"http://localhost:1234/draft2020-12/format-assertion-false.json\",\n            \"format\": \"ipv4\"\n        }",
+                "{\n                \"$id\": \"https://schema/using/format-assertion/false\",\n                \"$schema\": \"http://localhost:1234/draft2020-12/format-assertion-false.json\",\n                \"format\": \"ipv4\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Optional.FormatAssertion",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
-                validateFormat: true,
+                validateFormat: false,
                 optionalAsNullable: false,
                 useImplicitOperatorString: false,
                 addExplicitUsings: false,
-                Assembly.GetExecutingAssembly());
+                Assembly.GetExecutingAssembly(),
+                externalSchemas: "{\n                \"http://localhost:1234/draft2020-12/format-assertion-false.json\": {\n                    \"$id\": \"http://localhost:1234/draft2020-12/format-assertion-false.json\",\n                    \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n                    \"$vocabulary\": {\n                        \"https://json-schema.org/draft/2020-12/vocab/core\": true,\n                        \"https://json-schema.org/draft/2020-12/vocab/format-assertion\": false\n                    },\n                    \"$dynamicAnchor\": \"meta\",\n                    \"allOf\": [\n                        { \"$ref\": \"https://json-schema.org/draft/2020-12/meta/core\" },\n                        { \"$ref\": \"https://json-schema.org/draft/2020-12/meta/format-assertion\" }\n                    ]\n                }\n            }");
         }
     }
 }
@@ -100,15 +101,16 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithFormatAssertionTrue
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/optional/format-assertion.json",
-                "{\n            \"$id\": \"https://schema/using/format-assertion/true\",\n            \"$schema\": \"http://localhost:1234/draft2020-12/format-assertion-true.json\",\n            \"format\": \"ipv4\"\n        }",
+                "{\n                \"$id\": \"https://schema/using/format-assertion/true\",\n                \"$schema\": \"http://localhost:1234/draft2020-12/format-assertion-true.json\",\n                \"format\": \"ipv4\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Optional.FormatAssertion",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
-                validateFormat: true,
+                validateFormat: false,
                 optionalAsNullable: false,
                 useImplicitOperatorString: false,
                 addExplicitUsings: false,
-                Assembly.GetExecutingAssembly());
+                Assembly.GetExecutingAssembly(),
+                externalSchemas: "{\n                \"http://localhost:1234/draft2020-12/format-assertion-true.json\": {\n                    \"$id\": \"http://localhost:1234/draft2020-12/format-assertion-true.json\",\n                    \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n                    \"$vocabulary\": {\n                        \"https://json-schema.org/draft/2020-12/vocab/core\": true,\n                        \"https://json-schema.org/draft/2020-12/vocab/format-assertion\": true\n                    },\n                    \"$dynamicAnchor\": \"meta\",\n                    \"allOf\": [\n                        { \"$ref\": \"https://json-schema.org/draft/2020-12/meta/core\" },\n                        { \"$ref\": \"https://json-schema.org/draft/2020-12/meta/format-assertion\" }\n                    ]\n                }\n            }");
         }
     }
 }

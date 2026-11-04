@@ -46,9 +46,9 @@ public class SuiteUnevaluatedItemsTrue
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"unevaluatedItems\": true\n        }",
+                "{\n                \"unevaluatedItems\": true\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -100,9 +100,9 @@ public class SuiteUnevaluatedItemsFalse
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"unevaluatedItems\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -161,9 +161,9 @@ public class SuiteUnevaluatedItemsAsSchema
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"unevaluatedItems\": { \"type\": \"string\" }\n        }",
+                "{\n                \"unevaluatedItems\": { \"type\": \"string\" }\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -208,9 +208,9 @@ public class SuiteUnevaluatedItemsWithUniformItems
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"items\": { \"type\": \"string\" },\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"items\": { \"type\": \"string\" },\n                \"unevaluatedItems\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -223,7 +223,7 @@ public class SuiteUnevaluatedItemsWithUniformItems
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedItemsWithTuple
+public class SuiteUnevaluatedItemsWithTuplePrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -262,9 +262,9 @@ public class SuiteUnevaluatedItemsWithTuple
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [\n                { \"type\": \"string\" }\n            ],\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"prefixItems\": [{ \"type\": \"string\" }],\n                \"unevaluatedItems\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -309,9 +309,9 @@ public class SuiteUnevaluatedItemsWithItemsAndPrefixItems
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [\n                { \"type\": \"string\" }\n            ],\n            \"items\": true,\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"prefixItems\": [{ \"type\": \"string\" }],\n                \"items\": true,\n                \"unevaluatedItems\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -363,9 +363,9 @@ public class SuiteUnevaluatedItemsWithItems
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"items\": {\"type\": \"number\"},\n            \"unevaluatedItems\": {\"type\": \"string\"}\n        }",
+                "{\n                \"items\": { \"type\": \"number\" },\n                \"unevaluatedItems\": { \"type\": \"string\" }\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -378,7 +378,7 @@ public class SuiteUnevaluatedItemsWithItems
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedItemsWithNestedTuple
+public class SuiteUnevaluatedItemsWithNestedTuplePrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -417,9 +417,9 @@ public class SuiteUnevaluatedItemsWithNestedTuple
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [\n                { \"type\": \"string\" }\n            ],\n            \"allOf\": [\n                {\n                    \"prefixItems\": [\n                        true,\n                        { \"type\": \"number\" }\n                    ]\n                }\n            ],\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"prefixItems\": [{ \"type\": \"string\" }],\n                \"allOf\": [\n                    {\n                        \"prefixItems\": [true, { \"type\": \"number\" }]\n                    }\n                ],\n                \"unevaluatedItems\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -478,9 +478,9 @@ public class SuiteUnevaluatedItemsWithNestedItems
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"unevaluatedItems\": {\"type\": \"boolean\"},\n            \"anyOf\": [\n                { \"items\": {\"type\": \"string\"} },\n                true\n            ]\n        }",
+                "{\n                \"unevaluatedItems\": { \"type\": \"boolean\" },\n                \"anyOf\": [\n                    { \"items\": { \"type\": \"string\" } },\n                    true\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -532,9 +532,9 @@ public class SuiteUnevaluatedItemsWithNestedPrefixItemsAndItems
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"allOf\": [\n                {\n                    \"prefixItems\": [\n                        { \"type\": \"string\" }\n                    ],\n                    \"items\": true\n                }\n            ],\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"allOf\": [\n                    {\n                        \"prefixItems\": [{ \"type\": \"string\" }],\n                        \"items\": true\n                    }\n                ],\n                \"unevaluatedItems\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -547,7 +547,7 @@ public class SuiteUnevaluatedItemsWithNestedPrefixItemsAndItems
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedItemsWithNestedUnevaluatedItems
+public class SuiteUnevaluatedItemsWithNestedUnevaluatedItemsPrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -586,9 +586,9 @@ public class SuiteUnevaluatedItemsWithNestedUnevaluatedItems
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"allOf\": [\n                {\n                    \"prefixItems\": [\n                        { \"type\": \"string\" }\n                    ]\n                },\n                { \"unevaluatedItems\": true }\n            ],\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"allOf\": [\n                    { \"prefixItems\": [{ \"type\": \"string\" }] },\n                    { \"unevaluatedItems\": true }\n                ],\n                \"unevaluatedItems\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -601,7 +601,7 @@ public class SuiteUnevaluatedItemsWithNestedUnevaluatedItems
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedItemsWithAnyOf
+public class SuiteUnevaluatedItemsWithAnyOfPrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -654,9 +654,9 @@ public class SuiteUnevaluatedItemsWithAnyOf
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [\n                { \"const\": \"foo\" }\n            ],\n            \"anyOf\": [\n                {\n                    \"prefixItems\": [\n                        true,\n                        { \"const\": \"bar\" }\n                    ]\n                },\n                {\n                    \"prefixItems\": [\n                        true,\n                        true,\n                        { \"const\": \"baz\" }\n                    ]\n                }\n            ],\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"prefixItems\": [{ \"const\": \"foo\" }],\n                \"anyOf\": [\n                    {\n                        \"prefixItems\": [true, { \"const\": \"bar\" }]\n                    },\n                    {\n                        \"prefixItems\": [true, true, { \"const\": \"baz\" }]\n                    }\n                ],\n                \"unevaluatedItems\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -669,7 +669,7 @@ public class SuiteUnevaluatedItemsWithAnyOf
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedItemsWithOneOf
+public class SuiteUnevaluatedItemsWithOneOfPrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -708,9 +708,9 @@ public class SuiteUnevaluatedItemsWithOneOf
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [\n                { \"const\": \"foo\" }\n            ],\n            \"oneOf\": [\n                {\n                    \"prefixItems\": [\n                        true,\n                        { \"const\": \"bar\" }\n                    ]\n                },\n                {\n                    \"prefixItems\": [\n                        true,\n                        { \"const\": \"baz\" }\n                    ]\n                }\n            ],\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"prefixItems\": [{ \"const\": \"foo\" }],\n                \"oneOf\": [\n                    {\n                        \"prefixItems\": [true, { \"const\": \"bar\" }]\n                    },\n                    {\n                        \"prefixItems\": [true, { \"const\": \"baz\" }]\n                    }\n                ],\n                \"unevaluatedItems\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -723,7 +723,7 @@ public class SuiteUnevaluatedItemsWithOneOf
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedItemsWithNot
+public class SuiteUnevaluatedItemsWithNotPrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -755,9 +755,9 @@ public class SuiteUnevaluatedItemsWithNot
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [\n                { \"const\": \"foo\" }\n            ],\n            \"not\": {\n                \"not\": {\n                    \"prefixItems\": [\n                        true,\n                        { \"const\": \"bar\" }\n                    ]\n                }\n            },\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"prefixItems\": [{ \"const\": \"foo\" }],\n                \"not\": {\n                    \"not\": {\n                        \"prefixItems\": [true, { \"const\": \"bar\" }]\n                    }\n                },\n                \"unevaluatedItems\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -770,7 +770,7 @@ public class SuiteUnevaluatedItemsWithNot
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedItemsWithIfThenElse
+public class SuiteUnevaluatedItemsWithIfThenElsePrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -823,9 +823,9 @@ public class SuiteUnevaluatedItemsWithIfThenElse
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [\n                { \"const\": \"foo\" }\n            ],\n            \"if\": {\n                \"prefixItems\": [\n                    true,\n                    { \"const\": \"bar\" }\n                ]\n            },\n            \"then\": {\n                \"prefixItems\": [\n                    true,\n                    true,\n                    { \"const\": \"then\" }\n                ]\n            },\n            \"else\": {\n                \"prefixItems\": [\n                    true,\n                    true,\n                    true,\n                    { \"const\": \"else\" }\n                ]\n            },\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"prefixItems\": [{ \"const\": \"foo\" }],\n                \"if\": {\n                    \"prefixItems\": [true, { \"const\": \"bar\" }]\n                },\n                \"then\": {\n                    \"prefixItems\": [true, true, { \"const\": \"then\" }]\n                },\n                \"else\": {\n                    \"prefixItems\": [true, true, true, { \"const\": \"else\" }]\n                },\n                \"unevaluatedItems\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -877,9 +877,9 @@ public class SuiteUnevaluatedItemsWithBooleanSchemas
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"allOf\": [true],\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"allOf\": [true],\n                \"unevaluatedItems\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -892,7 +892,7 @@ public class SuiteUnevaluatedItemsWithBooleanSchemas
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedItemsWithRef
+public class SuiteUnevaluatedItemsWithRefPrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -931,9 +931,9 @@ public class SuiteUnevaluatedItemsWithRef
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$ref\": \"#/$defs/bar\",\n            \"prefixItems\": [\n                { \"type\": \"string\" }\n            ],\n            \"unevaluatedItems\": false,\n            \"$defs\": {\n              \"bar\": {\n                  \"prefixItems\": [\n                      true,\n                      { \"type\": \"string\" }\n                  ]\n              }\n            }\n        }",
+                "{\n                \"$ref\": \"#/$defs/bar\",\n                \"prefixItems\": [{ \"type\": \"string\" }],\n                \"unevaluatedItems\": false,\n                \"$defs\": {\n                    \"bar\": {\n                        \"prefixItems\": [true, { \"type\": \"string\" }]\n                    }\n                }\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -946,7 +946,7 @@ public class SuiteUnevaluatedItemsWithRef
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedItemsBeforeRef
+public class SuiteUnevaluatedItemsBeforeRefPrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -985,9 +985,9 @@ public class SuiteUnevaluatedItemsBeforeRef
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"unevaluatedItems\": false,\n            \"prefixItems\": [\n                { \"type\": \"string\" }\n            ],\n            \"$ref\": \"#/$defs/bar\",\n            \"$defs\": {\n              \"bar\": {\n                  \"prefixItems\": [\n                      true,\n                      { \"type\": \"string\" }\n                  ]\n              }\n            }\n        }",
+                "{\n                \"unevaluatedItems\": false,\n                \"prefixItems\": [{ \"type\": \"string\" }],\n                \"$ref\": \"#/$defs/bar\",\n                \"$defs\": {\n                    \"bar\": {\n                        \"prefixItems\": [true, { \"type\": \"string\" }]\n                    }\n                }\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1000,7 +1000,7 @@ public class SuiteUnevaluatedItemsBeforeRef
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedItemsWithDynamicRef
+public class SuiteUnevaluatedItemsWithDynamicRef202012
 {
     private static Fixture? s_fixture;
 
@@ -1039,9 +1039,9 @@ public class SuiteUnevaluatedItemsWithDynamicRef
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$id\": \"https://example.com/unevaluated-items-with-dynamic-ref/derived\",\n\n            \"$ref\": \"./baseSchema\",\n\n            \"$defs\": {\n                \"derived\": {\n                    \"$dynamicAnchor\": \"addons\",\n                    \"prefixItems\": [\n                        true,\n                        { \"type\": \"string\" }\n                    ]\n                },\n                \"baseSchema\": {\n                    \"$id\": \"./baseSchema\",\n\n                    \"$comment\": \"unevaluatedItems comes first so it's more likely to catch bugs with implementations that are sensitive to keyword ordering\",\n                    \"unevaluatedItems\": false,\n                    \"type\": \"array\",\n                    \"prefixItems\": [\n                        { \"type\": \"string\" }\n                    ],\n                    \"$dynamicRef\": \"#addons\",\n\n                    \"$defs\": {\n                        \"defaultAddons\": {\n                            \"$comment\": \"Needed to satisfy the bookending requirement\",\n                            \"$dynamicAnchor\": \"addons\"\n                        }\n                    }\n                }\n            }\n        }",
+                "{\n                \"$id\": \"https://example.com/unevaluated-items-with-dynamic-ref/derived\",\n                \"$ref\": \"./baseSchema\",\n                \"$defs\": {\n                    \"derived\": {\n                        \"$dynamicAnchor\": \"addons\",\n                        \"prefixItems\": [true, { \"type\": \"string\" }]\n                    },\n                    \"baseSchema\": {\n                        \"$id\": \"./baseSchema\",\n                        \"$comment\": \"unevaluatedItems comes first so it's more likely to catch bugs with implementations that are sensitive to keyword ordering\",\n                        \"unevaluatedItems\": false,\n                        \"type\": \"array\",\n                        \"prefixItems\": [{ \"type\": \"string\" }],\n                        \"$dynamicRef\": \"#addons\",\n                        \"$defs\": {\n                            \"defaultAddons\": {\n                                \"$comment\": \"Needed to satisfy the bookending requirement\",\n                                \"$dynamicAnchor\": \"addons\"\n                            }\n                        }\n                    }\n                }\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1054,7 +1054,7 @@ public class SuiteUnevaluatedItemsWithDynamicRef
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedItemsCanTSeeInsideCousins
+public class SuiteUnevaluatedItemsCanTSeeInsideCousinsPrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -1074,7 +1074,7 @@ public class SuiteUnevaluatedItemsCanTSeeInsideCousins
     [TestMethod]
     public void TestAlwaysFails()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[ 1 ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1]");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -1086,9 +1086,9 @@ public class SuiteUnevaluatedItemsCanTSeeInsideCousins
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"allOf\": [\n                {\n                    \"prefixItems\": [ true ]\n                },\n                { \"unevaluatedItems\": false }\n            ]\n        }",
+                "{\n                \"allOf\": [\n                    { \"prefixItems\": [true] },\n                    { \"unevaluatedItems\": false }\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1101,7 +1101,7 @@ public class SuiteUnevaluatedItemsCanTSeeInsideCousins
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteItemIsEvaluatedInAnUncleSchemaToUnevaluatedItems
+public class SuiteItemIsEvaluatedInAnUncleSchemaToUnevaluatedItemsPrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -1121,14 +1121,14 @@ public class SuiteItemIsEvaluatedInAnUncleSchemaToUnevaluatedItems
     [TestMethod]
     public void TestNoExtraItems()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": [\n                        \"test\"\n                    ]\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": [\"test\"] }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestUncleKeywordEvaluationIsNotSignificant()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\": [\n                        \"test\",\n                        \"test\"\n                    ]\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": [\"test\", \"test\"] }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -1140,9 +1140,9 @@ public class SuiteItemIsEvaluatedInAnUncleSchemaToUnevaluatedItems
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": {\n                    \"prefixItems\": [\n                        { \"type\": \"string\" }\n                    ],\n                    \"unevaluatedItems\": false\n                  }\n            },\n            \"anyOf\": [\n                {\n                    \"properties\": {\n                        \"foo\": {\n                            \"prefixItems\": [\n                                true,\n                                { \"type\": \"string\" }\n                            ]\n                        }\n                    }\n                }\n            ]\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": {\n                        \"prefixItems\": [{ \"type\": \"string\" }],\n                        \"unevaluatedItems\": false\n                    }\n                },\n                \"anyOf\": [\n                    {\n                        \"properties\": {\n                            \"foo\": {\n                                \"prefixItems\": [\n                                    true,\n                                    { \"type\": \"string\" }\n                                ]\n                            }\n                        }\n                    }\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1175,21 +1175,21 @@ public class SuiteUnevaluatedItemsDependsOnAdjacentContains
     [TestMethod]
     public void TestSecondItemIsEvaluatedByContains()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[ 1, \"foo\" ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, \"foo\"]");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestContainsFailsSecondItemIsNotEvaluated()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[ 1, 2 ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, 2]");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestContainsPassesSecondItemIsNotEvaluated()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[ 1, 2, \"foo\" ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, 2, \"foo\"]");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -1201,9 +1201,9 @@ public class SuiteUnevaluatedItemsDependsOnAdjacentContains
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [true],\n            \"contains\": {\"type\": \"string\"},\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"prefixItems\": [true],\n                \"contains\": { \"type\": \"string\" },\n                \"unevaluatedItems\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1236,14 +1236,14 @@ public class SuiteUnevaluatedItemsDependsOnMultipleNestedContains
     [TestMethod]
     public void Test5NotEvaluatedPassesUnevaluatedItems()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[ 2, 3, 4, 5, 6 ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[2, 3, 4, 5, 6]");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void Test7NotEvaluatedFailsUnevaluatedItems()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[ 2, 3, 4, 7, 8 ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[2, 3, 4, 7, 8]");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -1255,9 +1255,9 @@ public class SuiteUnevaluatedItemsDependsOnMultipleNestedContains
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"allOf\": [\n                { \"contains\": { \"multipleOf\": 2 } },\n                { \"contains\": { \"multipleOf\": 3 } }\n            ],\n            \"unevaluatedItems\": { \"multipleOf\": 5 }\n        }",
+                "{\n                \"allOf\": [\n                    { \"contains\": { \"multipleOf\": 2 } },\n                    { \"contains\": { \"multipleOf\": 3 } }\n                ],\n                \"unevaluatedItems\": { \"multipleOf\": 5 }\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1297,49 +1297,49 @@ public class SuiteUnevaluatedItemsAndContainsInteractToControlItemDependencyRela
     [TestMethod]
     public void TestOnlyASAreValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[ \"a\", \"a\" ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\"a\", \"a\"]");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestASAndBSAreValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[ \"a\", \"b\", \"a\", \"b\", \"a\" ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\"a\", \"b\", \"a\", \"b\", \"a\"]");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestASBSAndCSAreValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[ \"c\", \"a\", \"c\", \"c\", \"b\", \"a\" ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\"c\", \"a\", \"c\", \"c\", \"b\", \"a\"]");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestOnlyBSAreInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[ \"b\", \"b\" ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\"b\", \"b\"]");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestOnlyCSAreInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[ \"c\", \"c\" ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\"c\", \"c\"]");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestOnlyBSAndCSAreInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[ \"c\", \"b\", \"c\", \"b\", \"c\" ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\"c\", \"b\", \"c\", \"b\", \"c\"]");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestOnlyASAndCSAreInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[ \"c\", \"a\", \"c\", \"a\", \"c\" ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\"c\", \"a\", \"c\", \"a\", \"c\"]");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -1351,9 +1351,9 @@ public class SuiteUnevaluatedItemsAndContainsInteractToControlItemDependencyRela
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"if\": {\n                \"contains\": {\"const\": \"a\"}\n            },\n            \"then\": {\n                \"if\": {\n                    \"contains\": {\"const\": \"b\"}\n                },\n                \"then\": {\n                    \"if\": {\n                        \"contains\": {\"const\": \"c\"}\n                    }\n                }\n            },\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"if\": { \"contains\": { \"const\": \"a\" } },\n                \"then\": {\n                    \"if\": { \"contains\": { \"const\": \"b\" } },\n                    \"then\": {\n                        \"if\": { \"contains\": { \"const\": \"c\" } }\n                    }\n                },\n                \"unevaluatedItems\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1419,9 +1419,9 @@ public class SuiteUnevaluatedItemsWithMinContains0
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"contains\": {\"type\": \"string\"},\n            \"minContains\": 0,\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"contains\": { \"type\": \"string\" },\n                \"minContains\": 0,\n                \"unevaluatedItems\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1501,9 +1501,9 @@ public class SuiteNonArrayInstancesAreValid
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"unevaluatedItems\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1536,7 +1536,7 @@ public class SuiteUnevaluatedItemsWithNullInstanceElements
     [TestMethod]
     public void TestAllowsNullElements()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[ null ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[null]");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -1548,9 +1548,9 @@ public class SuiteUnevaluatedItemsWithNullInstanceElements
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"unevaluatedItems\": {\n                \"type\": \"null\"\n            }\n        }",
+                "{\n                \"unevaluatedItems\": { \"type\": \"null\" }\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1563,7 +1563,7 @@ public class SuiteUnevaluatedItemsWithNullInstanceElements
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedItemsCanSeeAnnotationsFromIfWithoutThenAndElse
+public class SuiteUnevaluatedItemsCanSeeAnnotationsFromIfWithoutThenAndElsePrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -1583,14 +1583,14 @@ public class SuiteUnevaluatedItemsCanSeeAnnotationsFromIfWithoutThenAndElse
     [TestMethod]
     public void TestValidInCaseIfIsEvaluated()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[ \"a\" ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\"a\"]");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestInvalidInCaseIfIsEvaluated()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[ \"b\" ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\"b\"]");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -1602,9 +1602,9 @@ public class SuiteUnevaluatedItemsCanSeeAnnotationsFromIfWithoutThenAndElse
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"if\": {\n                \"prefixItems\": [{\"const\": \"a\"}]\n            },\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"if\": {\n                    \"prefixItems\": [{ \"const\": \"a\" }]\n                },\n                \"unevaluatedItems\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1617,7 +1617,7 @@ public class SuiteUnevaluatedItemsCanSeeAnnotationsFromIfWithoutThenAndElse
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteEvaluatedItemsCollectionNeedsToConsiderInstanceLocation
+public class SuiteEvaluatedItemsCollectionNeedsToConsiderInstanceLocationPrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -1637,7 +1637,7 @@ public class SuiteEvaluatedItemsCollectionNeedsToConsiderInstanceLocation
     [TestMethod]
     public void TestWithAnUnevaluatedItemThatExistsAtAnotherLocation()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\n                    [\"foo\", \"bar\"],\n                    \"bar\"\n                ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[[\"foo\", \"bar\"], \"bar\"]");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -1649,9 +1649,9 @@ public class SuiteEvaluatedItemsCollectionNeedsToConsiderInstanceLocation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [\n                {\n                    \"prefixItems\": [\n                        true,\n                        { \"type\": \"string\" }\n                    ]\n                }\n            ],\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"prefixItems\": [\n                    {\n                        \"prefixItems\": [true, { \"type\": \"string\" }]\n                    }\n                ],\n                \"unevaluatedItems\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,

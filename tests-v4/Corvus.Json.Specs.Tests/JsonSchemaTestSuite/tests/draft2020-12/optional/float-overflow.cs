@@ -14,19 +14,21 @@ namespace JsonSchemaTestSuite.Draft202012.Optional.FloatOverflow;
 public class SuiteAllIntegersAreMultiplesOf05IfOverflowIsHandled
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -38,7 +40,7 @@ public class SuiteAllIntegersAreMultiplesOf05IfOverflowIsHandled
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -48,8 +50,8 @@ public class SuiteAllIntegersAreMultiplesOf05IfOverflowIsHandled
         {
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\float-overflow.json",
-                "#/0/schema",
+                "optional/float-overflow.json",
+                "#/tests/0/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalFloatOverflow",
                 "AllIntegersAreMultiplesOf05IfOverflowIsHandled",
                 validateFormat: false,
@@ -57,10 +59,9 @@ public class SuiteAllIntegersAreMultiplesOf05IfOverflowIsHandled
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

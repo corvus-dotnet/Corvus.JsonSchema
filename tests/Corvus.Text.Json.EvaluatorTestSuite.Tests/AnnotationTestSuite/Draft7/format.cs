@@ -47,7 +47,7 @@ public class SuiteFormatIsAnAnnotation
                 "annotations/format.json",
                 "{\n        \"format\": \"email\"\n      }",
                 "AnnotationTestSuite.Draft7.Format",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

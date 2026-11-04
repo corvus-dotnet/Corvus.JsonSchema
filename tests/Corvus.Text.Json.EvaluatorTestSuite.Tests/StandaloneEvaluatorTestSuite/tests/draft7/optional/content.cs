@@ -54,9 +54,9 @@ public class SuiteValidationOfStringEncodedContentBasedOnMediaType
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/optional/content.json",
-                "{\n            \"contentMediaType\": \"application/json\"\n        }",
+                "{\n                \"contentMediaType\": \"application/json\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft7.Optional.Content",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -112,9 +112,9 @@ public class SuiteValidationOfBinaryStringEncoding
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/optional/content.json",
-                "{\n            \"contentEncoding\": \"base64\"\n        }",
+                "{\n                \"contentEncoding\": \"base64\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft7.Optional.Content",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -177,9 +177,9 @@ public class SuiteValidationOfBinaryEncodedMediaTypeDocuments
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/optional/content.json",
-                "{\n            \"contentMediaType\": \"application/json\",\n            \"contentEncoding\": \"base64\"\n        }",
+                "{\n                \"contentMediaType\": \"application/json\",\n                \"contentEncoding\": \"base64\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft7.Optional.Content",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

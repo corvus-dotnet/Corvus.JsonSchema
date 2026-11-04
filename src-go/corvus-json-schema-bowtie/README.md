@@ -20,10 +20,10 @@ go test -p 4 ./...
 ```
 
 `ihop_test.go` runs the harness in its own process and drives it over IHOP exactly as Bowtie does. It sends every
-required case of the JSON-Schema-Test-Suite for draft 4, 6, 7, 2019-09 and 2020-12 with the suite's remotes as the
-registry, and the suite's annotation tests, and compares both with the expected results. The suite is the
-repository's submodule, or `JSON_SCHEMA_TEST_SUITE`. The library is the one in this checkout, through the `replace`
-directive in `go.mod`.
+required case of the JSON-Schema-Test-Suite for draft 4, 6, 7, 2019-09 and 2020-12 (those that do not expect format to
+be asserted, which the harness treats as an annotation) with each test case's `externalSchemas` as the registry, and the
+suite's annotation tests, and compares both with the expected results. The suite is the repository's submodule, or
+`JSON_SCHEMA_TEST_SUITE`. The library is the one in this checkout, through the `replace` directive in `go.mod`.
 
 ## Running it under Bowtie
 

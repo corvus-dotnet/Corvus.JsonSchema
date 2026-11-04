@@ -54,9 +54,9 @@ public class SuiteValidationOfStringEncodedContentBasedOnMediaType
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/content.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"contentMediaType\": \"application/json\"\n        }",
+                "{ \"contentMediaType\": \"application/json\" }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Content",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -112,9 +112,9 @@ public class SuiteValidationOfBinaryStringEncoding
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/content.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"contentEncoding\": \"base64\"\n        }",
+                "{ \"contentEncoding\": \"base64\" }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Content",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -177,9 +177,9 @@ public class SuiteValidationOfBinaryEncodedMediaTypeDocuments
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/content.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"contentMediaType\": \"application/json\",\n            \"contentEncoding\": \"base64\"\n        }",
+                "{\n                \"contentMediaType\": \"application/json\",\n                \"contentEncoding\": \"base64\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Content",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -270,9 +270,9 @@ public class SuiteValidationOfBinaryEncodedMediaTypeDocumentsWithSchema
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/content.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"contentMediaType\": \"application/json\",\n            \"contentEncoding\": \"base64\",\n            \"contentSchema\": { \"type\": \"object\", \"required\": [\"foo\"], \"properties\": { \"foo\": { \"type\": \"string\" } } }\n        }",
+                "{\n                \"contentMediaType\": \"application/json\",\n                \"contentEncoding\": \"base64\",\n                \"contentSchema\": {\n                    \"type\": \"object\",\n                    \"required\": [\"foo\"],\n                    \"properties\": {\n                        \"foo\": { \"type\": \"string\" }\n                    }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Content",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

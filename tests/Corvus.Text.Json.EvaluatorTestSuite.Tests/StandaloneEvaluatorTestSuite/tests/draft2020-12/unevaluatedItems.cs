@@ -47,9 +47,9 @@ public class SuiteUnevaluatedItemsTrue
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"unevaluatedItems\": true\n        }",
+                "{\n                \"unevaluatedItems\": true\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -98,9 +98,9 @@ public class SuiteUnevaluatedItemsFalse
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"unevaluatedItems\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -156,9 +156,9 @@ public class SuiteUnevaluatedItemsAsSchema
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"unevaluatedItems\": { \"type\": \"string\" }\n        }",
+                "{\n                \"unevaluatedItems\": { \"type\": \"string\" }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -200,9 +200,9 @@ public class SuiteUnevaluatedItemsWithUniformItems
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"items\": { \"type\": \"string\" },\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"items\": { \"type\": \"string\" },\n                \"unevaluatedItems\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -212,7 +212,7 @@ public class SuiteUnevaluatedItemsWithUniformItems
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedItemsWithTuple
+public class SuiteUnevaluatedItemsWithTuplePrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -251,9 +251,9 @@ public class SuiteUnevaluatedItemsWithTuple
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [\n                { \"type\": \"string\" }\n            ],\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"prefixItems\": [{ \"type\": \"string\" }],\n                \"unevaluatedItems\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -295,9 +295,9 @@ public class SuiteUnevaluatedItemsWithItemsAndPrefixItems
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [\n                { \"type\": \"string\" }\n            ],\n            \"items\": true,\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"prefixItems\": [{ \"type\": \"string\" }],\n                \"items\": true,\n                \"unevaluatedItems\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -346,9 +346,9 @@ public class SuiteUnevaluatedItemsWithItems
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"items\": {\"type\": \"number\"},\n            \"unevaluatedItems\": {\"type\": \"string\"}\n        }",
+                "{\n                \"items\": { \"type\": \"number\" },\n                \"unevaluatedItems\": { \"type\": \"string\" }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -358,7 +358,7 @@ public class SuiteUnevaluatedItemsWithItems
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedItemsWithNestedTuple
+public class SuiteUnevaluatedItemsWithNestedTuplePrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -397,9 +397,9 @@ public class SuiteUnevaluatedItemsWithNestedTuple
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [\n                { \"type\": \"string\" }\n            ],\n            \"allOf\": [\n                {\n                    \"prefixItems\": [\n                        true,\n                        { \"type\": \"number\" }\n                    ]\n                }\n            ],\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"prefixItems\": [{ \"type\": \"string\" }],\n                \"allOf\": [\n                    {\n                        \"prefixItems\": [true, { \"type\": \"number\" }]\n                    }\n                ],\n                \"unevaluatedItems\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -455,9 +455,9 @@ public class SuiteUnevaluatedItemsWithNestedItems
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"unevaluatedItems\": {\"type\": \"boolean\"},\n            \"anyOf\": [\n                { \"items\": {\"type\": \"string\"} },\n                true\n            ]\n        }",
+                "{\n                \"unevaluatedItems\": { \"type\": \"boolean\" },\n                \"anyOf\": [\n                    { \"items\": { \"type\": \"string\" } },\n                    true\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -506,9 +506,9 @@ public class SuiteUnevaluatedItemsWithNestedPrefixItemsAndItems
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"allOf\": [\n                {\n                    \"prefixItems\": [\n                        { \"type\": \"string\" }\n                    ],\n                    \"items\": true\n                }\n            ],\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"allOf\": [\n                    {\n                        \"prefixItems\": [{ \"type\": \"string\" }],\n                        \"items\": true\n                    }\n                ],\n                \"unevaluatedItems\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -518,7 +518,7 @@ public class SuiteUnevaluatedItemsWithNestedPrefixItemsAndItems
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedItemsWithNestedUnevaluatedItems
+public class SuiteUnevaluatedItemsWithNestedUnevaluatedItemsPrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -557,9 +557,9 @@ public class SuiteUnevaluatedItemsWithNestedUnevaluatedItems
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"allOf\": [\n                {\n                    \"prefixItems\": [\n                        { \"type\": \"string\" }\n                    ]\n                },\n                { \"unevaluatedItems\": true }\n            ],\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"allOf\": [\n                    { \"prefixItems\": [{ \"type\": \"string\" }] },\n                    { \"unevaluatedItems\": true }\n                ],\n                \"unevaluatedItems\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -569,7 +569,7 @@ public class SuiteUnevaluatedItemsWithNestedUnevaluatedItems
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedItemsWithAnyOf
+public class SuiteUnevaluatedItemsWithAnyOfPrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -622,9 +622,9 @@ public class SuiteUnevaluatedItemsWithAnyOf
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [\n                { \"const\": \"foo\" }\n            ],\n            \"anyOf\": [\n                {\n                    \"prefixItems\": [\n                        true,\n                        { \"const\": \"bar\" }\n                    ]\n                },\n                {\n                    \"prefixItems\": [\n                        true,\n                        true,\n                        { \"const\": \"baz\" }\n                    ]\n                }\n            ],\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"prefixItems\": [{ \"const\": \"foo\" }],\n                \"anyOf\": [\n                    {\n                        \"prefixItems\": [true, { \"const\": \"bar\" }]\n                    },\n                    {\n                        \"prefixItems\": [true, true, { \"const\": \"baz\" }]\n                    }\n                ],\n                \"unevaluatedItems\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -634,7 +634,7 @@ public class SuiteUnevaluatedItemsWithAnyOf
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedItemsWithOneOf
+public class SuiteUnevaluatedItemsWithOneOfPrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -673,9 +673,9 @@ public class SuiteUnevaluatedItemsWithOneOf
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [\n                { \"const\": \"foo\" }\n            ],\n            \"oneOf\": [\n                {\n                    \"prefixItems\": [\n                        true,\n                        { \"const\": \"bar\" }\n                    ]\n                },\n                {\n                    \"prefixItems\": [\n                        true,\n                        { \"const\": \"baz\" }\n                    ]\n                }\n            ],\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"prefixItems\": [{ \"const\": \"foo\" }],\n                \"oneOf\": [\n                    {\n                        \"prefixItems\": [true, { \"const\": \"bar\" }]\n                    },\n                    {\n                        \"prefixItems\": [true, { \"const\": \"baz\" }]\n                    }\n                ],\n                \"unevaluatedItems\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -685,7 +685,7 @@ public class SuiteUnevaluatedItemsWithOneOf
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedItemsWithNot
+public class SuiteUnevaluatedItemsWithNotPrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -717,9 +717,9 @@ public class SuiteUnevaluatedItemsWithNot
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [\n                { \"const\": \"foo\" }\n            ],\n            \"not\": {\n                \"not\": {\n                    \"prefixItems\": [\n                        true,\n                        { \"const\": \"bar\" }\n                    ]\n                }\n            },\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"prefixItems\": [{ \"const\": \"foo\" }],\n                \"not\": {\n                    \"not\": {\n                        \"prefixItems\": [true, { \"const\": \"bar\" }]\n                    }\n                },\n                \"unevaluatedItems\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -729,7 +729,7 @@ public class SuiteUnevaluatedItemsWithNot
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedItemsWithIfThenElse
+public class SuiteUnevaluatedItemsWithIfThenElsePrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -782,9 +782,9 @@ public class SuiteUnevaluatedItemsWithIfThenElse
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [\n                { \"const\": \"foo\" }\n            ],\n            \"if\": {\n                \"prefixItems\": [\n                    true,\n                    { \"const\": \"bar\" }\n                ]\n            },\n            \"then\": {\n                \"prefixItems\": [\n                    true,\n                    true,\n                    { \"const\": \"then\" }\n                ]\n            },\n            \"else\": {\n                \"prefixItems\": [\n                    true,\n                    true,\n                    true,\n                    { \"const\": \"else\" }\n                ]\n            },\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"prefixItems\": [{ \"const\": \"foo\" }],\n                \"if\": {\n                    \"prefixItems\": [true, { \"const\": \"bar\" }]\n                },\n                \"then\": {\n                    \"prefixItems\": [true, true, { \"const\": \"then\" }]\n                },\n                \"else\": {\n                    \"prefixItems\": [true, true, true, { \"const\": \"else\" }]\n                },\n                \"unevaluatedItems\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -833,9 +833,9 @@ public class SuiteUnevaluatedItemsWithBooleanSchemas
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"allOf\": [true],\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"allOf\": [true],\n                \"unevaluatedItems\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -845,7 +845,7 @@ public class SuiteUnevaluatedItemsWithBooleanSchemas
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedItemsWithRef
+public class SuiteUnevaluatedItemsWithRefPrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -884,9 +884,9 @@ public class SuiteUnevaluatedItemsWithRef
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$ref\": \"#/$defs/bar\",\n            \"prefixItems\": [\n                { \"type\": \"string\" }\n            ],\n            \"unevaluatedItems\": false,\n            \"$defs\": {\n              \"bar\": {\n                  \"prefixItems\": [\n                      true,\n                      { \"type\": \"string\" }\n                  ]\n              }\n            }\n        }",
+                "{\n                \"$ref\": \"#/$defs/bar\",\n                \"prefixItems\": [{ \"type\": \"string\" }],\n                \"unevaluatedItems\": false,\n                \"$defs\": {\n                    \"bar\": {\n                        \"prefixItems\": [true, { \"type\": \"string\" }]\n                    }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -896,7 +896,7 @@ public class SuiteUnevaluatedItemsWithRef
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedItemsBeforeRef
+public class SuiteUnevaluatedItemsBeforeRefPrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -935,9 +935,9 @@ public class SuiteUnevaluatedItemsBeforeRef
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"unevaluatedItems\": false,\n            \"prefixItems\": [\n                { \"type\": \"string\" }\n            ],\n            \"$ref\": \"#/$defs/bar\",\n            \"$defs\": {\n              \"bar\": {\n                  \"prefixItems\": [\n                      true,\n                      { \"type\": \"string\" }\n                  ]\n              }\n            }\n        }",
+                "{\n                \"unevaluatedItems\": false,\n                \"prefixItems\": [{ \"type\": \"string\" }],\n                \"$ref\": \"#/$defs/bar\",\n                \"$defs\": {\n                    \"bar\": {\n                        \"prefixItems\": [true, { \"type\": \"string\" }]\n                    }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -947,7 +947,7 @@ public class SuiteUnevaluatedItemsBeforeRef
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedItemsWithDynamicRef
+public class SuiteUnevaluatedItemsWithDynamicRef202012
 {
     private static Fixture? s_fixture;
 
@@ -986,9 +986,9 @@ public class SuiteUnevaluatedItemsWithDynamicRef
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"$id\": \"https://example.com/unevaluated-items-with-dynamic-ref/derived\",\n\n            \"$ref\": \"./baseSchema\",\n\n            \"$defs\": {\n                \"derived\": {\n                    \"$dynamicAnchor\": \"addons\",\n                    \"prefixItems\": [\n                        true,\n                        { \"type\": \"string\" }\n                    ]\n                },\n                \"baseSchema\": {\n                    \"$id\": \"./baseSchema\",\n\n                    \"$comment\": \"unevaluatedItems comes first so it's more likely to catch bugs with implementations that are sensitive to keyword ordering\",\n                    \"unevaluatedItems\": false,\n                    \"type\": \"array\",\n                    \"prefixItems\": [\n                        { \"type\": \"string\" }\n                    ],\n                    \"$dynamicRef\": \"#addons\",\n\n                    \"$defs\": {\n                        \"defaultAddons\": {\n                            \"$comment\": \"Needed to satisfy the bookending requirement\",\n                            \"$dynamicAnchor\": \"addons\"\n                        }\n                    }\n                }\n            }\n        }",
+                "{\n                \"$id\": \"https://example.com/unevaluated-items-with-dynamic-ref/derived\",\n                \"$ref\": \"./baseSchema\",\n                \"$defs\": {\n                    \"derived\": {\n                        \"$dynamicAnchor\": \"addons\",\n                        \"prefixItems\": [true, { \"type\": \"string\" }]\n                    },\n                    \"baseSchema\": {\n                        \"$id\": \"./baseSchema\",\n                        \"$comment\": \"unevaluatedItems comes first so it's more likely to catch bugs with implementations that are sensitive to keyword ordering\",\n                        \"unevaluatedItems\": false,\n                        \"type\": \"array\",\n                        \"prefixItems\": [{ \"type\": \"string\" }],\n                        \"$dynamicRef\": \"#addons\",\n                        \"$defs\": {\n                            \"defaultAddons\": {\n                                \"$comment\": \"Needed to satisfy the bookending requirement\",\n                                \"$dynamicAnchor\": \"addons\"\n                            }\n                        }\n                    }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -998,7 +998,7 @@ public class SuiteUnevaluatedItemsWithDynamicRef
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedItemsCanTSeeInsideCousins
+public class SuiteUnevaluatedItemsCanTSeeInsideCousinsPrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -1018,7 +1018,7 @@ public class SuiteUnevaluatedItemsCanTSeeInsideCousins
     [TestMethod]
     public void TestAlwaysFails()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1 ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1030,9 +1030,9 @@ public class SuiteUnevaluatedItemsCanTSeeInsideCousins
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"allOf\": [\n                {\n                    \"prefixItems\": [ true ]\n                },\n                { \"unevaluatedItems\": false }\n            ]\n        }",
+                "{\n                \"allOf\": [\n                    { \"prefixItems\": [true] },\n                    { \"unevaluatedItems\": false }\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1042,7 +1042,7 @@ public class SuiteUnevaluatedItemsCanTSeeInsideCousins
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteItemIsEvaluatedInAnUncleSchemaToUnevaluatedItems
+public class SuiteItemIsEvaluatedInAnUncleSchemaToUnevaluatedItemsPrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -1062,14 +1062,14 @@ public class SuiteItemIsEvaluatedInAnUncleSchemaToUnevaluatedItems
     [TestMethod]
     public void TestNoExtraItems()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": [\n                        \"test\"\n                    ]\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": [\"test\"] }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestUncleKeywordEvaluationIsNotSignificant()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": [\n                        \"test\",\n                        \"test\"\n                    ]\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": [\"test\", \"test\"] }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1081,9 +1081,9 @@ public class SuiteItemIsEvaluatedInAnUncleSchemaToUnevaluatedItems
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": {\n                    \"prefixItems\": [\n                        { \"type\": \"string\" }\n                    ],\n                    \"unevaluatedItems\": false\n                  }\n            },\n            \"anyOf\": [\n                {\n                    \"properties\": {\n                        \"foo\": {\n                            \"prefixItems\": [\n                                true,\n                                { \"type\": \"string\" }\n                            ]\n                        }\n                    }\n                }\n            ]\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": {\n                        \"prefixItems\": [{ \"type\": \"string\" }],\n                        \"unevaluatedItems\": false\n                    }\n                },\n                \"anyOf\": [\n                    {\n                        \"properties\": {\n                            \"foo\": {\n                                \"prefixItems\": [\n                                    true,\n                                    { \"type\": \"string\" }\n                                ]\n                            }\n                        }\n                    }\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1113,21 +1113,21 @@ public class SuiteUnevaluatedItemsDependsOnAdjacentContains
     [TestMethod]
     public void TestSecondItemIsEvaluatedByContains()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, \"foo\" ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, \"foo\"]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestContainsFailsSecondItemIsNotEvaluated()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 2 ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestContainsPassesSecondItemIsNotEvaluated()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 2, \"foo\" ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2, \"foo\"]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1139,9 +1139,9 @@ public class SuiteUnevaluatedItemsDependsOnAdjacentContains
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [true],\n            \"contains\": {\"type\": \"string\"},\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"prefixItems\": [true],\n                \"contains\": { \"type\": \"string\" },\n                \"unevaluatedItems\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1171,14 +1171,14 @@ public class SuiteUnevaluatedItemsDependsOnMultipleNestedContains
     [TestMethod]
     public void Test5NotEvaluatedPassesUnevaluatedItems()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 2, 3, 4, 5, 6 ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[2, 3, 4, 5, 6]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void Test7NotEvaluatedFailsUnevaluatedItems()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 2, 3, 4, 7, 8 ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[2, 3, 4, 7, 8]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1190,9 +1190,9 @@ public class SuiteUnevaluatedItemsDependsOnMultipleNestedContains
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"allOf\": [\n                { \"contains\": { \"multipleOf\": 2 } },\n                { \"contains\": { \"multipleOf\": 3 } }\n            ],\n            \"unevaluatedItems\": { \"multipleOf\": 5 }\n        }",
+                "{\n                \"allOf\": [\n                    { \"contains\": { \"multipleOf\": 2 } },\n                    { \"contains\": { \"multipleOf\": 3 } }\n                ],\n                \"unevaluatedItems\": { \"multipleOf\": 5 }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1229,49 +1229,49 @@ public class SuiteUnevaluatedItemsAndContainsInteractToControlItemDependencyRela
     [TestMethod]
     public void TestOnlyASAreValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ \"a\", \"a\" ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\"a\", \"a\"]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestASAndBSAreValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ \"a\", \"b\", \"a\", \"b\", \"a\" ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\"a\", \"b\", \"a\", \"b\", \"a\"]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestASBSAndCSAreValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ \"c\", \"a\", \"c\", \"c\", \"b\", \"a\" ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\"c\", \"a\", \"c\", \"c\", \"b\", \"a\"]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestOnlyBSAreInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ \"b\", \"b\" ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\"b\", \"b\"]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestOnlyCSAreInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ \"c\", \"c\" ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\"c\", \"c\"]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestOnlyBSAndCSAreInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ \"c\", \"b\", \"c\", \"b\", \"c\" ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\"c\", \"b\", \"c\", \"b\", \"c\"]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestOnlyASAndCSAreInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ \"c\", \"a\", \"c\", \"a\", \"c\" ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\"c\", \"a\", \"c\", \"a\", \"c\"]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1283,9 +1283,9 @@ public class SuiteUnevaluatedItemsAndContainsInteractToControlItemDependencyRela
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"if\": {\n                \"contains\": {\"const\": \"a\"}\n            },\n            \"then\": {\n                \"if\": {\n                    \"contains\": {\"const\": \"b\"}\n                },\n                \"then\": {\n                    \"if\": {\n                        \"contains\": {\"const\": \"c\"}\n                    }\n                }\n            },\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"if\": { \"contains\": { \"const\": \"a\" } },\n                \"then\": {\n                    \"if\": { \"contains\": { \"const\": \"b\" } },\n                    \"then\": {\n                        \"if\": { \"contains\": { \"const\": \"c\" } }\n                    }\n                },\n                \"unevaluatedItems\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1348,9 +1348,9 @@ public class SuiteUnevaluatedItemsWithMinContains0
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"contains\": {\"type\": \"string\"},\n            \"minContains\": 0,\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"contains\": { \"type\": \"string\" },\n                \"minContains\": 0,\n                \"unevaluatedItems\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1427,9 +1427,9 @@ public class SuiteNonArrayInstancesAreValid
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"unevaluatedItems\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1459,7 +1459,7 @@ public class SuiteUnevaluatedItemsWithNullInstanceElements
     [TestMethod]
     public void TestAllowsNullElements()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ null ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[null]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1471,9 +1471,9 @@ public class SuiteUnevaluatedItemsWithNullInstanceElements
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"unevaluatedItems\": {\n                \"type\": \"null\"\n            }\n        }",
+                "{\n                \"unevaluatedItems\": { \"type\": \"null\" }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1483,7 +1483,7 @@ public class SuiteUnevaluatedItemsWithNullInstanceElements
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteUnevaluatedItemsCanSeeAnnotationsFromIfWithoutThenAndElse
+public class SuiteUnevaluatedItemsCanSeeAnnotationsFromIfWithoutThenAndElsePrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -1503,14 +1503,14 @@ public class SuiteUnevaluatedItemsCanSeeAnnotationsFromIfWithoutThenAndElse
     [TestMethod]
     public void TestValidInCaseIfIsEvaluated()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ \"a\" ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\"a\"]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestInvalidInCaseIfIsEvaluated()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ \"b\" ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\"b\"]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1522,9 +1522,9 @@ public class SuiteUnevaluatedItemsCanSeeAnnotationsFromIfWithoutThenAndElse
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"if\": {\n                \"prefixItems\": [{\"const\": \"a\"}]\n            },\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"if\": {\n                    \"prefixItems\": [{ \"const\": \"a\" }]\n                },\n                \"unevaluatedItems\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1534,7 +1534,7 @@ public class SuiteUnevaluatedItemsCanSeeAnnotationsFromIfWithoutThenAndElse
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteEvaluatedItemsCollectionNeedsToConsiderInstanceLocation
+public class SuiteEvaluatedItemsCollectionNeedsToConsiderInstanceLocationPrefixItems
 {
     private static Fixture? s_fixture;
 
@@ -1554,7 +1554,7 @@ public class SuiteEvaluatedItemsCollectionNeedsToConsiderInstanceLocation
     [TestMethod]
     public void TestWithAnUnevaluatedItemThatExistsAtAnotherLocation()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\n                    [\"foo\", \"bar\"],\n                    \"bar\"\n                ]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[[\"foo\", \"bar\"], \"bar\"]");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -1566,9 +1566,9 @@ public class SuiteEvaluatedItemsCollectionNeedsToConsiderInstanceLocation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/unevaluatedItems.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"prefixItems\": [\n                {\n                    \"prefixItems\": [\n                        true,\n                        { \"type\": \"string\" }\n                    ]\n                }\n            ],\n            \"unevaluatedItems\": false\n        }",
+                "{\n                \"prefixItems\": [\n                    {\n                        \"prefixItems\": [true, { \"type\": \"string\" }]\n                    }\n                ],\n                \"unevaluatedItems\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

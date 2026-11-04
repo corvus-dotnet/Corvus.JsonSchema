@@ -27,7 +27,7 @@ public class SuiteInvalidTypeForDefault
     [TestMethod]
     public void TestValidWhenPropertyIsSpecified()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 13}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 13 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -46,9 +46,9 @@ public class SuiteInvalidTypeForDefault
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft7/default.json",
-                "{\n            \"properties\": {\n                \"foo\": {\n                    \"type\": \"integer\",\n                    \"default\": []\n                }\n            }\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": {\n                        \"type\": \"integer\",\n                        \"default\": []\n                    }\n                }\n            }",
                 "JsonSchemaTestSuite.Draft7.Default",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -81,7 +81,7 @@ public class SuiteInvalidStringValueForDefault
     [TestMethod]
     public void TestValidWhenPropertyIsSpecified()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"bar\": \"good\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"bar\": \"good\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -100,9 +100,9 @@ public class SuiteInvalidStringValueForDefault
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft7/default.json",
-                "{\n            \"properties\": {\n                \"bar\": {\n                    \"type\": \"string\",\n                    \"minLength\": 4,\n                    \"default\": \"bad\"\n                }\n            }\n        }",
+                "{\n                \"properties\": {\n                    \"bar\": {\n                        \"type\": \"string\",\n                        \"minLength\": 4,\n                        \"default\": \"bad\"\n                    }\n                }\n            }",
                 "JsonSchemaTestSuite.Draft7.Default",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -161,9 +161,9 @@ public class SuiteTheDefaultKeywordDoesNotDoAnythingIfThePropertyIsMissing
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft7/default.json",
-                "{\n            \"type\": \"object\",\n            \"properties\": {\n                \"alpha\": {\n                    \"type\": \"number\",\n                    \"maximum\": 3,\n                    \"default\": 5\n                }\n            }\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"alpha\": {\n                        \"type\": \"number\",\n                        \"maximum\": 3,\n                        \"default\": 5\n                    }\n                }\n            }",
                 "JsonSchemaTestSuite.Draft7.Default",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,

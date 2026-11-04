@@ -4,6 +4,7 @@
 //!
 //! Set `JSON_SCHEMA_TEST_SUITE` to use a different checkout of the suite.
 
+use std::collections::HashMap;
 use std::ffi::{c_char, c_void};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -147,16 +148,28 @@ fn crate_rows(
 // ---------------------------------------------------------------------------------------------------------------------
 // The JSON-Schema-Test-Suite
 
-const DRAFTS: [(&str, cjs_dialect, corvus::Dialect); 5] = [
-    ("draft4", CJS_DRAFT4, corvus::Dialect::Draft4),
-    ("draft6", CJS_DRAFT6, corvus::Dialect::Draft6),
-    ("draft7", CJS_DRAFT7, corvus::Dialect::Draft7),
-    ("draft2019-09", CJS_DRAFT201909, corvus::Dialect::Draft201909),
-    ("draft2020-12", CJS_DRAFT202012, corvus::Dialect::Draft202012),
+const DRAFTS: [(&str, u32, cjs_dialect, corvus::Dialect); 5] = [
+    ("draft4", 4, CJS_DRAFT4, corvus::Dialect::Draft4),
+    ("draft6", 6, CJS_DRAFT6, corvus::Dialect::Draft6),
+    ("draft7", 7, CJS_DRAFT7, corvus::Dialect::Draft7),
+    ("draft2019-09", 2019, CJS_DRAFT201909, corvus::Dialect::Draft201909),
+    ("draft2020-12", 2020, CJS_DRAFT202012, corvus::Dialect::Draft202012),
 ];
 
 // As the crate's runner: serde_json cannot tell 1.0 from 1.
-const EXCLUDED_FILES: [&str; 1] = ["draft4/optional/zeroTerminatedFloats.json"];
+const EXCLUDED_FILES: [&str; 1] = ["draft4/optional/zero-terminated-floats.json"];
+
+// As the crate's runner: the high-precision cases of optional/bignum.json, whose digits serde_json values do not hold.
+const EXCLUDED_CASES: [(&str, &str); 8] = [
+    ("bignum.json", "below the exclusive maximum is valid"),
+    ("bignum.json", "above the exclusive minimum is valid"),
+    ("bignum.json", "just below the minimum is invalid"),
+    ("bignum.json", "a slightly smaller decimal is invalid"),
+    ("bignum.json", "a slightly larger decimal is invalid"),
+    ("bignum.json", "distinct high-precision decimals are unique"),
+    ("bignum.json", "arrays containing distinct decimals are unique"),
+    ("bignum.json", "objects containing distinct decimals are unique"),
+];
 
 fn suite_root() -> PathBuf {
     std::env::var_os("JSON_SCHEMA_TEST_SUITE")
@@ -174,70 +187,108 @@ fn files(dir: &Path) -> Vec<PathBuf> {
     out
 }
 
-/// The suite's remotes (`http://localhost:1234/...`), served by a resolver callback over the remotes directory.
-unsafe extern "C" fn resolve_remote(
+/// Whether a test case's `compatibility` admits the release, by the algorithm of the suite's validation/README.md.
+fn compatible(compatibility: Option<&str>, release: u32) -> bool {
+    let Some(compatibility) = compatibility else { return true };
+    let mut valid = true;
+    for constraint in compatibility.split(',') {
+        let (op, version) = if let Some(v) = constraint.strip_prefix("<=") {
+            ("<=", v)
+        } else if let Some(v) = constraint.strip_prefix('=') {
+            ("=", v)
+        } else {
+            ("", constraint)
+        };
+        let version: u32 = version.trim().parse().unwrap();
+        valid = match op {
+            "<=" => release <= version,
+            "=" => release == version,
+            _ => release >= version,
+        };
+        if release <= version {
+            break;
+        }
+    }
+    valid
+}
+
+fn has_tag(case: &Value, tag: &str) -> bool {
+    case["tags"].as_array().is_some_and(|tags| tags.iter().any(|t| t == tag))
+}
+
+/// A test case's `externalSchemas`, as JSON text by retrieval URI.
+type ExternalSchemas = HashMap<String, String>;
+
+fn external_schemas(case: &Value) -> ExternalSchemas {
+    case["externalSchemas"]
+        .as_object()
+        .map(|o| o.iter().map(|(k, v)| (k.clone(), serde_json::to_string(v).unwrap())).collect())
+        .unwrap_or_default()
+}
+
+/// Serves a test case's `externalSchemas`, through a resolver callback.
+unsafe extern "C" fn resolve_external(
     user: *mut c_void,
     uri: *const c_char,
     len: usize,
     out: *mut cjs_resolved,
 ) -> cjs_status {
-    let remotes = unsafe { &*user.cast::<PathBuf>() };
+    let schemas = unsafe { &*user.cast::<ExternalSchemas>() };
     let uri = std::str::from_utf8(unsafe { std::slice::from_raw_parts(uri.cast::<u8>(), len) }).unwrap();
-    let Some(rest) = uri.strip_prefix("http://localhost:1234/") else { return CJS_OK };
-    let Ok(text) = std::fs::read_to_string(remotes.join(rest)) else { return CJS_OK };
-    unsafe { cjs_resolved_set_json(out, ptr(&text), text.len()) }
+    let Some(text) = schemas.get(uri) else { return CJS_OK };
+    unsafe { cjs_resolved_set_json(out, ptr(text), text.len()) }
 }
 
-unsafe extern "C" fn free_path(user: *mut c_void) {
-    drop(unsafe { Box::from_raw(user.cast::<PathBuf>()) });
+unsafe extern "C" fn free_schemas(user: *mut c_void) {
+    drop(unsafe { Box::from_raw(user.cast::<ExternalSchemas>()) });
 }
 
 #[test]
 fn json_schema_test_suite_through_the_c_api() {
     let root = suite_root();
-    let tests = root.join("tests");
+    let tests = root.join("validation").join("tests");
     if !tests.exists() {
         eprintln!("JSON-Schema-Test-Suite not found at {}; skipping", root.display());
         return;
     }
-    let remotes = root.join("remotes");
-    let crate_resolver: corvus::DocumentResolver = {
-        let remotes = remotes.clone();
-        Arc::new(move |uri: &str| {
-            let file = remotes.join(uri.strip_prefix("http://localhost:1234/")?);
-            serde_json::from_str(&std::fs::read_to_string(file).ok()?).ok()
-        })
-    };
+    let suite_files: Vec<PathBuf> = files(&tests).into_iter().chain(files(&tests.join("optional"))).collect();
     let (mut total, mut failures) = (0, Vec::new());
-    for (draft, cjs_dialect, dialect) in DRAFTS {
-        let dir = tests.join(draft);
-        let runs = files(&dir)
-            .into_iter()
-            .map(|f| (f, false))
-            .chain(files(&dir.join("optional")).into_iter().map(|f| (f, false)))
-            .chain(files(&dir.join("optional").join("format")).into_iter().map(|f| (f, true)));
-        for (file, assert_format) in runs {
-            let label = file.strip_prefix(&tests).unwrap().to_string_lossy().replace('\\', "/");
+    for (draft, release, cjs_dialect, dialect) in DRAFTS {
+        for file in &suite_files {
+            let relative = file.strip_prefix(&tests).unwrap().to_string_lossy().replace('\\', "/");
+            let label = format!("{draft}/{relative}");
             if EXCLUDED_FILES.contains(&label.as_str()) {
                 continue;
             }
-            let groups: Value = serde_json::from_str(&std::fs::read_to_string(&file).unwrap()).unwrap();
-            for group in groups.as_array().unwrap() {
+            let file_name = file.file_name().unwrap().to_string_lossy().to_string();
+            let suite: Value = serde_json::from_str(&std::fs::read_to_string(file).unwrap()).unwrap();
+            for group in suite["tests"].as_array().unwrap() {
+                if !compatible(group["compatibility"].as_str(), release) {
+                    continue;
+                }
+                // The engine asserts format by default up to draft7, so a format-annotation case does not apply.
+                if has_tag(group, "format-annotation") && release <= 7 {
+                    continue;
+                }
+                let assert_format = has_tag(group, "format-assertion");
+                let schemas = external_schemas(group);
                 let options = Options::new();
-                let user = Box::into_raw(Box::new(remotes.clone())).cast::<c_void>();
+                let user = Box::into_raw(Box::new(schemas.clone())).cast::<c_void>();
                 unsafe {
                     assert_eq!(cjs_options_set_default_dialect(options.0, cjs_dialect), CJS_OK);
                     let mode = if assert_format { CJS_TRUE } else { CJS_DEFAULT };
                     assert_eq!(cjs_options_set_assert_format(options.0, mode), CJS_OK);
                     assert_eq!(
-                        cjs_options_set_resolver(options.0, Some(resolve_remote), user, Some(free_path)),
+                        cjs_options_set_resolver(options.0, Some(resolve_external), user, Some(free_schemas)),
                         CJS_OK
                     );
                 }
+                let crate_resolver: corvus::DocumentResolver =
+                    Arc::new(move |uri: &str| serde_json::from_str(schemas.get(uri)?).ok());
                 let crate_options = corvus::CompileOptions {
                     default_dialect: dialect,
                     assert_format: assert_format.then_some(true),
-                    resolve_document: Some(crate_resolver.clone()),
+                    resolve_document: Some(crate_resolver),
                     ..corvus::CompileOptions::default()
                 };
                 let schema_text = serde_json::to_string(&group["schema"]).unwrap();
@@ -253,13 +304,16 @@ fn json_schema_test_suite_through_the_c_api() {
                     }
                 };
                 for test in group["tests"].as_array().unwrap() {
+                    let test_description = test["description"].as_str().unwrap();
+                    if EXCLUDED_CASES.contains(&(file_name.as_str(), test_description)) {
+                        continue;
+                    }
                     total += 1;
                     let data = serde_json::to_string(&test["data"]).unwrap();
                     let expected = test["valid"].as_bool().unwrap();
-                    let what = format!("{label} [{description}] {}", test["description"].as_str().unwrap());
-                    let leap_second = assert_format && what.to_lowercase().contains("leap second");
+                    let what = format!("{label} [{description}] {test_description}");
                     match validate(&v, &data) {
-                        Ok(valid) if valid == expected || leap_second => {}
+                        Ok(valid) if valid == expected => {}
                         other => failures.push(format!("{what}: expected {expected}, got {other:?}")),
                     }
                     for (level, crate_level) in [
@@ -279,7 +333,7 @@ fn json_schema_test_suite_through_the_c_api() {
             }
         }
     }
-    assert!(total > 7000, "only {total} cases ran");
+    assert!(total > 8000, "only {total} cases ran");
     assert!(failures.is_empty(), "{} of {total} failed:\n{}", failures.len(), failures.join("\n"));
     println!("{total} cases through the C API, every verdict and result row as the crate's");
 }

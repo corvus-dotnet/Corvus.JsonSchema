@@ -77,7 +77,7 @@ jobs:
         # for a source archive of the package. Here the files have to be there.
         working-directory: .
         run: |
-          test -d JSON-Schema-Test-Suite/tests/draft2020-12
+          test -d JSON-Schema-Test-Suite/validation/tests/optional
           test -d JSON-Schema-Test-Suite/annotations/tests
           test -f src-go/corvus-json-schema/metaschemas/draft2020-12/schema.json
           test -f src-go/corvus-json-schema/internal/ecmaregex/testdata/v8_oracle.json

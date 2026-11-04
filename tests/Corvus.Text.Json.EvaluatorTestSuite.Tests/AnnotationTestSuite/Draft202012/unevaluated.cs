@@ -58,7 +58,7 @@ public class SuiteUnevaluatedPropertiesAlone
                 "annotations/unevaluated.json",
                 "{\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -117,7 +117,7 @@ public class SuiteUnevaluatedPropertiesWithProperties
                 "annotations/unevaluated.json",
                 "{\n        \"properties\": {\n          \"foo\": { \"title\": \"Evaluated\" }\n        },\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -176,7 +176,7 @@ public class SuiteUnevaluatedPropertiesWithPatternProperties
                 "annotations/unevaluated.json",
                 "{\n        \"patternProperties\": {\n          \"^a\": { \"title\": \"Evaluated\" }\n        },\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -235,7 +235,7 @@ public class SuiteUnevaluatedPropertiesWithAdditionalProperties
                 "annotations/unevaluated.json",
                 "{\n        \"additionalProperties\": { \"title\": \"Evaluated\" },\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -294,7 +294,7 @@ public class SuiteUnevaluatedPropertiesWithDependentSchemas
                 "annotations/unevaluated.json",
                 "{\n        \"dependentSchemas\": {\n          \"foo\": {\n            \"properties\": {\n              \"bar\": { \"title\": \"Evaluated\" }\n            }\n          }\n        },\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -375,7 +375,7 @@ public class SuiteUnevaluatedPropertiesWithIfThenAndElse
                 "annotations/unevaluated.json",
                 "{\n        \"if\": {\n          \"properties\": {\n            \"foo\": {\n              \"type\": \"string\",\n              \"title\": \"If\"\n            }\n          }\n        },\n        \"then\": {\n          \"properties\": {\n            \"foo\": { \"title\": \"Then\" }\n          }\n        },\n        \"else\": {\n          \"properties\": {\n            \"foo\": { \"title\": \"Else\" }\n          }\n        },\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -434,7 +434,7 @@ public class SuiteUnevaluatedPropertiesWithAllOf
                 "annotations/unevaluated.json",
                 "{\n        \"allOf\": [\n          {\n            \"properties\": {\n              \"foo\": { \"title\": \"Evaluated\" }\n            }\n          }\n        ],\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -493,7 +493,7 @@ public class SuiteUnevaluatedPropertiesWithAnyOf
                 "annotations/unevaluated.json",
                 "{\n        \"anyOf\": [\n          {\n            \"properties\": {\n              \"foo\": { \"title\": \"Evaluated\" }\n            }\n          }\n        ],\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -552,7 +552,7 @@ public class SuiteUnevaluatedPropertiesWithOneOf
                 "annotations/unevaluated.json",
                 "{\n        \"oneOf\": [\n          {\n            \"properties\": {\n              \"foo\": { \"title\": \"Evaluated\" }\n            }\n          }\n        ],\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -611,7 +611,7 @@ public class SuiteUnevaluatedPropertiesWithNot
                 "annotations/unevaluated.json",
                 "{\n        \"not\": {\n          \"not\": {\n            \"properties\": {\n              \"foo\": { \"title\": \"Evaluated\" }\n            }\n          }\n        },\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -670,7 +670,7 @@ public class SuiteUnevaluatedItemsAlone
                 "annotations/unevaluated.json",
                 "{\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -729,7 +729,7 @@ public class SuiteUnevaluatedItemsWithPrefixItems
                 "annotations/unevaluated.json",
                 "{\n        \"prefixItems\": [{ \"title\": \"Evaluated\" }],\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -788,7 +788,7 @@ public class SuiteUnevaluatedItemsWithContains
                 "annotations/unevaluated.json",
                 "{\n        \"contains\": {\n          \"type\": \"string\",\n          \"title\": \"Evaluated\"\n        },\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -869,7 +869,7 @@ public class SuiteUnevaluatedItemsWithIfThenAndElse
                 "annotations/unevaluated.json",
                 "{\n        \"if\": {\n          \"prefixItems\": [\n            {\n              \"type\": \"string\",\n              \"title\": \"If\"\n            }\n          ]\n        },\n        \"then\": {\n          \"prefixItems\": [\n            { \"title\": \"Then\" }\n          ]\n        },\n        \"else\": {\n          \"prefixItems\": [\n            { \"title\": \"Else\" }\n          ]\n        },\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -928,7 +928,7 @@ public class SuiteUnevaluatedItemsWithAllOf
                 "annotations/unevaluated.json",
                 "{\n        \"allOf\": [\n          {\n            \"prefixItems\": [\n              { \"title\": \"Evaluated\" }\n            ]\n          }\n        ],\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -987,7 +987,7 @@ public class SuiteUnevaluatedItemsWithAnyOf
                 "annotations/unevaluated.json",
                 "{\n        \"anyOf\": [\n          {\n            \"prefixItems\": [\n              { \"title\": \"Evaluated\" }\n            ]\n          }\n        ],\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1046,7 +1046,7 @@ public class SuiteUnevaluatedItemsWithOneOf
                 "annotations/unevaluated.json",
                 "{\n        \"oneOf\": [\n          {\n            \"prefixItems\": [\n              { \"title\": \"Evaluated\" }\n            ]\n          }\n        ],\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -1105,7 +1105,7 @@ public class SuiteUnevaluatedItemsWithNot
                 "annotations/unevaluated.json",
                 "{\n        \"not\": {\n          \"not\": {\n            \"prefixItems\": [\n              { \"title\": \"Evaluated\" }\n            ]\n          }\n        },\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

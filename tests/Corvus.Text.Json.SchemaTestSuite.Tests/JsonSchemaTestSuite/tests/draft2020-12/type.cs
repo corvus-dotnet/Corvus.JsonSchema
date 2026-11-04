@@ -32,13 +32,6 @@ public class SuiteIntegerTypeMatchesIntegers
     }
 
     [TestMethod]
-    public void TestAFloatWithZeroFractionalPartIsAnInteger()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("1.0");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
     public void TestAFloatIsNotAnInteger()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("1.1");
@@ -95,9 +88,56 @@ public class SuiteIntegerTypeMatchesIntegers
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/type.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"integer\"\n        }",
+                "{\n                \"type\": \"integer\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "https://json-schema.org/draft/2020-12/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteIntegerTypeMatchesIntegers6
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAFloatWithZeroFractionalPartIsAnInteger()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("1.0");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests/draft2020-12/type.json",
+                "{\n                \"type\": \"integer\"\n            }",
+                "JsonSchemaTestSuite.Draft202012.Type",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -135,7 +175,7 @@ public class SuiteNumberTypeMatchesNumbers
     }
 
     [TestMethod]
-    public void TestAFloatWithZeroFractionalPartIsANumberAndAnInteger()
+    public void TestAFloatWithZeroFractionalPartIsANumber()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("1.0");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
@@ -198,9 +238,9 @@ public class SuiteNumberTypeMatchesNumbers
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/type.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"number\"\n        }",
+                "{\n                \"type\": \"number\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -301,9 +341,9 @@ public class SuiteStringTypeMatchesStrings
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/type.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"string\"\n        }",
+                "{\n                \"type\": \"string\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -390,9 +430,9 @@ public class SuiteObjectTypeMatchesObjects
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/type.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"object\"\n        }",
+                "{\n                \"type\": \"object\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -479,9 +519,9 @@ public class SuiteArrayTypeMatchesArrays
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/type.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"array\"\n        }",
+                "{\n                \"type\": \"array\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -589,9 +629,9 @@ public class SuiteBooleanTypeMatchesBooleans
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/type.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"boolean\"\n        }",
+                "{\n                \"type\": \"boolean\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -699,9 +739,63 @@ public class SuiteNullTypeMatchesOnlyTheNullObject
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/type.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"null\"\n        }",
+                "{\n                \"type\": \"null\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "https://json-schema.org/draft/2020-12/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteTypeAsArrayWithOneItem
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestStringIsValid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"foo\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestNumberIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("123");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests/draft2020-12/type.json",
+                "{\n                \"type\": [\"string\"]\n            }",
+                "JsonSchemaTestSuite.Draft202012.Type",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -788,63 +882,9 @@ public class SuiteMultipleTypesCanBeSpecifiedInAnArray
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/type.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": [\"integer\", \"string\"]\n        }",
+                "{\n                \"type\": [\"integer\", \"string\"]\n            }",
                 "JsonSchemaTestSuite.Draft202012.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
-                "https://json-schema.org/draft/2020-12/schema",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false,
-                addExplicitUsings: false,
-                Assembly.GetExecutingAssembly());
-        }
-    }
-}
-
-[TestCategory("Draft202012")]
-[TestClass]
-public class SuiteTypeAsArrayWithOneItem
-{
-    private static Fixture? s_fixture;
-
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext _)
-    {
-        s_fixture = new Fixture();
-        await s_fixture.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static void ClassCleanupMethod()
-    {
-        s_fixture = null;
-    }
-
-    [TestMethod]
-    public void TestStringIsValid()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"foo\"");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestNumberIsInvalid()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("123");
-        Assert.IsFalse(dynamicInstance.EvaluateSchema());
-    }
-
-    public class Fixture
-    {
-        public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public async Task InitializeAsync()
-        {
-            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests/draft2020-12/type.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": [\"string\"]\n        }",
-                "JsonSchemaTestSuite.Draft202012.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -877,14 +917,14 @@ public class SuiteTypeArrayOrObject
     [TestMethod]
     public void TestArrayIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1,2,3]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, 2, 3]");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestObjectIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 123}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 123 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -917,9 +957,9 @@ public class SuiteTypeArrayOrObject
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/type.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": [\"array\", \"object\"]\n        }",
+                "{\n                \"type\": [\"array\", \"object\"]\n            }",
                 "JsonSchemaTestSuite.Draft202012.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -952,14 +992,14 @@ public class SuiteTypeArrayObjectOrNull
     [TestMethod]
     public void TestArrayIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1,2,3]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, 2, 3]");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestObjectIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 123}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 123 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -992,9 +1032,9 @@ public class SuiteTypeArrayObjectOrNull
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/type.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": [\"array\", \"object\", \"null\"]\n        }",
+                "{\n                \"type\": [\"array\", \"object\", \"null\"]\n            }",
                 "JsonSchemaTestSuite.Draft202012.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,

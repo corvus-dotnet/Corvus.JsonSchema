@@ -61,9 +61,9 @@ public class SuiteMinItemsValidation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/minItems.json",
-                "{\"minItems\": 1}",
+                "{ \"minItems\": 1 }",
                 "StandaloneEvaluatorTestSuite.Draft6.MinItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -112,9 +112,9 @@ public class SuiteMinItemsValidationWithADecimal
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/minItems.json",
-                "{\"minItems\": 1.0}",
+                "{ \"minItems\": 1.0 }",
                 "StandaloneEvaluatorTestSuite.Draft6.MinItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

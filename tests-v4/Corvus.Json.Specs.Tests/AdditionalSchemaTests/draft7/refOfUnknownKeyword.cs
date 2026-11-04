@@ -14,26 +14,28 @@ namespace AdditionalSchemaTests.AdditionalDraft7.RefOfUnknownKeyword;
 public class SuiteReferenceOfAnArbitraryKeywordOfASubSchema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestDataBar3()
     {
-        using var doc = JsonDocument.Parse("{\r\n          \"bar\": 3\r\n        }");
+        using var doc = JsonDocument.Parse("{\n          \"bar\": 3\n        }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -41,12 +43,12 @@ public class SuiteReferenceOfAnArbitraryKeywordOfASubSchema
     [TestMethod]
     public void TestDataBarHello()
     {
-        using var doc = JsonDocument.Parse("{\r\n          \"bar\": \"hello\"\r\n        }");
+        using var doc = JsonDocument.Parse("{\n          \"bar\": \"hello\"\n        }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -65,10 +67,9 @@ public class SuiteReferenceOfAnArbitraryKeywordOfASubSchema
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

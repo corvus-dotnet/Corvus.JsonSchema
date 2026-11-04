@@ -83,35 +83,35 @@ public class SuiteUniqueItemsValidation
     [TestMethod]
     public void TestUniqueArrayOfObjectsIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{\"foo\": \"bar\"}, {\"foo\": \"baz\"}]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{ \"foo\": \"bar\" }, { \"foo\": \"baz\" }]");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestNonUniqueArrayOfObjectsIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{\"foo\": \"bar\"}, {\"foo\": \"bar\"}]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{ \"foo\": \"bar\" }, { \"foo\": \"bar\" }]");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestPropertyOrderOfArrayOfObjectsIsIgnored()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{\"foo\": \"bar\", \"bar\": \"foo\"}, {\"bar\": \"foo\", \"foo\": \"bar\"}]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{ \"foo\": \"bar\", \"bar\": \"foo\" }, { \"bar\": \"foo\", \"foo\": \"bar\" }]");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestUniqueArrayOfNestedObjectsIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\n                    {\"foo\": {\"bar\" : {\"baz\" : false}}}\n                ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\n                        { \"foo\": { \"bar\" : { \"baz\" : true } } },\n                        { \"foo\": { \"bar\" : { \"baz\" : false } } }\n                    ]");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestNonUniqueArrayOfNestedObjectsIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}}\n                ]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\n                        { \"foo\": { \"bar\" : { \"baz\" : true } } },\n                        { \"foo\": { \"bar\" : { \"baz\" : true } } }\n                    ]");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -139,26 +139,12 @@ public class SuiteUniqueItemsValidation
     [TestMethod]
     public void Test1AndTrueAreUnique()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, true]");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void Test0AndFalseAreUnique()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[0, false]");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void Test1AndTrueAreUnique1()
-    {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[[1], [true]]");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
-    public void Test0AndFalseAreUnique1()
+    public void Test0AndFalseAreUnique()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[[0], [false]]");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
@@ -195,28 +181,28 @@ public class SuiteUniqueItemsValidation
     [TestMethod]
     public void TestDifferentObjectsAreUnique()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{\"a\": 1, \"b\": 2}, {\"a\": 2, \"b\": 1}]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{ \"a\": 1, \"b\": 2 }, { \"a\": 2, \"b\": 1 }]");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestObjectsAreNonUniqueDespiteKeyOrder()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{\"a\": 1, \"b\": 2}, {\"b\": 2, \"a\": 1}]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{ \"a\": 1, \"b\": 2 }, { \"b\": 2, \"a\": 1 }]");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestAFalseAndA0AreUnique()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{\"a\": false}, {\"a\": 0}]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{ \"a\": false }, { \"a\": 0 }]");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestATrueAndA1AreUnique()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{\"a\": true}, {\"a\": 1}]");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{ \"a\": true }, { \"a\": 1 }]");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -228,9 +214,140 @@ public class SuiteUniqueItemsValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/uniqueItems.json",
-                "{\"uniqueItems\": true}",
+                "{\n                \"uniqueItems\": true\n            }",
                 "JsonSchemaTestSuite.Draft4.UniqueItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "http://json-schema.org/draft-04/schema#",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteUniqueItemsFalseValidation
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestUniqueArrayOfIntegersIsValid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, 2]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestNonUniqueArrayOfIntegersIsValid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, 1]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestNumbersAreUniqueIfMathematicallyUnequal()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1.0, 1.00, 1]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestFalseIsNotEqualToZero()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[0, false]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestTrueIsNotEqualToOne()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, true]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestUniqueArrayOfObjectsIsValid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{ \"foo\": \"bar\" }, { \"foo\": \"baz\" }]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestNonUniqueArrayOfObjectsIsValid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{ \"foo\": \"bar\" }, { \"foo\": \"bar\" }]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestUniqueArrayOfNestedObjectsIsValid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\n                        { \"foo\": { \"bar\" : { \"baz\" : true } } },\n                        { \"foo\": { \"bar\" : { \"baz\" : false } } }\n                    ]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestNonUniqueArrayOfNestedObjectsIsValid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\n                        { \"foo\": { \"bar\" : { \"baz\" : true } } },\n                        { \"foo\": { \"bar\" : { \"baz\" : true } } }\n                    ]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestUniqueArrayOfArraysIsValid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[[\"foo\"], [\"bar\"]]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestNonUniqueArrayOfArraysIsValid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[[\"foo\"], [\"foo\"]]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestUniqueHeterogeneousTypesAreValid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{}, [1], true, null, 1]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestNonUniqueHeterogeneousTypesAreValid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{}, [1], true, null, {}, 1]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests/draft4/uniqueItems.json",
+                "{\n                \"uniqueItems\": false\n            }",
+                "JsonSchemaTestSuite.Draft4.UniqueItems",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -324,9 +441,9 @@ public class SuiteUniqueItemsWithAnArrayOfItems
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/uniqueItems.json",
-                "{\n            \"items\": [{\"type\": \"boolean\"}, {\"type\": \"boolean\"}],\n            \"uniqueItems\": true\n        }",
+                "{\n                \"items\": [\n                    { \"type\": \"boolean\" },\n                    { \"type\": \"boolean\" }\n                ],\n                \"uniqueItems\": true\n            }",
                 "JsonSchemaTestSuite.Draft4.UniqueItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -399,154 +516,9 @@ public class SuiteUniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/uniqueItems.json",
-                "{\n            \"items\": [{\"type\": \"boolean\"}, {\"type\": \"boolean\"}],\n            \"uniqueItems\": true,\n            \"additionalItems\": false\n        }",
+                "{\n                \"items\": [\n                    { \"type\": \"boolean\" },\n                    { \"type\": \"boolean\" }\n                ],\n                \"uniqueItems\": true,\n                \"additionalItems\": false\n            }",
                 "JsonSchemaTestSuite.Draft4.UniqueItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
-                "http://json-schema.org/draft-04/schema#",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false,
-                addExplicitUsings: false,
-                Assembly.GetExecutingAssembly());
-        }
-    }
-}
-
-[TestCategory("Draft4")]
-[TestClass]
-public class SuiteUniqueItemsFalseValidation
-{
-    private static Fixture? s_fixture;
-
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext _)
-    {
-        s_fixture = new Fixture();
-        await s_fixture.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static void ClassCleanupMethod()
-    {
-        s_fixture = null;
-    }
-
-    [TestMethod]
-    public void TestUniqueArrayOfIntegersIsValid()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, 2]");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestNonUniqueArrayOfIntegersIsValid()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, 1]");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestNumbersAreUniqueIfMathematicallyUnequal()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1.0, 1.00, 1]");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestFalseIsNotEqualToZero()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[0, false]");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestTrueIsNotEqualToOne()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, true]");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestUniqueArrayOfObjectsIsValid()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{\"foo\": \"bar\"}, {\"foo\": \"baz\"}]");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestNonUniqueArrayOfObjectsIsValid()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{\"foo\": \"bar\"}, {\"foo\": \"bar\"}]");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestUniqueArrayOfNestedObjectsIsValid()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\n                    {\"foo\": {\"bar\" : {\"baz\" : false}}}\n                ]");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestNonUniqueArrayOfNestedObjectsIsValid()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}}\n                ]");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestUniqueArrayOfArraysIsValid()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[[\"foo\"], [\"bar\"]]");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestNonUniqueArrayOfArraysIsValid()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[[\"foo\"], [\"foo\"]]");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void Test1AndTrueAreUnique()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, true]");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void Test0AndFalseAreUnique()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[0, false]");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestUniqueHeterogeneousTypesAreValid()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{}, [1], true, null, 1]");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
-    public void TestNonUniqueHeterogeneousTypesAreValid()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{}, [1], true, null, {}, 1]");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    public class Fixture
-    {
-        public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public async Task InitializeAsync()
-        {
-            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
-                "tests/draft4/uniqueItems.json",
-                "{ \"uniqueItems\": false }",
-                "JsonSchemaTestSuite.Draft4.UniqueItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -640,9 +612,9 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItems
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/uniqueItems.json",
-                "{\n            \"items\": [{\"type\": \"boolean\"}, {\"type\": \"boolean\"}],\n            \"uniqueItems\": false\n        }",
+                "{\n                \"items\": [\n                    { \"type\": \"boolean\" },\n                    { \"type\": \"boolean\" }\n                ],\n                \"uniqueItems\": false\n            }",
                 "JsonSchemaTestSuite.Draft4.UniqueItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -715,9 +687,9 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItemsAndAdditionalItemsFalse
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/uniqueItems.json",
-                "{\n            \"items\": [{\"type\": \"boolean\"}, {\"type\": \"boolean\"}],\n            \"uniqueItems\": false,\n            \"additionalItems\": false\n        }",
+                "{\n                \"items\": [\n                    { \"type\": \"boolean\" },\n                    { \"type\": \"boolean\" }\n                ],\n                \"uniqueItems\": false,\n                \"additionalItems\": false\n            }",
                 "JsonSchemaTestSuite.Draft4.UniqueItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,

@@ -28,42 +28,42 @@ public class SuitePatternPropertiesValidatesPropertiesMatchingARegex
     [TestMethod]
     public void TestASingleValidMatchIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestMultipleValidMatchesIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"foooooo\" : 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1, \"foooooo\": 2 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestASingleInvalidMatchIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"bar\", \"fooooo\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"bar\", \"fooooo\": 2 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestMultipleInvalidMatchesIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"bar\", \"foooooo\" : \"baz\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"bar\", \"foooooo\": \"baz\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestIgnoresArrays()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[\"foo\"]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestIgnoresStrings()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\"");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"foo\"");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -82,9 +82,9 @@ public class SuitePatternPropertiesValidatesPropertiesMatchingARegex
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/patternProperties.json",
-                "{\n            \"patternProperties\": {\n                \"f.*o\": {\"type\": \"integer\"}\n            }\n        }",
+                "{\n                \"patternProperties\": {\n                    \"f.*o\": { \"type\": \"integer\" }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.PatternProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -114,42 +114,42 @@ public class SuiteMultipleSimultaneousPatternPropertiesAreValidated
     [TestMethod]
     public void TestASingleValidMatchIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"a\": 21}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"a\": 21 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestASimultaneousMatchIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"aaaa\": 18}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"aaaa\": 18 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestMultipleMatchesIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"a\": 21, \"aaaa\": 18}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"a\": 21, \"aaaa\": 18 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestAnInvalidDueToOneIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"a\": \"bar\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"a\": \"bar\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestAnInvalidDueToTheOtherIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"aaaa\": 31}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"aaaa\": 31 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestAnInvalidDueToBothIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"aaa\": \"foo\", \"aaaa\": 31}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"aaa\": \"foo\", \"aaaa\": 31 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -161,9 +161,9 @@ public class SuiteMultipleSimultaneousPatternPropertiesAreValidated
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/patternProperties.json",
-                "{\n            \"patternProperties\": {\n                \"a*\": {\"type\": \"integer\"},\n                \"aaa*\": {\"maximum\": 20}\n            }\n        }",
+                "{\n                \"patternProperties\": {\n                    \"a*\": { \"type\": \"integer\" },\n                    \"aaa*\": { \"maximum\": 20 }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.PatternProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -226,9 +226,9 @@ public class SuiteRegexesAreNotAnchoredByDefaultAndAreCaseSensitive
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/patternProperties.json",
-                "{\n            \"patternProperties\": {\n                \"[0-9]{2,}\": { \"type\": \"boolean\" },\n                \"X_\": { \"type\": \"string\" }\n            }\n        }",
+                "{\n                \"patternProperties\": {\n                    \"[0-9]{2,}\": { \"type\": \"boolean\" },\n                    \"X_\": { \"type\": \"string\" }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.PatternProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -258,7 +258,7 @@ public class SuitePatternPropertiesWithNullValuedInstanceProperties
     [TestMethod]
     public void TestAllowsNullValues()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foobar\": null}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foobar\": null }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -270,9 +270,9 @@ public class SuitePatternPropertiesWithNullValuedInstanceProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/patternProperties.json",
-                "{\n            \"patternProperties\": {\n                \"^.*bar$\": {\"type\": \"null\"}\n            }\n        }",
+                "{\n                \"patternProperties\": {\n                    \"^.*bar$\": { \"type\": \"null\" }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.PatternProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

@@ -71,7 +71,8 @@ let suite_dir =
     (let is_dir path = Sys.file_exists path && Sys.is_directory path in
      let from_env name =
        match Sys.getenv_opt name with
-       | Some root when root <> "" && is_dir (Filename.concat root "tests") -> Some (Filename.concat root "tests")
+       | Some root when root <> "" && is_dir (Filename.concat (Filename.concat root "validation") "tests") ->
+           Some (Filename.concat (Filename.concat root "validation") "tests")
        | _ -> None
      in
      match from_env "CORVUS_JSON_SCHEMA_TEST_SUITE" with
@@ -82,7 +83,9 @@ let suite_dir =
          | None ->
              (* The suite is a submodule at the root of the repository, some directories above this one. *)
              let rec up dir levels =
-               let tests = Filename.concat (Filename.concat dir "JSON-Schema-Test-Suite") "tests" in
+               let tests =
+                 Filename.concat (Filename.concat (Filename.concat dir "JSON-Schema-Test-Suite") "validation") "tests"
+               in
                if is_dir tests then Some tests
                else if levels = 0 || Filename.dirname dir = dir then None
                else up (Filename.dirname dir) (levels - 1)
@@ -94,19 +97,17 @@ let sorted_dir dir =
   Array.sort compare names;
   Array.to_list names
 
-(* Lists the files of the suite that exercise regular expressions, for every draft that has them. *)
+(* Lists the files of the suite that exercise regular expressions. *)
 let suite_files tests =
   let files =
-    List.concat_map
+    List.filter_map
       (fun name ->
-        List.filter_map
-          (fun draft ->
-            let path = Filename.concat (Filename.concat tests draft) name in
-            if Sys.file_exists path && not (Sys.is_directory path) then Some path else None)
-          (sorted_dir tests))
+        let path = Filename.concat tests name in
+        if Sys.file_exists path && not (Sys.is_directory path) then Some path else None)
       [
         Filename.concat "optional" "ecmascript-regex.json";
-        Filename.concat (Filename.concat "optional" "format") "regex.json";
+        Filename.concat "optional" "format-regex.json";
+        "format-regex.json";
         "pattern.json";
         "patternProperties.json";
         Filename.concat "optional" "non-bmp-regex.json";
@@ -185,23 +186,29 @@ let test_suite () =
       let cases = ref 0 in
       List.iter
         (fun file ->
-          match Json.load file with
-          | Array groups ->
+          match Json.items "tests" (Json.load file) with
+          | groups ->
               List.iter
                 (fun group ->
-                  let schema = match Json.member "schema" group with Some schema -> schema | None -> Json.Null in
-                  List.iter
-                    (fun test ->
-                      incr cases;
-                      let data = match Json.member "data" test with Some data -> data | None -> Json.Null in
-                      let want = Json.flag "valid" test in
-                      let got = suite_valid schema data in
-                      if got <> want then
-                        fail "%s: %s: %s: got %b, want %b" file (Json.text "description" group)
-                          (Json.text "description" test) got want)
-                    (Json.items "tests" group))
-                groups
-          | _ -> fail "%s is not an array" file)
+                  (* The regex format is asserted here: a case that expects it to be an annotation does not apply. *)
+                  let annotation =
+                    match Json.member "tags" group with
+                    | Some (Array tags) -> List.mem (Json.String "format-annotation") tags
+                    | _ -> false
+                  in
+                  if not annotation then
+                    let schema = match Json.member "schema" group with Some schema -> schema | None -> Json.Null in
+                    List.iter
+                      (fun test ->
+                        incr cases;
+                        let data = match Json.member "data" test with Some data -> data | None -> Json.Null in
+                        let want = Json.flag "valid" test in
+                        let got = suite_valid schema data in
+                        if got <> want then
+                          fail "%s: %s: %s: got %b, want %b" file (Json.text "description" group)
+                            (Json.text "description" test) got want)
+                      (Json.items "tests" group))
+                groups)
         files;
       let automata = Hashtbl.fold (fun _ re n -> if Re.engine re = Re.Dfa then n + 1 else n) suite_patterns 0 in
       let regular = Hashtbl.fold (fun _ re n -> if Re.regular re then n + 1 else n) suite_patterns 0 in

@@ -14,19 +14,21 @@ namespace JsonSchemaTestSuite.Draft4.Optional.EcmascriptRegex;
 public class SuiteECMA262RegexDoesNotMatchTrailingNewline
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -46,7 +48,7 @@ public class SuiteECMA262RegexDoesNotMatchTrailingNewline
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -56,8 +58,8 @@ public class SuiteECMA262RegexDoesNotMatchTrailingNewline
         {
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\ecmascript-regex.json",
-                "#/0/schema",
+                "optional/ecmascript-regex.json",
+                "#/tests/0/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "ECMA262RegexDoesNotMatchTrailingNewline",
                 validateFormat: false,
@@ -65,10 +67,9 @@ public class SuiteECMA262RegexDoesNotMatchTrailingNewline
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -78,19 +79,21 @@ public class SuiteECMA262RegexDoesNotMatchTrailingNewline
 public class SuiteECMA262RegexConvertsTToHorizontalTab
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -110,7 +113,7 @@ public class SuiteECMA262RegexConvertsTToHorizontalTab
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -120,8 +123,8 @@ public class SuiteECMA262RegexConvertsTToHorizontalTab
         {
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\ecmascript-regex.json",
-                "#/1/schema",
+                "optional/ecmascript-regex.json",
+                "#/tests/1/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "ECMA262RegexConvertsTToHorizontalTab",
                 validateFormat: false,
@@ -129,10 +132,9 @@ public class SuiteECMA262RegexConvertsTToHorizontalTab
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -142,19 +144,21 @@ public class SuiteECMA262RegexConvertsTToHorizontalTab
 public class SuiteECMA262RegexEscapesControlCodesWithCAndUpperLetter
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -174,7 +178,7 @@ public class SuiteECMA262RegexEscapesControlCodesWithCAndUpperLetter
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -184,8 +188,8 @@ public class SuiteECMA262RegexEscapesControlCodesWithCAndUpperLetter
         {
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\ecmascript-regex.json",
-                "#/2/schema",
+                "optional/ecmascript-regex.json",
+                "#/tests/2/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "ECMA262RegexEscapesControlCodesWithCAndUpperLetter",
                 validateFormat: false,
@@ -193,10 +197,9 @@ public class SuiteECMA262RegexEscapesControlCodesWithCAndUpperLetter
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -206,19 +209,21 @@ public class SuiteECMA262RegexEscapesControlCodesWithCAndUpperLetter
 public class SuiteECMA262RegexEscapesControlCodesWithCAndLowerLetter
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -238,7 +243,7 @@ public class SuiteECMA262RegexEscapesControlCodesWithCAndLowerLetter
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -248,8 +253,8 @@ public class SuiteECMA262RegexEscapesControlCodesWithCAndLowerLetter
         {
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\ecmascript-regex.json",
-                "#/3/schema",
+                "optional/ecmascript-regex.json",
+                "#/tests/3/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "ECMA262RegexEscapesControlCodesWithCAndLowerLetter",
                 validateFormat: false,
@@ -257,10 +262,9 @@ public class SuiteECMA262RegexEscapesControlCodesWithCAndLowerLetter
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -270,19 +274,21 @@ public class SuiteECMA262RegexEscapesControlCodesWithCAndLowerLetter
 public class SuiteECMA262DMatchesAsciiDigitsOnly
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -310,7 +316,7 @@ public class SuiteECMA262DMatchesAsciiDigitsOnly
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -320,8 +326,8 @@ public class SuiteECMA262DMatchesAsciiDigitsOnly
         {
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\ecmascript-regex.json",
-                "#/4/schema",
+                "optional/ecmascript-regex.json",
+                "#/tests/4/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "ECMA262DMatchesAsciiDigitsOnly",
                 validateFormat: false,
@@ -329,10 +335,9 @@ public class SuiteECMA262DMatchesAsciiDigitsOnly
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -342,19 +347,21 @@ public class SuiteECMA262DMatchesAsciiDigitsOnly
 public class SuiteECMA262DMatchesEverythingButAsciiDigits
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -382,7 +389,7 @@ public class SuiteECMA262DMatchesEverythingButAsciiDigits
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -392,8 +399,8 @@ public class SuiteECMA262DMatchesEverythingButAsciiDigits
         {
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\ecmascript-regex.json",
-                "#/5/schema",
+                "optional/ecmascript-regex.json",
+                "#/tests/5/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "ECMA262DMatchesEverythingButAsciiDigits",
                 validateFormat: false,
@@ -401,10 +408,9 @@ public class SuiteECMA262DMatchesEverythingButAsciiDigits
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -414,19 +420,21 @@ public class SuiteECMA262DMatchesEverythingButAsciiDigits
 public class SuiteECMA262WMatchesAsciiLettersOnly
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -446,7 +454,7 @@ public class SuiteECMA262WMatchesAsciiLettersOnly
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -456,8 +464,8 @@ public class SuiteECMA262WMatchesAsciiLettersOnly
         {
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\ecmascript-regex.json",
-                "#/6/schema",
+                "optional/ecmascript-regex.json",
+                "#/tests/6/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "ECMA262WMatchesAsciiLettersOnly",
                 validateFormat: false,
@@ -465,10 +473,9 @@ public class SuiteECMA262WMatchesAsciiLettersOnly
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -478,19 +485,21 @@ public class SuiteECMA262WMatchesAsciiLettersOnly
 public class SuiteECMA262WMatchesEverythingButAsciiLetters
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -510,7 +519,7 @@ public class SuiteECMA262WMatchesEverythingButAsciiLetters
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -520,8 +529,8 @@ public class SuiteECMA262WMatchesEverythingButAsciiLetters
         {
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\ecmascript-regex.json",
-                "#/7/schema",
+                "optional/ecmascript-regex.json",
+                "#/tests/7/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "ECMA262WMatchesEverythingButAsciiLetters",
                 validateFormat: false,
@@ -529,10 +538,9 @@ public class SuiteECMA262WMatchesEverythingButAsciiLetters
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -542,19 +550,21 @@ public class SuiteECMA262WMatchesEverythingButAsciiLetters
 public class SuiteECMA262SMatchesWhitespace
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -646,7 +656,7 @@ public class SuiteECMA262SMatchesWhitespace
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -656,8 +666,8 @@ public class SuiteECMA262SMatchesWhitespace
         {
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\ecmascript-regex.json",
-                "#/8/schema",
+                "optional/ecmascript-regex.json",
+                "#/tests/8/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "ECMA262SMatchesWhitespace",
                 validateFormat: false,
@@ -665,10 +675,9 @@ public class SuiteECMA262SMatchesWhitespace
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -678,19 +687,21 @@ public class SuiteECMA262SMatchesWhitespace
 public class SuiteECMA262SMatchesEverythingButWhitespace
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -782,7 +793,7 @@ public class SuiteECMA262SMatchesEverythingButWhitespace
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -792,8 +803,8 @@ public class SuiteECMA262SMatchesEverythingButWhitespace
         {
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\ecmascript-regex.json",
-                "#/9/schema",
+                "optional/ecmascript-regex.json",
+                "#/tests/9/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "ECMA262SMatchesEverythingButWhitespace",
                 validateFormat: false,
@@ -801,90 +812,9 @@ public class SuiteECMA262SMatchesEverythingButWhitespace
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft4")]
-[TestClass]
-public class SuitePatternsAlwaysUseUnicodeSemanticsWithPattern
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestAsciiCharacterInJsonString()
-    {
-        using var doc = JsonDocument.Parse("\"Les hivers de mon enfance etaient des saisons longues, longues. Nous vivions en trois lieux: l'ecole, l'eglise et la patinoire; mais la vraie vie etait sur la patinoire.\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestLiteralUnicodeCharacterInJsonString()
-    {
-        using var doc = JsonDocument.Parse("\"Les hivers de mon enfance étaient des saisons longues, longues. Nous vivions en trois lieux: l'école, l'église et la patinoire; mais la vraie vie était sur la patinoire.\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestUnicodeCharacterInHexFormatInString()
-    {
-        using var doc = JsonDocument.Parse("\"Les hivers de mon enfance étaient des saisons longues, longues. Nous vivions en trois lieux: l'\\u00e9cole, l'église et la patinoire; mais la vraie vie était sur la patinoire.\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestUnicodeMatchingIsCaseSensitive()
-    {
-        using var doc = JsonDocument.Parse("\"LES HIVERS DE MON ENFANCE ÉTAIENT DES SAISONS LONGUES, LONGUES. NOUS VIVIONS EN TROIS LIEUX: L'ÉCOLE, L'ÉGLISE ET LA PATINOIRE; MAIS LA VRAIE VIE ÉTAIT SUR LA PATINOIRE.\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\ecmascript-regex.json",
-                "#/10/schema",
-                "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
-                "PatternsAlwaysUseUnicodeSemanticsWithPattern",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -894,19 +824,21 @@ public class SuitePatternsAlwaysUseUnicodeSemanticsWithPattern
 public class SuiteWInPatternsMatchesAZaZ09NotUnicodeLetters
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -942,7 +874,7 @@ public class SuiteWInPatternsMatchesAZaZ09NotUnicodeLetters
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -952,8 +884,8 @@ public class SuiteWInPatternsMatchesAZaZ09NotUnicodeLetters
         {
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\ecmascript-regex.json",
-                "#/11/schema",
+                "optional/ecmascript-regex.json",
+                "#/tests/11/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "WInPatternsMatchesAZaZ09NotUnicodeLetters",
                 validateFormat: false,
@@ -961,10 +893,9 @@ public class SuiteWInPatternsMatchesAZaZ09NotUnicodeLetters
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -974,19 +905,21 @@ public class SuiteWInPatternsMatchesAZaZ09NotUnicodeLetters
 public class SuitePatternWithASCIIRanges
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -1014,7 +947,7 @@ public class SuitePatternWithASCIIRanges
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1024,8 +957,8 @@ public class SuitePatternWithASCIIRanges
         {
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\ecmascript-regex.json",
-                "#/12/schema",
+                "optional/ecmascript-regex.json",
+                "#/tests/12/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "PatternWithASCIIRanges",
                 validateFormat: false,
@@ -1033,10 +966,9 @@ public class SuitePatternWithASCIIRanges
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -1046,19 +978,21 @@ public class SuitePatternWithASCIIRanges
 public class SuiteDInPatternMatches09NotUnicodeDigits
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -1086,7 +1020,7 @@ public class SuiteDInPatternMatches09NotUnicodeDigits
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1096,8 +1030,8 @@ public class SuiteDInPatternMatches09NotUnicodeDigits
         {
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\ecmascript-regex.json",
-                "#/13/schema",
+                "optional/ecmascript-regex.json",
+                "#/tests/13/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "DInPatternMatches09NotUnicodeDigits",
                 validateFormat: false,
@@ -1105,162 +1039,9 @@ public class SuiteDInPatternMatches09NotUnicodeDigits
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft4")]
-[TestClass]
-public class SuitePatternWithNonASCIIDigits
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestAsciiDigits()
-    {
-        using var doc = JsonDocument.Parse("\"42\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestAsciiNonDigits()
-    {
-        using var doc = JsonDocument.Parse("\"-%#\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestNonAsciiDigitsBENGALIDIGITFOURBENGALIDIGITTWO()
-    {
-        using var doc = JsonDocument.Parse("\"৪২\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\ecmascript-regex.json",
-                "#/14/schema",
-                "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
-                "PatternWithNonASCIIDigits",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft4")]
-[TestClass]
-public class SuitePatternsAlwaysUseUnicodeSemanticsWithPatternProperties
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestAsciiCharacterInJsonString()
-    {
-        using var doc = JsonDocument.Parse("{ \"l'ecole\": \"pas de vraie vie\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestLiteralUnicodeCharacterInJsonString()
-    {
-        using var doc = JsonDocument.Parse("{ \"l'école\": \"pas de vraie vie\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestUnicodeCharacterInHexFormatInString()
-    {
-        using var doc = JsonDocument.Parse("{ \"l'\\u00e9cole\": \"pas de vraie vie\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestUnicodeMatchingIsCaseSensitive()
-    {
-        using var doc = JsonDocument.Parse("{ \"L'ÉCOLE\": \"PAS DE VRAIE VIE\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\ecmascript-regex.json",
-                "#/15/schema",
-                "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
-                "PatternsAlwaysUseUnicodeSemanticsWithPatternProperties",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -1270,19 +1051,21 @@ public class SuitePatternsAlwaysUseUnicodeSemanticsWithPatternProperties
 public class SuiteWInPatternPropertiesMatchesAZaZ09NotUnicodeLetters
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -1318,7 +1101,7 @@ public class SuiteWInPatternPropertiesMatchesAZaZ09NotUnicodeLetters
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1328,8 +1111,8 @@ public class SuiteWInPatternPropertiesMatchesAZaZ09NotUnicodeLetters
         {
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\ecmascript-regex.json",
-                "#/16/schema",
+                "optional/ecmascript-regex.json",
+                "#/tests/16/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "WInPatternPropertiesMatchesAZaZ09NotUnicodeLetters",
                 validateFormat: false,
@@ -1337,10 +1120,9 @@ public class SuiteWInPatternPropertiesMatchesAZaZ09NotUnicodeLetters
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -1350,19 +1132,21 @@ public class SuiteWInPatternPropertiesMatchesAZaZ09NotUnicodeLetters
 public class SuitePatternPropertiesWithASCIIRanges
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -1390,7 +1174,7 @@ public class SuitePatternPropertiesWithASCIIRanges
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1400,8 +1184,8 @@ public class SuitePatternPropertiesWithASCIIRanges
         {
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\ecmascript-regex.json",
-                "#/17/schema",
+                "optional/ecmascript-regex.json",
+                "#/tests/17/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "PatternPropertiesWithASCIIRanges",
                 validateFormat: false,
@@ -1409,10 +1193,9 @@ public class SuitePatternPropertiesWithASCIIRanges
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -1422,19 +1205,21 @@ public class SuitePatternPropertiesWithASCIIRanges
 public class SuiteDInPatternPropertiesMatches09NotUnicodeDigits
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -1462,7 +1247,7 @@ public class SuiteDInPatternPropertiesMatches09NotUnicodeDigits
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1472,8 +1257,8 @@ public class SuiteDInPatternPropertiesMatches09NotUnicodeDigits
         {
             _driver = DriverFactory.CreateDraft4Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\ecmascript-regex.json",
-                "#/18/schema",
+                "optional/ecmascript-regex.json",
+                "#/tests/18/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "DInPatternPropertiesMatches09NotUnicodeDigits",
                 validateFormat: false,
@@ -1481,82 +1266,9 @@ public class SuiteDInPatternPropertiesMatches09NotUnicodeDigits
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft4")]
-[TestClass]
-public class SuitePatternPropertiesWithNonASCIIDigits
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestAsciiDigits()
-    {
-        using var doc = JsonDocument.Parse("{ \"42\": \"life, the universe, and everything\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestAsciiNonDigits()
-    {
-        using var doc = JsonDocument.Parse("{ \"-%#\": \"spending the year dead for tax reasons\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestNonAsciiDigitsBENGALIDIGITFOURBENGALIDIGITTWO()
-    {
-        using var doc = JsonDocument.Parse("{ \"৪২\": \"khajit has wares if you have coin\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\ecmascript-regex.json",
-                "#/19/schema",
-                "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
-                "PatternPropertiesWithNonASCIIDigits",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

@@ -47,9 +47,9 @@ public class SuiteNot
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/not.json",
-                "{\n            \"not\": {\"type\": \"integer\"}\n        }",
+                "{\n                \"not\": { \"type\": \"integer\" }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Not",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -105,9 +105,9 @@ public class SuiteNotMultipleTypes
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/not.json",
-                "{\n            \"not\": {\"type\": [\"integer\", \"boolean\"]}\n        }",
+                "{\n                \"not\": { \"type\": [\"integer\", \"boolean\"] }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Not",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -144,14 +144,14 @@ public class SuiteNotMoreComplexSchema
     [TestMethod]
     public void TestOtherMatch()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestMismatch()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"bar\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"bar\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -163,9 +163,9 @@ public class SuiteNotMoreComplexSchema
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/not.json",
-                "{\n            \"not\": {\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": {\n                        \"type\": \"string\"\n                    }\n                }\n             }\n        }",
+                "{\n                \"not\": {\n                    \"type\": \"object\",\n                    \"properties\": {\n                        \"foo\": { \"type\": \"string\" }\n                    }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Not",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -195,14 +195,14 @@ public class SuiteForbiddenProperty
     [TestMethod]
     public void TestPropertyPresent()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"bar\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1, \"bar\": 2 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestPropertyAbsent()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": 1, \"baz\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": 1, \"baz\": 2 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -214,9 +214,9 @@ public class SuiteForbiddenProperty
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/not.json",
-                "{\n            \"properties\": {\n                \"foo\": { \n                    \"not\": {}\n                }\n            }\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": { \"not\": {} }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Not",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -281,7 +281,7 @@ public class SuiteForbidEverythingWithEmptySchema
     [TestMethod]
     public void TestObjectIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"bar\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"bar\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -314,9 +314,9 @@ public class SuiteForbidEverythingWithEmptySchema
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/not.json",
-                "{ \"not\": {} }",
+                "{\n                \"not\": {}\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Not",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -358,9 +358,9 @@ public class SuiteDoubleNegation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/not.json",
-                "{ \"not\": { \"not\": {} } }",
+                "{\n                \"not\": { \"not\": {} }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Not",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

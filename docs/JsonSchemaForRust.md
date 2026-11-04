@@ -7,8 +7,9 @@ and gives the same results and annotations. The Python, Ruby, PHP and R packages
 A schema is compiled once into a node graph with its keywords pre-digested: references resolved, patterns compiled,
 numeric bounds exact. Any number of instances can then be validated against it.
 
-- **Conformant.** Passes the whole JSON-Schema-Test-Suite (required, optional and `optional/format`, every draft) except
-  `draft4/optional/zeroTerminatedFloats.json`, and all of its annotation tests.
+- **Conformant.** Passes the whole JSON-Schema-Test-Suite (required and optional, every draft) except
+  `draft4/optional/zero-terminated-floats.json` and the high-precision cases of `optional/bignum.json` (serde_json
+  values hold a number to the precision of an `f64`), and all of its annotation tests.
 - **Fast.** Over the [jsonschema-benchmark](https://github.com/sourcemeta-research/jsonschema-benchmark) corpora,
   parsing and validating JSON text takes 0.37 of the time of [Blaze](https://github.com/sourcemeta/blaze), the C++
   validator, and it is faster on all 37 corpora.

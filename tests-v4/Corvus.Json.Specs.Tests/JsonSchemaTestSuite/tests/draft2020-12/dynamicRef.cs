@@ -11,22 +11,24 @@ namespace JsonSchemaTestSuite.Draft202012.DynamicRef;
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteADynamicRefToADynamicAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnAnchor
+public class SuiteADynamicRefToADynamicAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnAnchor2020
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -46,7 +48,7 @@ public class SuiteADynamicRefToADynamicAnchorInTheSameSchemaResourceBehavesLikeA
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -57,40 +59,41 @@ public class SuiteADynamicRefToADynamicAnchorInTheSameSchemaResourceBehavesLikeA
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
-                "#/0/schema",
+                "#/tests/1/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
-                "ADynamicRefToADynamicAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnAnchor",
+                "ADynamicRefToADynamicAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnAnchor2020",
                 validateFormat: false,
                 optionalAsNullable: false,
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteADynamicRefToAnAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnAnchor
+public class SuiteADynamicRefResolvesToTheFirstDynamicAnchorStillInScopeThatIsEncounteredWhenTheSchemaIsEvaluated2020
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -110,7 +113,7 @@ public class SuiteADynamicRefToAnAnchorInTheSameSchemaResourceBehavesLikeANormal
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -121,40 +124,41 @@ public class SuiteADynamicRefToAnAnchorInTheSameSchemaResourceBehavesLikeANormal
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
-                "#/1/schema",
+                "#/tests/3/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
-                "ADynamicRefToAnAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnAnchor",
+                "ADynamicRefResolvesToTheFirstDynamicAnchorStillInScopeThatIsEncounteredWhenTheSchemaIsEvaluated2020",
                 validateFormat: false,
                 optionalAsNullable: false,
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteARefToADynamicAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnAnchor
+public class SuiteADynamicRefWithIntermediateScopesThatDonTIncludeAMatchingDynamicAnchorDoesNotAffectDynamicScopeResolution2020
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -174,7 +178,7 @@ public class SuiteARefToADynamicAnchorInTheSameSchemaResourceBehavesLikeANormalR
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -185,232 +189,41 @@ public class SuiteARefToADynamicAnchorInTheSameSchemaResourceBehavesLikeANormalR
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
-                "#/2/schema",
+                "#/tests/5/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
-                "ARefToADynamicAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnAnchor",
+                "ADynamicRefWithIntermediateScopesThatDonTIncludeAMatchingDynamicAnchorDoesNotAffectDynamicScopeResolution2020",
                 validateFormat: false,
                 optionalAsNullable: false,
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteADynamicRefResolvesToTheFirstDynamicAnchorStillInScopeThatIsEncounteredWhenTheSchemaIsEvaluated
+public class SuiteAnAnchorWithTheSameNameAsADynamicAnchorIsNotUsedForDynamicScopeResolution2020
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestAnArrayOfStringsIsValid()
-    {
-        using var doc = JsonDocument.Parse("[\"foo\", \"bar\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestAnArrayContainingNonStringsIsInvalid()
-    {
-        using var doc = JsonDocument.Parse("[\"foo\", 42]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "dynamicRef.json",
-                "#/3/schema",
-                "JsonSchemaTestSuiteDraft202012DynamicRef",
-                "ADynamicRefResolvesToTheFirstDynamicAnchorStillInScopeThatIsEncounteredWhenTheSchemaIsEvaluated",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft202012")]
-[TestClass]
-public class SuiteADynamicRefWithoutAnchorInFragmentBehavesIdenticalToRef
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestAnArrayOfStringsIsInvalid()
-    {
-        using var doc = JsonDocument.Parse("[\"foo\", \"bar\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestAnArrayOfNumbersIsValid()
-    {
-        using var doc = JsonDocument.Parse("[24, 42]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "dynamicRef.json",
-                "#/4/schema",
-                "JsonSchemaTestSuiteDraft202012DynamicRef",
-                "ADynamicRefWithoutAnchorInFragmentBehavesIdenticalToRef",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft202012")]
-[TestClass]
-public class SuiteADynamicRefWithIntermediateScopesThatDonTIncludeAMatchingDynamicAnchorDoesNotAffectDynamicScopeResolution
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestAnArrayOfStringsIsValid()
-    {
-        using var doc = JsonDocument.Parse("[\"foo\", \"bar\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestAnArrayContainingNonStringsIsInvalid()
-    {
-        using var doc = JsonDocument.Parse("[\"foo\", 42]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "dynamicRef.json",
-                "#/5/schema",
-                "JsonSchemaTestSuiteDraft202012DynamicRef",
-                "ADynamicRefWithIntermediateScopesThatDonTIncludeAMatchingDynamicAnchorDoesNotAffectDynamicScopeResolution",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft202012")]
-[TestClass]
-public class SuiteAnAnchorWithTheSameNameAsADynamicAnchorIsNotUsedForDynamicScopeResolution
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -422,7 +235,7 @@ public class SuiteAnAnchorWithTheSameNameAsADynamicAnchorIsNotUsedForDynamicScop
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -433,352 +246,41 @@ public class SuiteAnAnchorWithTheSameNameAsADynamicAnchorIsNotUsedForDynamicScop
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
-                "#/6/schema",
+                "#/tests/7/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
-                "AnAnchorWithTheSameNameAsADynamicAnchorIsNotUsedForDynamicScopeResolution",
+                "AnAnchorWithTheSameNameAsADynamicAnchorIsNotUsedForDynamicScopeResolution2020",
                 validateFormat: false,
                 optionalAsNullable: false,
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteADynamicRefWithoutAMatchingDynamicAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnchor
+public class SuiteAfterLeavingADynamicScopeItIsNotUsedByADynamicRef2020
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestAnyArrayIsValid()
-    {
-        using var doc = JsonDocument.Parse("[\"foo\", 42]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "dynamicRef.json",
-                "#/7/schema",
-                "JsonSchemaTestSuiteDraft202012DynamicRef",
-                "ADynamicRefWithoutAMatchingDynamicAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnchor",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft202012")]
-[TestClass]
-public class SuiteADynamicRefWithANonMatchingDynamicAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnchor
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestAnyArrayIsValid()
-    {
-        using var doc = JsonDocument.Parse("[\"foo\", 42]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "dynamicRef.json",
-                "#/8/schema",
-                "JsonSchemaTestSuiteDraft202012DynamicRef",
-                "ADynamicRefWithANonMatchingDynamicAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnchor",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft202012")]
-[TestClass]
-public class SuiteADynamicRefThatInitiallyResolvesToASchemaWithAMatchingDynamicAnchorResolvesToTheFirstDynamicAnchorInTheDynamicScope
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestTheRecursivePartIsValidAgainstTheRoot()
-    {
-        using var doc = JsonDocument.Parse("{\r\n                    \"foo\": \"pass\",\r\n                    \"bar\": {\r\n                        \"baz\": { \"foo\": \"pass\" }\r\n                    }\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestTheRecursivePartIsNotValidAgainstTheRoot()
-    {
-        using var doc = JsonDocument.Parse("{\r\n                    \"foo\": \"pass\",\r\n                    \"bar\": {\r\n                        \"baz\": { \"foo\": \"fail\" }\r\n                    }\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "dynamicRef.json",
-                "#/9/schema",
-                "JsonSchemaTestSuiteDraft202012DynamicRef",
-                "ADynamicRefThatInitiallyResolvesToASchemaWithAMatchingDynamicAnchorResolvesToTheFirstDynamicAnchorInTheDynamicScope",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft202012")]
-[TestClass]
-public class SuiteADynamicRefThatInitiallyResolvesToASchemaWithoutAMatchingDynamicAnchorBehavesLikeANormalRefToAnchor
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestTheRecursivePartDoesnTNeedToValidateAgainstTheRoot()
-    {
-        using var doc = JsonDocument.Parse("{\r\n                    \"foo\": \"pass\",\r\n                    \"bar\": {\r\n                        \"baz\": { \"foo\": \"fail\" }\r\n                    }\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "dynamicRef.json",
-                "#/10/schema",
-                "JsonSchemaTestSuiteDraft202012DynamicRef",
-                "ADynamicRefThatInitiallyResolvesToASchemaWithoutAMatchingDynamicAnchorBehavesLikeANormalRefToAnchor",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft202012")]
-[TestClass]
-public class SuiteMultipleDynamicPathsToTheDynamicRefKeyword
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestNumberListWithNumberValues()
-    {
-        using var doc = JsonDocument.Parse("{\r\n                    \"kindOfList\": \"numbers\",\r\n                    \"list\": [1.1]\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestNumberListWithStringValues()
-    {
-        using var doc = JsonDocument.Parse("{\r\n                    \"kindOfList\": \"numbers\",\r\n                    \"list\": [\"foo\"]\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestStringListWithNumberValues()
-    {
-        using var doc = JsonDocument.Parse("{\r\n                    \"kindOfList\": \"strings\",\r\n                    \"list\": [1.1]\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestStringListWithStringValues()
-    {
-        using var doc = JsonDocument.Parse("{\r\n                    \"kindOfList\": \"strings\",\r\n                    \"list\": [\"foo\"]\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "dynamicRef.json",
-                "#/11/schema",
-                "JsonSchemaTestSuiteDraft202012DynamicRef",
-                "MultipleDynamicPathsToTheDynamicRefKeyword",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft202012")]
-[TestClass]
-public class SuiteAfterLeavingADynamicScopeItIsNotUsedByADynamicRef
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -806,7 +308,7 @@ public class SuiteAfterLeavingADynamicScopeItIsNotUsedByADynamicRef
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -817,47 +319,48 @@ public class SuiteAfterLeavingADynamicScopeItIsNotUsedByADynamicRef
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
-                "#/12/schema",
+                "#/tests/9/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
-                "AfterLeavingADynamicScopeItIsNotUsedByADynamicRef",
+                "AfterLeavingADynamicScopeItIsNotUsedByADynamicRef2020",
                 validateFormat: false,
                 optionalAsNullable: false,
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteStrictTreeSchemaGuardsAgainstMisspelledProperties
+public class SuiteStrictTreeSchemaGuardsAgainstMisspelledProperties2020
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestInstanceWithMisspelledField()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"children\": [{\r\n                            \"daat\": 1\r\n                        }]\r\n                }");
+        using var doc = JsonDocument.Parse("{\n                        \"children\": [{\n                            \"daat\": 1\n                        }]\n                    }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -865,12 +368,12 @@ public class SuiteStrictTreeSchemaGuardsAgainstMisspelledProperties
     [TestMethod]
     public void TestInstanceWithCorrectField()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"children\": [{\r\n                            \"data\": 1\r\n                        }]\r\n                }");
+        using var doc = JsonDocument.Parse("{\n                        \"children\": [{\n                            \"data\": 1\n                        }]\n                    }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -881,47 +384,49 @@ public class SuiteStrictTreeSchemaGuardsAgainstMisspelledProperties
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
-                "#/13/schema",
+                "#/tests/11/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
-                "StrictTreeSchemaGuardsAgainstMisspelledProperties",
+                "StrictTreeSchemaGuardsAgainstMisspelledProperties2020",
                 validateFormat: false,
                 optionalAsNullable: false,
-                useImplicitOperatorString: false);
+                useImplicitOperatorString: false,
+                externalSchemasPath: "#/tests/11/externalSchemas");
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteTestsForImplementationDynamicAnchorAndReferenceLink
+public class SuiteTestsForImplementationDynamicAnchorAndReferenceLink2020
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestIncorrectParentSchema()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"a\": true\r\n                }");
+        using var doc = JsonDocument.Parse("{\n                        \"a\": true\n                    }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -929,7 +434,7 @@ public class SuiteTestsForImplementationDynamicAnchorAndReferenceLink
     [TestMethod]
     public void TestIncorrectExtendedSchema()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"elements\": [\r\n                        { \"b\": 1 }\r\n                    ]\r\n                }");
+        using var doc = JsonDocument.Parse("{\n                        \"elements\": [\n                            { \"b\": 1 }\n                        ]\n                    }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -937,12 +442,12 @@ public class SuiteTestsForImplementationDynamicAnchorAndReferenceLink
     [TestMethod]
     public void TestCorrectExtendedSchema()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"elements\": [\r\n                        { \"a\": 1 }\r\n                    ]\r\n                }");
+        using var doc = JsonDocument.Parse("{\n                        \"elements\": [\n                            { \"a\": 1 }\n                        ]\n                    }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -953,47 +458,49 @@ public class SuiteTestsForImplementationDynamicAnchorAndReferenceLink
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
-                "#/14/schema",
+                "#/tests/13/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
-                "TestsForImplementationDynamicAnchorAndReferenceLink",
+                "TestsForImplementationDynamicAnchorAndReferenceLink2020",
                 validateFormat: false,
                 optionalAsNullable: false,
-                useImplicitOperatorString: false);
+                useImplicitOperatorString: false,
+                externalSchemasPath: "#/tests/13/externalSchemas");
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteRefAndDynamicAnchorAreIndependentOfOrderDefsFirst
+public class SuiteRefAndDynamicAnchorAreIndependentOfOrderDefsFirst2020
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestIncorrectParentSchema()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"a\": true\r\n                }");
+        using var doc = JsonDocument.Parse("{\n                        \"a\": true\n                    }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -1001,7 +508,7 @@ public class SuiteRefAndDynamicAnchorAreIndependentOfOrderDefsFirst
     [TestMethod]
     public void TestIncorrectExtendedSchema()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"elements\": [\r\n                        { \"b\": 1 }\r\n                    ]\r\n                }");
+        using var doc = JsonDocument.Parse("{\n                        \"elements\": [\n                            { \"b\": 1 }\n                        ]\n                    }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -1009,12 +516,12 @@ public class SuiteRefAndDynamicAnchorAreIndependentOfOrderDefsFirst
     [TestMethod]
     public void TestCorrectExtendedSchema()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"elements\": [\r\n                        { \"a\": 1 }\r\n                    ]\r\n                }");
+        using var doc = JsonDocument.Parse("{\n                        \"elements\": [\n                            { \"a\": 1 }\n                        ]\n                    }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1025,47 +532,49 @@ public class SuiteRefAndDynamicAnchorAreIndependentOfOrderDefsFirst
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
-                "#/15/schema",
+                "#/tests/15/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
-                "RefAndDynamicAnchorAreIndependentOfOrderDefsFirst",
+                "RefAndDynamicAnchorAreIndependentOfOrderDefsFirst2020",
                 validateFormat: false,
                 optionalAsNullable: false,
-                useImplicitOperatorString: false);
+                useImplicitOperatorString: false,
+                externalSchemasPath: "#/tests/15/externalSchemas");
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteRefAndDynamicAnchorAreIndependentOfOrderRefFirst
+public class SuiteRefAndDynamicAnchorAreIndependentOfOrderRefFirst2020
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestIncorrectParentSchema()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"a\": true\r\n                }");
+        using var doc = JsonDocument.Parse("{\n                        \"a\": true\n                    }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -1073,7 +582,7 @@ public class SuiteRefAndDynamicAnchorAreIndependentOfOrderRefFirst
     [TestMethod]
     public void TestIncorrectExtendedSchema()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"elements\": [\r\n                        { \"b\": 1 }\r\n                    ]\r\n                }");
+        using var doc = JsonDocument.Parse("{\n                        \"elements\": [\n                            { \"b\": 1 }\n                        ]\n                    }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -1081,12 +590,12 @@ public class SuiteRefAndDynamicAnchorAreIndependentOfOrderRefFirst
     [TestMethod]
     public void TestCorrectExtendedSchema()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"elements\": [\r\n                        { \"a\": 1 }\r\n                    ]\r\n                }");
+        using var doc = JsonDocument.Parse("{\n                        \"elements\": [\n                            { \"a\": 1 }\n                        ]\n                    }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1097,40 +606,42 @@ public class SuiteRefAndDynamicAnchorAreIndependentOfOrderRefFirst
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
-                "#/16/schema",
+                "#/tests/17/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
-                "RefAndDynamicAnchorAreIndependentOfOrderRefFirst",
+                "RefAndDynamicAnchorAreIndependentOfOrderRefFirst2020",
                 validateFormat: false,
                 optionalAsNullable: false,
-                useImplicitOperatorString: false);
+                useImplicitOperatorString: false,
+                externalSchemasPath: "#/tests/17/externalSchemas");
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteRefToDynamicRefFindsDetachedDynamicAnchor
+public class SuiteRefToDynamicRefFindsDetachedDynamicAnchor2020
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -1150,7 +661,7 @@ public class SuiteRefToDynamicRefFindsDetachedDynamicAnchor
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1161,104 +672,42 @@ public class SuiteRefToDynamicRefFindsDetachedDynamicAnchor
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
-                "#/17/schema",
+                "#/tests/19/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
-                "RefToDynamicRefFindsDetachedDynamicAnchor",
+                "RefToDynamicRefFindsDetachedDynamicAnchor2020",
                 validateFormat: false,
                 optionalAsNullable: false,
-                useImplicitOperatorString: false);
+                useImplicitOperatorString: false,
+                externalSchemasPath: "#/tests/19/externalSchemas");
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteDynamicRefPointsToABooleanSchema
+public class SuiteDynamicRefSkipsOverIntermediateResourcesDirectReference2020
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestFollowDynamicRefToATrueSchema()
-    {
-        using var doc = JsonDocument.Parse("{ \"true\": 1 }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestFollowDynamicRefToAFalseSchema()
-    {
-        using var doc = JsonDocument.Parse("{ \"false\": 1 }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "dynamicRef.json",
-                "#/18/schema",
-                "JsonSchemaTestSuiteDraft202012DynamicRef",
-                "DynamicRefPointsToABooleanSchema",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft202012")]
-[TestClass]
-public class SuiteDynamicRefSkipsOverIntermediateResourcesDirectReference
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -1278,7 +727,7 @@ public class SuiteDynamicRefSkipsOverIntermediateResourcesDirectReference
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1289,40 +738,41 @@ public class SuiteDynamicRefSkipsOverIntermediateResourcesDirectReference
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
-                "#/19/schema",
+                "#/tests/21/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
-                "DynamicRefSkipsOverIntermediateResourcesDirectReference",
+                "DynamicRefSkipsOverIntermediateResourcesDirectReference2020",
                 validateFormat: false,
                 optionalAsNullable: false,
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteDynamicRefAvoidsTheRootOfEachSchemaButScopesAreStillRegistered
+public class SuiteDynamicRefAvoidsTheRootOfEachSchemaButScopesAreStillRegistered2020
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -1342,7 +792,7 @@ public class SuiteDynamicRefAvoidsTheRootOfEachSchemaButScopesAreStillRegistered
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1353,18 +803,594 @@ public class SuiteDynamicRefAvoidsTheRootOfEachSchemaButScopesAreStillRegistered
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
-                "#/20/schema",
+                "#/tests/23/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
-                "DynamicRefAvoidsTheRootOfEachSchemaButScopesAreStillRegistered",
+                "DynamicRefAvoidsTheRootOfEachSchemaButScopesAreStillRegistered2020",
                 validateFormat: false,
                 optionalAsNullable: false,
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteADynamicRefToAnAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnAnchor
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestAnArrayOfStringsIsValid()
+    {
+        using var doc = JsonDocument.Parse("[\"foo\", \"bar\"]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestAnArrayContainingNonStringsIsInvalid()
+    {
+        using var doc = JsonDocument.Parse("[\"foo\", 42]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft202012Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "dynamicRef.json",
+                "#/tests/24/schema",
+                "JsonSchemaTestSuiteDraft202012DynamicRef",
+                "ADynamicRefToAnAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnAnchor",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false);
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteARefToADynamicAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnAnchor
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestAnArrayOfStringsIsValid()
+    {
+        using var doc = JsonDocument.Parse("[\"foo\", \"bar\"]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestAnArrayContainingNonStringsIsInvalid()
+    {
+        using var doc = JsonDocument.Parse("[\"foo\", 42]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft202012Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "dynamicRef.json",
+                "#/tests/25/schema",
+                "JsonSchemaTestSuiteDraft202012DynamicRef",
+                "ARefToADynamicAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnAnchor",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false);
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteADynamicRefWithoutAnchorInFragmentBehavesIdenticalToRef
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestAnArrayOfStringsIsInvalid()
+    {
+        using var doc = JsonDocument.Parse("[\"foo\", \"bar\"]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestAnArrayOfNumbersIsValid()
+    {
+        using var doc = JsonDocument.Parse("[24, 42]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft202012Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "dynamicRef.json",
+                "#/tests/26/schema",
+                "JsonSchemaTestSuiteDraft202012DynamicRef",
+                "ADynamicRefWithoutAnchorInFragmentBehavesIdenticalToRef",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false);
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteADynamicRefWithoutAMatchingDynamicAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnchor
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestAnyArrayIsValid()
+    {
+        using var doc = JsonDocument.Parse("[\"foo\", 42]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft202012Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "dynamicRef.json",
+                "#/tests/27/schema",
+                "JsonSchemaTestSuiteDraft202012DynamicRef",
+                "ADynamicRefWithoutAMatchingDynamicAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnchor",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false);
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteADynamicRefWithANonMatchingDynamicAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnchor
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestAnyArrayIsValid()
+    {
+        using var doc = JsonDocument.Parse("[\"foo\", 42]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft202012Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "dynamicRef.json",
+                "#/tests/28/schema",
+                "JsonSchemaTestSuiteDraft202012DynamicRef",
+                "ADynamicRefWithANonMatchingDynamicAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnchor",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false);
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteADynamicRefThatInitiallyResolvesToASchemaWithAMatchingDynamicAnchorResolvesToTheFirstDynamicAnchorInTheDynamicScope
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestTheRecursivePartIsValidAgainstTheRoot()
+    {
+        using var doc = JsonDocument.Parse("{\n                        \"foo\": \"pass\",\n                        \"bar\": {\n                            \"baz\": { \"foo\": \"pass\" }\n                        }\n                    }");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestTheRecursivePartIsNotValidAgainstTheRoot()
+    {
+        using var doc = JsonDocument.Parse("{\n                        \"foo\": \"pass\",\n                        \"bar\": {\n                            \"baz\": { \"foo\": \"fail\" }\n                        }\n                    }");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft202012Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "dynamicRef.json",
+                "#/tests/29/schema",
+                "JsonSchemaTestSuiteDraft202012DynamicRef",
+                "ADynamicRefThatInitiallyResolvesToASchemaWithAMatchingDynamicAnchorResolvesToTheFirstDynamicAnchorInTheDynamicScope",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false);
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteADynamicRefThatInitiallyResolvesToASchemaWithoutAMatchingDynamicAnchorBehavesLikeANormalRefToAnchor
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestTheRecursivePartDoesnTNeedToValidateAgainstTheRoot()
+    {
+        using var doc = JsonDocument.Parse("{\n                        \"foo\": \"pass\",\n                        \"bar\": {\n                            \"baz\": { \"foo\": \"fail\" }\n                        }\n                    }");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft202012Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "dynamicRef.json",
+                "#/tests/30/schema",
+                "JsonSchemaTestSuiteDraft202012DynamicRef",
+                "ADynamicRefThatInitiallyResolvesToASchemaWithoutAMatchingDynamicAnchorBehavesLikeANormalRefToAnchor",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false);
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteMultipleDynamicPathsToTheDynamicRefKeyword2020
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestNumberListWithNumberValues()
+    {
+        using var doc = JsonDocument.Parse("{\n                        \"kindOfList\": \"numbers\",\n                        \"list\": [1.1]\n                    }");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestNumberListWithStringValues()
+    {
+        using var doc = JsonDocument.Parse("{\n                        \"kindOfList\": \"numbers\",\n                        \"list\": [\"foo\"]\n                    }");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestStringListWithNumberValues()
+    {
+        using var doc = JsonDocument.Parse("{\n                        \"kindOfList\": \"strings\",\n                        \"list\": [1.1]\n                    }");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestStringListWithStringValues()
+    {
+        using var doc = JsonDocument.Parse("{\n                        \"kindOfList\": \"strings\",\n                        \"list\": [\"foo\"]\n                    }");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft202012Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "dynamicRef.json",
+                "#/tests/31/schema",
+                "JsonSchemaTestSuiteDraft202012DynamicRef",
+                "MultipleDynamicPathsToTheDynamicRefKeyword2020",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false);
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteDynamicRefPointsToABooleanSchema
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestFollowDynamicRefToATrueSchema()
+    {
+        using var doc = JsonDocument.Parse("{ \"true\": 1 }");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestFollowDynamicRefToAFalseSchema()
+    {
+        using var doc = JsonDocument.Parse("{ \"false\": 1 }");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft202012Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "dynamicRef.json",
+                "#/tests/32/schema",
+                "JsonSchemaTestSuiteDraft202012DynamicRef",
+                "DynamicRefPointsToABooleanSchema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false);
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
         }
     }
 }

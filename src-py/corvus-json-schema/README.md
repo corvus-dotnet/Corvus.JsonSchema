@@ -10,9 +10,10 @@ the text.
 For the same evaluator in Rust, behind the same Python API, see
 [corvus-json-schema-rs](../corvus-json-schema-rs/README.md).
 
-- **Conformant**: passes all 7,967 tests of the JSON-Schema-Test-Suite (required, optional and `optional/format`,
-  every draft), including `draft4/optional/zeroTerminatedFloats.json`, which the C# and TypeScript evaluators exclude
-  because their parsers cannot tell `1.0` from `1` (`json.loads` can).
+- **Conformant**: passes the JSON-Schema-Test-Suite (required and optional, every draft), including
+  `draft4/optional/zero-terminated-floats.json`, which the C# and TypeScript evaluators exclude because their parsers
+  cannot tell `1.0` from `1` (`json.loads` can), but the high-precision decimal cases of `optional/bignum.json`: it
+  evaluates Python values, and a float holds a number to the precision of a double (integers are exact).
 - **Fast**: see [Performance](#performance).
 - **Results and annotations**: evaluate with a results collector at the Basic, Detailed or Verbose level for the same
   rows (locations, messages, order) as the C# `JsonSchemaResultsCollector`, and annotations as

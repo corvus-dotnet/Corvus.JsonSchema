@@ -2,24 +2,23 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"reflect"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 
 	jsonschema "github.com/corvus-dotnet/Corvus.JsonSchema/src-go/corvus-json-schema"
 )
 
-// Drives the harness over IHOP as Bowtie does (start, dialect, run with the suite's remotes as the registry, stop),
+// Drives the harness over IHOP as Bowtie does (start, dialect, run with each case's externalSchemas as the registry, stop),
 // in a separate process: every required case of the JSON-Schema-Test-Suite, and the annotation suite's assertions,
 // compared with the expected results. No containers.
 
@@ -34,12 +33,15 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-var drafts = []struct{ directory, dialect, level string }{
-	{"draft4", "http://json-schema.org/draft-04/schema#", "4"},
-	{"draft6", "http://json-schema.org/draft-06/schema#", "6"},
-	{"draft7", "http://json-schema.org/draft-07/schema#", "7"},
-	{"draft2019-09", "https://json-schema.org/draft/2019-09/schema", "2019"},
-	{"draft2020-12", "https://json-schema.org/draft/2020-12/schema", "2020"},
+var drafts = []struct {
+	directory, dialect string
+	release            int
+}{
+	{"draft4", "http://json-schema.org/draft-04/schema#", 4},
+	{"draft6", "http://json-schema.org/draft-06/schema#", 6},
+	{"draft7", "http://json-schema.org/draft-07/schema#", 7},
+	{"draft2019-09", "https://json-schema.org/draft/2019-09/schema", 2019},
+	{"draft2020-12", "https://json-schema.org/draft/2020-12/schema", 2020},
 }
 
 // harnessProcess is the harness in its own process.
@@ -137,7 +139,7 @@ func suiteRoot(t *testing.T) string {
 	if root == "" {
 		root = filepath.Join("..", "..", "JSON-Schema-Test-Suite")
 	}
-	if _, err := os.Stat(filepath.Join(root, "tests")); err != nil {
+	if _, err := os.Stat(filepath.Join(root, "validation", "tests")); err != nil {
 		t.Fatalf("JSON-Schema-Test-Suite not found at %s (set JSON_SCHEMA_TEST_SUITE, or check out the submodule)", root)
 	}
 	return root
@@ -170,38 +172,12 @@ func readJSON(t *testing.T, file string, into any) {
 	}
 }
 
-// registry is Bowtie's registry: every remote, keyed by its http://localhost:1234/ URI.
-func registry(t *testing.T, root string) json.RawMessage {
-	t.Helper()
-	remotes := filepath.Join(root, "remotes")
-	out := make(map[string]json.RawMessage)
-	err := filepath.WalkDir(remotes, func(path string, entry fs.DirEntry, err error) error {
-		if err != nil || entry.IsDir() || !strings.HasSuffix(path, ".json") {
-			return err
-		}
-		relative, err := filepath.Rel(remotes, path)
-		if err != nil {
-			return err
-		}
-		text, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		var compact bytes.Buffer
-		if err := json.Compact(&compact, text); err != nil {
-			return fmt.Errorf("%s: %w", path, err)
-		}
-		out["http://localhost:1234/"+filepath.ToSlash(relative)] = compact.Bytes()
-		return nil
-	})
-	if err != nil {
-		t.Fatal(err)
+// registry is Bowtie's registry for a test case: its externalSchemas, keyed by their retrieval URIs.
+func registry(externalSchemas json.RawMessage) json.RawMessage {
+	if len(externalSchemas) == 0 {
+		return json.RawMessage("{}")
 	}
-	text, err := json.Marshal(out)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return text
+	return externalSchemas
 }
 
 type ihopTest struct {
@@ -242,27 +218,35 @@ type ihopResponse struct {
 
 func TestRequiredSuiteOverIHOP(t *testing.T) {
 	root := suiteRoot(t)
-	remotes := registry(t, root)
 	h := startHarness(t)
 	seq, total := 0, 0
 	var failures []string
 	for _, draft := range drafts {
 		h.setDialect(draft.dialect)
-		for _, file := range jsonFiles(t, filepath.Join(root, "tests", draft.directory)) {
-			var groups []struct {
-				Description string          `json:"description"`
-				Schema      json.RawMessage `json:"schema"`
-				Tests       []struct {
-					Description string          `json:"description"`
-					Data        json.RawMessage `json:"data"`
-					Valid       bool            `json:"valid"`
+		for _, file := range jsonFiles(t, filepath.Join(root, "validation", "tests")) {
+			var suite struct {
+				Tests []struct {
+					Description     string          `json:"description"`
+					Compatibility   string          `json:"compatibility"`
+					Tags            []string        `json:"tags"`
+					Schema          json.RawMessage `json:"schema"`
+					ExternalSchemas json.RawMessage `json:"externalSchemas"`
+					Tests           []struct {
+						Description string          `json:"description"`
+						Data        json.RawMessage `json:"data"`
+						Valid       bool            `json:"valid"`
+					} `json:"tests"`
 				} `json:"tests"`
 			}
-			readJSON(t, file, &groups)
-			for _, group := range groups {
+			readJSON(t, file, &suite)
+			for _, group := range suite.Tests {
+				// The harness treats format as an annotation in every dialect, as Bowtie expects.
+				if !compatible(group.Compatibility, draft.release) || slices.Contains(group.Tags, "format-assertion") {
+					continue
+				}
 				seq++
 				request := ihopRun{Cmd: "run", Seq: seq, Case: ihopCase{
-					Description: group.Description, Schema: group.Schema, Registry: remotes,
+					Description: group.Description, Schema: group.Schema, Registry: registry(group.ExternalSchemas),
 				}}
 				for _, test := range group.Tests {
 					request.Case.Tests = append(request.Case.Tests, ihopTest{test.Description, test.Data})
@@ -287,22 +271,44 @@ func TestRequiredSuiteOverIHOP(t *testing.T) {
 	if len(failures) != 0 {
 		t.Fatalf("%d of %d failed:\n%s", len(failures), total, strings.Join(failures, "\n"))
 	}
-	if total <= 4000 {
+	if total <= 5000 {
 		t.Fatalf("only %d tests ran", total)
 	}
 	t.Logf("%d tests in %d cases", total, seq)
 }
 
-var compatibilityOrder = []string{"3", "4", "6", "7", "2019", "2020"}
-
-func compatible(level, compatibility string) bool {
-	at := slices.Index(compatibilityOrder, level)
-	if limit, ok := strings.CutPrefix(compatibility, "<="); ok {
-		most := slices.Index(compatibilityOrder, limit)
-		return most >= 0 && at <= most
+// compatible reports whether a test case's compatibility (a comma-separated list of minimums, <= maximums and =
+// releases, from the smallest release to the largest) admits the release, by the algorithm of the suite's
+// validation/README.md.
+func compatible(compatibility string, release int) bool {
+	if compatibility == "" {
+		return true
 	}
-	least := slices.Index(compatibilityOrder, compatibility)
-	return least >= 0 && at >= least
+	valid := true
+	for _, constraint := range strings.Split(compatibility, ",") {
+		op, version := "", constraint
+		if v, ok := strings.CutPrefix(constraint, "<="); ok {
+			op, version = "<=", v
+		} else if v, ok := strings.CutPrefix(constraint, "="); ok {
+			op, version = "=", v
+		}
+		number, err := strconv.Atoi(strings.TrimSpace(version))
+		if err != nil {
+			panic("compatibility " + compatibility + ": " + err.Error())
+		}
+		switch op {
+		case "<=":
+			valid = release <= number
+		case "=":
+			valid = release == number
+		default:
+			valid = release >= number
+		}
+		if release <= number {
+			break
+		}
+	}
+	return valid
 }
 
 // sameJSON is JSON equality with numbers compared by value and objects whatever their members' order.
@@ -317,7 +323,6 @@ func TestAnnotationSuiteOverIHOP(t *testing.T) {
 	if _, err := os.Stat(dir); err != nil {
 		t.Fatalf("annotation tests not found at %s", dir)
 	}
-	remotes := registry(t, root)
 	h := startHarness(t)
 	seq, total := 0, 0
 	var failures []string
@@ -326,10 +331,11 @@ func TestAnnotationSuiteOverIHOP(t *testing.T) {
 		for _, file := range jsonFiles(t, dir) {
 			var suite struct {
 				Suite []struct {
-					Description   string          `json:"description"`
-					Compatibility string          `json:"compatibility"`
-					Schema        json.RawMessage `json:"schema"`
-					Tests         []struct {
+					Description     string          `json:"description"`
+					Compatibility   string          `json:"compatibility"`
+					Schema          json.RawMessage `json:"schema"`
+					ExternalSchemas json.RawMessage `json:"externalSchemas"`
+					Tests           []struct {
 						Instance   json.RawMessage `json:"instance"`
 						Assertions []struct {
 							Location string                     `json:"location"`
@@ -341,12 +347,12 @@ func TestAnnotationSuiteOverIHOP(t *testing.T) {
 			}
 			readJSON(t, file, &suite)
 			for _, group := range suite.Suite {
-				if group.Compatibility != "" && !compatible(draft.level, group.Compatibility) {
+				if !compatible(group.Compatibility, draft.release) {
 					continue
 				}
 				seq++
 				request := ihopRun{Cmd: "run", Seq: seq, Output: "annotations", Case: ihopCase{
-					Description: group.Description, Schema: group.Schema, Registry: remotes,
+					Description: group.Description, Schema: group.Schema, Registry: registry(group.ExternalSchemas),
 				}}
 				for _, test := range group.Tests {
 					request.Case.Tests = append(request.Case.Tests, ihopTest{"", test.Instance})

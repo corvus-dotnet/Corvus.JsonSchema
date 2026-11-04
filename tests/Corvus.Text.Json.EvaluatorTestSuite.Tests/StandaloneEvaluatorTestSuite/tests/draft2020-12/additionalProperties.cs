@@ -28,14 +28,14 @@ public class SuiteAdditionalPropertiesBeingFalseDoesNotAllowOtherProperties
     [TestMethod]
     public void TestNoAdditionalPropertiesIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestAnAdditionalPropertyIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\" : 1, \"bar\" : 2, \"quux\" : \"boom\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\" : 1, \"bar\" : 2, \"quux\" : \"boom\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -63,7 +63,7 @@ public class SuiteAdditionalPropertiesBeingFalseDoesNotAllowOtherProperties
     [TestMethod]
     public void TestPatternPropertiesAreNotAdditionalProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\":1, \"vroom\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\":1, \"vroom\": 2 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -75,9 +75,9 @@ public class SuiteAdditionalPropertiesBeingFalseDoesNotAllowOtherProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/additionalProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\"foo\": {}, \"bar\": {}},\n            \"patternProperties\": { \"^v\": {} },\n            \"additionalProperties\": false\n        }",
+                "{\n                \"properties\": { \"foo\": {}, \"bar\": {} },\n                \"patternProperties\": { \"^v\": {} },\n                \"additionalProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.AdditionalProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -107,14 +107,14 @@ public class SuiteNonAsciiPatternWithAdditionalProperties
     [TestMethod]
     public void TestMatchingThePatternIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"ármányos\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"ármányos\": 2 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestNotMatchingThePatternIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"élmény\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"élmény\": 2 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -126,9 +126,9 @@ public class SuiteNonAsciiPatternWithAdditionalProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/additionalProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"patternProperties\": {\"^á\": {}},\n            \"additionalProperties\": false\n        }",
+                "{\n                \"patternProperties\": { \"^á\": {} },\n                \"additionalProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.AdditionalProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -158,21 +158,21 @@ public class SuiteAdditionalPropertiesWithSchema
     [TestMethod]
     public void TestNoAdditionalPropertiesIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestAnAdditionalValidPropertyIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\" : 1, \"bar\" : 2, \"quux\" : true}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\" : 1, \"bar\" : 2, \"quux\" : true }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestAnAdditionalInvalidPropertyIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\" : 1, \"bar\" : 2, \"quux\" : 12}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\" : 1, \"bar\" : 2, \"quux\" : 12 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -184,9 +184,9 @@ public class SuiteAdditionalPropertiesWithSchema
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/additionalProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\"foo\": {}, \"bar\": {}},\n            \"additionalProperties\": {\"type\": \"boolean\"}\n        }",
+                "{\n                \"properties\": { \"foo\": {}, \"bar\": {} },\n                \"additionalProperties\": { \"type\": \"boolean\" }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.AdditionalProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -216,14 +216,14 @@ public class SuiteAdditionalPropertiesCanExistByItself
     [TestMethod]
     public void TestAnAdditionalValidPropertyIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\" : true}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\" : true }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestAnAdditionalInvalidPropertyIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\" : 1}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\" : 1 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -235,9 +235,9 @@ public class SuiteAdditionalPropertiesCanExistByItself
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/additionalProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"additionalProperties\": {\"type\": \"boolean\"}\n        }",
+                "{\n                \"additionalProperties\": { \"type\": \"boolean\" }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.AdditionalProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -267,7 +267,7 @@ public class SuiteAdditionalPropertiesAreAllowedByDefault
     [TestMethod]
     public void TestAdditionalPropertiesAreAllowed()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"bar\": 2, \"quux\": true}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1, \"bar\": 2, \"quux\": true }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -279,9 +279,9 @@ public class SuiteAdditionalPropertiesAreAllowedByDefault
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/additionalProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\"foo\": {}, \"bar\": {}}\n        }",
+                "{\n                \"properties\": { \"foo\": {}, \"bar\": {} }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.AdditionalProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -311,7 +311,7 @@ public class SuiteAdditionalPropertiesDoesNotLookInApplicators
     [TestMethod]
     public void TestPropertiesDefinedInAllOfAreNotExamined()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"bar\": true}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1, \"bar\": true }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -323,9 +323,9 @@ public class SuiteAdditionalPropertiesDoesNotLookInApplicators
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/additionalProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"allOf\": [\n                {\"properties\": {\"foo\": {}}}\n            ],\n            \"additionalProperties\": {\"type\": \"boolean\"}\n        }",
+                "{\n                \"allOf\": [\n                    { \"properties\": { \"foo\": {} } }\n                ],\n                \"additionalProperties\": { \"type\": \"boolean\" }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.AdditionalProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -355,7 +355,7 @@ public class SuiteAdditionalPropertiesWithNullValuedInstanceProperties
     [TestMethod]
     public void TestAllowsNullValues()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": null}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": null }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -367,9 +367,9 @@ public class SuiteAdditionalPropertiesWithNullValuedInstanceProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/additionalProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"additionalProperties\": {\n                \"type\": \"null\"\n            }\n        }",
+                "{\n                \"additionalProperties\": { \"type\": \"null\" }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.AdditionalProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -418,9 +418,9 @@ public class SuiteAdditionalPropertiesWithPropertyNames
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/additionalProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"propertyNames\": {\n                \"maxLength\": 5\n            },\n            \"additionalProperties\": {\n                \"type\": \"number\"\n            }\n        }",
+                "{\n                \"propertyNames\": { \"maxLength\": 5 },\n                \"additionalProperties\": { \"type\": \"number\" }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.AdditionalProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -450,21 +450,21 @@ public class SuiteDependentSchemasWithAdditionalProperties
     [TestMethod]
     public void TestAdditionalPropertiesDoesnTConsiderDependentSchemas()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestAdditionalPropertiesCanTSeeBar()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": \"\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": \"\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestAdditionalPropertiesCanTSeeBarEvenWhenFoo2IsPresent()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo2\": \"\", \"bar\": \"\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo2\": \"\", \"bar\": \"\"}");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -476,9 +476,9 @@ public class SuiteDependentSchemasWithAdditionalProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/additionalProperties.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\"foo2\": {}},\n            \"dependentSchemas\": {\n                \"foo\" : {},\n                \"foo2\": {\n                    \"properties\": {\n                        \"bar\": {}\n                    }\n                }\n            },\n            \"additionalProperties\": false\n        }",
+                "{\n                \"properties\": { \"foo2\": {} },\n                \"dependentSchemas\": {\n                    \"foo\" : {},\n                    \"foo2\": {\n                        \"properties\": { \"bar\": {} }\n                    }\n                },\n                \"additionalProperties\": false\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.AdditionalProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

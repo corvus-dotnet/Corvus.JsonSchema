@@ -14,19 +14,21 @@ namespace JsonSchemaTestSuite.Draft202012.Optional.FormatAssertion;
 public class SuiteSchemaThatUsesCustomMetaschemaWithFormatAssertionFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -46,7 +48,7 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithFormatAssertionFalse
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -56,19 +58,19 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithFormatAssertionFalse
         {
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\format-assertion.json",
-                "#/0/schema",
+                "optional/format-assertion.json",
+                "#/tests/0/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalFormatAssertion",
                 "SchemaThatUsesCustomMetaschemaWithFormatAssertionFalse",
-                validateFormat: true,
+                validateFormat: false,
                 optionalAsNullable: false,
-                useImplicitOperatorString: false);
+                useImplicitOperatorString: false,
+                externalSchemasPath: "#/tests/0/externalSchemas");
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -78,19 +80,21 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithFormatAssertionFalse
 public class SuiteSchemaThatUsesCustomMetaschemaWithFormatAssertionTrue
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -110,7 +114,7 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithFormatAssertionTrue
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -120,19 +124,19 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithFormatAssertionTrue
         {
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\format-assertion.json",
-                "#/1/schema",
+                "optional/format-assertion.json",
+                "#/tests/1/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalFormatAssertion",
                 "SchemaThatUsesCustomMetaschemaWithFormatAssertionTrue",
-                validateFormat: true,
+                validateFormat: false,
                 optionalAsNullable: false,
-                useImplicitOperatorString: false);
+                useImplicitOperatorString: false,
+                externalSchemasPath: "#/tests/1/externalSchemas");
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

@@ -9,10 +9,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assumptions;
@@ -20,23 +20,25 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Runs the JSON-Schema-Test-Suite (the repository's submodule) against the evaluator, mirroring the C#, TypeScript and
- * Rust runners: required and optional tests with format as an annotation, optional/format with format asserted. Every
- * case runs fail-fast and through a results collector at each level.
+ * Rust runners. Every dialect's cases are in one tree ({@code validation/tests}, required and optional): each case's
+ * {@code compatibility} selects the drafts it applies to, its {@code tags} whether format is asserted, and its
+ * {@code externalSchemas} are served to that case alone. Every case runs fail-fast and through a results collector at
+ * each level.
  *
  * <p>Set the {@code jsonSchemaTestSuite} system property (or {@code JSON_SCHEMA_TEST_SUITE}) to use another checkout,
  * and {@code SUITE_DRAFT} / {@code SUITE_FILTER} to narrow the run.
  */
 class SuiteTest {
     static final String[][] DRAFTS = {
-        {"draft4", "DRAFT4"}, {"draft6", "DRAFT6"}, {"draft7", "DRAFT7"}, {"draft2019-09", "DRAFT201909"},
-        {"draft2020-12", "DRAFT202012"},
+        {"draft4", "DRAFT4", "4"}, {"draft6", "DRAFT6", "6"}, {"draft7", "DRAFT7", "7"},
+        {"draft2019-09", "DRAFT201909", "2019"}, {"draft2020-12", "DRAFT202012", "2020"},
     };
 
     /** Exclusions, matching the C# runner. */
-    static final List<String> EXCLUDED_FILES = List.of("draft4/optional/zeroTerminatedFloats.json");
+    static final List<String> EXCLUDED_FILES = List.of("draft4/optional/zero-terminated-floats.json");
 
     /** The number of test cases the suite has, less the exclusions: a smaller count means a stale or partial run. */
-    static final int EXPECTED_TOTAL = 7966;
+    static final int EXPECTED_TOTAL = 8686;
 
     static Path suiteRoot() {
         String p = System.getProperty("jsonSchemaTestSuite");
@@ -70,20 +72,68 @@ class SuiteTest {
         return JsonDocument.parse(d.toJson(node));
     }
 
-    static DocumentResolver remotes(Path root) {
-        Path remotes = root.resolve("remotes");
-        Map<String, JsonDocument> cache = new ConcurrentHashMap<>();
-        return uri -> {
-            String prefix = "http://localhost:1234/";
-            if (!uri.startsWith(prefix)) {
-                return null;
+    /**
+     * Whether a test case's {@code compatibility} (a comma-separated list of minimums, {@code <=} maximums and
+     * {@code =} releases, from the smallest release to the largest) admits the release, by the algorithm of the
+     * suite's validation/README.md.
+     */
+    static boolean compatible(String compatibility, int release) {
+        if (compatibility == null) {
+            return true;
+        }
+        boolean valid = true;
+        for (String constraint : compatibility.split(",")) {
+            String op = "";
+            String version = constraint;
+            if (constraint.startsWith("<=")) {
+                op = "<=";
+                version = constraint.substring(2);
+            } else if (constraint.startsWith("=")) {
+                op = "=";
+                version = constraint.substring(1);
             }
-            Path file = remotes.resolve(uri.substring(prefix.length()));
-            if (!Files.isRegularFile(file)) {
-                return null;
+            int number = Integer.parseInt(version.trim());
+            valid = op.equals("<=") ? release <= number : op.equals("=") ? release == number : release >= number;
+            if (release <= number) {
+                break;
             }
-            return cache.computeIfAbsent(uri, k -> read(file));
-        };
+        }
+        return valid;
+    }
+
+    /** Whether a test case has a tag. */
+    static boolean hasTag(JsonDocument d, int testCase, String tag) {
+        int tags = d.property(testCase, "tags");
+        if (tags < 0) {
+            return false;
+        }
+        int t = d.first(tags);
+        for (int i = 0; i < d.count(tags); i++) {
+            if (tag.equals(d.string(t + i))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** A test case's {@code compatibility}, or null if it has none. */
+    static String compatibility(JsonDocument d, int testCase) {
+        int c = d.property(testCase, "compatibility");
+        return c < 0 ? null : d.string(c);
+    }
+
+    /** A resolver serving a test case's {@code externalSchemas} at their retrieval URIs, or null if it has none. */
+    static DocumentResolver externalSchemas(JsonDocument d, int testCase) {
+        int schemas = d.property(testCase, "externalSchemas");
+        if (schemas < 0) {
+            return null;
+        }
+        Map<String, JsonDocument> documents = new HashMap<>();
+        int k = d.first(schemas);
+        for (int i = 0; i < d.count(schemas); i++, k += 2) {
+            documents.put(d.string(k), sub(d, k + 1));
+        }
+        return documents::get;
     }
 
     private int total;
@@ -123,12 +173,20 @@ class SuiteTest {
         return Boolean.toString(fast);
     }
 
-    private void runFile(Dialect dialect, Path file, String label, boolean assertFormat, DocumentResolver resolver,
-            String filter) {
+    private void runFile(Dialect dialect, int release, Path file, String label, String filter) {
         JsonDocument groups = read(file);
-        int g = groups.first(groups.root());
-        for (int gi = 0; gi < groups.count(groups.root()); gi++) {
+        int cases = groups.property(groups.root(), "tests");
+        int g = groups.first(cases);
+        for (int gi = 0; gi < groups.count(cases); gi++) {
             int group = g + gi;
+            if (!compatible(compatibility(groups, group), release)) {
+                continue;
+            }
+            // The engine asserts format by default up to draft7, so a format-annotation case does not apply there.
+            if (hasTag(groups, group, "format-annotation") && release <= 7) {
+                continue;
+            }
+            boolean assertFormat = hasTag(groups, group, "format-assertion");
             String description = groups.string(groups.property(group, "description"));
             if (filter != null && !description.contains(filter) && !label.contains(filter)) {
                 continue;
@@ -136,7 +194,7 @@ class SuiteTest {
             CompileOptions options = CompileOptions.builder()
                     .defaultDialect(dialect)
                     .assertFormat(assertFormat ? Boolean.TRUE : null)
-                    .documentResolver(resolver)
+                    .documentResolver(externalSchemas(groups, group))
                     .build();
             Validator v = null;
             String compileError = null;
@@ -160,7 +218,7 @@ class SuiteTest {
                         ? compileError
                         : runCase(v, sub(groups, groups.property(test, "data")));
                 if (!actual.equals(Boolean.toString(expected))) {
-                    // Leap seconds are skipped in the format run, as in the C# runner.
+                    // Leap seconds are skipped where format is asserted, as in the C# runner.
                     if (assertFormat && testDescription.toLowerCase(Locale.ROOT).contains("leap second")) {
                         continue;
                     }
@@ -174,28 +232,23 @@ class SuiteTest {
     @Test
     void jsonSchemaTestSuite() {
         Path root = suiteRoot();
-        Path tests = root.resolve("tests");
+        Path tests = root.resolve("validation").resolve("tests");
         Assumptions.assumeTrue(Files.isDirectory(tests), "JSON-Schema-Test-Suite not found at " + root);
-        DocumentResolver resolver = remotes(root);
         String draftFilter = System.getenv("SUITE_DRAFT");
         String filter = System.getenv("SUITE_FILTER");
+        List<Path> suiteFiles = new ArrayList<>(files(tests));
+        suiteFiles.addAll(files(tests.resolve("optional")));
         for (String[] draft : DRAFTS) {
             if (draftFilter != null && !draftFilter.equals(draft[0])) {
                 continue;
             }
             Dialect dialect = Dialect.valueOf(draft[1]);
-            Path dir = tests.resolve(draft[0]);
-            for (Path f : files(dir)) {
-                runFile(dialect, f, draft[0] + "/" + f.getFileName(), false, resolver, filter);
-            }
-            for (Path f : files(dir.resolve("optional"))) {
-                String label = draft[0] + "/optional/" + f.getFileName();
+            int release = Integer.parseInt(draft[2]);
+            for (Path f : suiteFiles) {
+                String label = draft[0] + "/" + tests.relativize(f).toString().replace('\\', '/');
                 if (!EXCLUDED_FILES.contains(label)) {
-                    runFile(dialect, f, label, false, resolver, filter);
+                    runFile(dialect, release, f, label, filter);
                 }
-            }
-            for (Path f : files(dir.resolve("optional").resolve("format"))) {
-                runFile(dialect, f, draft[0] + "/optional/format/" + f.getFileName(), true, resolver, filter);
             }
         }
         failures.forEach(System.out::println);

@@ -27,14 +27,14 @@ public class SuiteRequiredValidation
     [TestMethod]
     public void TestPresentRequiredPropertyIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestNonPresentRequiredPropertyIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"bar\": 1}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"bar\": 1 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -81,9 +81,9 @@ public class SuiteRequiredValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/required.json",
-                "{\n            \"properties\": {\n                \"foo\": {},\n                \"bar\": {}\n            },\n            \"required\": [\"foo\"]\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": {},\n                    \"bar\": {}\n                },\n                \"required\": [\"foo\"]\n            }",
                 "JsonSchemaTestSuite.Draft4.Required",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -128,9 +128,9 @@ public class SuiteRequiredDefaultValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/required.json",
-                "{\n            \"properties\": {\n                \"foo\": {}\n            }\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": {}\n                }\n            }",
                 "JsonSchemaTestSuite.Draft4.Required",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -163,14 +163,14 @@ public class SuiteRequiredWithEscapedCharacters
     [TestMethod]
     public void TestObjectWithAllPropertiesPresentIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\\nbar\": 1,\n                    \"foo\\\"bar\": 1,\n                    \"foo\\\\bar\": 1,\n                    \"foo\\rbar\": 1,\n                    \"foo\\tbar\": 1,\n                    \"foo\\fbar\": 1\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                        \"foo\\nbar\": 1,\n                        \"foo\\\"bar\": 1,\n                        \"foo\\\\bar\": 1,\n                        \"foo\\rbar\": 1,\n                        \"foo\\tbar\": 1,\n                        \"foo\\fbar\": 1\n                    }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestObjectWithSomePropertiesMissingIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\\nbar\": \"1\",\n                    \"foo\\\"bar\": \"1\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                        \"foo\\nbar\": \"1\",\n                        \"foo\\\"bar\": \"1\"\n                    }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -182,9 +182,9 @@ public class SuiteRequiredWithEscapedCharacters
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/required.json",
-                "{\n            \"required\": [\n                \"foo\\nbar\",\n                \"foo\\\"bar\",\n                \"foo\\\\bar\",\n                \"foo\\rbar\",\n                \"foo\\tbar\",\n                \"foo\\fbar\"\n            ]\n        }",
+                "{\n                \"required\": [\n                    \"foo\\nbar\",\n                    \"foo\\\"bar\",\n                    \"foo\\\\bar\",\n                    \"foo\\rbar\",\n                    \"foo\\tbar\",\n                    \"foo\\fbar\"\n                ]\n            }",
                 "JsonSchemaTestSuite.Draft4.Required",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -259,7 +259,7 @@ public class SuiteRequiredPropertiesWhoseNamesAreJavascriptObjectPropertyNames
     [TestMethod]
     public void TestAllPresent()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \n                    \"__proto__\": 12,\n                    \"toString\": { \"length\": \"foo\" },\n                    \"constructor\": 37\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                        \"__proto__\": 12,\n                        \"toString\": { \"length\": \"foo\" },\n                        \"constructor\": 37\n                    }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -273,7 +273,7 @@ public class SuiteRequiredPropertiesWhoseNamesAreJavascriptObjectPropertyNames
                 "tests/draft4/required.json",
                 "{ \"required\": [\"__proto__\", \"toString\", \"constructor\"] }",
                 "JsonSchemaTestSuite.Draft4.Required",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,

@@ -4,9 +4,10 @@ JSON Schema validation for Fortran: draft 4, 6, 7, 2019-09 and 2020-12. The modu
 through `ISO_C_BINDING`, to the [corvus-json-schema C library](https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/docs/JsonSchemaForC.md),
 so it gives the same results and annotations as every other Corvus implementation.
 
-- **Conformant.** It passes the whole JSON-Schema-Test-Suite (required, optional and `optional/format`, every draft)
-  except `draft4/optional/zeroTerminatedFloats.json`, as JSON text, as parsed documents and through a collector, and
-  the suite's annotation tests.
+- **Conformant.** It passes the whole JSON-Schema-Test-Suite (required and optional, every draft)
+  except `draft4/optional/zero-terminated-floats.json` and the high-precision cases of `optional/bignum.json` (whose
+  digits the C library's serde_json values do not hold), as JSON text, as parsed documents and through a collector,
+  and the suite's annotation tests.
 - **Results and annotations.** Basic, Detailed and Verbose results, and the annotations of an evaluation.
 - **Safe with input from outside.** A match of a regular expression is limited to one second by default, and a
   regular expression over a limit of size does not compile.

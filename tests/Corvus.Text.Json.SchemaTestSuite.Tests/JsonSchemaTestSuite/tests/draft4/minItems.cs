@@ -60,9 +60,9 @@ public class SuiteMinItemsValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/minItems.json",
-                "{\"minItems\": 1}",
+                "{ \"minItems\": 1 }",
                 "JsonSchemaTestSuite.Draft4.MinItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,

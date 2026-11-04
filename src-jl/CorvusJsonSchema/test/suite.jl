@@ -1,14 +1,16 @@
 # Runs the JSON-Schema-Test-Suite (the repository's submodule) against the evaluator, as the C#, Rust and Go suite
-# runners do: required and optional tests with format as an annotation, optional/format with format asserted. Every
-# case runs fail-fast (as a document, as bytes and as a string) and through a results collector at each level.
+# runners do. Every dialect's cases are in one tree (validation/tests, required and optional): each case's
+# compatibility selects the drafts it applies to, its tags whether format is asserted, and its externalSchemas are
+# served to that case alone. Every case runs fail-fast (as a document, as bytes and as a string) and through a results
+# collector at each level.
 #
 # Set JSON_SCHEMA_TEST_SUITE to use a different checkout, SUITE_DRAFT and SUITE_FILTER to narrow the run.
 
-const SUITE_DRAFTS = [("draft4", Draft4), ("draft6", Draft6), ("draft7", Draft7), ("draft2019-09", Draft201909),
-    ("draft2020-12", Draft202012)]
+const SUITE_DRAFTS = [("draft4", Draft4, 4), ("draft6", Draft6, 6), ("draft7", Draft7, 7),
+    ("draft2019-09", Draft201909, 2019), ("draft2020-12", Draft202012, 2020)]
 
 # Exclusions, matching the C#, Rust and Go runners: zero-terminated floats.
-const SUITE_EXCLUDED_FILES = Set(["draft4/optional/zeroTerminatedFloats.json"])
+const SUITE_EXCLUDED_FILES = Set(["draft4/optional/zero-terminated-floats.json"])
 
 const RESULTS_LEVELS = [Basic, Detailed, Verbose]
 
@@ -47,36 +49,39 @@ function run_suite_case(v::Validator, data::String)
 end
 
 mutable struct SuiteRunner
-    resolver::Any
     filter::String
     total::Int
     failures::Vector{String}
-    # Failing leap second cases of the format run, which are not counted as failures.
+    # Failing leap second cases that assert format, which are not counted as failures.
     skipped::Vector{String}
     areas::Vector{String}
     passed::Dict{String,Int}
     counted::Dict{String,Int}
 end
 
-function run_suite_file!(r::SuiteRunner, dialect::Dialect, file::String, label::String, area::String,
-    assert_format::Bool)
+function run_suite_file!(r::SuiteRunner, dialect::Dialect, release::Int, file::String, label::String, area::String)
     d = parse_document(read(file))
     if !haskey(r.counted, area)
         push!(r.areas, area)
         r.counted[area] = 0
         r.passed[area] = 0
     end
-    for group in items_of(d, d.root)
+    for group in items_of(d, member(d, d.root, "tests"))
+        suite_compatible(d, group, release) || continue
+        # The engine asserts format by default up to draft7, so a format-annotation case does not apply there.
+        (has_tag(d, group, "format-annotation") && release <= 7) && continue
+        assert_format = has_tag(d, group, "format-assertion")
         description = text_of(d, member(d, group, "description"))
         if r.filter != "" && !occursin(r.filter, description) && !occursin(r.filter, label)
             continue
         end
         schema = json_of(d, member(d, group, "schema"))
+        resolver = case_resolver(d, group)
         validator, compile_error = nothing, ""
         try
             validator = assert_format ?
-                        compile_schema(schema; default_dialect=dialect, resolver=r.resolver, assert_format=true) :
-                        compile_schema(schema; default_dialect=dialect, resolver=r.resolver)
+                        compile_schema(schema; default_dialect=dialect, resolver=resolver, assert_format=true) :
+                        compile_schema(schema; default_dialect=dialect, resolver=resolver)
         catch err
             compile_error = "compile error: " * sprint(showerror, err)
         end
@@ -91,7 +96,7 @@ function run_suite_file!(r::SuiteRunner, dialect::Dialect, file::String, label::
                 r.passed[area] += 1
                 continue
             end
-            # Leap seconds are skipped in the format run, as in the C# runner.
+            # Leap seconds are skipped where format is asserted, as in the C# runner.
             if assert_format && occursin("leap second", lowercase(test_description))
                 r.passed[area] += 1
                 push!(r.skipped, "$label [$description] $test_description")
@@ -105,26 +110,21 @@ end
 
 @testset "JSON-Schema-Test-Suite" begin
     root = suite_root()
-    tests = joinpath(root, "tests")
+    tests = joinpath(root, "validation", "tests")
     if !isdir(tests)
         error("JSON-Schema-Test-Suite not found at $root (set JSON_SCHEMA_TEST_SUITE, or check out the submodule)")
     end
-    runner = SuiteRunner(remote_resolver(root), get(ENV, "SUITE_FILTER", ""), 0, String[], String[], String[],
-        Dict{String,Int}(), Dict{String,Int}())
+    runner = SuiteRunner(get(ENV, "SUITE_FILTER", ""), 0, String[], String[], String[], Dict{String,Int}(),
+        Dict{String,Int}())
     draft_filter = get(ENV, "SUITE_DRAFT", "")
-    for (name, dialect) in SUITE_DRAFTS
+    for (name, dialect, release) in SUITE_DRAFTS
         (draft_filter != "" && draft_filter != name) && continue
-        dir = joinpath(tests, name)
-        for f in json_files(dir)
-            run_suite_file!(runner, dialect, f, name * "/" * basename(f), name, false)
+        for f in json_files(tests)
+            run_suite_file!(runner, dialect, release, f, name * "/" * basename(f), name)
         end
-        for f in json_files(joinpath(dir, "optional"))
+        for f in json_files(joinpath(tests, "optional"))
             label = name * "/optional/" * basename(f)
-            label in SUITE_EXCLUDED_FILES || run_suite_file!(runner, dialect, f, label, name * "/optional", false)
-        end
-        for f in json_files(joinpath(dir, "optional", "format"))
-            label = name * "/optional/format/" * basename(f)
-            run_suite_file!(runner, dialect, f, label, name * "/optional/format", true)
+            label in SUITE_EXCLUDED_FILES || run_suite_file!(runner, dialect, release, f, label, name * "/optional")
         end
     end
     foreach(println, runner.failures)
@@ -137,5 +137,6 @@ end
     failed = length(runner.failures)
     println("JSON-Schema-Test-Suite: ", runner.total - failed, "/", runner.total, " passed")
     @test failed == 0
-    @test runner.total > 0
+    # The number of test cases the suite has, less the exclusions: a smaller count means a stale or partial run.
+    (draft_filter == "" && runner.filter == "") && @test runner.total == 8686
 end

@@ -14,19 +14,21 @@ namespace JsonSchemaTestSuite.Draft202012.Enum;
 public class SuiteSimpleEnumValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -46,7 +48,7 @@ public class SuiteSimpleEnumValidation
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -57,7 +59,7 @@ public class SuiteSimpleEnumValidation
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
-                "#/0/schema",
+                "#/tests/0/schema",
                 "JsonSchemaTestSuiteDraft202012Enum",
                 "SimpleEnumValidation",
                 validateFormat: false,
@@ -65,10 +67,9 @@ public class SuiteSimpleEnumValidation
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -78,19 +79,21 @@ public class SuiteSimpleEnumValidation
 public class SuiteHeterogeneousEnumValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -113,7 +116,7 @@ public class SuiteHeterogeneousEnumValidation
     [TestMethod]
     public void TestObjectsAreDeepCompared()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": false}");
+        using var doc = JsonDocument.Parse("{ \"foo\": false }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -121,7 +124,7 @@ public class SuiteHeterogeneousEnumValidation
     [TestMethod]
     public void TestValidObjectMatches()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 12}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 12 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -129,12 +132,12 @@ public class SuiteHeterogeneousEnumValidation
     [TestMethod]
     public void TestExtraPropertiesInObjectIsInvalid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": 12, \"boo\": 42}");
+        using var doc = JsonDocument.Parse("{ \"foo\": 12, \"boo\": 42 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -145,7 +148,7 @@ public class SuiteHeterogeneousEnumValidation
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
-                "#/1/schema",
+                "#/tests/1/schema",
                 "JsonSchemaTestSuiteDraft202012Enum",
                 "HeterogeneousEnumValidation",
                 validateFormat: false,
@@ -153,10 +156,9 @@ public class SuiteHeterogeneousEnumValidation
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -166,19 +168,21 @@ public class SuiteHeterogeneousEnumValidation
 public class SuiteHeterogeneousEnumWithNullValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -206,7 +210,7 @@ public class SuiteHeterogeneousEnumWithNullValidation
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -217,7 +221,7 @@ public class SuiteHeterogeneousEnumWithNullValidation
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
-                "#/2/schema",
+                "#/tests/2/schema",
                 "JsonSchemaTestSuiteDraft202012Enum",
                 "HeterogeneousEnumWithNullValidation",
                 validateFormat: false,
@@ -225,10 +229,9 @@ public class SuiteHeterogeneousEnumWithNullValidation
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -238,26 +241,28 @@ public class SuiteHeterogeneousEnumWithNullValidation
 public class SuiteEnumsInProperties
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestBothPropertiesAreValid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\":\"foo\", \"bar\":\"bar\"}");
+        using var doc = JsonDocument.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -265,7 +270,7 @@ public class SuiteEnumsInProperties
     [TestMethod]
     public void TestWrongFooValue()
     {
-        using var doc = JsonDocument.Parse("{\"foo\":\"foot\", \"bar\":\"bar\"}");
+        using var doc = JsonDocument.Parse("{ \"foo\": \"foot\", \"bar\": \"bar\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -273,7 +278,7 @@ public class SuiteEnumsInProperties
     [TestMethod]
     public void TestWrongBarValue()
     {
-        using var doc = JsonDocument.Parse("{\"foo\":\"foo\", \"bar\":\"bart\"}");
+        using var doc = JsonDocument.Parse("{ \"foo\": \"foo\", \"bar\": \"bart\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -281,7 +286,7 @@ public class SuiteEnumsInProperties
     [TestMethod]
     public void TestMissingOptionalPropertyIsValid()
     {
-        using var doc = JsonDocument.Parse("{\"bar\":\"bar\"}");
+        using var doc = JsonDocument.Parse("{ \"bar\": \"bar\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -289,7 +294,7 @@ public class SuiteEnumsInProperties
     [TestMethod]
     public void TestMissingRequiredPropertyIsInvalid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\":\"foo\"}");
+        using var doc = JsonDocument.Parse("{ \"foo\": \"foo\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -302,7 +307,7 @@ public class SuiteEnumsInProperties
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -313,7 +318,7 @@ public class SuiteEnumsInProperties
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
-                "#/3/schema",
+                "#/tests/4/schema",
                 "JsonSchemaTestSuiteDraft202012Enum",
                 "EnumsInProperties",
                 validateFormat: false,
@@ -321,10 +326,9 @@ public class SuiteEnumsInProperties
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -334,19 +338,21 @@ public class SuiteEnumsInProperties
 public class SuiteEnumWithEscapedCharacters
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -374,7 +380,7 @@ public class SuiteEnumWithEscapedCharacters
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -385,7 +391,7 @@ public class SuiteEnumWithEscapedCharacters
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
-                "#/4/schema",
+                "#/tests/5/schema",
                 "JsonSchemaTestSuiteDraft202012Enum",
                 "EnumWithEscapedCharacters",
                 validateFormat: false,
@@ -393,10 +399,9 @@ public class SuiteEnumWithEscapedCharacters
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -406,19 +411,21 @@ public class SuiteEnumWithEscapedCharacters
 public class SuiteEnumWithFalseDoesNotMatch0
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -446,7 +453,7 @@ public class SuiteEnumWithFalseDoesNotMatch0
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -457,7 +464,7 @@ public class SuiteEnumWithFalseDoesNotMatch0
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
-                "#/5/schema",
+                "#/tests/6/schema",
                 "JsonSchemaTestSuiteDraft202012Enum",
                 "EnumWithFalseDoesNotMatch0",
                 validateFormat: false,
@@ -465,10 +472,9 @@ public class SuiteEnumWithFalseDoesNotMatch0
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -478,19 +484,21 @@ public class SuiteEnumWithFalseDoesNotMatch0
 public class SuiteEnumWithFalseDoesNotMatch01
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -518,7 +526,7 @@ public class SuiteEnumWithFalseDoesNotMatch01
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -529,7 +537,7 @@ public class SuiteEnumWithFalseDoesNotMatch01
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
-                "#/6/schema",
+                "#/tests/7/schema",
                 "JsonSchemaTestSuiteDraft202012Enum",
                 "EnumWithFalseDoesNotMatch01",
                 validateFormat: false,
@@ -537,10 +545,9 @@ public class SuiteEnumWithFalseDoesNotMatch01
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -550,19 +557,21 @@ public class SuiteEnumWithFalseDoesNotMatch01
 public class SuiteEnumWithTrueDoesNotMatch1
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -590,7 +599,7 @@ public class SuiteEnumWithTrueDoesNotMatch1
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -601,7 +610,7 @@ public class SuiteEnumWithTrueDoesNotMatch1
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
-                "#/7/schema",
+                "#/tests/8/schema",
                 "JsonSchemaTestSuiteDraft202012Enum",
                 "EnumWithTrueDoesNotMatch1",
                 validateFormat: false,
@@ -609,10 +618,9 @@ public class SuiteEnumWithTrueDoesNotMatch1
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -622,19 +630,21 @@ public class SuiteEnumWithTrueDoesNotMatch1
 public class SuiteEnumWithTrueDoesNotMatch11
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -662,7 +672,7 @@ public class SuiteEnumWithTrueDoesNotMatch11
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -673,7 +683,7 @@ public class SuiteEnumWithTrueDoesNotMatch11
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
-                "#/8/schema",
+                "#/tests/9/schema",
                 "JsonSchemaTestSuiteDraft202012Enum",
                 "EnumWithTrueDoesNotMatch11",
                 validateFormat: false,
@@ -681,10 +691,9 @@ public class SuiteEnumWithTrueDoesNotMatch11
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -694,19 +703,21 @@ public class SuiteEnumWithTrueDoesNotMatch11
 public class SuiteEnumWith0DoesNotMatchFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -734,7 +745,7 @@ public class SuiteEnumWith0DoesNotMatchFalse
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -745,7 +756,7 @@ public class SuiteEnumWith0DoesNotMatchFalse
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
-                "#/9/schema",
+                "#/tests/10/schema",
                 "JsonSchemaTestSuiteDraft202012Enum",
                 "EnumWith0DoesNotMatchFalse",
                 validateFormat: false,
@@ -753,10 +764,9 @@ public class SuiteEnumWith0DoesNotMatchFalse
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -766,19 +776,21 @@ public class SuiteEnumWith0DoesNotMatchFalse
 public class SuiteEnumWith0DoesNotMatchFalse1
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -806,7 +818,7 @@ public class SuiteEnumWith0DoesNotMatchFalse1
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -817,7 +829,7 @@ public class SuiteEnumWith0DoesNotMatchFalse1
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
-                "#/10/schema",
+                "#/tests/11/schema",
                 "JsonSchemaTestSuiteDraft202012Enum",
                 "EnumWith0DoesNotMatchFalse1",
                 validateFormat: false,
@@ -825,10 +837,9 @@ public class SuiteEnumWith0DoesNotMatchFalse1
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -838,19 +849,21 @@ public class SuiteEnumWith0DoesNotMatchFalse1
 public class SuiteEnumWith1DoesNotMatchTrue
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -878,7 +891,7 @@ public class SuiteEnumWith1DoesNotMatchTrue
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -889,7 +902,7 @@ public class SuiteEnumWith1DoesNotMatchTrue
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
-                "#/11/schema",
+                "#/tests/12/schema",
                 "JsonSchemaTestSuiteDraft202012Enum",
                 "EnumWith1DoesNotMatchTrue",
                 validateFormat: false,
@@ -897,10 +910,9 @@ public class SuiteEnumWith1DoesNotMatchTrue
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -910,19 +922,21 @@ public class SuiteEnumWith1DoesNotMatchTrue
 public class SuiteEnumWith1DoesNotMatchTrue1
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -950,7 +964,7 @@ public class SuiteEnumWith1DoesNotMatchTrue1
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -961,7 +975,7 @@ public class SuiteEnumWith1DoesNotMatchTrue1
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
-                "#/12/schema",
+                "#/tests/13/schema",
                 "JsonSchemaTestSuiteDraft202012Enum",
                 "EnumWith1DoesNotMatchTrue1",
                 validateFormat: false,
@@ -969,10 +983,9 @@ public class SuiteEnumWith1DoesNotMatchTrue1
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -982,19 +995,21 @@ public class SuiteEnumWith1DoesNotMatchTrue1
 public class SuiteNulCharactersInStrings
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -1014,7 +1029,7 @@ public class SuiteNulCharactersInStrings
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1025,7 +1040,7 @@ public class SuiteNulCharactersInStrings
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
-                "#/13/schema",
+                "#/tests/14/schema",
                 "JsonSchemaTestSuiteDraft202012Enum",
                 "NulCharactersInStrings",
                 validateFormat: false,
@@ -1033,10 +1048,9 @@ public class SuiteNulCharactersInStrings
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -1046,19 +1060,21 @@ public class SuiteNulCharactersInStrings
 public class SuiteEmptyEnum
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -1110,7 +1126,7 @@ public class SuiteEmptyEnum
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1121,7 +1137,7 @@ public class SuiteEmptyEnum
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
-                "#/14/schema",
+                "#/tests/15/schema",
                 "JsonSchemaTestSuiteDraft202012Enum",
                 "EmptyEnum",
                 validateFormat: false,
@@ -1129,10 +1145,139 @@ public class SuiteEmptyEnum
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteCharactersWithTheSameVisualRepresentationButDifferentCodepoint
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestCharacterUsesTheSameCodepoint()
+    {
+        using var doc = JsonDocument.Parse("\"μ\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestCharacterLooksTheSameButUsesADifferentCodepoint()
+    {
+        using var doc = JsonDocument.Parse("\"µ\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft202012Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "enum.json",
+                "#/tests/16/schema",
+                "JsonSchemaTestSuiteDraft202012Enum",
+                "CharactersWithTheSameVisualRepresentationButDifferentCodepoint",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false);
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteCharactersWithTheSameVisualRepresentationButDifferentNumberOfCodepoints
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestCharacterUsesTheSameCodepoint()
+    {
+        using var doc = JsonDocument.Parse("\"ä\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestCharacterLooksTheSameButUsesCombiningMarks()
+    {
+        using var doc = JsonDocument.Parse("\"ä\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft202012Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "enum.json",
+                "#/tests/17/schema",
+                "JsonSchemaTestSuiteDraft202012Enum",
+                "CharactersWithTheSameVisualRepresentationButDifferentNumberOfCodepoints",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false);
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
         }
     }
 }

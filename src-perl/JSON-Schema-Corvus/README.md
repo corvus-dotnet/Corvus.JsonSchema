@@ -6,8 +6,8 @@ schema is compiled into Perl, which validates with exactly the checks the schema
 [JSON::Schema::Corvus::XS](../JSON-Schema-Corvus-XS) is the same evaluator on the corvus-json-schema C library, with
 the same API.
 
-- **Conformant**: passes all of the JSON-Schema-Test-Suite (required, optional and `optional/format`, every draft)
-  as JSON text, as a parsed document, through a results collector and as Perl data, and all of its annotation tests.
+- **Conformant**: passes all of the JSON-Schema-Test-Suite (required and optional, every draft) but the
+  high-precision cases of `optional/bignum.json`, whose decimals it holds to the precision of a double, as JSON text, as a parsed document, through a results collector and as Perl data, and all of its annotation tests.
   Its regular expressions give V8's answer on every record of the
   [ECMA-262 regular expression test data](https://github.com/corvus-dotnet/ecma262-regex-test-data).
 - **Fast**: hundreds of times faster than JSON::Schema::Modern (see [Performance](#performance)).

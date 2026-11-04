@@ -14,17 +14,14 @@ namespace Corvus.JsonSchemaTestSuite.CodeGenerator;
 /// </summary>
 internal static class AnnotationTestCaseGenerator
 {
-    private static readonly (string Name, string Vocabulary, string MinCompat)[] Drafts =
+    private static readonly (string Name, string Vocabulary, int Release)[] Drafts =
     [
-        ("Draft4", "http://json-schema.org/draft-04/schema#", "3"),
-        ("Draft6", "http://json-schema.org/draft-06/schema#", "6"),
-        ("Draft7", "http://json-schema.org/draft-07/schema#", "7"),
-        ("Draft201909", "https://json-schema.org/draft/2019-09/schema", "2019"),
-        ("Draft202012", "https://json-schema.org/draft/2020-12/schema", "2020"),
+        ("Draft4", "http://json-schema.org/draft-04/schema#", 4),
+        ("Draft6", "http://json-schema.org/draft-06/schema#", 6),
+        ("Draft7", "http://json-schema.org/draft-07/schema#", 7),
+        ("Draft201909", "https://json-schema.org/draft/2019-09/schema", 2019),
+        ("Draft202012", "https://json-schema.org/draft/2020-12/schema", 2020),
     ];
-
-    // The compatibility ordering — a draft is compatible if its compat level >= suite compat level.
-    private static readonly string[] CompatOrder = ["3", "4", "6", "7", "2019", "2020"];
 
     public static void GenerateTests(string baseDirectory, string outputPath, Action<string> fileCallback)
     {
@@ -45,7 +42,9 @@ internal static class AnnotationTestCaseGenerator
             Directory.Delete(outputPath, true);
         }
 
-        string remotesDirectory = Path.Combine(baseDirectory, "remotes");
+        // The schema is registered as a virtual document; any other documents it references come
+        // from the test case's own externalSchemas.
+        string remotesDirectory = Path.Combine(baseDirectory, "annotations", "tests");
 
         foreach (string file in Directory.EnumerateFiles(annotationsDir, "*.json"))
         {
@@ -62,7 +61,7 @@ internal static class AnnotationTestCaseGenerator
             }
 
             // For each draft, generate a test file with applicable suites.
-            foreach ((string draftName, string vocabulary, string minCompat) in Drafts)
+            foreach ((string draftName, string vocabulary, int release) in Drafts)
             {
                 StringBuilder builder = new();
                 bool hasSuites = false;
@@ -80,14 +79,18 @@ internal static class AnnotationTestCaseGenerator
 
                 foreach (JsonElement suite in suiteArray.EnumerateArray())
                 {
-                    string suiteCompat = suite.TryGetProperty("compatibility", out JsonElement compatEl)
-                        ? compatEl.GetString()!
-                        : "3"; // Default: all drafts
+                    string? suiteCompat = suite.TryGetProperty("compatibility", out JsonElement compatEl)
+                        ? compatEl.GetString()
+                        : null;
 
-                    if (!IsCompatible(minCompat, suiteCompat))
+                    if (!TestUtilities.JsonSchemaTestSuite.SuiteCompatibility.IsCompatible(suiteCompat, release))
                     {
                         continue;
                     }
+
+                    string? externalSchemas = suite.TryGetProperty("externalSchemas", out JsonElement externalSchemasElement)
+                        ? externalSchemasElement.GetRawText()
+                        : null;
 
                     string suiteDescription = suite.GetProperty("description").GetString()!;
                     string pascalSuiteName = GetUniqueName(ToPascalCase(suiteDescription), suiteNames);
@@ -169,7 +172,8 @@ internal static class AnnotationTestCaseGenerator
                         .AppendLine($"                {SymbolDisplay.FormatLiteral(EmbeddedLiteral.ForwardSlash(remotesDirectory), true)},")
                         .AppendLine($"                {SymbolDisplay.FormatLiteral(vocabulary, true)},")
                         .AppendLine("                validateFormat: false,")
-                        .AppendLine("                Assembly.GetExecutingAssembly());")
+                        .AppendLine(externalSchemas is null ? "                Assembly.GetExecutingAssembly());" : "                Assembly.GetExecutingAssembly(),")
+                        .AppendLineIf(externalSchemas is not null, () => $"                externalSchemas: {SymbolDisplay.FormatLiteral(EmbeddedLiteral.Json(externalSchemas!), true)});")
                         .AppendLine("        }")
                         .AppendLine("    }")
                         .AppendLine("}");
@@ -185,19 +189,6 @@ internal static class AnnotationTestCaseGenerator
                 }
             }
         }
-    }
-
-    private static bool IsCompatible(string draftMinCompat, string suiteCompat)
-    {
-        int draftLevel = Array.IndexOf(CompatOrder, draftMinCompat);
-        int suiteLevel = Array.IndexOf(CompatOrder, suiteCompat);
-
-        if (draftLevel < 0 || suiteLevel < 0)
-        {
-            return false;
-        }
-
-        return draftLevel >= suiteLevel;
     }
 
     private static string SanitizeLocation(string location)
