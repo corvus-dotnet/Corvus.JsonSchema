@@ -74,19 +74,17 @@ Publishing is conditional based on whether the build was triggered by a tag:
 
 | Trigger | NuGet source | Authentication |
 |---------|-------------|---------|
-| Tag (`refs/tags/*`) | `https://api.nuget.org/v3/index.json` | NuGet.org Trusted Publishing (no stored key) |
+| Tag (`refs/tags/*`), or a manual run with `forcePublicNugetDestination` | `https://api.nuget.org/v3/index.json` | NuGet.org Trusted Publishing (no stored key) |
 | Branch / PR | `https://nuget.pkg.github.com/{owner}/index.json` | `BUILD_PUBLISHER_PAT` secret |
 
 NuGet.org publishing uses [Trusted Publishing](https://learn.microsoft.com/nuget/nuget-org/trusted-publishing): the
-`Publish` job of `build.yml` (which has `id-token: write`) exchanges a GitHub Actions OIDC token for a NuGet.org key
+shared pipeline's Publish job in `build.yml` (which has `id-token: write`) exchanges a GitHub Actions OIDC token for a NuGet.org key
 that is valid for an hour, through ZeroFailed.Build.DotNet's `PublishNuGetPackages`. It needs:
 
 - a Trusted Publishing policy on nuget.org, owned by the `corvus-dotnet` organisation, for the repository owner
   `corvus-dotnet`, the repository `Corvus.JsonSchema` and the workflow file `build.yml` (no environment);
 - the repository variable `NUGET_TRUSTED_PUBLISHING_USER`, set to the nuget.org profile name (not the email address)
   of the user who created the policy, who must stay a member of the organisation.
-
-The shared pipeline's own Publish job runs an empty task (`RunFirst`): it cannot have `id-token: write`.
 
 This means:
 - **Stable releases** go to NuGet.org when a version tag is pushed
