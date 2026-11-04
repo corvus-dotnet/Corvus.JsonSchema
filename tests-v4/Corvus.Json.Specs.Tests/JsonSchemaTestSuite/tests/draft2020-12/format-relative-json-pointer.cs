@@ -339,6 +339,46 @@ public class SuiteValidationOfRelativeJSONPointersRJP
     }
 
     [TestMethod]
+    public void TestValidEscapedSlash1InTheJsonPointerPart()
+    {
+        using var doc = JsonDocument.Parse("\"0/a~1b\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestValidEscapedTilde0InTheJsonPointerPart()
+    {
+        using var doc = JsonDocument.Parse("\"0/m~0n\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestMultipleEscapedCharactersInTheJsonPointerPart()
+    {
+        using var doc = JsonDocument.Parse("\"0/~1~0~0~1~1\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestUsedAsAMemberNameInTheJsonPointerPart()
+    {
+        using var doc = JsonDocument.Parse("\"1/foo/-\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestMultipleUnescapedTildesInTheJsonPointerPart()
+    {
+        using var doc = JsonDocument.Parse("\"0/~~\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
     public void TestTrailingNewlineAfterTheNonNegativeInteger()
     {
         using var doc = JsonDocument.Parse("\"1\\n\"");

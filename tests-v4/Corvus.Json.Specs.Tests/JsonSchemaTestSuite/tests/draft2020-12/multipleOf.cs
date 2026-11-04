@@ -230,6 +230,71 @@ public class SuiteMultipleOfSmallNumber
 
 [TestCategory("Draft202012")]
 [TestClass]
+public class SuiteMultipleOfVerySmallNumber
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void Test_4e8IsMultipleOf1e8()
+    {
+        using var doc = JsonDocument.Parse("4e-8");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void Test_15e8IsNotMultipleOf1e8()
+    {
+        using var doc = JsonDocument.Parse("1.5e-8");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft202012Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "multipleOf.json",
+                "#/tests/6/schema",
+                "JsonSchemaTestSuiteDraft202012MultipleOf",
+                "MultipleOfVerySmallNumber",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false);
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
 public class SuiteMultipleOfWhenFloatDivisionInf
 {
     private static Fixture? s_fixture;
@@ -270,7 +335,7 @@ public class SuiteMultipleOfWhenFloatDivisionInf
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "multipleOf.json",
-                "#/tests/6/schema",
+                "#/tests/8/schema",
                 "JsonSchemaTestSuiteDraft202012MultipleOf",
                 "MultipleOfWhenFloatDivisionInf",
                 validateFormat: false,
@@ -327,7 +392,7 @@ public class SuiteSmallMultipleOfLargeInteger
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "multipleOf.json",
-                "#/tests/8/schema",
+                "#/tests/10/schema",
                 "JsonSchemaTestSuiteDraft202012MultipleOf",
                 "SmallMultipleOfLargeInteger",
                 validateFormat: false,

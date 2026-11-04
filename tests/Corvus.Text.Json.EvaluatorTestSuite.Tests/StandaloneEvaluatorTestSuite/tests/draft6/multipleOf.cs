@@ -182,6 +182,57 @@ public class SuiteMultipleOfSmallNumber
 
 [TestCategory("Draft6")]
 [TestClass]
+public class SuiteMultipleOfVerySmallNumber
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void Test4e8IsMultipleOf1e8()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("4e-8");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void Test15e8IsNotMultipleOf1e8()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("1.5e-8");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    public class Fixture
+    {
+        public CompiledEvaluator Evaluator { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
+                "tests/draft6/multipleOf.json",
+                "{\n                \"multipleOf\": 1e-8\n            }",
+                "StandaloneEvaluatorTestSuite.Draft6.MultipleOf",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "http://json-schema.org/draft-06/schema#",
+                validateFormat: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft6")]
+[TestClass]
 public class SuiteMultipleOfWhenFloatDivisionInf
 {
     private static Fixture? s_fixture;

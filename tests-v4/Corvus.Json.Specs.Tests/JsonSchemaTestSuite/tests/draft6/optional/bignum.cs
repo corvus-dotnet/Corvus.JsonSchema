@@ -537,3 +537,149 @@ public class SuiteAllIntegersAreMultiplesOf05IfOverflowIsHandled
         }
     }
 }
+
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteUniqueItemsComparisonWithHighPrecision
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestTheSameHighPrecisionDecimalIsNotUnique()
+    {
+        using var doc = JsonDocument.Parse("[0.123456789123456789, 0.123456789123456789]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestTrailingZeroesDoNotMakeDecimalsUnique()
+    {
+        using var doc = JsonDocument.Parse("[0.123456789123456789, 0.1234567891234567890]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestArraysContainingTheSameDecimalAreNotUnique()
+    {
+        using var doc = JsonDocument.Parse("[[0.123456789123456789], [0.123456789123456789]]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestObjectsContainingTheSameDecimalAreNotUnique()
+    {
+        using var doc = JsonDocument.Parse("[{\"value\": 0.123456789123456789}, {\"value\": 0.123456789123456789}]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft6Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "optional/bignum.json",
+                "#/tests/12/schema",
+                "JsonSchemaTestSuiteDraft6OptionalBignum",
+                "UniqueItemsComparisonWithHighPrecision",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false);
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
+        }
+    }
+}
+
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteMultipleOfWithIntegersAbove253
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void Test_3e20IsMultipleOf3()
+    {
+        using var doc = JsonDocument.Parse("300000000000000000000");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void Test_1e20IsNotMultipleOf3()
+    {
+        using var doc = JsonDocument.Parse("100000000000000000000");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft6Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "optional/bignum.json",
+                "#/tests/13/schema",
+                "JsonSchemaTestSuiteDraft6OptionalBignum",
+                "MultipleOfWithIntegersAbove253",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false);
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
+        }
+    }
+}

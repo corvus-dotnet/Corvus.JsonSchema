@@ -514,6 +514,14 @@ public class SuiteValidationOfURIs
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
+    [TestMethod]
+    public void TestAnIPv6AddressWithoutEnclosingBracketsIsInvalid()
+    {
+        using var doc = JsonDocument.Parse("\"http://2001:0db8:85a3:0000:0000:8a2e:0370:7334\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
     public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;

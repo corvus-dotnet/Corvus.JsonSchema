@@ -440,6 +440,13 @@ public class SuiteValidationOfUrIs
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
+    [TestMethod]
+    public void TestAnIPv6AddressWithoutEnclosingBracketsIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"http://2001:0db8:85a3:0000:0000:8a2e:0370:7334\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
     public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }

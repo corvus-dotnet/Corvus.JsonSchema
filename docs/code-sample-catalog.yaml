@@ -1501,11 +1501,11 @@ main-docs:
   - path: "docs/ReleaseProcess.md"
     blocks:
       - {index: 0, language: yaml, lines: [18, 36]}
-      - {index: 1, language: powershell, lines: [143, 151]}
-      - {index: 2, language: bash, lines: [227, 232]}
-      - {index: 3, language: sh, lines: [638, 640]}
-      - {index: 4, language: xml, lines: [773, 777]}
-      - {index: 5, language: xml, lines: [781, 783]}
+      - {index: 1, language: powershell, lines: [135, 143]}
+      - {index: 2, language: bash, lines: [210, 215]}
+      - {index: 3, language: sh, lines: [621, 623]}
+      - {index: 4, language: xml, lines: [756, 760]}
+      - {index: 5, language: xml, lines: [764, 766]}
   - path: "docs/RunningTests.md"
     blocks:
       - {index: 0, language: powershell, lines: [7, 10]}
@@ -1540,9 +1540,9 @@ main-docs:
       - {index: 29, language: powershell, lines: [415, 421]}
   - path: "docs/RuntimeEvaluator.md"
     blocks:
-      - {index: 0, language: csharp, lines: [279, 297], category: compilable, verified: false}
-      - {index: 1, language: csharp, lines: [350, 362], category: compilable, verified: false}
-      - {index: 2, language: xml, lines: [449, 453]}
+      - {index: 0, language: csharp, lines: [283, 301], category: compilable, verified: false}
+      - {index: 1, language: csharp, lines: [354, 366], category: compilable, verified: false}
+      - {index: 2, language: xml, lines: [453, 457]}
   - path: "docs/SchemaEvaluator.md"
     blocks:
       - {index: 0, language: xml, lines: [19, 26]}

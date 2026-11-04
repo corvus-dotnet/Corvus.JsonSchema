@@ -49,6 +49,9 @@ EXCLUDED_CASES = {
     ("bignum.json", "above the exclusive minimum is valid"),
     ("bignum.json", "a slightly smaller decimal is invalid"),
     ("bignum.json", "a slightly larger decimal is invalid"),
+    ("bignum.json", "distinct high-precision decimals are unique"),
+    ("bignum.json", "arrays containing distinct decimals are unique"),
+    ("bignum.json", "objects containing distinct decimals are unique"),
 }
 if _impl == "corvus_json_schema_rs":
     EXCLUDED_CASES.add(("bignum.json", "just below the minimum is invalid"))

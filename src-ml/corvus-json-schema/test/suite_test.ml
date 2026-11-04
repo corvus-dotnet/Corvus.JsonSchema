@@ -23,7 +23,7 @@ let suite_drafts =
 let suite_excluded_files = [ "draft4/optional/zero-terminated-floats.json" ]
 
 (* The number of test cases the suite has, less the exclusion: a smaller count means a stale or partial run. *)
-let expected_total = 8611
+let expected_total = 8686
 let results_levels = [ Results.Basic; Results.Detailed; Results.Verbose ]
 
 exception Case_error of string

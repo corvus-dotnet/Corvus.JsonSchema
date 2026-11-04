@@ -231,6 +231,20 @@ public class SuiteValidationOfHostNames
     }
 
     [TestMethod]
+    public void TestLeadingSpaceIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\" example.com\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestSpaceInsideALabelIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"ex ample.com\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
     public void TestInvalidNonAsciiKelvinSignU212a()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u212Aelvin.example.com\"");

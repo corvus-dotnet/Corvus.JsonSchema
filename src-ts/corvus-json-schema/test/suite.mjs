@@ -37,24 +37,18 @@ const drafts = {
 // Exclusions, matching the C# runner: zero-terminated floats (JSON.parse cannot tell 1.0 from 1 either).
 const excludedFiles = new Set(['draft4/optional/zero-terminated-floats.json']);
 
-// Test cases left out by name (file and test description):
-// - the six required leap-second cases, which optional/format-time.json contradicts for the same drafts (the
-//   evaluator accepts leap seconds);
-// - the high-precision cases of optional/bignum.json: the evaluator takes JavaScript values, so a number has at most
-//   the precision of a double by the time it sees it.
+// Test cases left out by name (file and test description): the high-precision cases of optional/bignum.json. The
+// evaluator takes JavaScript values, so a number has at most the precision of a double by the time it sees it.
 const excludedCases = new Set([
-  'format-time.json|a leap second is not a valid time',
-  'format-time.json|a leap second with a zero time-offset is not a valid time',
-  'format-time.json|a leap second with a positive time-offset is not a valid time',
-  'format-time.json|a leap second with a large positive time-offset is not a valid time',
-  'format-time.json|a leap second with a negative time-offset is not a valid time',
-  'format-time.json|a leap second with a large negative time-offset is not a valid time',
   'bignum.json|below the exclusive maximum is valid',
   'bignum.json|above the exclusive minimum is valid',
   'bignum.json|just above the maximum is invalid',
   'bignum.json|just below the minimum is invalid',
   'bignum.json|a slightly smaller decimal is invalid',
   'bignum.json|a slightly larger decimal is invalid',
+  'bignum.json|distinct high-precision decimals are unique',
+  'bignum.json|arrays containing distinct decimals are unique',
+  'bignum.json|objects containing distinct decimals are unique',
 ]);
 
 // Whether a test case's compatibility (a comma-separated list of minimums, <= maximums and = releases, from the

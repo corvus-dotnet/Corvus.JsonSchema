@@ -138,5 +138,5 @@ end
     println("JSON-Schema-Test-Suite: ", runner.total - failed, "/", runner.total, " passed")
     @test failed == 0
     # The number of test cases the suite has, less the exclusions: a smaller count means a stale or partial run.
-    (draft_filter == "" && runner.filter == "") && @test runner.total == 8611
+    (draft_filter == "" && runner.filter == "") && @test runner.total == 8686
 end

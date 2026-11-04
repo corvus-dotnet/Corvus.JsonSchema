@@ -258,6 +258,34 @@ public class SuiteValidationOfIriReferences
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
+    [TestMethod]
+    public void TestANonNumericPortInANetworkPathReferenceIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"//ƒøø.ßår:abc/p\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestMoreThanOneAtSignInTheAuthorityIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"//â@b@ƒøø.ßår/\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAColonInTheFirstSegmentOfARelativePathReference()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"â:b\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAColonInTheFirstSegmentPrecededByADotSegment()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"./â:b\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
     public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }

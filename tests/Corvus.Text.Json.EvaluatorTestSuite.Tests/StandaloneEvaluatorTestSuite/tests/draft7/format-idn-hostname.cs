@@ -469,6 +469,27 @@ public class SuiteValidationOfInternationalizedHostNames
     }
 
     [TestMethod]
+    public void TestTrailingNewlineIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"example.com\\n\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestLeadingSpaceIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\" example.com\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestSpaceInsideALabelIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"ex ample.com\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
     public void TestFullwidthDigitsAreMappedToAsciiDigits()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\uff11\\uff12\\uff13\"");

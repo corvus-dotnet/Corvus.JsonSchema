@@ -346,6 +346,54 @@ public class SuiteValidationOfIRIs
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
+    [TestMethod]
+    public void TestNonASCIICharacterInSchemeIsInvalid()
+    {
+        using var doc = JsonDocument.Parse("\"htτp://example.com\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestSchemeStartingWithADigitIsInvalid()
+    {
+        using var doc = JsonDocument.Parse("\"1http://example.com\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestInvalidCharacterInScheme()
+    {
+        using var doc = JsonDocument.Parse("\"ht_tp://example.com\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestNonNumericPortIsInvalid()
+    {
+        using var doc = JsonDocument.Parse("\"http://ƒøø.ßår:abc/path\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestMoreThanOneAtSignInTheAuthorityIsInvalid()
+    {
+        using var doc = JsonDocument.Parse("\"http://â@b@ƒøø.ßår/\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestSquareBracketsAreNotAllowedInAPathSegment()
+    {
+        using var doc = JsonDocument.Parse("\"http://ƒøø.ßår/[::1]\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
     public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;

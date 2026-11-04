@@ -163,29 +163,13 @@ public class SuiteUniqueItemsValidation
     [TestMethod]
     public void Test_1AndTrueAreUnique()
     {
-        using var doc = JsonDocument.Parse("[1, true]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void Test_0AndFalseAreUnique()
-    {
-        using var doc = JsonDocument.Parse("[0, false]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void Test_1AndTrueAreUnique1()
-    {
         using var doc = JsonDocument.Parse("[[1], [true]]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
     [TestMethod]
-    public void Test_0AndFalseAreUnique1()
+    public void Test_0AndFalseAreUnique()
     {
         using var doc = JsonDocument.Parse("[[0], [false]]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
@@ -389,22 +373,6 @@ public class SuiteUniqueItemsFalseValidation
     public void TestNonUniqueArrayOfArraysIsValid()
     {
         using var doc = JsonDocument.Parse("[[\"foo\"], [\"foo\"]]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void Test_1AndTrueAreUnique()
-    {
-        using var doc = JsonDocument.Parse("[1, true]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void Test_0AndFalseAreUnique()
-    {
-        using var doc = JsonDocument.Parse("[0, false]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }

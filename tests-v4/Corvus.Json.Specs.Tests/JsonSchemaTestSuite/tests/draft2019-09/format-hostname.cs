@@ -331,6 +331,22 @@ public class SuiteValidationOfHostNames
     }
 
     [TestMethod]
+    public void TestLeadingSpaceIsInvalid()
+    {
+        using var doc = JsonDocument.Parse("\" example.com\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestSpaceInsideALabelIsInvalid()
+    {
+        using var doc = JsonDocument.Parse("\"ex ample.com\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
     public void TestInvalidNonASCIIKELVINSIGNU212A()
     {
         using var doc = JsonDocument.Parse("\"\\u212Aelvin.example.com\"");

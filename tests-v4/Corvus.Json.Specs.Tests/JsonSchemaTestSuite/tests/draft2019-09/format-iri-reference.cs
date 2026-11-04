@@ -306,6 +306,38 @@ public class SuiteValidationOfIRIReferences
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
+    [TestMethod]
+    public void TestANonNumericPortInANetworkPathReferenceIsInvalid()
+    {
+        using var doc = JsonDocument.Parse("\"//ƒøø.ßår:abc/p\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestMoreThanOneAtSignInTheAuthorityIsInvalid()
+    {
+        using var doc = JsonDocument.Parse("\"//â@b@ƒøø.ßår/\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestAColonInTheFirstSegmentOfARelativePathReference()
+    {
+        using var doc = JsonDocument.Parse("\"â:b\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestAColonInTheFirstSegmentPrecededByADotSegment()
+    {
+        using var doc = JsonDocument.Parse("\"./â:b\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
     public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;

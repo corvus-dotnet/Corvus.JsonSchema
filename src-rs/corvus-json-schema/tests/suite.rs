@@ -28,25 +28,18 @@ const DRAFTS: [(&str, Dialect, u32); 5] = [
 // Exclusions, matching the C# runner: zero-terminated floats (serde_json cannot tell 1.0 from 1 either).
 const EXCLUDED_FILES: [&str; 1] = ["draft4/optional/zero-terminated-floats.json"];
 
-// The suite contradicts itself on leap seconds: format-time.json (required) says 23:59:60Z is not a valid time, and
-// optional/format-time.json says it is, for the same drafts. The evaluator accepts leap seconds, so these six required
-// cases are left out by name.
-//
 // The crate reads JSON through serde_json without its arbitrary_precision feature, so a number has at most the
 // precision of an f64 by the time the evaluator sees it. These high-precision cases of optional/bignum.json need the
 // digits of the text, and are left out by name.
-const EXCLUDED_CASES: [(&str, &str); 11] = [
-    ("format-time.json", "a leap second is not a valid time"),
-    ("format-time.json", "a leap second with a zero time-offset is not a valid time"),
-    ("format-time.json", "a leap second with a positive time-offset is not a valid time"),
-    ("format-time.json", "a leap second with a large positive time-offset is not a valid time"),
-    ("format-time.json", "a leap second with a negative time-offset is not a valid time"),
-    ("format-time.json", "a leap second with a large negative time-offset is not a valid time"),
+const EXCLUDED_CASES: [(&str, &str); 8] = [
     ("bignum.json", "below the exclusive maximum is valid"),
     ("bignum.json", "above the exclusive minimum is valid"),
     ("bignum.json", "just below the minimum is invalid"),
     ("bignum.json", "a slightly smaller decimal is invalid"),
     ("bignum.json", "a slightly larger decimal is invalid"),
+    ("bignum.json", "distinct high-precision decimals are unique"),
+    ("bignum.json", "arrays containing distinct decimals are unique"),
+    ("bignum.json", "objects containing distinct decimals are unique"),
 ];
 
 /// Whether a test case's `compatibility` (a comma-separated list of minimums, `<=` maximums and `=` releases, from

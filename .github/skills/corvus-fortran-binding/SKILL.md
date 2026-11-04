@@ -25,7 +25,7 @@ library's, and so the Rust crate's (`docs/JsonSchemaForC.md`, `src-rs/corvus-jso
   `1.0` must reach the validator as `1.0`).
 - `test/suite_test.f90`: the JSON-Schema-Test-Suite (`validation/tests`, each case filtered by its `compatibility`,
   format asserted by its `tags`, its `externalSchemas` served by `case_resolver`) as JSON text, as a document and
-  through a verbose collector: COUNT_TBD run, with the 38 high-precision `bignum.json` cases left out by name.
+  through a verbose collector: 8,633 run, with the 53 high-precision `bignum.json` cases left out by name.
 - `test/annotations_test.f90`: the annotation suite (213 assertions). JSON values are compared with the library
   itself, by validating the produced object against `{"const": <expected>}`; `api_test` checks that this comparison
   can fail.

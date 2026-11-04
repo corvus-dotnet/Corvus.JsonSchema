@@ -282,6 +282,41 @@ public class SuiteValidationOfRelativeJsonPointersRjp
     }
 
     [TestMethod]
+    public void TestValidEscapedSlash1InTheJsonPointerPart()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"0/a~1b\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestValidEscapedTilde0InTheJsonPointerPart()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"0/m~0n\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestMultipleEscapedCharactersInTheJsonPointerPart()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"0/~1~0~0~1~1\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestUsedAsAMemberNameInTheJsonPointerPart()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"1/foo/-\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestMultipleUnescapedTildesInTheJsonPointerPart()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"0/~~\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
     public void TestTrailingNewlineAfterTheNonNegativeInteger()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"1\\n\"");

@@ -293,6 +293,48 @@ public class SuiteValidationOfIrIs
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
+    [TestMethod]
+    public void TestNonAsciiCharacterInSchemeIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"htτp://example.com\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestSchemeStartingWithADigitIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"1http://example.com\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestInvalidCharacterInScheme()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"ht_tp://example.com\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestNonNumericPortIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"http://ƒøø.ßår:abc/path\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestMoreThanOneAtSignInTheAuthorityIsInvalid()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"http://â@b@ƒøø.ßår/\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestSquareBracketsAreNotAllowedInAPathSegment()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"http://ƒøø.ßår/[::1]\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
     public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }

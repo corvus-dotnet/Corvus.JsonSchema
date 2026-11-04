@@ -209,6 +209,34 @@ public class SuiteValidationOfIriReferences
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
+    [TestMethod]
+    public void TestANonNumericPortInANetworkPathReferenceIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"//ƒøø.ßår:abc/p\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestMoreThanOneAtSignInTheAuthorityIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"//â@b@ƒøø.ßår/\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestAColonInTheFirstSegmentOfARelativePathReference()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"â:b\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestAColonInTheFirstSegmentPrecededByADotSegment()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"./â:b\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
     public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }

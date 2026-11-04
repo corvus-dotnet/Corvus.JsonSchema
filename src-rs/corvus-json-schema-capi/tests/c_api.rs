@@ -159,20 +159,16 @@ const DRAFTS: [(&str, u32, cjs_dialect, corvus::Dialect); 5] = [
 // As the crate's runner: serde_json cannot tell 1.0 from 1.
 const EXCLUDED_FILES: [&str; 1] = ["draft4/optional/zero-terminated-floats.json"];
 
-// As the crate's runner: the six required leap-second cases that optional/format-time.json contradicts, and the
-// high-precision cases of optional/bignum.json, whose digits serde_json values do not hold.
-const EXCLUDED_CASES: [(&str, &str); 11] = [
-    ("format-time.json", "a leap second is not a valid time"),
-    ("format-time.json", "a leap second with a zero time-offset is not a valid time"),
-    ("format-time.json", "a leap second with a positive time-offset is not a valid time"),
-    ("format-time.json", "a leap second with a large positive time-offset is not a valid time"),
-    ("format-time.json", "a leap second with a negative time-offset is not a valid time"),
-    ("format-time.json", "a leap second with a large negative time-offset is not a valid time"),
+// As the crate's runner: the high-precision cases of optional/bignum.json, whose digits serde_json values do not hold.
+const EXCLUDED_CASES: [(&str, &str); 8] = [
     ("bignum.json", "below the exclusive maximum is valid"),
     ("bignum.json", "above the exclusive minimum is valid"),
     ("bignum.json", "just below the minimum is invalid"),
     ("bignum.json", "a slightly smaller decimal is invalid"),
     ("bignum.json", "a slightly larger decimal is invalid"),
+    ("bignum.json", "distinct high-precision decimals are unique"),
+    ("bignum.json", "arrays containing distinct decimals are unique"),
+    ("bignum.json", "objects containing distinct decimals are unique"),
 ];
 
 fn suite_root() -> PathBuf {

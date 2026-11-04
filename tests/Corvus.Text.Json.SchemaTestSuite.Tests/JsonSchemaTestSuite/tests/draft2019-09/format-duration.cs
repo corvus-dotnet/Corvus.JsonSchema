@@ -378,13 +378,6 @@ public class SuiteValidationOfDurationStrings
     }
 
     [TestMethod]
-    public void TestMonthsAndDaysCanAppearWithoutYears()
-    {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"P1M2D\"");
-        Assert.IsTrue(dynamicInstance.EvaluateSchema());
-    }
-
-    [TestMethod]
     public void TestHoursAndMinutesCanAppearWithoutSeconds()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"PT1H2M\"");

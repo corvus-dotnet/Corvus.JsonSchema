@@ -140,26 +140,12 @@ public class SuiteUniqueItemsValidation
     [TestMethod]
     public void Test1AndTrueAreUnique()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, true]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void Test0AndFalseAreUnique()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[0, false]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void Test1AndTrueAreUnique1()
-    {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[[1], [true]]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
-    public void Test0AndFalseAreUnique1()
+    public void Test0AndFalseAreUnique()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[[0], [false]]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
@@ -332,20 +318,6 @@ public class SuiteUniqueItemsFalseValidation
     public void TestNonUniqueArrayOfArraysIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[[\"foo\"], [\"foo\"]]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void Test1AndTrueAreUnique()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, true]");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void Test0AndFalseAreUnique()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[0, false]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 

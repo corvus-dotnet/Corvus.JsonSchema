@@ -242,6 +242,46 @@ public class SuiteValidationOfRegularExpressions
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
+    [TestMethod]
+    public void TestAnEmptyRegularExpressionIsValid()
+    {
+        using var doc = JsonDocument.Parse("\"\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestAlternationIsValid()
+    {
+        using var doc = JsonDocument.Parse("\"a|b\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestABoundedQuantifierIsValid()
+    {
+        using var doc = JsonDocument.Parse("\"a{2,3}\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestANegatedRangeCharacterClassIsValid()
+    {
+        using var doc = JsonDocument.Parse("\"[^a-z]\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestALazyQuantifierIsValid()
+    {
+        using var doc = JsonDocument.Parse("\"a+?\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
     public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;

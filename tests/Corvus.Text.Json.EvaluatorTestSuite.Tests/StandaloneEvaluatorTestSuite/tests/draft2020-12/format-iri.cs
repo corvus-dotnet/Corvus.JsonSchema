@@ -288,6 +288,48 @@ public class SuiteValidationOfIrIs
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
+    [TestMethod]
+    public void TestNonAsciiCharacterInSchemeIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"htτp://example.com\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestSchemeStartingWithADigitIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"1http://example.com\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidCharacterInScheme()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"ht_tp://example.com\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestNonNumericPortIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"http://ƒøø.ßår:abc/path\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestMoreThanOneAtSignInTheAuthorityIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"http://â@b@ƒøø.ßår/\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestSquareBracketsAreNotAllowedInAPathSegment()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"http://ƒøø.ßår/[::1]\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
     public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }

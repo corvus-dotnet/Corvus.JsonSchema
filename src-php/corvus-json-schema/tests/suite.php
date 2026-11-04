@@ -24,6 +24,9 @@ $excludedCases = [
     'bignum.json|just below the minimum is invalid',
     'bignum.json|a slightly smaller decimal is invalid',
     'bignum.json|a slightly larger decimal is invalid',
+    'bignum.json|distinct high-precision decimals are unique',
+    'bignum.json|arrays containing distinct decimals are unique',
+    'bignum.json|objects containing distinct decimals are unique',
 ];
 
 $tests = "$root/validation/tests";
