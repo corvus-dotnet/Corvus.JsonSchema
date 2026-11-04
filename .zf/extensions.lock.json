@@ -1,0 +1,58 @@
+{
+  "lockVersion": 1,
+  "extensions": {
+    "ZeroFailed.Build.Common": {
+      "source": {
+        "type": "git",
+        "folderPath": "module",
+        "repository": "https://github.com/zerofailed/ZeroFailed.Build.Common"
+      },
+      "requested": "main",
+      "resolved": "57ff8211cd75b4bd34297d9192ceb90e7d2df86c",
+      "contentHash": "sha256:ca10d4dd47ebf1ca8deeb5da78e3a930ca35cfe0c60acafa9b9b314d95533bfd",
+      "direct": false,
+      "requiredBy": [
+        "ZeroFailed.Build.DotNet",
+        "ZeroFailed.Build.GitHub"
+      ]
+    },
+    "ZeroFailed.Build.DotNet": {
+      "source": {
+        "type": "git",
+        "folderPath": "module",
+        "repository": "https://github.com/zerofailed/ZeroFailed.Build.DotNet"
+      },
+      "requested": "main",
+      "resolved": "7fa91e302616accf3c65a2b95fff79f37fcc1ebb",
+      "contentHash": "sha256:5b7a3ce101f586795e7b9558da5d9f98c86909e43dcda93b4b5e5a4d231097d9",
+      "direct": true,
+      "requiredBy": []
+    },
+    "ZeroFailed.Build.GitHub": {
+      "source": {
+        "type": "git",
+        "folderPath": "module",
+        "repository": "https://github.com/zerofailed/ZeroFailed.Build.GitHub"
+      },
+      "requested": "main",
+      "resolved": "2c4d0589e939fafb6db6c18aebc504837a79f26b",
+      "contentHash": "sha256:3243fc978d7ae1c6fdc35a87eef901d57394388f524dd01fb89f5aa479e82914",
+      "direct": true,
+      "requiredBy": []
+    },
+    "ZeroFailed.DevOps.Common": {
+      "source": {
+        "type": "git",
+        "folderPath": "module",
+        "repository": "https://github.com/zerofailed/ZeroFailed.DevOps.Common"
+      },
+      "requested": "main",
+      "resolved": "ea7799ec437c2a0cb380968903b8611e0733f812",
+      "contentHash": "sha256:2434243da7607d2cba16d47ae505325f8881647dce2a8eb9728ff085d9e5b6b4",
+      "direct": false,
+      "requiredBy": [
+        "ZeroFailed.Build.Common"
+      ]
+    }
+  }
+}
