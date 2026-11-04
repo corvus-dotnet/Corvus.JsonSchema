@@ -96,6 +96,104 @@ public class SuiteValidationOfTimeStrings
     }
 
     [TestMethod]
+    public void TestAValidTimeStringWithLeapSecondZulu()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"23:59:60Z\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidLeapSecondZuluWrongHour()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"22:59:60Z\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidLeapSecondZuluWrongMinute()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"23:58:60Z\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestValidLeapSecondZeroTimeOffset()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"23:59:60+00:00\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidLeapSecondZeroTimeOffsetWrongHour()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"22:59:60+00:00\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidLeapSecondZeroTimeOffsetWrongMinute()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"23:58:60+00:00\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestValidLeapSecondPositiveTimeOffset()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"01:29:60+01:30\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestValidLeapSecondLargePositiveTimeOffset()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"23:29:60+23:30\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidLeapSecondPositiveTimeOffsetWrongHour()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"23:59:60+01:00\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidLeapSecondPositiveTimeOffsetWrongMinute()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"23:59:60+00:30\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestValidLeapSecondNegativeTimeOffset()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"15:59:60-08:00\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestValidLeapSecondLargeNegativeTimeOffset()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"00:29:60-23:30\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidLeapSecondNegativeTimeOffsetWrongHour()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"23:59:60-01:00\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidLeapSecondNegativeTimeOffsetWrongMinute()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"23:59:60-00:30\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
     public void TestAValidTimeStringWithSecondFraction()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"23:20:50.52Z\"");
@@ -162,6 +260,20 @@ public class SuiteValidationOfTimeStrings
     public void TestAnInvalidTimeStringWithInvalidSecond()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"00:00:61Z\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestAnInvalidTimeStringWithInvalidLeapSecondWrongHour()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"22:59:60Z\"");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestAnInvalidTimeStringWithInvalidLeapSecondWrongMinute()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"23:58:60Z\"");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 

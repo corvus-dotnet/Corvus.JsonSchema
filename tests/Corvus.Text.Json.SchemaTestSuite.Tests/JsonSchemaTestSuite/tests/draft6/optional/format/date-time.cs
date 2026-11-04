@@ -95,6 +95,41 @@ public class SuiteValidationOfDateTimeStrings
     }
 
     [TestMethod]
+    public void TestAValidDateTimeWithALeapSecondUtc()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"1998-12-31T23:59:60Z\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAValidDateTimeWithALeapSecondWithMinusOffset()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"1998-12-31T15:59:60.123-08:00\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAnInvalidDateTimePastLeapSecondUtc()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"1998-12-31T23:59:61Z\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAnInvalidDateTimeWithLeapSecondOnAWrongMinuteUtc()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"1998-12-31T23:58:60Z\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAnInvalidDateTimeWithLeapSecondOnAWrongHourUtc()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"1998-12-31T22:59:60Z\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
     public void TestAnInvalidHourInDateTimeString()
     {
         var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"1990-12-31T24:00:00Z\"");

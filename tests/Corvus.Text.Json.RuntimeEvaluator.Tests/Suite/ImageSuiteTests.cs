@@ -39,18 +39,13 @@ public class ImageSuiteTests
     [DynamicData(nameof(FormatFiles), DynamicDataDisplayName = nameof(DisplayName))]
     public void Format(string draft, string name, string file)
     {
-        AssertFile(file, draft, assertFormat: true, skipLeapSeconds: true);
+        AssertFile(file, draft, assertFormat: true);
     }
 
-    private static void AssertFile(string file, string draft, bool assertFormat, bool skipLeapSeconds = false)
+    private static void AssertFile(string file, string draft, bool assertFormat)
     {
         List<SuiteRunner.CaseResult> results = SuiteRunner.RunFile(file, draft, assertFormat, throughImage: true);
         List<SuiteRunner.CaseResult> failures = results.Where(r => !r.Passed).ToList();
-        if (skipLeapSeconds)
-        {
-            failures = failures.Where(f => !f.Test.Contains("leap second", StringComparison.OrdinalIgnoreCase)).ToList();
-        }
-
         if (failures.Count > 0)
         {
             Assert.Fail($"{failures.Count}/{results.Count} cases failed in {Path.GetFileName(file)} (through image):\n{SuiteRunner.Describe(failures)}");

@@ -1,5 +1,17 @@
 # Version History
 
+## V5.8.6
+
+V5.8.6 accepts leap seconds in the `date-time` and `time` formats, and accepts every time offset RFC 3339 allows.
+
+### Bug fixes
+
+- **A leap second is a valid `date-time` on a day that ended with one.** RFC 3339 allows a second of `60` when a leap second falls there. `date-time` now accepts it at 23:59:60 UTC on the 27 days the IERS has ended with a leap second, from 1972-06-30 to 2016-12-31, in whatever offset the value is written (`1998-12-31T15:59:60-08:00` is valid). A second of `60` at any other time, or on any other day, is still invalid. The check refused every leap second before.
+- **A leap second is a valid `time` at 23:59:60 UTC.** A `time` has no date, so `time` accepts a second of `60` whenever the time is 23:59 in UTC (`23:59:60Z`, `15:59:60-08:00`).
+- **A time offset may have any hour from 00 to 23.** RFC 3339 allows offsets up to `+23:59`, and `date-time` and `time` now accept them. The checks refused an offset over 14 hours. The parsed `date-time` and `time` values, which convert to `DateTimeOffset` and NodaTime types, still refuse what those types cannot hold.
+
+V4 uses the same checks, so its answers change in the same way. The JSON-Schema-Test-Suite's leap-second cases, which both engines excluded, now run and pass.
+
 ## V5.8.5
 
 V5.8.5 fixes how V4 code generation finds a `$dynamicAnchor` when a `$ref` pointer reaches into an embedded resource.

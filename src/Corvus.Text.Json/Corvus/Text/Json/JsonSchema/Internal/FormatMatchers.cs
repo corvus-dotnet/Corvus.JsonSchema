@@ -67,6 +67,27 @@ internal static class FormatMatchers
         0x11A34, 0x11A47, 0x11A99, 0x11C3F,
         0x11D44, 0x11D45, 0x11D97];
 
+    private const int MinutesPerDay = 24 * 60;
+
+    private const int LastMinuteOfDay = MinutesPerDay - 1;
+
+    /// <summary>
+    /// The UTC days that ended with a leap second, as days from 1970-01-01: every one the IERS has announced, from
+    /// 1972-06-30 to 2016-12-31 (IERS Bulletin C).
+    /// </summary>
+    private static readonly int[] LeapSecondDays =
+    [
+        DaysFromCivil(1972, 6, 30), DaysFromCivil(1972, 12, 31), DaysFromCivil(1973, 12, 31),
+        DaysFromCivil(1974, 12, 31), DaysFromCivil(1975, 12, 31), DaysFromCivil(1976, 12, 31),
+        DaysFromCivil(1977, 12, 31), DaysFromCivil(1978, 12, 31), DaysFromCivil(1979, 12, 31),
+        DaysFromCivil(1981, 6, 30), DaysFromCivil(1982, 6, 30), DaysFromCivil(1983, 6, 30),
+        DaysFromCivil(1985, 6, 30), DaysFromCivil(1987, 12, 31), DaysFromCivil(1989, 12, 31),
+        DaysFromCivil(1990, 12, 31), DaysFromCivil(1992, 6, 30), DaysFromCivil(1993, 6, 30),
+        DaysFromCivil(1994, 6, 30), DaysFromCivil(1995, 12, 31), DaysFromCivil(1997, 6, 30),
+        DaysFromCivil(1998, 12, 31), DaysFromCivil(2005, 12, 31), DaysFromCivil(2008, 12, 31),
+        DaysFromCivil(2012, 6, 30), DaysFromCivil(2015, 6, 30), DaysFromCivil(2016, 12, 31),
+    ];
+
     /// <summary>
     /// Validates that a value is an RFC 3339 <c>full-date</c>, for the <c>date</c> format.
     /// </summary>
@@ -84,11 +105,25 @@ internal static class FormatMatchers
     /// </summary>
     /// <param name="value">The UTF-8 encoded value.</param>
     /// <returns><see langword="true"/> if the value is a time.</returns>
+    /// <remarks>
+    /// A second of <c>60</c> (a leap second) is accepted when the time is 23:59 in UTC. A time has no date, so the
+    /// date of the leap second is not checked.
+    /// </remarks>
     internal static bool MatchTime(ReadOnlySpan<byte> value)
     {
-        // HH:MM:SS, then at least the one character of a "Z" offset.
-        return value.Length >= 9 &&
-            JsonElementHelpers.ParseOffsetTimeCore(value, out _, out _, out _, out _, out _, out _, out _);
+        if (!TryParseFullTime(value, out int hour, out int minute, out int second, out int offsetMinutes))
+        {
+            return false;
+        }
+
+        if (second < 60)
+        {
+            return true;
+        }
+
+        // The UTC minute runs from -1439 to 2878, so 23:59 UTC is minute 1439 of this day or minute -1 (the day before).
+        int utcMinute = (hour * 60) + minute - offsetMinutes;
+        return utcMinute == LastMinuteOfDay || utcMinute == LastMinuteOfDay - MinutesPerDay;
     }
 
     /// <summary>
@@ -97,16 +132,148 @@ internal static class FormatMatchers
     /// <param name="value">The UTF-8 encoded value.</param>
     /// <returns><see langword="true"/> if the value is a date-time.</returns>
     /// <remarks>
+    /// <para>
     /// A lowercase <c>t</c> separator is accepted, as RFC 3339 section 5.6 allows.
+    /// </para>
+    /// <para>
+    /// A second of <c>60</c> (a leap second) is accepted only at 23:59:60 UTC on a day the IERS has ended with a
+    /// leap second (RFC 3339 section 5.7).
+    /// </para>
     /// </remarks>
     internal static bool MatchDateTime(ReadOnlySpan<byte> value)
     {
         // YYYY-MM-DDTHH:MM:SS, then at least the one character of a "Z" offset.
-        return value.Length >= 20 &&
-            (value[10] == (byte)'T' || value[10] == (byte)'t') &&
-            JsonElementHelpers.ParseDateCore(value, out int year, out int month, out int day) &&
-            GregorianYearMonthDayCalculator.TryValidateGregorianYearMonthDay(year, month, day) &&
-            JsonElementHelpers.ParseOffsetTimeCore(value.Slice(11), out _, out _, out _, out _, out _, out _, out _);
+        if (value.Length < 20 ||
+            (value[10] != (byte)'T' && value[10] != (byte)'t') ||
+            !JsonElementHelpers.ParseDateCore(value, out int year, out int month, out int day) ||
+            !GregorianYearMonthDayCalculator.TryValidateGregorianYearMonthDay(year, month, day) ||
+            !TryParseFullTime(value.Slice(11), out int hour, out int minute, out int second, out int offsetMinutes))
+        {
+            return false;
+        }
+
+        if (second < 60)
+        {
+            return true;
+        }
+
+        int utcMinute = (hour * 60) + minute - offsetMinutes;
+        int dayShift = utcMinute < 0 ? -1 : utcMinute >= MinutesPerDay ? 1 : 0;
+        if (utcMinute - (dayShift * MinutesPerDay) != LastMinuteOfDay)
+        {
+            return false;
+        }
+
+        return IsLeapSecondDay(DaysFromCivil(year, month, day) + dayShift);
+    }
+
+    /// <summary>
+    /// Reads an RFC 3339 <c>full-time</c>: <c>HH:MM:SS</c>, an optional fraction of any length, and a <c>Z</c> or
+    /// <c>+HH:MM</c> offset. The hour is 00 to 23, the minute 00 to 59, the second 00 to 60, and the offset hour
+    /// 00 to 23.
+    /// </summary>
+    private static bool TryParseFullTime(ReadOnlySpan<byte> value, out int hour, out int minute, out int second, out int offsetMinutes)
+    {
+        hour = 0;
+        minute = 0;
+        second = 0;
+        offsetMinutes = 0;
+
+        // HH:MM:SS, then at least the one character of a "Z" offset.
+        if (value.Length < 9 ||
+            value[2] != (byte)':' ||
+            value[5] != (byte)':' ||
+            !TryReadTwoDigits(value, 0, out hour) ||
+            !TryReadTwoDigits(value, 3, out minute) ||
+            !TryReadTwoDigits(value, 6, out second) ||
+            hour > 23 ||
+            minute > 59 ||
+            second > 60)
+        {
+            return false;
+        }
+
+        int index = 8;
+        if (value[index] == (byte)'.')
+        {
+            index++;
+            int fractionStart = index;
+            while (index < value.Length && (uint)(value[index] - '0') <= 9)
+            {
+                index++;
+            }
+
+            if (index == fractionStart)
+            {
+                return false;
+            }
+        }
+
+        ReadOnlySpan<byte> offset = value.Slice(index);
+        if (offset.Length == 1)
+        {
+            return offset[0] == (byte)'Z' || offset[0] == (byte)'z';
+        }
+
+        if (offset.Length != 6 ||
+            (offset[0] != (byte)'+' && offset[0] != (byte)'-') ||
+            offset[3] != (byte)':' ||
+            !TryReadTwoDigits(offset, 1, out int offsetHour) ||
+            !TryReadTwoDigits(offset, 4, out int offsetMinute) ||
+            offsetHour > 23 ||
+            offsetMinute > 59)
+        {
+            return false;
+        }
+
+        offsetMinutes = (offsetHour * 60) + offsetMinute;
+        if (offset[0] == (byte)'-')
+        {
+            offsetMinutes = -offsetMinutes;
+        }
+
+        return true;
+    }
+
+    private static bool TryReadTwoDigits(ReadOnlySpan<byte> value, int index, out int result)
+    {
+        uint tens = (uint)(value[index] - '0');
+        uint units = (uint)(value[index + 1] - '0');
+        if (tens > 9 || units > 9)
+        {
+            result = 0;
+            return false;
+        }
+
+        result = (int)((tens * 10) + units);
+        return true;
+    }
+
+    /// <summary>
+    /// Gets the number of days from 1970-01-01 to a proleptic Gregorian date.
+    /// </summary>
+    private static int DaysFromCivil(int year, int month, int day)
+    {
+        // Howard Hinnant's days_from_civil.
+        year -= month <= 2 ? 1 : 0;
+        int era = (year >= 0 ? year : year - 399) / 400;
+        int yearOfEra = year - (era * 400);
+        int dayOfYear = ((((153 * (month + (month > 2 ? -3 : 9))) + 2) / 5) + day) - 1;
+        int dayOfEra = (yearOfEra * 365) + (yearOfEra / 4) - (yearOfEra / 100) + dayOfYear;
+        return (era * 146097) + dayOfEra - 719468;
+    }
+
+    private static bool IsLeapSecondDay(int daysFromEpoch)
+    {
+        foreach (int leapDay in LeapSecondDays)
+        {
+            if (leapDay == daysFromEpoch)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>

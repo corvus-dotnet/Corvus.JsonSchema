@@ -33,8 +33,7 @@ PHP, R and Perl.
   plans to Go, with no native code, and the Julia package, the Object Pascal package and the OCaml package are each a port
   of the Go module.
 - **The same results.** Every implementation evaluates drafts 4, 6, 7, 2019-09 and 2020-12, passes the
-  JSON-Schema-Test-Suite (the .NET evaluators ignore its 73 leap-second cases, whose times the shared Corvus date and
-  time parsers refuse; see [Conformance](RuntimeEvaluator.md#conformance) for what each runner runs), and reports
+  JSON-Schema-Test-Suite (see [Conformance](RuntimeEvaluator.md#conformance) for what each runner runs), and reports
   results at the Basic, Detailed and Verbose levels, with the same rows (evaluation
   path, schema location, instance location and message, in the same order). Annotations come grouped the same way
   everywhere: instance location, then keyword, then schema location, then value (in R, as the columns of a data

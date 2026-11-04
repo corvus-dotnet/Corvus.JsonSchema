@@ -25,6 +25,24 @@ public class JsonSchemaMatchingStringTests
     [TestMethod]
     [DataRow("2023-06-01T12:34:56+00:00", true)]
     [DataRow("not-a-datetime", false)]
+    [DataRow("1998-12-31T23:59:60Z", true)] // a published leap second
+    [DataRow("1998-12-31T23:59:60.5z", true)]
+    [DataRow("1998-12-31T15:59:60.123-08:00", true)] // the same leap second in a western offset
+    [DataRow("1999-01-01T00:59:60+01:00", true)] // the same leap second in an eastern offset, on the next local day
+    [DataRow("1972-06-30T23:59:60Z", true)] // the first
+    [DataRow("2016-12-31T23:59:60Z", true)] // the last
+    [DataRow("2017-12-31T23:59:60Z", false)] // no leap second at the end of 2017
+    [DataRow("1999-12-31T23:59:60Z", false)]
+    [DataRow("1998-06-30T23:59:60Z", false)] // a June date with no leap second
+    [DataRow("1998-12-31T23:58:60Z", false)]
+    [DataRow("1998-12-31T22:59:60Z", false)]
+    [DataRow("1998-12-31T23:59:60+00:01", false)] // 23:58:60 UTC
+    [DataRow("1998-12-31T23:59:61Z", false)]
+    [DataRow("2016-12-31T24:59:60+01:00", false)]
+    [DataRow("1990-12-31T15:59:59-24:00", false)]
+    [DataRow("1990-12-31T15:59:59+23:59", true)] // RFC 3339 allows any offset hour from 00 to 23
+    [DataRow("1990-12-31T15:59:59-15:00", true)]
+    [DataRow("1990-12-31T15:59:59+10:60", false)]
     public void MatchDateTime_ValidatesDateTime(string value, bool expected)
     {
         var collector = new DummyResultsCollector();
@@ -495,6 +513,21 @@ public class JsonSchemaMatchingStringTests
     [TestMethod]
     [DataRow("12:34:56+00:00", true)]
     [DataRow("not-a-time", false)]
+    [DataRow("23:59:60Z", true)] // a leap second is 23:59:60 UTC on its day; a time has no date to check
+    [DataRow("23:59:60.25+00:00", true)]
+    [DataRow("15:59:60-08:00", true)]
+    [DataRow("01:29:60+01:30", true)]
+    [DataRow("23:29:60+23:30", true)]
+    [DataRow("00:29:60-23:30", true)]
+    [DataRow("22:59:60Z", false)]
+    [DataRow("23:58:60Z", false)]
+    [DataRow("23:59:60+01:00", false)]
+    [DataRow("23:59:60-00:30", false)]
+    [DataRow("23:59:61Z", false)]
+    [DataRow("12:00:00+18:00", true)] // RFC 3339 allows any offset hour from 00 to 23
+    [DataRow("01:02:03+24:00", false)]
+    [DataRow("01:02:03+00:60", false)]
+    [DataRow("24:00:00Z", false)]
     public void MatchTime_ValidatesTime(string value, bool expected)
     {
         var collector = new DummyResultsCollector();
