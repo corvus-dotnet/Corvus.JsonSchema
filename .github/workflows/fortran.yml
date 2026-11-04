@@ -84,7 +84,7 @@ jobs:
         run: git submodule update --init --depth 1 JSON-Schema-Test-Suite
       - name: Fortran compiler
         id: fortran
-        uses: fortran-lang/setup-fortran@be037f0a45b1160f139d4ccd0b96f9e9bfd6a682 # v1.10.0
+        uses: fortran-lang/setup-fortran@1f630c95fa9e0c941248f52e4674260139020365 # v1.11.0
         with:
           compiler: ${{ matrix.compiler }}
           version: ${{ matrix.version }}
