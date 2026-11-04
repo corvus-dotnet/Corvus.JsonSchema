@@ -1,5 +1,13 @@
 # Version History
 
+## V5.8.5
+
+V5.8.5 fixes how V4 code generation finds a `$dynamicAnchor` when a `$ref` pointer reaches into an embedded resource.
+
+### Bug fixes
+
+- **In V4, a `$ref` whose pointer reaches into an embedded resource enters only that resource.** A reference such as `"$ref": "bar#/$defs/item"`, where `item` has its own `$id`, lands in the `item` resource. The generator put `bar` into the dynamic scope as well, so a `$dynamicRef` inside `item` could resolve to a `$dynamicAnchor` that only `bar` declares, and validate against the wrong schema. The scope now holds the resource the reference lands in, as the specification and V5 require. The JSON-Schema-Test-Suite's optional draft 2020-12 test "$dynamicRef skips over intermediate resources - pointer reference across resource boundary", which V4 excluded with both answers wrong, now runs and passes.
+
 ## V5.8.4
 
 V5.8.4 is the first release published to NuGet.org since V5.8.0, and it publishes with NuGet.org Trusted Publishing. V5.8.1, V5.8.2 and V5.8.3 were tagged, and have GitHub releases, but their packages were never published to NuGet.org: the API key the release build used had expired, so each tag build's push was refused. Those versions are skipped on NuGet.org. V5.8.4 has no changes of its own beyond how it is published, so it ships everything in the three, which are listed below:

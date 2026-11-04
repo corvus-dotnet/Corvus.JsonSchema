@@ -130,6 +130,7 @@ public static class References
             return;
         }
 
+        baseSchemaForReference = GetResourceSchema(typeBuilderContext.SchemaRegistry, baseSchemaForReferenceLocation, baseSchemaForReference);
         typeBuilderContext.EnterReferenceScope(baseSchemaForReferenceLocation, baseSchemaForReference, schemaForRefPointer);
         TypeDeclaration subschemaTypeDeclaration = await typeBuilderContext.BuildTypeDeclarationForCurrentScope(cancellationToken);
 
@@ -219,6 +220,7 @@ public static class References
             return;
         }
 
+        baseSchemaForReference = GetResourceSchema(typeBuilderContext.SchemaRegistry, baseSchemaForReferenceLocation, baseSchemaForReference);
         typeBuilderContext.EnterReferenceScope(baseSchemaForReferenceLocation, baseSchemaForReference, schemaForRefPointer);
         TypeDeclaration subschemaTypeDeclaration = await typeBuilderContext.BuildTypeDeclarationForCurrentScope(cancellationToken);
 
@@ -309,6 +311,7 @@ public static class References
             return;
         }
 
+        baseSchemaForReference = GetResourceSchema(typeBuilderContext.SchemaRegistry, baseSchemaForReferenceLocation, baseSchemaForReference);
         typeBuilderContext.EnterReferenceScope(baseSchemaForReferenceLocation, baseSchemaForReference, schemaForRefPointer);
         TypeDeclaration subschemaTypeDeclaration = await typeBuilderContext.BuildTypeDeclarationForCurrentScope(cancellationToken);
 
@@ -344,7 +347,9 @@ public static class References
             // If we've already located it, this must be the thing.
             if (schemaRegistry.TryGetLocatedSchema(new JsonReference(baseSchemaForReferenceLocation.Uri, reference.Fragment), out _))
             {
-                schemaForRefPointer = new JsonReference([], reference.Fragment);
+                // The pointer may cross into an embedded resource (a subschema with its own id). The reference
+                // then lands in that resource, not in the one the pointer started from, so re-base on it.
+                return RebaseOnInnermostResource(schemaRegistry, baseSchemaForReferenceLocation, reference.Fragment);
             }
             else
             {
@@ -471,6 +476,86 @@ public static class References
                         k => (string)new JsonReference("#").AppendUnencodedPropertyNameToFragment(k.Keyword),
                         k => k));
         }
+    }
+
+    /// <summary>
+    /// Gets the located schema of the resource at a base location, so that the scope a reference enters is the
+    /// resource the reference landed in, and not the resource it was resolved from.
+    /// </summary>
+    /// <param name="schemaRegistry">The schema registry.</param>
+    /// <param name="resourceLocation">The location of the resource.</param>
+    /// <param name="fallback">The located schema to use if no schema is registered at the location.</param>
+    /// <returns>The located schema for the resource.</returns>
+    /// <remarks>
+    /// The dynamic scope is the list of resources entered during evaluation. If a reference such as
+    /// <c>bar#/$defs/item</c> lands in an embedded resource (<c>item</c>), <c>bar</c> must not be in the
+    /// dynamic scope, or a <c>$dynamicRef</c> would find <c>bar</c>'s dynamic anchors.
+    /// </remarks>
+    private static LocatedSchema GetResourceSchema(JsonSchemaRegistry schemaRegistry, JsonReference resourceLocation, LocatedSchema fallback)
+    {
+        if (fallback.Location == resourceLocation)
+        {
+            return fallback;
+        }
+
+        return schemaRegistry.TryGetLocatedSchema(resourceLocation, out LocatedSchema? resourceSchema)
+            ? resourceSchema
+            : fallback;
+    }
+
+    /// <summary>
+    /// Re-bases a pointer that has already been located on the innermost resource it passes through.
+    /// </summary>
+    /// <param name="schemaRegistry">The schema registry.</param>
+    /// <param name="baseSchemaForReferenceLocation">The location of the resource the pointer starts from.</param>
+    /// <param name="fragment">The pointer fragment, with its leading <c>#</c>.</param>
+    /// <returns>The location of the innermost resource and the pointer relative to it; or the inputs unchanged if
+    /// the pointer does not pass through an embedded resource.</returns>
+    private static (JsonReference Location, JsonReference Pointer) RebaseOnInnermostResource(
+        JsonSchemaRegistry schemaRegistry,
+        JsonReference baseSchemaForReferenceLocation,
+        ReadOnlySpan<char> fragment)
+    {
+        JsonReference unchangedPointer = new([], fragment);
+        JsonReference resourceLocation = baseSchemaForReferenceLocation;
+        string[] segments = fragment.ToString().Split('/');
+        var currentBuilder = new StringBuilder();
+        bool found = false;
+        bool rebased = false;
+        foreach (string segment in segments)
+        {
+            if (currentBuilder.Length > 0)
+            {
+                currentBuilder.Append('/');
+            }
+
+            // The segments are still pointer-encoded, which is how the registry keys its locations.
+            currentBuilder.Append(segment);
+            found = schemaRegistry.TryGetLocatedSchema(resourceLocation.WithFragment(currentBuilder.ToString()), out LocatedSchema? locatedSchema);
+            if (found &&
+                currentBuilder.Length > 1 &&
+                Scope.ShouldEnterScope(locatedSchema!.Schema, locatedSchema.Vocabulary, out string? scopeName))
+            {
+                JsonReference scopeLocation = resourceLocation.Apply(new JsonReference(scopeName));
+                if (scopeLocation.HasFragment)
+                {
+                    // A plain-name scope (an anchor-style id) does not start a new resource.
+                    continue;
+                }
+
+                resourceLocation = scopeLocation;
+                currentBuilder.Clear();
+                currentBuilder.Append('#');
+                rebased = true;
+            }
+        }
+
+        if (!rebased || !found)
+        {
+            return (baseSchemaForReferenceLocation, unchangedPointer);
+        }
+
+        return (resourceLocation, new JsonReference(currentBuilder.ToString()));
     }
 
     private static bool TryResolvePointer(
