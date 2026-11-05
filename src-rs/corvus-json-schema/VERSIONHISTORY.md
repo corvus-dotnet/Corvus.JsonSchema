@@ -2,6 +2,10 @@
 
 The version history of the `corvus-json-schema` Rust crate. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md).
 
+## V0.2.2
+
+V0.2.2 fixes leap seconds in the `date-time` format. `date-time` accepts a leap second (23:59:60 UTC) only on the 27 days that the IERS has ended with one, from 1972-06-30 to 2016-12-31, in whatever offset the value is written (`1998-12-31T15:59:60-08:00` is valid, `1999-12-31T23:59:60Z` is not). It accepted 23:59:60 UTC on any day. `time` is unchanged: it has no date, so it accepts a leap second whenever the time is 23:59 in UTC. The .NET engine does the same from V5.8.6.
+
 ## V0.2.1
 
 V0.2.1 fixes the `format` checks that the JSON-Schema-Test-Suite's unified layout found wrong. `idn-hostname` (and the domain of `idn-email`) applies the UTS #46 mapping (Unicode 17.0.0) before it checks a name, so ignored code points such as U+200B are removed and fullwidth letters are read as ASCII; an uppercase letter outside ASCII is lowered, so it is no longer refused. `email` follows RFC 5321 in a quoted local part (printable ASCII and quoted pairs of printable ASCII only), and `idn-email` RFC 6531 (any character outside ASCII in the local part, whatever its category). `uri-template` takes the RFC 6570 literals, with the apostrophe that erratum 6937 adds, so a `%` must begin a complete percent-encoded triplet and a delete character is refused. The UTS #46 table is written by `gen-uts46-data.ps1`, from the same `IdnaMappingTable.txt` as the .NET engine's.

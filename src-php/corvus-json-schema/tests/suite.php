@@ -58,9 +58,6 @@ foreach ($drafts as $draft => $dialect) {
             foreach ($group->tests as $test) {
                 $total++;
                 $what = "$label [$group->description] $test->description";
-                if ($assertFormat && str_contains(strtolower($what), 'leap second')) {
-                    continue;
-                }
                 $expected = $test->valid;
                 $actual = $validator->isValid($test->data);
                 if ($actual !== $expected) {

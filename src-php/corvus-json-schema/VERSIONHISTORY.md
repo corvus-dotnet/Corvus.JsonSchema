@@ -2,6 +2,10 @@
 
 The version history of the `corvus_json_schema` PHP extension (Packagist package `corvus-dotnet/corvus-json-schema`). It is versioned independently of the Corvus NuGet packages and of the [corvus-json-schema](../../src-rs/corvus-json-schema/VERSIONHISTORY.md) Rust crate it is built on.
 
+## V0.2.2
+
+V0.2.2 takes version 0.2.2 of the `corvus-json-schema` crate, which fixes leap seconds in the `date-time` format. `date-time` accepts a leap second (23:59:60 UTC) only on the 27 days that the IERS has ended with one, from 1972-06-30 to 2016-12-31, in whatever offset the value is written (`1998-12-31T15:59:60-08:00` is valid, `1999-12-31T23:59:60Z` is not). It accepted 23:59:60 UTC on any day. `time` is unchanged: it has no date, so it accepts a leap second whenever the time is 23:59 in UTC. Nothing else in the extension changes.
+
 ## V0.2.1
 
 V0.2.1 takes version 0.2.1 of the `corvus-json-schema` crate, which fixes the `format` checks that the JSON-Schema-Test-Suite's unified layout found wrong. `idn-hostname` (and the domain of `idn-email`) applies the UTS #46 mapping (Unicode 17.0.0) before it checks a name, so ignored code points such as U+200B are removed and fullwidth letters are read as ASCII. `email` follows RFC 5321 in a quoted local part (printable ASCII and quoted pairs of printable ASCII only), and `idn-email` RFC 6531 (any character outside ASCII in the local part, whatever its category). `uri-template` takes the RFC 6570 literals, with the apostrophe that erratum 6937 adds, so a `%` must begin a complete percent-encoded triplet and a delete character is refused. Nothing else in the extension changes.

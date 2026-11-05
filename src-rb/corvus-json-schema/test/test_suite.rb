@@ -51,8 +51,6 @@ class TestSuite < Minitest::Test
         group["tests"].each do |test|
           total += 1
           what = "#{label} [#{group["description"]}] #{test["description"]}"
-          next if assert_format && what.downcase.include?("leap second")
-
           expected = test["valid"]
           actual = validator.valid?(test["data"])
           failures << "#{what}: expected #{expected}, got #{actual}" if actual != expected

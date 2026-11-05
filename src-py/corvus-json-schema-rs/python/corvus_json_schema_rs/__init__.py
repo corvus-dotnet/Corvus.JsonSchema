@@ -34,7 +34,7 @@ from ._native import (
     Validator,
 )
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 __all__ = [
     "Annotation",
