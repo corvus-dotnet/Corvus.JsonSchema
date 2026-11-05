@@ -78,16 +78,23 @@ Publishing is conditional based on whether the build was triggered by a tag:
 | Branch / PR | `https://nuget.pkg.github.com/{owner}/index.json` | `BUILD_PUBLISHER_PAT` secret |
 
 NuGet.org publishing uses [Trusted Publishing](https://learn.microsoft.com/nuget/nuget-org/trusted-publishing): the
-shared pipeline's Publish job in `build.yml` (which has `id-token: write`) exchanges a GitHub Actions OIDC token for a NuGet.org key
+`Publish` job of `build.yml` (which has `id-token: write`) exchanges a GitHub Actions OIDC token for a NuGet.org key
 that is valid for an hour, through ZeroFailed.Build.DotNet's `PublishNuGetPackages`. It needs:
 
 - a Trusted Publishing policy on nuget.org, owned by the `corvus-dotnet` organisation, for the repository owner
-  `corvus-dotnet`, the repository `Corvus.JsonSchema` and the workflow file `build.yml` (no environment);
+  `corvus-dotnet`, the repository `Corvus.JsonSchema` and the workflow file `build.yml`
+  (the file name with its extension, and no environment). A new policy is active for 7 days until its first publish,
+  and inactive after that if nothing published, until it is activated again;
 - the organisation variable `ZF_BUILD_DOTNET_NUGET_TRUSTED_PUBLISHING_USER`, set to the nuget.org profile name (not
   the email address) of the user who created the policy (`endjin-nuget`), who must stay a member of the organisation.
   `build.yml` passes it to the build, and turns Trusted Publishing on only for a nuget.org destination: the
   organisation variable `ZF_BUILD_DOTNET_NUGET_USE_TRUSTED_PUBLISHING` is true for every build, but branch builds
   publish to GitHub Packages with a key.
+
+The shared pipeline's own Publish job runs an empty task (`RunFirst`). NuGet.org matches a token by the workflow file
+its job runs in (the token's `job_workflow_ref` claim), and a job in the shared pipeline runs in endjin's shared
+workflow, not `build.yml`, so nuget.org refuses its token with "No matching trust policy". A policy that named the
+shared workflow would trust every repository that calls it.
 
 This means:
 - **Stable releases** go to NuGet.org when a version tag is pushed

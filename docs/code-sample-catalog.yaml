@@ -1501,11 +1501,11 @@ main-docs:
   - path: "docs/ReleaseProcess.md"
     blocks:
       - {index: 0, language: yaml, lines: [18, 36]}
-      - {index: 1, language: powershell, lines: [136, 144]}
-      - {index: 2, language: bash, lines: [211, 216]}
-      - {index: 3, language: sh, lines: [622, 624]}
-      - {index: 4, language: xml, lines: [757, 761]}
-      - {index: 5, language: xml, lines: [765, 767]}
+      - {index: 1, language: powershell, lines: [143, 151]}
+      - {index: 2, language: bash, lines: [218, 223]}
+      - {index: 3, language: sh, lines: [629, 631]}
+      - {index: 4, language: xml, lines: [764, 768]}
+      - {index: 5, language: xml, lines: [772, 774]}
   - path: "docs/RunningTests.md"
     blocks:
       - {index: 0, language: powershell, lines: [7, 10]}
