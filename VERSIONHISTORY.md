@@ -1,6 +1,14 @@
 # Version History
 
-## V5.8.6
+## V5.8.7
+
+V5.8.7 publishes V5.8.6 to NuGet.org. V5.8.6 was tagged, and has a GitHub release, but its packages were never published to NuGet.org: nuget.org refused the release build's Trusted Publishing token, so the version is skipped there. V5.8.7 has no changes of its own beyond how it is published, so it ships everything in V5.8.6, which is listed below.
+
+### Other changes
+
+- **Releases publish from a job of `build.yml` again.** V5.8.6 moved publishing into the shared build pipeline's Publish job. NuGet.org matches a Trusted Publishing token by the workflow file its job runs in, and that job runs in the shared workflow, not `build.yml`, so nuget.org found no matching policy. The `Publish` job of `build.yml` publishes again, as it did for V5.8.4 and V5.8.5, with the nuget.org user from the organisation variable. [docs/ReleaseProcess.md](docs/ReleaseProcess.md) describes the setup.
+
+## V5.8.6 (not published to NuGet.org; shipped in V5.8.7)
 
 V5.8.6 accepts leap seconds in the `date-time` and `time` formats, and accepts every time offset RFC 3339 allows.
 
