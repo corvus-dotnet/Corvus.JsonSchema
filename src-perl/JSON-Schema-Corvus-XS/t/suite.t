@@ -2,7 +2,7 @@
 # 2019-09 and 2020-12, required, optional and optional/format, as JSON text, as a parsed document, at the verbose
 # level through a collector, and as Perl data (decoded by JSON::PP), which must all give the expected verdict. Remote
 # references are served from the suite's remotes. As the other runners, draft4/optional/zeroTerminatedFloats.json is
-# left out (1.0 and 1 cannot be told apart there), and leap-second format cases are skipped. The Perl data is
+# left out (1.0 and 1 cannot be told apart there). The Perl data is
 # decoded with allow_bignum, so that big and precise numbers are Math::BigInt and Math::BigFloat, which are encoded
 # exactly.
 use strict;
@@ -23,7 +23,7 @@ my $excluded = 'draft4/optional/zeroTerminatedFloats.json';
 my $resolver = remote_resolver(File::Spec->catdir($root, 'remotes'));
 my $decoder = JSON::PP->new->allow_nonref->allow_bignum->utf8;
 my $collector = JSON::Schema::Corvus::XS::ResultsCollector->new('verbose');
-my ($total, $failed, $skipped, $files) = (0, 0, 0, 0);
+my ($total, $failed, $files) = (0, 0, 0);
 
 for my $draft (sort keys %drafts) {
   for my $sub ('', 'optional', 'optional/format') {
@@ -58,10 +58,6 @@ sub run_file {
     }
     for my $test (@{ $group->{tests} }) {
       my $what = "$label [$group->{description}] $test->{description}";
-      if ($assert_format && $what =~ /leap second/i) {
-        $skipped++;
-        next;
-      }
       $total++;
       my $expected = $test->{valid} ? 1 : 0;
       my @verdicts = eval {
@@ -84,8 +80,8 @@ sub run_file {
   }
 }
 
-diag sprintf 'JSON-Schema-Test-Suite: %d/%d passed (%d files, %d leap-second cases skipped), as JSON text, as a '
-  . 'document, through a collector and as Perl data', $total - $failed, $total, $files, $skipped;
+diag sprintf 'JSON-Schema-Test-Suite: %d/%d passed (%d files), as JSON text, as a document, through a collector and '
+  . 'as Perl data', $total - $failed, $total, $files;
 ok $total >= 7000, "at least 7,000 cases ran ($total)";
 is $failed, 0, 'every case gives the expected verdict';
 

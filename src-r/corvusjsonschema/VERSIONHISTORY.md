@@ -2,6 +2,10 @@
 
 The version history of the `corvusjsonschema` R package. It is versioned independently of the Corvus NuGet packages and of the [corvus-json-schema](../../src-rs/corvus-json-schema/VERSIONHISTORY.md) Rust crate it is built on.
 
+## V0.1.4
+
+V0.1.4 takes version 0.2.2 of the corvus-json-schema crate, which accepts a leap second in a `date-time` only on the 27 days that the IERS has ended with one, from 1972-06-30 to 2016-12-31 (23:59:60 UTC, in whatever offset the value is written). It accepted 23:59:60 UTC on any day. The R interface is unchanged, and the test suite runs the JSON-Schema-Test-Suite's leap-second cases, which it skipped.
+
 ## V0.1.3
 
 V0.1.3 takes version 0.2.1 of the corvus-json-schema crate (it was built on 0.1.7). The R interface is unchanged. Versions 0.1.0 to 0.1.2 are affected by what it fixes.

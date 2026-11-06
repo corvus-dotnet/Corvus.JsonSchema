@@ -11,7 +11,7 @@ The attached notices are provided for information only.
 License notice for the Unicode Character Database
 -------------------------------
 
-The package is built on version 0.2.1 of the corvus-json-schema Rust crate,
+The package is built on version 0.2.2 of the corvus-json-schema Rust crate,
 which cargo takes from crates.io when the package is installed. An installed
 package, and a binary package, holds it compiled into its shared library, with
 the corvus-regex-ecma262 crate it matches patterns with.
