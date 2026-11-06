@@ -172,7 +172,16 @@ an application"). It is recorded from the code being packaged by the build's `Ge
    methods stay instrumented, `ReadyToRun=0`, the runtime provider at keyword 0x1E000080018 level 5);
 3. `create-mibc` into `src/Corvus.Text.Json/obj/profiles/Corvus.Text.Json.mibc`, which `Corvus.Text.Json.csproj`
    packs in preference to the checked-in file when it exists (`obj` travels between the pipeline's phases in the
-   build cache), and fails the build if the result is small or names fewer than 1,000 of the library's methods.
+   build cache), and fails the build if the result is small or names fewer than 1,000 of the library's methods;
+4. then the `VerifyAotProfile` task publishes the cold runner with native AOT and that profile (with the same identity
+   check) and runs `verify` over every corpus: each instance must evaluate as valid, as the jsonschema-benchmark
+   requires, or the build fails.
+
+The profile steers the AOT compiler's inlining and devirtualisation, and a profile can make it compile something
+wrongly. With the profiles that 5.8.0 to 5.8.5 shipped, it compiled Corvus.Regex.Ecma262's automaton (before 1.0.15) so
+that patterns such as `^[0-9]+(ns|ms|us|µs|s|m|h)$` matched nothing, and the benchmark's native AOT harness failed five
+corpora, while the JIT and native AOT without the profile were right. Each build records a different profile, so a
+release that passed proves nothing about the next: the check runs on every build.
 
 The checked-in `src/Corvus.Text.Json/profiles/Corvus.Text.Json.mibc` is the fallback for local packs and is refreshed
 when the evaluator changes: `BUILDVAR_GenerateAotProfile=true ./build.ps1 -Tasks GenerateAotProfile`, then copy the

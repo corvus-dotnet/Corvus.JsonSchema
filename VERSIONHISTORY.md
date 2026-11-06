@@ -1,5 +1,17 @@
 # Version History
 
+## V5.8.8
+
+V5.8.8 fixes wrong answers from `pattern` in an application published with native AOT.
+
+### Bug fixes
+
+- **A `pattern` gives the right answer under native AOT.** The package hands the AOT compiler a static profile (`profiles/Corvus.Text.Json.mibc`), and with the profiles that V5.8.0 to V5.8.5 shipped, the compiler compiled the automaton of Corvus.Regex.Ecma262 wrongly: patterns that it answers, such as `^[0-9]+(ns|ms|us|µs|s|m|h)$` and `^(0|[1-9]\d*)\.(0|[1-9]\d*)$`, matched nothing, so valid values were refused. The JIT, and native AOT without the profile, were right. Corvus.Regex.Ecma262 1.0.15 removes the interface call the compiler devirtualised wrongly. V5.8.7's profile happened not to trigger it, but each build records a different profile, so V5.8.0 to V5.8.7 are all affected in principle. An application that cannot move can publish with `-p:CorvusTextJsonUseProfile=false`.
+
+### Other changes
+
+- **Every build checks its profile under native AOT.** After the build records the profile, it publishes the cold runner with native AOT and that profile, and every instance of the 37 jsonschema-benchmark corpora must evaluate as valid, or the build fails. [docs/ReleaseProcess.md](docs/ReleaseProcess.md) describes it.
+
 ## V5.8.7
 
 V5.8.7 publishes V5.8.6 to NuGet.org. V5.8.6 was tagged, and has a GitHub release, but its packages were never published to NuGet.org: nuget.org refused the release build's Trusted Publishing token, so the version is skipped there. V5.8.7 has no changes of its own beyond how it is published, so it ships everything in V5.8.6, which is listed below.
