@@ -275,26 +275,32 @@ fn digits(s: &[u8]) -> Option<u32> {
     Some(s.iter().fold(0u32, |a, &b| a * 10 + (b - b'0') as u32))
 }
 
-pub(crate) fn date(s: &str) -> bool {
+/// Reads an RFC 3339 `full-date`, checking that the day is in the month.
+fn date_parts(s: &str) -> Option<(u32, u32, u32)> {
     let b = s.as_bytes();
     if b.len() != 10 || b[4] != b'-' || b[7] != b'-' {
-        return false;
+        return None;
     }
-    let (Some(y), Some(m), Some(d)) = (digits(&b[0..4]), digits(&b[5..7]), digits(&b[8..10])) else {
-        return false;
-    };
+    let (y, m, d) = (digits(&b[0..4])?, digits(&b[5..7])?, digits(&b[8..10])?);
     const DAYS: [u32; 13] = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    (1..=12).contains(&m) && d >= 1 && d <= if m == 2 && is_leap_year(y) { 29 } else { DAYS[m as usize] }
+    ((1..=12).contains(&m) && d >= 1 && d <= if m == 2 && is_leap_year(y) { 29 } else { DAYS[m as usize] })
+        .then_some((y, m, d))
 }
 
-pub(crate) fn time(s: &str) -> bool {
-    let b = s.as_bytes();
+pub(crate) fn date(s: &str) -> bool {
+    date_parts(s).is_some()
+}
+
+const MINUTES_PER_DAY: i32 = 24 * 60;
+const LAST_MINUTE_OF_DAY: i32 = MINUTES_PER_DAY - 1;
+
+/// Reads an RFC 3339 `full-time`: the second (up to 60), and the minute of the time in UTC counted from the start of
+/// the day it is written in, which runs from -1439 (the day before) to 2878 (the day after).
+fn full_time(b: &[u8]) -> Option<(u32, i32)> {
     if b.len() < 9 || b[2] != b':' || b[5] != b':' {
-        return false;
+        return None;
     }
-    let (Some(h), Some(mi), Some(sec)) = (digits(&b[0..2]), digits(&b[3..5]), digits(&b[6..8])) else {
-        return false;
-    };
+    let (h, mi, sec) = (digits(&b[0..2])?, digits(&b[3..5])?, digits(&b[6..8])?);
     let mut i = 8;
     if b[i] == b'.' {
         i += 1;
@@ -303,49 +309,109 @@ pub(crate) fn time(s: &str) -> bool {
             i += 1;
         }
         if i == start {
-            return false;
+            return None;
         }
     }
     if i >= b.len() {
-        return false;
+        return None;
     }
-    let (mut oh, mut om, mut sign) = (0u32, 0u32, 0i32);
+    let mut offset = 0i32;
     match b[i] {
         b'z' | b'Z' => {
             if i + 1 != b.len() {
-                return false;
+                return None;
             }
         }
         b'+' | b'-' => {
             if b.len() - i != 6 || b[i + 3] != b':' {
-                return false;
+                return None;
             }
-            sign = if b[i] == b'-' { 1 } else { -1 };
-            let (Some(x), Some(y)) = (digits(&b[i + 1..i + 3]), digits(&b[i + 4..i + 6])) else {
-                return false;
-            };
-            if x > 23 || y > 59 {
-                return false;
+            let (oh, om) = (digits(&b[i + 1..i + 3])?, digits(&b[i + 4..i + 6])?);
+            if oh > 23 || om > 59 {
+                return None;
             }
-            oh = x;
-            om = y;
+            offset = (oh * 60 + om) as i32;
+            if b[i] == b'+' {
+                offset = -offset;
+            }
         }
-        _ => return false,
+        _ => return None,
     }
     if h > 23 || mi > 59 || sec > 60 {
-        return false;
+        return None;
     }
-    if sec == 60 {
-        // A leap second is only valid at 23:59:60 UTC.
-        let utc = (h * 60 + mi) as i32 + sign * (oh * 60 + om) as i32;
-        return utc.rem_euclid(1440) == 23 * 60 + 59;
-    }
-    true
+    Some((sec, (h * 60 + mi) as i32 + offset))
 }
+
+pub(crate) fn time(s: &str) -> bool {
+    // A time has no date, so a leap second is valid whenever it is 23:59 in UTC.
+    full_time(s.as_bytes()).is_some_and(|(sec, utc)| sec < 60 || utc.rem_euclid(MINUTES_PER_DAY) == LAST_MINUTE_OF_DAY)
+}
+
+/// The number of days from 1970-01-01 to a date in the proleptic Gregorian calendar (Howard Hinnant's algorithm).
+const fn days_from_civil(year: i32, month: i32, day: i32) -> i32 {
+    let y = if month <= 2 { year - 1 } else { year };
+    let era = y.div_euclid(400);
+    let year_of_era = y - era * 400;
+    let day_of_year = (153 * (month + if month > 2 { -3 } else { 9 }) + 2) / 5 + day - 1;
+    let day_of_era = year_of_era * 365 + year_of_era / 4 - year_of_era / 100 + day_of_year;
+    era * 146_097 + day_of_era - 719_468
+}
+
+/// The days that the IERS has ended with a positive leap second (23:59:60 UTC), from 1972-06-30 to 2016-12-31.
+const LEAP_SECOND_DAYS: [i32; 27] = {
+    const DATES: [(i32, i32, i32); 27] = [
+        (1972, 6, 30),
+        (1972, 12, 31),
+        (1973, 12, 31),
+        (1974, 12, 31),
+        (1975, 12, 31),
+        (1976, 12, 31),
+        (1977, 12, 31),
+        (1978, 12, 31),
+        (1979, 12, 31),
+        (1981, 6, 30),
+        (1982, 6, 30),
+        (1983, 6, 30),
+        (1985, 6, 30),
+        (1987, 12, 31),
+        (1989, 12, 31),
+        (1990, 12, 31),
+        (1992, 6, 30),
+        (1993, 6, 30),
+        (1994, 6, 30),
+        (1995, 12, 31),
+        (1997, 6, 30),
+        (1998, 12, 31),
+        (2005, 12, 31),
+        (2008, 12, 31),
+        (2012, 6, 30),
+        (2015, 6, 30),
+        (2016, 12, 31),
+    ];
+    let mut days = [0; 27];
+    let mut i = 0;
+    while i < 27 {
+        days[i] = days_from_civil(DATES[i].0, DATES[i].1, DATES[i].2);
+        i += 1;
+    }
+    days
+};
 
 pub(crate) fn date_time(s: &str) -> bool {
     let b = s.as_bytes();
-    b.len() > 11 && (b[10] == b'T' || b[10] == b't') && s.is_char_boundary(10) && date(&s[..10]) && time(&s[11..])
+    if b.len() <= 11 || !(b[10] == b'T' || b[10] == b't') || !s.is_char_boundary(10) {
+        return false;
+    }
+    let (Some((y, m, d)), Some((sec, utc))) = (date_parts(&s[..10]), full_time(&b[11..])) else {
+        return false;
+    };
+    // A leap second is valid only at 23:59:60 UTC on a day that ended with one, which may be the day before or after
+    // the date as written.
+    sec < 60
+        || utc.rem_euclid(MINUTES_PER_DAY) == LAST_MINUTE_OF_DAY
+            && LEAP_SECOND_DAYS
+                .contains(&(days_from_civil(y as i32, m as i32, d as i32) + utc.div_euclid(MINUTES_PER_DAY)))
 }
 
 static DURATION_RE: LazyLock<Regex> = LazyLock::new(|| {
@@ -954,6 +1020,42 @@ mod tests {
         assert!(date("2020-02-29") && !date("2021-02-29"));
         assert!(time("23:59:60Z") && !time("22:59:60Z") && time("08:30:06.283185+01:00"));
         assert!(date_time("1963-06-19T08:30:06.283185Z") && !date_time("1963-06-19 08:30:06Z"));
+    }
+
+    #[test]
+    fn leap_seconds() {
+        // date-time: 23:59:60 UTC, only on a day that ended with a leap second, in whatever offset it is written.
+        for (text, expected) in [
+            ("1998-12-31T23:59:60Z", true),
+            ("1998-12-31T15:59:60.123-08:00", true),
+            ("1972-06-30T23:59:60Z", true),
+            ("2016-12-31T23:59:60z", true),
+            ("2017-01-01T00:59:60+01:00", true),
+            ("1998-12-31T00:29:60-23:30", true),
+            ("1999-01-01T00:29:60+00:30", true),
+            ("1998-12-30T23:59:60-24:00", false),
+            ("1998-12-31T23:59:60+00:00", true),
+            ("1999-12-31T23:59:60Z", false),
+            ("2017-12-31T23:59:60Z", false),
+            ("1998-12-31T23:58:60Z", false),
+            ("1998-12-31T22:59:60Z", false),
+            ("1998-12-31T23:59:61Z", false),
+            ("2016-12-31T22:59:60-01:00", true),
+            ("2016-12-30T23:59:60-24:00", false),
+            ("2016-12-31T00:00:60Z", false),
+            ("1998-12-31T23:59:60+23:59", false),
+            ("1999-01-01T23:58:60+23:59", true),
+            ("1998-12-31T00:00:60-23:59", true),
+        ] {
+            assert_eq!(date_time(text), expected, "{text}");
+        }
+
+        // time: 23:59:60 in UTC, on any day.
+        for (text, expected) in
+            [("23:59:60Z", true), ("15:59:60-08:00", true), ("00:29:60-23:30", true), ("23:58:60Z", false)]
+        {
+            assert_eq!(time(text), expected, "{text}");
+        }
         assert!(ipv6("::ffff:192.168.0.1") && !ipv6("1:2:3:4:5:6:7:8:9"));
         assert!(hostname("xn--4gbwdl.xn--wgbh1c") && !hostname("-a.com"));
         assert!(idn_hostname("실례.테스트") && !idn_hostname("〮실례.테스트"));

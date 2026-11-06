@@ -257,9 +257,8 @@ fn json_schema_test_suite_through_the_c_api() {
                     let data = serde_json::to_string(&test["data"]).unwrap();
                     let expected = test["valid"].as_bool().unwrap();
                     let what = format!("{label} [{description}] {}", test["description"].as_str().unwrap());
-                    let leap_second = assert_format && what.to_lowercase().contains("leap second");
                     match validate(&v, &data) {
-                        Ok(valid) if valid == expected || leap_second => {}
+                        Ok(valid) if valid == expected => {}
                         other => failures.push(format!("{what}: expected {expected}, got {other:?}")),
                     }
                     for (level, crate_level) in [
