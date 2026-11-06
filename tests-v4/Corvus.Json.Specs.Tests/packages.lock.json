@@ -517,7 +517,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.JsonReference": "[1.0.0, )",
-          "Corvus.Regex.Ecma262": "[1.0.12, )",
+          "Corvus.Regex.Ecma262": "[1.0.15, )",
           "Corvus.UriTemplates": "[2.3.2, )",
           "Microsoft.Bcl.Memory": "[10.0.7, )",
           "NodaTime": "[3.3.1, )",
@@ -559,9 +559,9 @@
       },
       "Corvus.Regex.Ecma262": {
         "type": "CentralTransitive",
-        "requested": "[1.0.12, )",
-        "resolved": "1.0.12",
-        "contentHash": "0ErVXFzGlUEgEVvk//BZqf0hbsM+zGo0utwyEqc9hc5eub886A6Qudn3M29BoLsFEdOVHo3HSEbJkA4zuvIhVQ==",
+        "requested": "[1.0.15, )",
+        "resolved": "1.0.15",
+        "contentHash": "wDC21MqsPI9L8PBs3dst8kebfY0rxE9KFiacCuk2Zwju6q3+DO49JFnQ61SwBBJgVUh2xSx2L6NQ4C6LXL6Vrg==",
         "dependencies": {
           "System.Memory": "4.6.3"
         }
@@ -1106,7 +1106,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Json.JsonReference": "[1.0.0, )",
-          "Corvus.Regex.Ecma262": "[1.0.12, )",
+          "Corvus.Regex.Ecma262": "[1.0.15, )",
           "Corvus.UriTemplates": "[2.3.2, )",
           "NodaTime": "[3.3.1, )"
         }
@@ -1134,9 +1134,9 @@
       },
       "Corvus.Regex.Ecma262": {
         "type": "CentralTransitive",
-        "requested": "[1.0.12, )",
-        "resolved": "1.0.12",
-        "contentHash": "0ErVXFzGlUEgEVvk//BZqf0hbsM+zGo0utwyEqc9hc5eub886A6Qudn3M29BoLsFEdOVHo3HSEbJkA4zuvIhVQ=="
+        "requested": "[1.0.15, )",
+        "resolved": "1.0.15",
+        "contentHash": "wDC21MqsPI9L8PBs3dst8kebfY0rxE9KFiacCuk2Zwju6q3+DO49JFnQ61SwBBJgVUh2xSx2L6NQ4C6LXL6Vrg=="
       },
       "Corvus.UriTemplates": {
         "type": "CentralTransitive",

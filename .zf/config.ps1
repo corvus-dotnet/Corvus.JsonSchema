@@ -120,6 +120,26 @@ $DotnetPgoVersion = "11.0.0-preview.6.26310.106"
 $DotnetPgoFeed = "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-eng/nuget/v3/flat2"
 $DotnetPgoRuntimeMajor = 11
 
+# The identity of a built assembly, and the publish properties that keep it: publishing a runner rebuilds
+# Corvus.Text.Json (a project reference) into the bin/obj the package phase packs from, so a publish must be given the
+# version the build gave the library, and must leave the assembly's identity as it was.
+function Get-AssemblyIdentity([string] $path) {
+    $name = [Reflection.AssemblyName]::GetAssemblyName($path)
+    $info = [Diagnostics.FileVersionInfo]::GetVersionInfo($path)
+    return [pscustomobject]@{ AssemblyVersion = $name.Version.ToString(); FileVersion = $info.FileVersion; InformationalVersion = $info.ProductVersion }
+}
+
+function Get-VersionProperties($identity) {
+    # The SDK appends "+<commit>" to InformationalVersion itself (SourceLink), so pass it without the suffix.
+    $versionWithoutMetadata = $identity.InformationalVersion -replace '\+.*$', ''
+    return @(
+        "-p:Version=$versionWithoutMetadata",
+        "-p:AssemblyVersion=$($identity.AssemblyVersion)",
+        "-p:FileVersion=$($identity.FileVersion)",
+        "-p:InformationalVersion=$versionWithoutMetadata"
+    )
+}
+
 task GenerateAotProfile -If { $GenerateAotProfile -and $IsLinux } {
     $profileDir = Join-Path $here ".zf/aot-profile"
     $toolsDir = Join-Path $profileDir "tools"
@@ -183,23 +203,11 @@ task GenerateAotProfile -If { $GenerateAotProfile -and $IsLinux } {
     if (-not (Test-Path $libraryDll)) {
         throw "GenerateAotProfile must run after the build: $libraryDll is missing"
     }
-    function Get-AssemblyIdentity([string] $path) {
-        $name = [Reflection.AssemblyName]::GetAssemblyName($path)
-        $info = [Diagnostics.FileVersionInfo]::GetVersionInfo($path)
-        return [pscustomobject]@{ AssemblyVersion = $name.Version.ToString(); FileVersion = $info.FileVersion; InformationalVersion = $info.ProductVersion }
-    }
     $identity = Get-AssemblyIdentity $libraryDll
     if ($identity.AssemblyVersion -eq "1.0.0.0") {
         throw "The built Corvus.Text.Json.dll has the default assembly version 1.0.0.0; the build did not version it"
     }
-    # The SDK appends "+<commit>" to InformationalVersion itself (SourceLink), so pass it without the suffix.
-    $versionWithoutMetadata = $identity.InformationalVersion -replace '\+.*$', ''
-    $versionProperties = @(
-        "-p:Version=$versionWithoutMetadata",
-        "-p:AssemblyVersion=$($identity.AssemblyVersion)",
-        "-p:FileVersion=$($identity.FileVersion)",
-        "-p:InformationalVersion=$versionWithoutMetadata"
-    )
+    $versionProperties = Get-VersionProperties $identity
     Write-Host "Publishing the cold runner (framework-dependent) as $($identity.InformationalVersion)"
     $runnerDir = Join-Path $profileDir "runner"
     exec { & dotnet publish (Join-Path $here "benchmarks/Corvus.Text.Json.RuntimeEvaluator.ColdRunner/Corvus.Text.Json.RuntimeEvaluator.ColdRunner.csproj") -c $Configuration -r linux-x64 --self-contained false -o $runnerDir --nologo -v:minimal @versionProperties }
@@ -246,6 +254,50 @@ task GenerateAotProfile -If { $GenerateAotProfile -and $IsLinux } {
     Write-Host "Profile written to $mibc ($((Get-Item $mibc).Length) bytes, $methods Corvus.Text.Json methods); the package takes it from there"
 }
 
+# The profile steers the native AOT compiler's inlining and devirtualisation, and a profile can make it compile
+# something wrongly: with the profiles that 5.8.0 to 5.8.5 shipped, it compiled Corvus.Regex.Ecma262's automaton so that
+# patterns such as ^[0-9]+(ns|ms|us|µs|s|m|h)$ matched nothing, and the jsonschema-benchmark's native AOT harness
+# failed five corpora (the JIT, and native AOT without the profile, were right). So the profile just recorded is checked
+# before the package takes it: the cold runner is published with native AOT and the profile, and every instance of
+# every corpus must evaluate as valid, as the benchmark requires. It runs where GenerateAotProfile does.
+task VerifyAotProfile -If { $GenerateAotProfile -and $IsLinux } {
+    $profileDir = Join-Path $here ".zf/aot-profile"
+    $mibc = Join-Path $here "src/Corvus.Text.Json/obj/profiles/Corvus.Text.Json.mibc"
+    if (-not (Test-Path $mibc)) {
+        throw "VerifyAotProfile must run after GenerateAotProfile: $mibc is missing"
+    }
+
+    $corpusDir = Join-Path $profileDir "sourcemeta"
+    New-Item -ItemType Directory -Path $corpusDir -Force | Out-Null
+    Get-ChildItem (Join-Path $here "benchmarks") -Directory -Filter "Corvus.Text.Json.*BenchmarkModels" | ForEach-Object {
+        Get-ChildItem $_.FullName -File | Where-Object { $_.Name -like "*-instances.jsonl" -or $_.Name -like "*-schema.json" } | Copy-Item -Destination $corpusDir -Force
+    }
+    $corpora = @(Get-ChildItem $corpusDir -Filter "*-instances.jsonl" | ForEach-Object { $_.Name -replace "-instances\.jsonl$", "" } | Sort-Object)
+    if ($corpora.Count -lt 30) {
+        throw "VerifyAotProfile found $($corpora.Count) corpora under benchmarks, not the 37 the benchmark runs"
+    }
+
+    $libraryDll = Join-Path $here "src/Corvus.Text.Json/bin/$Configuration/net10.0/Corvus.Text.Json.dll"
+    $identity = Get-AssemblyIdentity $libraryDll
+    $versionProperties = Get-VersionProperties $identity
+    Write-Host "Publishing the cold runner with native AOT and the profile, as $($identity.InformationalVersion)"
+    $runnerDir = Join-Path $profileDir "aot-runner"
+    exec { & dotnet publish (Join-Path $here "benchmarks/Corvus.Text.Json.RuntimeEvaluator.ColdRunner/Corvus.Text.Json.RuntimeEvaluator.ColdRunner.csproj") -c $Configuration -r linux-x64 -p:ColdAot=true "-p:ColdMibc=$mibc" -o $runnerDir --nologo -v:minimal @versionProperties }
+    $after = Get-AssemblyIdentity $libraryDll
+    if (($after.AssemblyVersion -ne $identity.AssemblyVersion) -or ($after.FileVersion -ne $identity.FileVersion) -or ($after.InformationalVersion -ne $identity.InformationalVersion)) {
+        throw "Publishing the native AOT runner changed Corvus.Text.Json.dll from $($identity.InformationalVersion) ($($identity.AssemblyVersion)) to $($after.InformationalVersion) ($($after.AssemblyVersion))"
+    }
+
+    Write-Host "Evaluating every instance of $($corpora.Count) corpora with the native AOT runner"
+    $env:COLD_ROOT = $corpusDir
+    try {
+        exec { & (Join-Path $runnerDir "Corvus.Text.Json.RuntimeEvaluator.ColdRunner") verify @corpora }
+    }
+    finally {
+        Remove-Item Env:\COLD_ROOT -ErrorAction SilentlyContinue
+    }
+}
+
 # The generated-code analyzer configuration (analyzers/generated-code.globalconfig and the generated region of
 # .editorconfig) is derived from the analyzers in use; a stale copy would let an analyzer run on generated code unnoticed.
 # It needs the restored solution, so it runs after the build.
@@ -253,7 +305,7 @@ task CheckGeneratedCodeAnalyzerConfig {
     Write-Host "Checking the generated-code analyzer configuration is up to date"
     exec { & pwsh -File (Join-Path $here "update-generated-code-analyzer-config.ps1") -Check }
 }
-task PostBuild CheckGeneratedCodeAnalyzerConfig, GenerateAotProfile, BuildWebSiteLocal
+task PostBuild CheckGeneratedCodeAnalyzerConfig, GenerateAotProfile, VerifyAotProfile, BuildWebSiteLocal
 # Synopsis: Restore the solution before packaging. In CI the Package job does not build, so nothing restores on its
 # runner, and 'dotnet pack --no-build --no-restore' still resolves each project's framework references. Where the
 # runner's .NET install lacks a targeting pack that the Compile job's runner had, pack fails with NETSDK1127 (as it did
