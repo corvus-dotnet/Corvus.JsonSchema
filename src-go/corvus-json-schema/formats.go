@@ -338,13 +338,20 @@ func isDate(s string) bool {
 	return d <= monthDays[m]
 }
 
-func isTime(s string) bool {
+const (
+	minutesPerDay   = 24 * 60
+	lastMinuteOfDay = minutesPerDay - 1
+)
+
+// fullTime reads an RFC 3339 full-time: the second (up to 60), and the minute of the time in UTC counted from the
+// start of the day it is written in, which runs from -1439 (the day before) to 2878 (the day after).
+func fullTime(s string) (sec int, utc int, ok bool) {
 	if len(s) < 9 || s[2] != ':' || s[5] != ':' {
-		return false
+		return 0, 0, false
 	}
 	h, mi, sec := digitsValue(s[0:2]), digitsValue(s[3:5]), digitsValue(s[6:8])
 	if h < 0 || mi < 0 || sec < 0 {
-		return false
+		return 0, 0, false
 	}
 	i := 8
 	if s[i] == '.' {
@@ -354,49 +361,116 @@ func isTime(s string) bool {
 			i++
 		}
 		if i == start {
-			return false
+			return 0, 0, false
 		}
 	}
 	if i >= len(s) {
-		return false
+		return 0, 0, false
 	}
-	oh, om, sign := 0, 0, 0
+	offset := 0
 	switch s[i] {
 	case 'z', 'Z':
 		if i+1 != len(s) {
-			return false
+			return 0, 0, false
 		}
 	case '+', '-':
 		if len(s)-i != 6 || s[i+3] != ':' {
-			return false
+			return 0, 0, false
 		}
-		sign = -1
-		if s[i] == '-' {
-			sign = 1
-		}
-		oh, om = digitsValue(s[i+1:i+3]), digitsValue(s[i+4:i+6])
+		oh, om := digitsValue(s[i+1:i+3]), digitsValue(s[i+4:i+6])
 		if oh < 0 || om < 0 || oh > 23 || om > 59 {
-			return false
+			return 0, 0, false
+		}
+		offset = oh*60 + om
+		if s[i] == '+' {
+			offset = -offset
 		}
 	default:
-		return false
+		return 0, 0, false
 	}
 	if h > 23 || mi > 59 || sec > 60 {
-		return false
+		return 0, 0, false
 	}
-	if sec == 60 {
-		// A leap second is only valid at 23:59:60 UTC.
-		utc := (h*60 + mi + sign*(oh*60+om)) % 1440
-		if utc < 0 {
-			utc += 1440
-		}
-		return utc == 23*60+59
-	}
-	return true
+	return sec, h*60 + mi + offset, true
 }
 
+// floorMod is the remainder of a divided by b with the sign of b.
+func floorMod(a, b int) int {
+	m := a % b
+	if m < 0 {
+		m += b
+	}
+	return m
+}
+
+func isTime(s string) bool {
+	// A time has no date, so a leap second is valid whenever it is 23:59 in UTC.
+	sec, utc, ok := fullTime(s)
+	return ok && (sec < 60 || floorMod(utc, minutesPerDay) == lastMinuteOfDay)
+}
+
+// daysFromCivil is the number of days from 1970-01-01 to a date in the proleptic Gregorian calendar (Howard
+// Hinnant's algorithm).
+func daysFromCivil(year, month, day int) int {
+	y := year
+	if month <= 2 {
+		y--
+	}
+	era := y / 400
+	if y < 0 && y%400 != 0 {
+		era--
+	}
+	yearOfEra := y - era*400
+	shifted := month - 3
+	if month <= 2 {
+		shifted = month + 9
+	}
+	dayOfYear := (153*shifted+2)/5 + day - 1
+	dayOfEra := yearOfEra*365 + yearOfEra/4 - yearOfEra/100 + dayOfYear
+	return era*146097 + dayOfEra - 719468
+}
+
+// leapSecondDays are the days that the IERS has ended with a positive leap second (23:59:60 UTC), from 1972-06-30
+// to 2016-12-31, as days from 1970-01-01.
+var leapSecondDays = func() map[int]struct{} {
+	dates := [27][3]int{
+		{1972, 6, 30}, {1972, 12, 31}, {1973, 12, 31}, {1974, 12, 31}, {1975, 12, 31}, {1976, 12, 31},
+		{1977, 12, 31}, {1978, 12, 31}, {1979, 12, 31}, {1981, 6, 30}, {1982, 6, 30}, {1983, 6, 30},
+		{1985, 6, 30}, {1987, 12, 31}, {1989, 12, 31}, {1990, 12, 31}, {1992, 6, 30}, {1993, 6, 30},
+		{1994, 6, 30}, {1995, 12, 31}, {1997, 6, 30}, {1998, 12, 31}, {2005, 12, 31}, {2008, 12, 31},
+		{2012, 6, 30}, {2015, 6, 30}, {2016, 12, 31},
+	}
+	days := make(map[int]struct{}, len(dates))
+	for _, d := range dates {
+		days[daysFromCivil(d[0], d[1], d[2])] = struct{}{}
+	}
+	return days
+}()
+
 func isDateTime(s string) bool {
-	return len(s) > 11 && (s[10] == 'T' || s[10] == 't') && isDate(s[:10]) && isTime(s[11:])
+	if len(s) <= 11 || (s[10] != 'T' && s[10] != 't') || !isDate(s[:10]) {
+		return false
+	}
+	sec, utc, ok := fullTime(s[11:])
+	if !ok {
+		return false
+	}
+	if sec < 60 {
+		return true
+	}
+	// A leap second is valid only at 23:59:60 UTC on a day that ended with one, which may be the day before or after
+	// the date as written.
+	if floorMod(utc, minutesPerDay) != lastMinuteOfDay {
+		return false
+	}
+	shift := 0
+	if utc < 0 {
+		shift = -1
+	} else if utc >= minutesPerDay {
+		shift = 1
+	}
+	_, isLeapDay := leapSecondDays[daysFromCivil(digitsValue(s[0:4]), digitsValue(s[5:7]), digitsValue(s[8:10]))+shift]
+	return isLeapDay
 }
 
 // isDuration reads an ISO 8601 duration: P then weeks, or date parts in order then an optional time, or a time.
