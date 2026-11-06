@@ -99,9 +99,6 @@ for (draft in drafts) {
       for (t in seq_along(group$tests)) {
         test <- group$tests[[t]]
         what <- sprintf("%s [%s] %s", label, group$description, test$description)
-        if (runs$format[r] && grepl("leap second", tolower(what), fixed = TRUE)) {
-          next
-        }
         text <- data_texts[t]
         actual <- tryCatch({
           verdicts <- c(json = is_valid_json(compiled$text, text),

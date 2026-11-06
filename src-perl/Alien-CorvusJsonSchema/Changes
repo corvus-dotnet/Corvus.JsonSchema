@@ -1,5 +1,10 @@
 Revision history for Alien-CorvusJsonSchema
 
+v0.1.2  2026-11-06
+  - Installs the release package of C library 0.1.7, and needs an installed library to be 0.1.7 or later. 0.1.7
+    accepts a leap second in a date-time only on the 27 days that ended with one (23:59:60 UTC), so
+    JSON::Schema::Corvus::XS gets that when it is built.
+
 v0.1.1  2026-11-04
   - Installs the release package of C library 0.1.6, and needs an installed library to be 0.1.6 or later. 0.1.6's
     format checks follow the grammars the JSON-Schema-Test-Suite tests (UTS #46 for idn-hostname, RFC 5321 and RFC

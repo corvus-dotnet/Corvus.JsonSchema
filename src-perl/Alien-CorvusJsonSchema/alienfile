@@ -1,7 +1,7 @@
 use alienfile;
 use Config;
 
-# The corvus-json-schema C library (src-rs/corvus-json-schema-capi), version 0.1.6 or later in the 0.1 series.
+# The corvus-json-schema C library (src-rs/corvus-json-schema-capi), version 0.1.7 or later in the 0.1 series.
 #
 # An installed library that pkg-config finds as corvus-json-schema is used as it is (the "system" install, linked
 # dynamically). Otherwise the release package for this platform is downloaded from the C library's GitHub release,
@@ -9,16 +9,16 @@ use Config;
 # "share" install). There the static library is linked, so JSON::Schema::Corvus::XS has nothing to find at run time,
 # except on Windows, where the C library is a DLL that Alien::CorvusJsonSchema->dynamic_libs names.
 
-my $version = '0.1.6';
+my $version = '0.1.7';
 
 my %digest = (
-  'aarch64-pc-windows-msvc'    => 'd2d1c23420207d4ef47447c79e6dc25ca9f5d24ab278d7ce2eec7606812e2adc',
-  'aarch64-unknown-linux-gnu'  => 'bb7c59e794313c9451846d04d2212c5bc90aa4abaf058fe204677180d3ce1a3c',
-  'aarch64-unknown-linux-musl' => '91b6fb9b7062070ba03a6dd5a72bbed6951ea7d39053efe54818bc07b777e597',
-  'universal2-apple-darwin'    => 'fbf5998a94e040011cd700fe36eaa11aab8fc20d76975f627c42210b281b0d7b',
-  'x86_64-pc-windows-msvc'     => '4da0256e4ab7787599e115b617424348b712be36a532270d3c48497954f89d07',
-  'x86_64-unknown-linux-gnu'   => '9e21919abd1a49b3a664e216fd6ef5cbd496b8fcfa9a8d4bc702975dffad2c5c',
-  'x86_64-unknown-linux-musl'  => 'b328df93e37a36e52cea09fb790a3445cbbc40d881860b251fa645c0376b421d',
+  'aarch64-pc-windows-msvc'    => 'e74eb3822fa0730654045c2cf455a899bef90f90b6f183e60ee6a36416555a94',
+  'aarch64-unknown-linux-gnu'  => '00ad0bce8b1ae0d2c7657de191ea942293ab606bdc5f98f331b018e03b5dff10',
+  'aarch64-unknown-linux-musl' => '92b6d6ba48fcfcbbedbf2d0bbb337d60e075d6289efd4a86ee7097e939d637ce',
+  'universal2-apple-darwin'    => '136d538b5ebe117fa6233c224c58cf6ff939149ec041c0c9317bcf4194c1d3aa',
+  'x86_64-pc-windows-msvc'     => 'b7c1e00459dc0018b6986f4bb38e2d4ad70b22d2cde2b6c84b06a8e57fdc70be',
+  'x86_64-unknown-linux-gnu'   => '290ada3bfedaf466b975f6992ff525629e7402669f1d1efbf4c1dd9c164d6a24',
+  'x86_64-unknown-linux-musl'  => '0830191606e99b1ee8bf3e9dd013c9e44bce19598dfbe45a235a054474e0cd45',
 );
 
 # The release package's target for this Perl, or undef when the release has none.

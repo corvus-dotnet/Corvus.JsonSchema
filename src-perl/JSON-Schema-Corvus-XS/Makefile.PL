@@ -15,11 +15,11 @@ WriteMakefile(
   MIN_PERL_VERSION => '5.026',
   CONFIGURE_REQUIRES => {
     'Alien::Base::Wrapper'    => '2.38',
-    'Alien::CorvusJsonSchema' => 'v0.1.0',
+    'Alien::CorvusJsonSchema' => 'v0.1.2',
     'ExtUtils::MakeMaker'     => '6.64',
   },
   PREREQ_PM => {
-    'Alien::CorvusJsonSchema' => 'v0.1.0',
+    'Alien::CorvusJsonSchema' => 'v0.1.2',
     'JSON::PP'                => '2.27',
   },
   TEST_REQUIRES => {

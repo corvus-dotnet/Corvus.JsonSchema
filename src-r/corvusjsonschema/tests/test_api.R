@@ -222,7 +222,14 @@ stopifnot(!format_valid("email", '"\\"test\\\\\\u00a9\\"@iana.org"'))
 stopifnot(format_valid("email", '"\\"\\\\a\\"@iana.org"'))
 stopifnot(!format_valid("uri-template", '"a%"'))
 stopifnot(format_valid("uri-template", '"a\'b"'))
-stopifnot(identical(crate_version(), "0.2.1"))
+
+# A leap second is a valid date-time only at 23:59:60 UTC on a day that ended with one (crate 0.2.2), in whatever
+# offset it is written, and a time whenever it is 23:59 in UTC.
+stopifnot(format_valid("date-time", '"1998-12-31T23:59:60Z"'))
+stopifnot(format_valid("date-time", '"1999-01-01T00:29:60+00:30"'))
+stopifnot(!format_valid("date-time", '"1999-12-31T23:59:60Z"'))
+stopifnot(format_valid("time", '"15:59:60-08:00"'))
+stopifnot(identical(crate_version(), "0.2.2"))
 
 content <- '{"contentEncoding": "base64"}'
 stopifnot(!is_valid(compile_schema(content, default_dialect = "draft7"), "***"))

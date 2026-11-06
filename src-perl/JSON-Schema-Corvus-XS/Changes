@@ -1,5 +1,10 @@
 Revision history for JSON-Schema-Corvus-XS
 
+v0.1.1  2026-11-06
+  - Built with Alien::CorvusJsonSchema v0.1.2, on C library 0.1.7 or later: a leap second is a valid date-time
+    only on the 27 days that ended with one (23:59:60 UTC). The test suite runs the JSON-Schema-Test-Suite's
+    leap-second cases, which it skipped.
+
 v0.1.0  2026-10-20
   - First release: JSON Schema validation (draft 4, 6, 7, 2019-09 and 2020-12) on the corvus-json-schema C library
     (0.1.4 or later in the 0.1 series), which Alien::CorvusJsonSchema finds or installs. Validates JSON text, Perl

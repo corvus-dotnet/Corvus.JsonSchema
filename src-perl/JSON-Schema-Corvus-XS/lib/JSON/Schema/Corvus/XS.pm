@@ -6,7 +6,7 @@ use warnings;
 use Carp ();
 use Scalar::Util ();
 
-our $VERSION = 'v0.1.0';
+our $VERSION = 'v0.1.1';
 
 # The C library this binding is written against: 0.1.4 or later in the 0.1 series.
 use constant REQUIRED_LIBRARY_VERSION => (0 << 16) | (1 << 8) | 4;

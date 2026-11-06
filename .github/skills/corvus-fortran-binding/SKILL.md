@@ -24,7 +24,7 @@ library's, and so the Rust crate's (`docs/JsonSchemaForC.md`, `src-rs/corvus-jso
   the suite's remote resolver, and a scanner that cuts JSON values out of a text as they are written (the suite's
   `1.0` must reach the validator as `1.0`).
 - `test/suite_test.f90`: the JSON-Schema-Test-Suite as JSON text, as a document and through a verbose collector.
-  7,893 run plus 73 leap-second format cases skipped: 7,966.
+  All 7,966 cases run, the leap-second cases of the format run among them (C library 0.1.7 or later).
 - `test/annotations_test.f90`: the annotation suite (217 assertions). JSON values are compared with the library
   itself, by validating the produced object against `{"const": <expected>}`; `api_test` checks that this comparison
   can fail.
