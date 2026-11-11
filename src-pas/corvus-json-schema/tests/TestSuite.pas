@@ -245,7 +245,7 @@ begin
         Inc(Areas[Area].Passed);
         Continue;
       end;
-      { Leap seconds are skipped where format is asserted, as in the C# runner. }
+      { Leap seconds are skipped where format is asserted until this engine has the leap-second rule. }
       if AssertFormat and (Pos('leap second', LowerAscii(TestDescription)) > 0) then begin
         Inc(Areas[Area].Passed);
         Inc(Skipped);

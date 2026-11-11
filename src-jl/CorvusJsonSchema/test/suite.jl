@@ -96,7 +96,7 @@ function run_suite_file!(r::SuiteRunner, dialect::Dialect, release::Int, file::S
                 r.passed[area] += 1
                 continue
             end
-            # Leap seconds are skipped where format is asserted, as in the C# runner.
+            # Leap seconds are skipped where format is asserted until this engine has the leap-second rule.
             if assert_format && occursin("leap second", lowercase(test_description))
                 r.passed[area] += 1
                 push!(r.skipped, "$label [$description] $test_description")

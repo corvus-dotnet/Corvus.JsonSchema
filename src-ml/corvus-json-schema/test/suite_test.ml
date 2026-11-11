@@ -127,7 +127,7 @@ let run_file scratch filter dialect release file label area =
             in
             if outcome = Ok test.valid then bump passed area
             else if
-              (* Leap seconds are skipped where format is asserted, as in the C# runner. *)
+              (* Leap seconds are skipped where format is asserted until this engine has the leap-second rule. *)
               assert_format && contains (String.lowercase_ascii test.case_description) "leap second"
             then begin
               bump passed area;

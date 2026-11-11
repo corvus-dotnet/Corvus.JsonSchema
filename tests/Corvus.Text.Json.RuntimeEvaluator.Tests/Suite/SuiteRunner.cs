@@ -209,17 +209,13 @@ public static class SuiteRunner
     }
 
     /// <summary>
-    /// Gets the failures in a file's results, leaving out the leap-second cases that run with <c>format</c>
-    /// asserted: the shared date/time parsers do not support leap seconds (as in Corvus.JsonSchema).
+    /// Gets the failures in a file's results.
     /// </summary>
     /// <param name="results">The case results.</param>
     /// <returns>The failures.</returns>
     public static List<CaseResult> Failures(IEnumerable<CaseResult> results)
     {
-        return results
-            .Where(r => !r.Passed)
-            .Where(r => !(r.AssertedFormat && r.Test.Contains("leap second", StringComparison.OrdinalIgnoreCase)))
-            .ToList();
+        return results.Where(r => !r.Passed).ToList();
     }
 
     public static string Describe(IEnumerable<CaseResult> failures)

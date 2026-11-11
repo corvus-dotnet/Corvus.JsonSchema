@@ -33,6 +33,14 @@ public class SuiteValidationOfTimeStrings
     }
 
     [TestMethod]
+    public void TestAValidTimeStringWithLeapSecondZulu()
+    {
+        using var doc = JsonDocument.Parse("\"23:59:60Z\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
     public void TestInvalidLeapSecondZuluWrongHour()
     {
         using var doc = JsonDocument.Parse("\"22:59:60Z\"");
@@ -46,6 +54,14 @@ public class SuiteValidationOfTimeStrings
         using var doc = JsonDocument.Parse("\"23:58:60Z\"");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestValidLeapSecondZeroTimeOffset()
+    {
+        using var doc = JsonDocument.Parse("\"23:59:60+00:00\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
     [TestMethod]
@@ -65,6 +81,22 @@ public class SuiteValidationOfTimeStrings
     }
 
     [TestMethod]
+    public void TestValidLeapSecondPositiveTimeOffset()
+    {
+        using var doc = JsonDocument.Parse("\"01:29:60+01:30\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestValidLeapSecondLargePositiveTimeOffset()
+    {
+        using var doc = JsonDocument.Parse("\"23:29:60+23:30\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
     public void TestInvalidLeapSecondPositiveTimeOffsetWrongHour()
     {
         using var doc = JsonDocument.Parse("\"23:59:60+01:00\"");
@@ -78,6 +110,22 @@ public class SuiteValidationOfTimeStrings
         using var doc = JsonDocument.Parse("\"23:59:60+00:30\"");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestValidLeapSecondNegativeTimeOffset()
+    {
+        using var doc = JsonDocument.Parse("\"15:59:60-08:00\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestValidLeapSecondLargeNegativeTimeOffset()
+    {
+        using var doc = JsonDocument.Parse("\"00:29:60-23:30\"");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
     [TestMethod]

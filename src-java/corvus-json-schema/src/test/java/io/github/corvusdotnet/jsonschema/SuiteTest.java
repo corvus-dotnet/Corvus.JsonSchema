@@ -218,7 +218,7 @@ class SuiteTest {
                         ? compileError
                         : runCase(v, sub(groups, groups.property(test, "data")));
                 if (!actual.equals(Boolean.toString(expected))) {
-                    // Leap seconds are skipped where format is asserted, as in the C# runner.
+                    // Leap seconds are skipped where format is asserted until this engine has the leap-second rule.
                     if (assertFormat && testDescription.toLowerCase(Locale.ROOT).contains("leap second")) {
                         continue;
                     }
