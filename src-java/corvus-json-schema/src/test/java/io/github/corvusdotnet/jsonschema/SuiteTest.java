@@ -11,7 +11,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -218,10 +217,6 @@ class SuiteTest {
                         ? compileError
                         : runCase(v, sub(groups, groups.property(test, "data")));
                 if (!actual.equals(Boolean.toString(expected))) {
-                    // Leap seconds are skipped where format is asserted until this engine has the leap-second rule.
-                    if (assertFormat && testDescription.toLowerCase(Locale.ROOT).contains("leap second")) {
-                        continue;
-                    }
                     failures.add(label + " [" + description + "] " + testDescription + ": expected " + expected
                             + ", got " + actual);
                 }
