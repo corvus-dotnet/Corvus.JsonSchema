@@ -327,13 +327,22 @@ let time_offset b i stop =
         sign * ((oh * 60) + om)
   else no_offset
 
-let time_ok b from stop =
-  if stop - from < 9 || at b (from + 2) <> 0x3a || at b (from + 5) <> 0x3a then false
+(* What full_time gives for a text that is not a time, and for a time whose second is not 60. *)
+let not_a_time = min_int
+let not_a_leap_second = max_int
+let minutes_per_day = 24 * 60
+let last_minute_of_day = (23 * 60) + 59
+
+(* full_time reads an RFC 3339 full-time. It gives not_a_time for a text that is not one, not_a_leap_second for one
+   whose second is not 60, and for a leap second the minute it falls on in UTC, counted from the midnight that starts
+   the day as written (negative on the day before, a day or more on the day after). *)
+let full_time b from stop =
+  if stop - from < 9 || at b (from + 2) <> 0x3a || at b (from + 5) <> 0x3a then not_a_time
   else
     let h = digits_value b from (from + 2) in
     let mi = digits_value b (from + 3) (from + 5) in
     let sec = digits_value b (from + 6) (from + 8) in
-    if h < 0 || mi < 0 || sec < 0 then false
+    if h < 0 || mi < 0 || sec < 0 then not_a_time
     else begin
       let i = ref (from + 8) in
       let fraction = ref true in
@@ -345,25 +354,90 @@ let time_ok b from stop =
         done;
         if !i = start then fraction := false
       end;
-      if (not !fraction) || !i >= stop then false
+      if (not !fraction) || !i >= stop then not_a_time
       else
         let offset = time_offset b !i stop in
-        if offset = no_offset then false
-        else if h > 23 || mi > 59 || sec > 60 then false
-        else if sec = 60 then begin
-          (* A leap second is only valid at 23:59:60 UTC. *)
-          let utc = ((h * 60) + mi + offset) mod 1440 in
-          let utc = if utc < 0 then utc + 1440 else utc in
-          utc = (23 * 60) + 59
-        end
-        else true
+        if offset = no_offset then not_a_time
+        else if h > 23 || mi > 59 || sec > 60 then not_a_time
+        else if sec = 60 then (h * 60) + mi + offset
+        else not_a_leap_second
     end
 
+(* floor_mod is the remainder of a division rounded down, which is never negative for a positive divisor. *)
+let floor_mod a n =
+  let r = a mod n in
+  if r < 0 then r + n else r
+
+(* A leap second is a valid time whenever it is 23:59 in UTC: a time has no date. *)
+let time_ok b from stop =
+  let utc = full_time b from stop in
+  utc = not_a_leap_second || (utc <> not_a_time && floor_mod utc minutes_per_day = last_minute_of_day)
+
+(* days_from_civil is the days from 1970-01-01 to a date of the proleptic Gregorian calendar (Howard Hinnant's
+   algorithm). *)
+let days_from_civil year month day =
+  let y = if month <= 2 then year - 1 else year in
+  let era = (if y >= 0 then y else y - 399) / 400 in
+  let year_of_era = y - (era * 400) in
+  let day_of_year = (((153 * if month <= 2 then month + 9 else month - 3) + 2) / 5) + day - 1 in
+  let day_of_era = (year_of_era * 365) + (year_of_era / 4) - (year_of_era / 100) + day_of_year in
+  (era * 146097) + day_of_era - 719468
+
+(* The days that ended with a leap second (IERS), as days from 1970-01-01. *)
+let leap_second_days =
+  Array.map
+    (fun (y, m, d) -> days_from_civil y m d)
+    [|
+      (1972, 6, 30);
+      (1972, 12, 31);
+      (1973, 12, 31);
+      (1974, 12, 31);
+      (1975, 12, 31);
+      (1976, 12, 31);
+      (1977, 12, 31);
+      (1978, 12, 31);
+      (1979, 12, 31);
+      (1981, 6, 30);
+      (1982, 6, 30);
+      (1983, 6, 30);
+      (1985, 6, 30);
+      (1987, 12, 31);
+      (1989, 12, 31);
+      (1990, 12, 31);
+      (1992, 6, 30);
+      (1993, 6, 30);
+      (1994, 6, 30);
+      (1995, 12, 31);
+      (1997, 6, 30);
+      (1998, 12, 31);
+      (2005, 12, 31);
+      (2008, 12, 31);
+      (2012, 6, 30);
+      (2015, 6, 30);
+      (2016, 12, 31);
+    |]
+
+(* A date, T and a time. A leap second is valid only at 23:59:60 UTC on a day that ended with one, which may be the
+   day before or after the date as written. *)
 let date_time_ok b from stop =
   stop - from > 11
   && (at b (from + 10) = 0x54 || at b (from + 10) = 0x74)
   && date_ok b from (from + 10)
-  && time_ok b (from + 11) stop
+  &&
+  let utc = full_time b (from + 11) stop in
+  if utc = not_a_leap_second then true
+  else if utc = not_a_time || floor_mod utc minutes_per_day <> last_minute_of_day then false
+  else
+    let shift = if utc < 0 then -1 else if utc >= minutes_per_day then 1 else 0 in
+    let day =
+      days_from_civil
+        (digits_value b from (from + 4))
+        (digits_value b (from + 5) (from + 7))
+        (digits_value b (from + 8) (from + 10))
+      + shift
+    in
+    let rec find i = i < Array.length leap_second_days && (leap_second_days.(i) = day || find (i + 1)) in
+    find 0
 
 (* duration_part reads digits and one of the designators from position `first` in order, from position i of the text.
    The closure of the Go source moves the position and returns the designator's index. Here both come packed in one
