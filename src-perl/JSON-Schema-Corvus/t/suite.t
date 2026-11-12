@@ -3,7 +3,7 @@
 # it applies to and its tags whether format is asserted), as JSON text, as a parsed document, at the verbose level
 # through a collector, and as Perl data (decoded by JSON::PP), which must all give the expected verdict. Each case's
 # externalSchemas are served to that case alone. As the other runners, draft4/optional/zero-terminated-floats.json is
-# left out (1.0 and 1 cannot be told apart there), and leap-second cases that assert format are skipped. The Perl data is
+# left out (1.0 and 1 cannot be told apart there). The Perl data is
 # decoded with allow_bignum, so that big and precise numbers are Math::BigInt and Math::BigFloat, which are encoded
 # exactly.
 use strict;
@@ -37,7 +37,7 @@ my %excluded_cases = map { ("bignum.json|$_" => 1) } (
 );
 my $decoder = JSON::PP->new->allow_nonref->allow_bignum->utf8;
 my $collector = JSON::Schema::Corvus::ResultsCollector->new('verbose');
-my ($total, $failed, $skipped, $files) = (0, 0, 0, 0);
+my ($total, $failed, $files) = (0, 0, 0);
 
 my $tests = File::Spec->catdir($root, qw(validation tests));
 for my $draft (sort keys %releases) {
@@ -80,10 +80,6 @@ sub run_file {
     for my $test (@{ $group->{tests} }) {
       next if $excluded_cases{ ($path =~ m{([^/\\]+)\z})[0] . "|$test->{description}" };
       my $what = "$label [$group->{description}] $test->{description}";
-      if ($assert_format && $what =~ /leap second/i) {
-        $skipped++;
-        next;
-      }
       $total++;
       my $expected = $test->{valid} ? 1 : 0;
       my @verdicts = eval {
@@ -106,8 +102,8 @@ sub run_file {
   }
 }
 
-diag sprintf 'JSON-Schema-Test-Suite: %d/%d passed (%d files, %d leap-second cases skipped), as JSON text, as a '
-  . 'document, through a collector and as Perl data', $total - $failed, $total, $files, $skipped;
+diag sprintf 'JSON-Schema-Test-Suite: %d/%d passed (%d files), as JSON text, as a document, through a collector and '
+  . 'as Perl data', $total - $failed, $total, $files;
 ok $total >= 8000, "at least 8,000 cases ran ($total)";
 is $failed, 0, 'every case gives the expected verdict';
 

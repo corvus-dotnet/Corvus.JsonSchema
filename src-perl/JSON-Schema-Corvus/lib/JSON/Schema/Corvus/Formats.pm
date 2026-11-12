@@ -23,29 +23,64 @@ sub date {
   return $mo >= 1 && $mo <= 12 && $d >= 1 && $d <= ($mo == 2 && _is_leap_year($y) ? 29 : $DAYS[$mo]) ? 1 : 0;
 }
 
-sub time_format {
+use constant { MINUTES_PER_DAY => 24 * 60, LAST_MINUTE_OF_DAY => 23 * 60 + 59 };
+
+# Reads an RFC 3339 full-time. It gives nothing for a text that is not one, and otherwise the second and the minute
+# it falls on in UTC, counted from the midnight that starts the day as written (negative on the day before, a day or
+# more on the day after).
+sub _full_time {
   my ($s) = @_;
   my ($h, $mi, $sec, undef, undef, $sign, $oh, $om)
-    = $s =~ /\A([0-9]{2}):([0-9]{2}):([0-9]{2})(\.[0-9]+)?([zZ]|([+-])([0-9]{2}):([0-9]{2}))\z/ or return 0;
+    = $s =~ /\A([0-9]{2}):([0-9]{2}):([0-9]{2})(\.[0-9]+)?([zZ]|([+-])([0-9]{2}):([0-9]{2}))\z/ or return;
   $oh //= 0;
   $om //= 0;
   if (defined $sign) {
-    return 0 if $oh > 23 || $om > 59;
+    return if $oh > 23 || $om > 59;
   }
-  return 0 if $h > 23 || $mi > 59 || $sec > 60;
-  if ($sec == 60) {
-    # A leap second is valid only at 23:59:60 UTC.
-    my $direction = defined $sign && $sign eq '-' ? 1 : -1;
-    my $utc_minutes = ($h * 60 + $mi + $direction * ($oh * 60 + $om)) % 1440;
-    return $utc_minutes == 23 * 60 + 59 ? 1 : 0;
-  }
-  return 1;
+  return if $h > 23 || $mi > 59 || $sec > 60;
+  my $direction = defined $sign && $sign eq '-' ? 1 : -1;
+  return ($sec, $h * 60 + $mi + $direction * ($oh * 60 + $om));
 }
 
+# A leap second is a valid time whenever it is 23:59 in UTC: a time has no date. (Perl's % of a positive divisor is
+# never negative.)
+sub time_format {
+  my ($sec, $utc) = _full_time($_[0]) or return 0;
+  return $sec < 60 || $utc % MINUTES_PER_DAY == LAST_MINUTE_OF_DAY ? 1 : 0;
+}
+
+# The days from 1970-01-01 to a date of the proleptic Gregorian calendar (Howard Hinnant's algorithm).
+sub _days_from_civil {
+  my ($year, $month, $day) = @_;
+  my $y = $month <= 2 ? $year - 1 : $year;
+  my $era = $y >= 0 ? int($y / 400) : int(($y - 399) / 400);
+  my $year_of_era = $y - $era * 400;
+  my $day_of_year = int((153 * ($month <= 2 ? $month + 9 : $month - 3) + 2) / 5) + $day - 1;
+  my $day_of_era = $year_of_era * 365 + int($year_of_era / 4) - int($year_of_era / 100) + $day_of_year;
+  return $era * 146097 + $day_of_era - 719468;
+}
+
+# The days that ended with a leap second (IERS), as days from 1970-01-01.
+my %LEAP_SECOND_DAYS = map { (_days_from_civil(@$_) => 1) } (
+  [1972, 6, 30], [1972, 12, 31], [1973, 12, 31], [1974, 12, 31], [1975, 12, 31], [1976, 12, 31],
+  [1977, 12, 31], [1978, 12, 31], [1979, 12, 31], [1981, 6, 30], [1982, 6, 30], [1983, 6, 30],
+  [1985, 6, 30], [1987, 12, 31], [1989, 12, 31], [1990, 12, 31], [1992, 6, 30], [1993, 6, 30],
+  [1994, 6, 30], [1995, 12, 31], [1997, 6, 30], [1998, 12, 31], [2005, 12, 31], [2008, 12, 31],
+  [2012, 6, 30], [2015, 6, 30], [2016, 12, 31],
+);
+
+# A date, T and a time. A leap second is valid only at 23:59:60 UTC on a day that ended with one, which may be the
+# day before or after the date as written.
 sub date_time {
   my ($s) = @_;
   my $t = $s =~ /[tT]/g ? pos($s) - 1 : -1;
-  return $t == 10 && date(substr($s, 0, 10)) && time_format(substr($s, 11)) ? 1 : 0;
+  return 0 unless $t == 10 && date(substr($s, 0, 10));
+  my ($sec, $utc) = _full_time(substr($s, 11)) or return 0;
+  return 1 if $sec < 60;
+  return 0 unless $utc % MINUTES_PER_DAY == LAST_MINUTE_OF_DAY;
+  my $shift = $utc < 0 ? -1 : $utc >= MINUTES_PER_DAY ? 1 : 0;
+  my ($y, $mo, $d) = (substr($s, 0, 4), substr($s, 5, 2), substr($s, 8, 2));
+  return $LEAP_SECOND_DAYS{_days_from_civil($y, $mo, $d) + $shift} ? 1 : 0;
 }
 
 # RFC 3339 appendix A: dur-year = 1*DIGIT "Y" [dur-month], dur-month = 1*DIGIT "M" [dur-day], and so on.

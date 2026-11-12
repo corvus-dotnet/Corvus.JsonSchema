@@ -30,6 +30,7 @@ t/00-load.t
 t/annotations.t
 t/api.t
 t/formats-unified.t
+t/leap-seconds.t
 t/lib/SuiteSupport.pm
 t/suite.t
 THIRD-PARTY-NOTICES.txt
