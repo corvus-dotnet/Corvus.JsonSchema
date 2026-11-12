@@ -5,8 +5,9 @@ a C ABI over the [Rust crate](JsonSchemaForRust.md), with a C99 header, and give
 every other Corvus implementation. The [C++ wrapper](JsonSchemaForCpp.md) and the [Swift package](JsonSchemaForSwift.md)
 are built on it.
 
-- **Conformant.** Passes the whole JSON-Schema-Test-Suite (required, optional and `optional/format`, every draft) except
-  `draft4/optional/zeroTerminatedFloats.json`. Every result row matches the Rust crate's at every level.
+- **Conformant.** Passes the whole JSON-Schema-Test-Suite (required and optional, every draft) except
+  `draft4/optional/zero-terminated-floats.json` and the high-precision cases of `optional/bignum.json`, whose digits
+  the library's serde_json values do not hold. Every result row matches the Rust crate's at every level.
 - **Fast.** Over the [jsonschema-benchmark](https://github.com/sourcemeta-research/jsonschema-benchmark) corpora,
   parsing and validating JSON text takes about a quarter of the time of [Blaze](https://github.com/sourcemeta/blaze),
   the C++ validator, and it is faster on all 37 corpora. In the steady state, validating JSON text allocates nothing.

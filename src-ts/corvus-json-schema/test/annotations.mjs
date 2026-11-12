@@ -11,32 +11,33 @@ import { equal } from '../dist/runtime.js';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const suiteRoot = process.env.JSON_SCHEMA_TEST_SUITE ?? path.resolve(here, '../../../JSON-Schema-Test-Suite');
 const dir = path.join(suiteRoot, 'annotations', 'tests');
-const drafts = { draft4: [Dialect.Draft4, '4'], draft6: [Dialect.Draft6, '6'], draft7: [Dialect.Draft7, '7'], 'draft2019-09': [Dialect.Draft201909, '2019'], 'draft2020-12': [Dialect.Draft202012, '2020'] };
-const order = ['3', '4', '6', '7', '2019', '2020'];
-const compatible = (draft, compat) => {
-  const level = order.indexOf(draft);
-  if (compat.startsWith('<=')) {
-    const max = order.indexOf(compat.slice(2));
-    return max >= 0 && level <= max;
+const drafts = { draft4: [Dialect.Draft4, 4], draft6: [Dialect.Draft6, 6], draft7: [Dialect.Draft7, 7], 'draft2019-09': [Dialect.Draft201909, 2019], 'draft2020-12': [Dialect.Draft202012, 2020] };
+
+// Whether a test case's compatibility (a comma-separated list of minimums, <= maximums and = releases, from the
+// smallest release to the largest) admits the release, by the algorithm of the suite's validation/README.md.
+function compatible(compatibility, release) {
+  if (compatibility === undefined) return true;
+  let valid = true;
+  for (const constraint of compatibility.split(',')) {
+    const [op, version] = constraint.startsWith('<=') ? ['<=', constraint.slice(2)] : constraint.startsWith('=') ? ['=', constraint.slice(1)] : ['', constraint];
+    const number = Number.parseInt(version.trim(), 10);
+    valid = op === '<=' ? release <= number : op === '=' ? release === number : release >= number;
+    if (release <= number) break;
   }
-  const min = order.indexOf(compat);
-  return min >= 0 && level >= min;
-};
-const resolveRemote = (uri) => {
-  const prefix = 'http://localhost:1234/';
-  if (!uri.startsWith(prefix)) return undefined;
-  const file = path.join(suiteRoot, 'remotes', uri.slice(prefix.length));
-  return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : undefined;
-};
+  return valid;
+}
+
+// A resolver serving a test case's externalSchemas at their retrieval URIs.
+const resolverFor = (group) => (group.externalSchemas === undefined ? undefined : (uri) => group.externalSchemas[uri]);
 
 let total = 0;
 let failed = 0;
-for (const [draft, [dialect, compatLevel]] of Object.entries(drafts)) {
+for (const [draft, [dialect, release]] of Object.entries(drafts)) {
   for (const file of fs.readdirSync(dir).filter((f) => f.endsWith('.json')).sort()) {
     const suite = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
     for (const group of suite.suite) {
-      if (group.compatibility !== undefined && !compatible(compatLevel, group.compatibility)) continue;
-      const validator = compile(group.schema, { defaultDialect: dialect, resolveDocument: resolveRemote });
+      if (!compatible(group.compatibility, release)) continue;
+      const validator = compile(group.schema, { defaultDialect: dialect, resolveDocument: resolverFor(group) });
       for (const test of group.tests) {
         const collector = JsonSchemaResultsCollector.create(ResultsLevel.Verbose);
         validator.evaluate(test.instance, collector);

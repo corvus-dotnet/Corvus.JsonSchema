@@ -1,6 +1,7 @@
 (* Runs the JSON-Schema-Test-Suite (the repository's submodule) against the evaluator, as the C#, Rust and Go suite
-   runners do: required and optional tests with format as an annotation, optional/format with format asserted. Every
-   case runs fail-fast (as a document, as bytes and as a string, with the validator's own buffers and with a scratch)
+   runners do. Every dialect's cases are in one tree (validation/tests, required and optional): each case's
+   compatibility selects the drafts it applies to, its tags whether format is asserted, and its externalSchemas are
+   served to that case alone. Every case runs fail-fast (as a document, as bytes and as a string, with the validator's own buffers and with a scratch)
    and through a results collector at each level. A port of suite_test.go of the Go module.
 
    Set JSON_SCHEMA_TEST_SUITE to use a different checkout, SUITE_DRAFT and SUITE_FILTER to narrow the run. *)
@@ -11,15 +12,18 @@ module Suite = Corvus_json_schema_test_helpers.Suite
 
 let suite_drafts =
   [
-    ("draft4", Draft4);
-    ("draft6", Draft6);
-    ("draft7", Draft7);
-    ("draft2019-09", Draft2019_09);
-    ("draft2020-12", Draft2020_12);
+    ("draft4", Draft4, 4);
+    ("draft6", Draft6, 6);
+    ("draft7", Draft7, 7);
+    ("draft2019-09", Draft2019_09, 2019);
+    ("draft2020-12", Draft2020_12, 2020);
   ]
 
 (* Exclusions, matching the C#, Rust and Go runners: zero-terminated floats. *)
-let suite_excluded_files = [ "draft4/optional/zeroTerminatedFloats.json" ]
+let suite_excluded_files = [ "draft4/optional/zero-terminated-floats.json" ]
+
+(* The number of test cases the suite has, less the exclusion: a smaller count means a stale or partial run. *)
+let expected_total = 8686
 let results_levels = [ Results.Basic; Results.Detailed; Results.Verbose ]
 
 exception Case_error of string
@@ -84,21 +88,28 @@ let run_suite_case scratch v data =
 let total = ref 0
 let failures = ref []
 
-(* Failing leap second cases of the format run, which are not counted as failures. *)
+(* Failing leap second cases that assert format, which are not counted as failures. *)
 let skipped = ref []
 let areas = ref []
 let passed : (string, int) Hashtbl.t = Hashtbl.create 16
 let counted : (string, int) Hashtbl.t = Hashtbl.create 16
 let bump table area = Hashtbl.replace table area (1 + try Hashtbl.find table area with Not_found -> 0)
 
-let run_file scratch resolver filter dialect file label area assert_format =
+let run_file scratch filter dialect release file label area =
   let groups = Suite.groups file in
   if not (List.mem area !areas) then areas := !areas @ [ area ];
   List.iter
     (fun (group : Suite.group) ->
-      if filter = "" || contains group.description filter || contains label filter then begin
+      (* The evaluator asserts format by default up to draft7, so a format-annotation case does not apply there. *)
+      let applies =
+        Suite.compatible group.compatibility release && not (Suite.has_tag group "format-annotation" && release <= 7)
+      in
+      let assert_format = Suite.has_tag group "format-assertion" in
+      if applies && (filter = "" || contains group.description filter || contains label filter) then begin
         let options =
-          options ~default_dialect:dialect ~resolver ?assert_format:(if assert_format then Some true else None) ()
+          options ~default_dialect:dialect ?resolver:(Suite.case_resolver group)
+            ?assert_format:(if assert_format then Some true else None)
+            ()
         in
         let validator =
           match Validator.compile_string ~options group.schema with
@@ -116,7 +127,7 @@ let run_file scratch resolver filter dialect file label area assert_format =
             in
             if outcome = Ok test.valid then bump passed area
             else if
-              (* Leap seconds are skipped in the format run, as in the C# runner. *)
+              (* Leap seconds are skipped where format is asserted until this engine has the leap-second rule. *)
               assert_format && contains (String.lowercase_ascii test.case_description) "leap second"
             then begin
               bump passed area;
@@ -135,7 +146,7 @@ let run_file scratch resolver filter dialect file label area assert_format =
 
 let () =
   let root = Suite.root () in
-  let tests = Filename.concat root "tests" in
+  let tests = Suite.tests_dir root in
   if Suite.absent root then begin
     Suite.skipped "suite";
     exit 0
@@ -145,28 +156,21 @@ let () =
       root;
     exit 1
   end;
-  let resolver = Suite.remote_resolver root in
   let filter = Option.value (Sys.getenv_opt "SUITE_FILTER") ~default:"" in
   let draft_filter = Option.value (Sys.getenv_opt "SUITE_DRAFT") ~default:"" in
   let scratch = Some (Scratch.create ()) in
   List.iter
-    (fun (name, dialect) ->
+    (fun (name, dialect, release) ->
       if draft_filter = "" || draft_filter = name then begin
-        let dir = Filename.concat tests name in
         List.iter
-          (fun f -> run_file scratch resolver filter dialect f (name ^ "/" ^ Filename.basename f) name false)
-          (Suite.json_files dir);
+          (fun f -> run_file scratch filter dialect release f (name ^ "/" ^ Filename.basename f) name)
+          (Suite.json_files tests);
         List.iter
           (fun f ->
             let label = name ^ "/optional/" ^ Filename.basename f in
             if not (List.mem label suite_excluded_files) then
-              run_file scratch resolver filter dialect f label (name ^ "/optional") false)
-          (Suite.json_files (Filename.concat dir "optional"));
-        List.iter
-          (fun f ->
-            let label = name ^ "/optional/format/" ^ Filename.basename f in
-            run_file scratch resolver filter dialect f label (name ^ "/optional/format") true)
-          (Suite.json_files (Filename.concat (Filename.concat dir "optional") "format"))
+              run_file scratch filter dialect release f label (name ^ "/optional"))
+          (Suite.json_files (Filename.concat tests "optional"))
       end)
     suite_drafts;
   List.iter print_endline (List.rev !failures);
@@ -181,4 +185,7 @@ let () =
   Printf.printf "JSON-Schema-Test-Suite: %d/%d passed\n" (!total - failed) !total;
   Check.checkf (failed = 0) "%d JSON-Schema-Test-Suite cases failed" failed;
   Check.check "some JSON-Schema-Test-Suite cases ran" (!total <> 0);
+  if draft_filter = "" && filter = "" then
+    Check.checkf (!total = expected_total) "%d JSON-Schema-Test-Suite cases ran, where %d were expected" !total
+      expected_total;
   Check.finish "suite"

@@ -27,28 +27,28 @@ public class SuiteObjectPropertiesValidation
     [TestMethod]
     public void TestBothPropertiesPresentAndValidIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1, \"bar\": \"baz\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1, \"bar\": \"baz\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestOnePropertyInvalidIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1, \"bar\": {}}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1, \"bar\": {} }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestBothPropertiesInvalidIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": [], \"bar\": {}}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": [], \"bar\": {} }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestDoesnTInvalidateOtherProperties()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"quux\": []}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"quux\": [] }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -74,9 +74,9 @@ public class SuiteObjectPropertiesValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft6/properties.json",
-                "{\n            \"properties\": {\n                \"foo\": {\"type\": \"integer\"},\n                \"bar\": {\"type\": \"string\"}\n            }\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": { \"type\": \"integer\" },\n                    \"bar\": { \"type\": \"string\" }\n                }\n            }",
                 "JsonSchemaTestSuite.Draft6.Properties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -109,56 +109,56 @@ public class SuitePropertiesPatternPropertiesAdditionalPropertiesInteraction
     [TestMethod]
     public void TestPropertyValidatesProperty()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": [1, 2]}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": [1, 2] }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestPropertyInvalidatesProperty()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": [1, 2, 3, 4]}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": [1, 2, 3, 4] }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestPatternPropertyInvalidatesProperty()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": []}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": [] }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestPatternPropertyValidatesNonproperty()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"fxo\": [1, 2]}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"fxo\": [1, 2] }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestPatternPropertyInvalidatesNonproperty()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"fxo\": []}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"fxo\": [] }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestAdditionalPropertyIgnoresProperty()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"bar\": []}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"bar\": [] }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestAdditionalPropertyValidatesOthers()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"quux\": 3}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"quux\": 3 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestAdditionalPropertyInvalidatesOthers()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"quux\": \"foo\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"quux\": \"foo\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -170,9 +170,9 @@ public class SuitePropertiesPatternPropertiesAdditionalPropertiesInteraction
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft6/properties.json",
-                "{\n            \"properties\": {\n                \"foo\": {\"type\": \"array\", \"maxItems\": 3},\n                \"bar\": {\"type\": \"array\"}\n            },\n            \"patternProperties\": {\"f.o\": {\"minItems\": 2}},\n            \"additionalProperties\": {\"type\": \"integer\"}\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": { \"type\": \"array\", \"maxItems\": 3 },\n                    \"bar\": { \"type\": \"array\" }\n                },\n                \"patternProperties\": { \"f.o\": { \"minItems\": 2 } },\n                \"additionalProperties\": { \"type\": \"integer\" }\n            }",
                 "JsonSchemaTestSuite.Draft6.Properties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -212,21 +212,21 @@ public class SuitePropertiesWithBooleanSchema
     [TestMethod]
     public void TestOnlyTruePropertyPresentIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestOnlyFalsePropertyPresentIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"bar\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"bar\": 2 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestBothPropertiesPresentIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1, \"bar\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1, \"bar\": 2 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -238,9 +238,9 @@ public class SuitePropertiesWithBooleanSchema
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft6/properties.json",
-                "{\n            \"properties\": {\n                \"foo\": true,\n                \"bar\": false\n            }\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": true,\n                    \"bar\": false\n                }\n            }",
                 "JsonSchemaTestSuite.Draft6.Properties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -273,14 +273,14 @@ public class SuitePropertiesWithEscapedCharacters
     [TestMethod]
     public void TestObjectWithAllNumbersIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\\nbar\": 1,\n                    \"foo\\\"bar\": 1,\n                    \"foo\\\\bar\": 1,\n                    \"foo\\rbar\": 1,\n                    \"foo\\tbar\": 1,\n                    \"foo\\fbar\": 1\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                        \"foo\\nbar\": 1,\n                        \"foo\\\"bar\": 1,\n                        \"foo\\\\bar\": 1,\n                        \"foo\\rbar\": 1,\n                        \"foo\\tbar\": 1,\n                        \"foo\\fbar\": 1\n                    }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestObjectWithStringsIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                    \"foo\\nbar\": \"1\",\n                    \"foo\\\"bar\": \"1\",\n                    \"foo\\\\bar\": \"1\",\n                    \"foo\\rbar\": \"1\",\n                    \"foo\\tbar\": \"1\",\n                    \"foo\\fbar\": \"1\"\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                        \"foo\\nbar\": \"1\",\n                        \"foo\\\"bar\": \"1\",\n                        \"foo\\\\bar\": \"1\",\n                        \"foo\\rbar\": \"1\",\n                        \"foo\\tbar\": \"1\",\n                        \"foo\\fbar\": \"1\"\n                    }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -292,9 +292,9 @@ public class SuitePropertiesWithEscapedCharacters
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft6/properties.json",
-                "{\n            \"properties\": {\n                \"foo\\nbar\": {\"type\": \"number\"},\n                \"foo\\\"bar\": {\"type\": \"number\"},\n                \"foo\\\\bar\": {\"type\": \"number\"},\n                \"foo\\rbar\": {\"type\": \"number\"},\n                \"foo\\tbar\": {\"type\": \"number\"},\n                \"foo\\fbar\": {\"type\": \"number\"}\n            }\n        }",
+                "{\n                \"properties\": {\n                    \"foo\\nbar\": { \"type\": \"number\" },\n                    \"foo\\\"bar\": { \"type\": \"number\" },\n                    \"foo\\\\bar\": { \"type\": \"number\" },\n                    \"foo\\rbar\": { \"type\": \"number\" },\n                    \"foo\\tbar\": { \"type\": \"number\" },\n                    \"foo\\fbar\": { \"type\": \"number\" }\n                }\n            }",
                 "JsonSchemaTestSuite.Draft6.Properties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -327,7 +327,7 @@ public class SuitePropertiesWithNullValuedInstanceProperties
     [TestMethod]
     public void TestAllowsNullValues()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": null}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": null }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -339,9 +339,9 @@ public class SuitePropertiesWithNullValuedInstanceProperties
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft6/properties.json",
-                "{\n            \"properties\": {\n                \"foo\": {\"type\": \"null\"}\n            }\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": { \"type\": \"null\" }\n                }\n            }",
                 "JsonSchemaTestSuite.Draft6.Properties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -416,7 +416,7 @@ public class SuitePropertiesWhoseNamesAreJavascriptObjectPropertyNames
     [TestMethod]
     public void TestAllPresentAndValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \n                    \"__proto__\": 12,\n                    \"toString\": { \"length\": \"foo\" },\n                    \"constructor\": 37\n                }");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\n                        \"__proto__\": 12,\n                        \"toString\": { \"length\": \"foo\" },\n                        \"constructor\": 37\n                    }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -428,9 +428,9 @@ public class SuitePropertiesWhoseNamesAreJavascriptObjectPropertyNames
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft6/properties.json",
-                "{\n            \"properties\": {\n                \"__proto__\": {\"type\": \"number\"},\n                \"toString\": {\n                    \"properties\": { \"length\": { \"type\": \"string\" } }\n                },\n                \"constructor\": {\"type\": \"number\"}\n            }\n        }",
+                "{\n                \"properties\": {\n                    \"__proto__\": { \"type\": \"number\" },\n                    \"toString\": {\n                        \"properties\": { \"length\": { \"type\": \"string\" } }\n                    },\n                    \"constructor\": { \"type\": \"number\" }\n                }\n            }",
                 "JsonSchemaTestSuite.Draft6.Properties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,

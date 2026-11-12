@@ -3,6 +3,7 @@
 //! by "compatibility", and each assertion compared with the annotations grouped by instance location, keyword and
 //! schema location.
 
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -11,15 +12,37 @@ use corvus_json_schema::{
 };
 use serde_json::Value;
 
-const ORDER: [&str; 6] = ["3", "4", "6", "7", "2019", "2020"];
-
-fn compatible(level: &str, compat: &str) -> bool {
-    let level = ORDER.iter().position(|x| *x == level).unwrap();
-    if let Some(max) = compat.strip_prefix("<=") {
-        ORDER.iter().position(|x| *x == max).is_some_and(|max| level <= max)
-    } else {
-        ORDER.iter().position(|x| *x == compat).is_some_and(|min| level >= min)
+/// Whether a test case's `compatibility` (a comma-separated list of minimums, `<=` maximums and `=` releases, from
+/// the smallest release to the largest) admits the release, by the algorithm of the suite's validation/README.md.
+fn compatible(compatibility: Option<&str>, release: u32) -> bool {
+    let Some(compatibility) = compatibility else { return true };
+    let mut valid = true;
+    for constraint in compatibility.split(',') {
+        let (op, version) = if let Some(v) = constraint.strip_prefix("<=") {
+            ("<=", v)
+        } else if let Some(v) = constraint.strip_prefix('=') {
+            ("=", v)
+        } else {
+            ("", constraint)
+        };
+        let version: u32 = version.trim().parse().unwrap();
+        valid = match op {
+            "<=" => release <= version,
+            "=" => release == version,
+            _ => release >= version,
+        };
+        if release <= version {
+            break;
+        }
     }
+    valid
+}
+
+/// A resolver serving a test case's `externalSchemas` at their retrieval URIs, scoped to that test case.
+fn resolver_for(case: &Value) -> Option<corvus_json_schema::DocumentResolver> {
+    let schemas: HashMap<String, Value> =
+        case["externalSchemas"].as_object()?.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
+    Some(Arc::new(move |uri: &str| schemas.get(uri).cloned()))
 }
 
 fn read_json(path: &Path) -> Value {
@@ -48,11 +71,6 @@ fn annotation_suite() {
         eprintln!("annotation tests not found at {}; skipping", dir.display());
         return;
     }
-    let remotes = root.join("remotes");
-    let resolver = move |uri: &str| -> Option<Value> {
-        let file = remotes.join(uri.strip_prefix("http://localhost:1234/")?);
-        file.exists().then(|| read_json(&file))
-    };
     let mut files: Vec<PathBuf> = std::fs::read_dir(&dir)
         .unwrap()
         .filter_map(|e| e.ok().map(|e| e.path()))
@@ -61,27 +79,25 @@ fn annotation_suite() {
     files.sort();
 
     let drafts = [
-        ("draft4", Dialect::Draft4, "4"),
-        ("draft6", Dialect::Draft6, "6"),
-        ("draft7", Dialect::Draft7, "7"),
-        ("draft2019-09", Dialect::Draft201909, "2019"),
-        ("draft2020-12", Dialect::Draft202012, "2020"),
+        ("draft4", Dialect::Draft4, 4),
+        ("draft6", Dialect::Draft6, 6),
+        ("draft7", Dialect::Draft7, 7),
+        ("draft2019-09", Dialect::Draft201909, 2019),
+        ("draft2020-12", Dialect::Draft202012, 2020),
     ];
     let mut total = 0;
     let mut failures = Vec::new();
-    for (draft, dialect, level) in drafts {
+    for (draft, dialect, release) in drafts {
         for file in &files {
             let suite = read_json(file);
             let name = file.file_name().unwrap().to_string_lossy();
             for group in suite["suite"].as_array().unwrap() {
-                if let Some(compat) = group.get("compatibility").and_then(Value::as_str)
-                    && !compatible(level, compat)
-                {
+                if !compatible(group.get("compatibility").and_then(Value::as_str), release) {
                     continue;
                 }
                 let options = CompileOptions {
                     default_dialect: dialect,
-                    resolve_document: Some(Arc::new(resolver.clone())),
+                    resolve_document: resolver_for(group),
                     ..CompileOptions::default()
                 };
                 let description = group["description"].as_str().unwrap_or("");

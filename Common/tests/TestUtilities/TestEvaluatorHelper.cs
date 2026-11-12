@@ -125,6 +125,10 @@ public class TestEvaluatorHelper
     /// <param name="defaultVocabulary">The default vocabulary URI string (e.g. <c>"https://json-schema.org/draft/2020-12/schema"</c>).</param>
     /// <param name="validateFormat">Whether to enforce format validation rather than just evaluation.</param>
     /// <param name="hostAssembly">The host assembly with preserved compilation context.</param>
+    /// <param name="externalSchemas">
+    /// The test case's <c>externalSchemas</c> object as JSON text (retrieval URI to schema), or <see langword="null"/>.
+    /// Each schema is registered at its retrieval URI for this compilation only.
+    /// </param>
     /// <returns>A <see cref="CompiledEvaluator"/> for the schema.</returns>
     public static async ValueTask<CompiledEvaluator> GenerateEvaluatorForVirtualFileAsync(
         string virtualFilename,
@@ -133,9 +137,10 @@ public class TestEvaluatorHelper
         string remotesBaseDirectory,
         string defaultVocabulary,
         bool validateFormat,
-        Assembly hostAssembly)
+        Assembly hostAssembly,
+        string? externalSchemas = null)
     {
-        string key = $"eval_{schemaText}_{defaultVocabulary}_{validateFormat}";
+        string key = $"eval_{schemaText}_{defaultVocabulary}_{validateFormat}_{externalSchemas}";
         if (s_cache.TryGetValue(key, out CompiledEvaluator? value))
         {
             return value;
@@ -145,6 +150,8 @@ public class TestEvaluatorHelper
             remotesBaseDirectory,
             defaultVocabulary: defaultVocabulary,
             validateFormat: validateFormat);
+
+        ExternalSchemaRegistration.Register(externalSchemas, helper._jsonSchemaTypeBuilder.AddDocument);
 
         CompiledEvaluator result = await helper.GenerateAndCompileAsync(virtualFilename, schemaText, TestJsonSchemaCodeGenerator.ToPascalCase(defaultNamespace), hostAssembly);
         return s_cache.GetOrAdd(key, _ => result);

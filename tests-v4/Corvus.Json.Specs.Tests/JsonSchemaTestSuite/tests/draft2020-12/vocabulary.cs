@@ -11,29 +11,31 @@ namespace JsonSchemaTestSuite.Draft202012.Vocabulary;
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteSchemaThatUsesCustomMetaschemaWithWithNoValidationVocabulary
+public class SuiteSchemaThatUsesCustomMetaschemaWithNoValidationVocabulary
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestApplicatorVocabularyStillWorks()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"badProperty\": \"this property should not exist\"\r\n                }");
+        using var doc = JsonDocument.Parse("{ \"badProperty\": \"this property should not exist\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -41,7 +43,7 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithWithNoValidationVocabulary
     [TestMethod]
     public void TestNoValidationValidNumber()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"numberProperty\": 20\r\n                }");
+        using var doc = JsonDocument.Parse("{ \"numberProperty\": 20 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -49,12 +51,12 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithWithNoValidationVocabulary
     [TestMethod]
     public void TestNoValidationInvalidNumberButItStillValidates()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"numberProperty\": 1\r\n                }");
+        using var doc = JsonDocument.Parse("{ \"numberProperty\": 1 }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -65,40 +67,42 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithWithNoValidationVocabulary
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "vocabulary.json",
-                "#/0/schema",
+                "#/tests/2/schema",
                 "JsonSchemaTestSuiteDraft202012Vocabulary",
-                "SchemaThatUsesCustomMetaschemaWithWithNoValidationVocabulary",
+                "SchemaThatUsesCustomMetaschemaWithNoValidationVocabulary",
                 validateFormat: false,
                 optionalAsNullable: false,
-                useImplicitOperatorString: false);
+                useImplicitOperatorString: false,
+                externalSchemasPath: "#/tests/2/externalSchemas");
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
 
 [TestCategory("Draft202012")]
 [TestClass]
-public class SuiteIgnoreUnrecognizedOptionalVocabulary
+public class SuiteIgnoreUnrecognizedOptionalVocabularyDynamicAnchor
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -118,7 +122,7 @@ public class SuiteIgnoreUnrecognizedOptionalVocabulary
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -129,18 +133,18 @@ public class SuiteIgnoreUnrecognizedOptionalVocabulary
             _driver = DriverFactory.CreateDraft202012Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "vocabulary.json",
-                "#/1/schema",
+                "#/tests/3/schema",
                 "JsonSchemaTestSuiteDraft202012Vocabulary",
-                "IgnoreUnrecognizedOptionalVocabulary",
+                "IgnoreUnrecognizedOptionalVocabularyDynamicAnchor",
                 validateFormat: false,
                 optionalAsNullable: false,
-                useImplicitOperatorString: false);
+                useImplicitOperatorString: false,
+                externalSchemasPath: "#/tests/3/externalSchemas");
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

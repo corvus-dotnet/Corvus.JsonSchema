@@ -89,9 +89,9 @@ public class SuitePatternValidation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/pattern.json",
-                "{\"pattern\": \"^a*$\"}",
+                "{ \"pattern\": \"^a*$\" }",
                 "StandaloneEvaluatorTestSuite.Draft7.Pattern",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -133,9 +133,9 @@ public class SuitePatternIsNotAnchored
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/pattern.json",
-                "{\"pattern\": \"a+\"}",
+                "{ \"pattern\": \"a+\" }",
                 "StandaloneEvaluatorTestSuite.Draft7.Pattern",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

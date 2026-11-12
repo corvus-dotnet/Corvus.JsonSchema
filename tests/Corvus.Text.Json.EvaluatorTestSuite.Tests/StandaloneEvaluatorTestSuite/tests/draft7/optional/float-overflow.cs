@@ -40,9 +40,9 @@ public class SuiteAllIntegersAreMultiplesOf05IfOverflowIsHandled
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft7/optional/float-overflow.json",
-                "{\"type\": \"integer\", \"multipleOf\": 0.5}",
+                "{\n                \"type\": \"number\", \n                \"multipleOf\": 0.5\n            }",
                 "StandaloneEvaluatorTestSuite.Draft7.Optional.FloatOverflow",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

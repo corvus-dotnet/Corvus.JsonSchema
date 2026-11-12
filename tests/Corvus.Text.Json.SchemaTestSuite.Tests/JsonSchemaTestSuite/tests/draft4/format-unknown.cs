@@ -1,0 +1,95 @@
+using System.Reflection;
+using System.Threading.Tasks;
+using TestUtilities;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace JsonSchemaTestSuite.Draft4.FormatUnknown;
+
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteUnknownFormat
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestUnknownFormatsIgnoreIntegers()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("12");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestUnknownFormatsIgnoreFloats()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("13.7");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestUnknownFormatsIgnoreObjects()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestUnknownFormatsIgnoreArrays()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestUnknownFormatsIgnoreBooleans()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("false");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestUnknownFormatsIgnoreNulls()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestUnknownFormatsIgnoreStrings()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"string\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests/draft4/format-unknown.json",
+                "{\n                \"format\": \"unknown\"\n            }",
+                "JsonSchemaTestSuite.Draft4.FormatUnknown",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "http://json-schema.org/draft-04/schema#",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}

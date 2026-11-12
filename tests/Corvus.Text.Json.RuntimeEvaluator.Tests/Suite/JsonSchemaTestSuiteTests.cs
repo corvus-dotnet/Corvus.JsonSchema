@@ -3,83 +3,62 @@ using Corvus.Text.Json.RuntimeEvaluator.Tests.Suite;
 namespace Corvus.Text.Json.RuntimeEvaluator.Tests;
 
 /// <summary>
-/// One test per suite file: the test fails if any case in the file fails, and the message lists them.
+/// One test per suite file and draft: the test fails if any case in the file fails, and the message lists them.
 /// </summary>
+/// <remarks>
+/// Each test case in the file decides for itself whether it applies to the draft (its <c>compatibility</c>) and
+/// whether <c>format</c> is asserted (its <c>format-assertion</c> tag); see <see cref="SuiteRunner.RunFile"/>.
+/// </remarks>
 [TestClass]
 public class JsonSchemaTestSuiteTests
 {
     /// <summary>
-    /// Cases that are deliberately not supported, mirroring the exclusions used by Corvus.JsonSchema.
+    /// Cases that are deliberately not supported, mirroring the exclusions used by Corvus.JsonSchema, keyed by
+    /// <c>draft/relative-path</c>.
     /// </summary>
     private static readonly HashSet<string> ExcludedFiles = new(StringComparer.Ordinal);
 
-    public static IEnumerable<object[]> RequiredFiles()
-    {
-        foreach (string draft in SuiteRunner.Drafts)
-        {
-            foreach (string file in SuiteRunner.Files(draft))
-            {
-                yield return [draft, Path.GetFileName(file), file];
-            }
-        }
-    }
+    public static IEnumerable<object[]> RequiredFiles() => FilesFor(optional: false);
 
-    public static IEnumerable<object[]> OptionalFiles()
-    {
-        foreach (string draft in SuiteRunner.Drafts)
-        {
-            foreach (string file in SuiteRunner.Files(draft, "optional"))
-            {
-                string key = draft + "/optional/" + Path.GetFileName(file);
-                if (!ExcludedFiles.Contains(key))
-                {
-                    yield return [draft, "optional/" + Path.GetFileName(file), file];
-                }
-            }
-        }
-    }
-
-    public static IEnumerable<object[]> FormatFiles()
-    {
-        foreach (string draft in SuiteRunner.Drafts)
-        {
-            foreach (string file in SuiteRunner.Files(draft, Path.Combine("optional", "format")))
-            {
-                yield return [draft, "optional/format/" + Path.GetFileName(file), file];
-            }
-        }
-    }
+    public static IEnumerable<object[]> OptionalFiles() => FilesFor(optional: true);
 
     public static string DisplayName(System.Reflection.MethodInfo method, object[] data) => $"{data[0]}/{data[1]}";
 
     [TestMethod]
     [DynamicData(nameof(RequiredFiles), DynamicDataDisplayName = nameof(DisplayName))]
-    public void Required(string draft, string name, string file)
+    public void Required(string draft, string file)
     {
-        AssertFile(file, draft, assertFormat: false);
+        AssertFile(file, draft);
     }
 
     [TestMethod]
     [DynamicData(nameof(OptionalFiles), DynamicDataDisplayName = nameof(DisplayName))]
-    public void Optional(string draft, string name, string file)
+    public void Optional(string draft, string file)
     {
-        AssertFile(file, draft, assertFormat: false);
+        AssertFile(file, draft);
     }
 
-    [TestMethod]
-    [DynamicData(nameof(FormatFiles), DynamicDataDisplayName = nameof(DisplayName))]
-    public void Format(string draft, string name, string file)
+    private static IEnumerable<object[]> FilesFor(bool optional)
     {
-        AssertFile(file, draft, assertFormat: true);
+        foreach (string draft in SuiteRunner.Drafts)
+        {
+            foreach (string file in SuiteRunner.Files(optional))
+            {
+                if (!ExcludedFiles.Contains(draft + "/" + file))
+                {
+                    yield return [draft, file];
+                }
+            }
+        }
     }
 
-    private static void AssertFile(string file, string draft, bool assertFormat)
+    private static void AssertFile(string file, string draft)
     {
-        List<SuiteRunner.CaseResult> results = SuiteRunner.RunFile(file, draft, assertFormat);
-        List<SuiteRunner.CaseResult> failures = results.Where(r => !r.Passed).ToList();
+        List<SuiteRunner.CaseResult> results = SuiteRunner.RunFile(file, draft);
+        List<SuiteRunner.CaseResult> failures = SuiteRunner.Failures(results);
         if (failures.Count > 0)
         {
-            Assert.Fail($"{failures.Count}/{results.Count} cases failed in {Path.GetFileName(file)}:\n{SuiteRunner.Describe(failures)}");
+            Assert.Fail($"{failures.Count}/{results.Count} cases failed in {file}:\n{SuiteRunner.Describe(failures)}");
         }
     }
 }

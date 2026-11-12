@@ -11,22 +11,24 @@ namespace JsonSchemaTestSuite.Draft201909.Optional.CrossDraft;
 
 [TestCategory("Draft201909")]
 [TestClass]
-public class SuiteRefsToFutureDraftsAreProcessedAsFutureDrafts
+public class SuiteRefsToFutureDraftsAreProcessedAsFutureDrafts2020
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -46,7 +48,7 @@ public class SuiteRefsToFutureDraftsAreProcessedAsFutureDrafts
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -56,53 +58,55 @@ public class SuiteRefsToFutureDraftsAreProcessedAsFutureDrafts
         {
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\cross-draft.json",
-                "#/0/schema",
+                "optional/cross-draft.json",
+                "#/tests/1/schema",
                 "JsonSchemaTestSuiteDraft201909OptionalCrossDraft",
-                "RefsToFutureDraftsAreProcessedAsFutureDrafts",
+                "RefsToFutureDraftsAreProcessedAsFutureDrafts2020",
                 validateFormat: false,
                 optionalAsNullable: false,
-                useImplicitOperatorString: false);
+                useImplicitOperatorString: false,
+                externalSchemasPath: "#/tests/1/externalSchemas");
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
 
 [TestCategory("Draft201909")]
 [TestClass]
-public class SuiteRefsToHistoricDraftsAreProcessedAsHistoricDrafts
+public class SuiteRefsToHistoricDraftsAreProcessedAsHistoricDrafts7
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestMissingBarIsValid()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": \"any value\"}");
+        using var doc = JsonDocument.Parse("{ \"foo\": \"any value\" }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -112,19 +116,19 @@ public class SuiteRefsToHistoricDraftsAreProcessedAsHistoricDrafts
         {
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "optional\\cross-draft.json",
-                "#/1/schema",
+                "optional/cross-draft.json",
+                "#/tests/2/schema",
                 "JsonSchemaTestSuiteDraft201909OptionalCrossDraft",
-                "RefsToHistoricDraftsAreProcessedAsHistoricDrafts",
+                "RefsToHistoricDraftsAreProcessedAsHistoricDrafts7",
                 validateFormat: false,
                 optionalAsNullable: false,
-                useImplicitOperatorString: false);
+                useImplicitOperatorString: false,
+                externalSchemasPath: "#/tests/2/externalSchemas");
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

@@ -7,8 +7,9 @@ evaluator (see [Runtime Evaluator](RuntimeEvaluator.md)), and gives the same res
 It compiles a schema once into specialised JavaScript and validates parsed JSON values (`JSON.parse` output) against
 it.
 
-- **Conformant.** Passes the whole JSON-Schema-Test-Suite (required, optional and `optional/format`, every draft), and
-  all of its annotation tests.
+- **Conformant.** Passes the whole JSON-Schema-Test-Suite (required and optional, every draft) but the
+  high-precision cases of `optional/bignum.json` (it evaluates JavaScript values, and a number is a double), and all
+  of its annotation tests.
 - **Fast.** Over the [jsonschema-benchmark](https://github.com/sourcemeta-research/jsonschema-benchmark) corpora it
   validates in under a quarter of the time of jsu-js, which also compiles schemas to JavaScript (see
   [Performance](#performance)).

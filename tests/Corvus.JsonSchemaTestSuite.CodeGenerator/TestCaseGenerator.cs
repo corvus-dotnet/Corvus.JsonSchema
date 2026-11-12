@@ -80,7 +80,9 @@ internal static class TestCaseGenerator
                     .AppendLine($"namespace {namespaceValue};");
 
                 string current = Path.GetFullPath(".");
-                string remotesDirectory = Path.Combine(testFile.BaseDirectory, "remotes");
+                // The schema is registered as a virtual document under the suite's tests directory; any
+                // other documents it references come from the test case's own externalSchemas.
+                string remotesDirectory = Path.Combine(testFile.BaseDirectory, "validation", "tests");
 
                 foreach (TestSuite testSuite in testFile.TestSuites)
                 {
@@ -140,7 +142,8 @@ internal static class TestCaseGenerator
                         .AppendLine("                optionalAsNullable: false,")
                         .AppendLine("                useImplicitOperatorString: false,")
                         .AppendLine("                addExplicitUsings: false,")
-                        .AppendLine("                Assembly.GetExecutingAssembly());")
+                        .AppendLine(testSuite.ExternalSchemas is null ? "                Assembly.GetExecutingAssembly());" : "                Assembly.GetExecutingAssembly(),")
+                        .AppendLineIf(testSuite.ExternalSchemas is not null, () => $"                externalSchemas: {SymbolDisplay.FormatLiteral(EmbeddedLiteral.Json(testSuite.ExternalSchemas!), true)});")
                         .AppendLine("        }")
                         .AppendLine("    }")
                         .AppendLine("}");
@@ -177,40 +180,24 @@ internal static class TestCaseGenerator
 
         // Always work with the full path
         string baseDirectory = Path.GetFullPath(jsonSchemaTestSuite.BaseDirectory);
+        string testsDirectory = Path.Combine(baseDirectory, jsonSchemaTestSuite.TestsDirectory);
+
         foreach (TestCollection collection in jsonSchemaTestSuite.Collections)
         {
-            // Compbine the base directory with the current directory
-            string currentDirectory = Path.Combine(baseDirectory, collection.Directory);
-
             List<TestFile> testFiles = [];
 
-            // Iterate the files
-            foreach (string file in Directory.EnumerateFiles(currentDirectory, "*.json", SearchOption.AllDirectories))
+            // The unified suite holds every dialect in one tree; each test case says which
+            // releases it applies to in its "compatibility" property.
+            foreach (string file in Directory.EnumerateFiles(testsDirectory, "*.json", SearchOption.AllDirectories).OrderBy(f => f, StringComparer.Ordinal))
             {
                 List<TestSuite> testSuites = [];
 
-#if NET
-                string relativePath = Path.GetRelativePath(currentDirectory, file);
-                string baseRelativePath = Path.GetRelativePath(baseDirectory, file);
-#else
-                int offset = currentDirectory.Length;
-                if (currentDirectory[currentDirectory.Length - 1] != Path.DirectorySeparatorChar &&
-                    currentDirectory[currentDirectory.Length - 1] != Path.AltDirectorySeparatorChar)
+                string relativePath = Path.GetRelativePath(testsDirectory, file).Replace('\\', '/');
+
+                if (jsonSchemaTestSuite.ExcludedDirectories?.Any(d => relativePath.StartsWith(d.TrimEnd('/') + "/", StringComparison.Ordinal)) == true)
                 {
-                    offset += 1;
+                    continue;
                 }
-
-                string relativePath = file.Substring(offset);
-
-                offset = baseDirectory.Length;
-                if (baseDirectory[baseDirectory.Length - 1] != Path.DirectorySeparatorChar &&
-                    baseDirectory[baseDirectory.Length - 1] != Path.AltDirectorySeparatorChar)
-                {
-                    offset += 1;
-                }
-
-                string baseRelativePath = file.Substring(offset);
-#endif
 
                 PathOptions? pathOptions = collection.Options?.FirstOrDefault(fe => IsInPath(currentPath: relativePath, basePath: fe.Path));
                 FileExclusions? fileExclusions = collection.Exclusions?.FirstOrDefault(fe => EqualsPath(fe.File, relativePath));
@@ -221,13 +208,32 @@ internal static class TestCaseGenerator
                     continue;
                 }
 
-                var model = ParsedValue<TestFileModel>.Parse(File.ReadAllText(file));
+                using System.Text.Json.JsonDocument model = System.Text.Json.JsonDocument.Parse(File.ReadAllText(file));
 
-                foreach (TestFileModel.RequiredDescriptionAndSchemaAndTests testSuite in model.Instance.EnumerateArray())
+                foreach (System.Text.Json.JsonElement testSuite in model.RootElement.GetProperty("tests").EnumerateArray())
                 {
+                    string? compatibility = testSuite.TryGetProperty("compatibility", out System.Text.Json.JsonElement compatibilityElement)
+                        ? compatibilityElement.GetString()
+                        : null;
+
+                    if (!SuiteCompatibility.IsCompatible(compatibility, collection.Release))
+                    {
+                        continue;
+                    }
+
+                    bool isFormatAnnotation = testSuite.TryGetProperty("tags", out System.Text.Json.JsonElement caseTags) &&
+                        caseTags.EnumerateArray().Any(t => t.ValueEquals("format-annotation"));
+
+                    // Where the dialect asserts format by default (draft4 to draft7 in this
+                    // implementation, which the specification allows), a "format-annotation" case
+                    // describes behaviour the implementation does not provide, so it does not apply.
+                    if (isFormatAnnotation && collection.FormatAssertedByDefault)
+                    {
+                        continue;
+                    }
 
                     List<TestSpecification> testList = [];
-                    string suiteName = (string)testSuite.Description;
+                    string suiteName = testSuite.GetProperty("description").GetString()!;
 
                     SuiteExclusions? suiteExclusions = null;
 
@@ -236,39 +242,60 @@ internal static class TestCaseGenerator
                         suiteExclusions = fe.Suites?.FirstOrDefault(s => s.Name == suiteName);
                     }
 
-                    foreach (TestFileModel.Test test in testSuite.Tests.EnumerateArray())
+                    if (suiteExclusions is SuiteExclusions wholeSuite && wholeSuite.Tests is null)
                     {
-                        if (suiteExclusions is SuiteExclusions se)
+                        // We have exclusions for the suite, but have not set tests at all, which means we should exclude the suite.
+                        continue;
+                    }
+
+                    foreach (System.Text.Json.JsonElement test in testSuite.GetProperty("tests").EnumerateArray())
+                    {
+                        string testDescription = test.GetProperty("description").GetString()!;
+
+                        if (suiteExclusions is SuiteExclusions se &&
+                            se.Tests is List<TestExclusion> te &&
+                            te.Any(t => t.Name == testDescription))
                         {
-                            if (se.Tests is List<TestExclusion> te &&
-                                te.Any(t => test.Description.EqualsString(t.Name)))
-                            {
-                                // We could log the reason here if we wanted
-                                continue;
-                            }
+                            continue;
                         }
 
                         testList.Add(
                             new TestSpecification(
-                                (string)test.Description,
-                                test.Data,
-                                test.Valid));
+                                testDescription,
+                                JsonAny.Parse(test.GetProperty("data").GetRawText()),
+                                test.GetProperty("valid").GetBoolean()));
                     }
 
                     if (testList.Count > 0)
                     {
+                        // A "format-assertion" tag means the case expects format to be asserted;
+                        // "format-annotation" (or no tag) means the dialect's default behaviour.
+                        bool validateFormat = pathOptions?.ValidateFormat ?? false;
+                        if (testSuite.TryGetProperty("tags", out System.Text.Json.JsonElement tags) &&
+                            tags.EnumerateArray().Any(t => t.ValueEquals("format-assertion")))
+                        {
+                            validateFormat = true;
+                        }
+
+                        string? externalSchemas = testSuite.TryGetProperty("externalSchemas", out System.Text.Json.JsonElement externalSchemasElement)
+                            ? externalSchemasElement.GetRawText()
+                            : null;
+
                         testSuites.Add(
                             new TestSuite(
-                                (string)testSuite.Description,
-                                testSuite.Schema,
+                                suiteName,
+                                JsonAny.Parse(testSuite.GetProperty("schema").GetRawText()),
                                 testList,
-                                pathOptions?.ValidateFormat ?? false));
+                                validateFormat,
+                                externalSchemas));
                     }
                 }
 
                 if (testSuites.Count > 0)
                 {
-                    testFiles.Add(new TestFile(jsonSchemaTestSuite.BaseDirectory, baseRelativePath, relativePath, testSuites));
+                    // Keep the generated tree as tests/<dialect>/<file>, as it was when the suite
+                    // had one directory per dialect.
+                    testFiles.Add(new TestFile(jsonSchemaTestSuite.BaseDirectory, $"tests/{collection.Name}/{relativePath}", relativePath, testSuites));
                 }
             }
 
@@ -292,21 +319,23 @@ internal static class TestCaseGenerator
 
     private static string NormalizePath(string path)
     {
-        return Path.GetFullPath(new Uri(Path.GetFullPath(path)).LocalPath)
-        .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        return path.Replace('\\', '/').TrimEnd('/');
     }
 
     public class TestConfiguration
     {
         public string BaseDirectory { get; set; }
+        public string TestsDirectory { get; set; }
+        public List<string>? ExcludedDirectories { get; set; }
         public List<TestCollection> Collections { get; set; }
     }
 
     public class TestCollection
     {
         public string Name { get; set; }
+        public int Release { get; set; }
+        public bool FormatAssertedByDefault { get; set; }
         public string DefaultVocabulary { get; set; }
-        public string Directory { get; set; }
         public List<PathOptions>? Options { get; set; }
         public List<FileExclusions>? Exclusions { get; set; }
     }

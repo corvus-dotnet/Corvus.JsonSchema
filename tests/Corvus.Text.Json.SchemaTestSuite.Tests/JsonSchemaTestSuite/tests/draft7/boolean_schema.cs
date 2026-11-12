@@ -62,7 +62,7 @@ public class SuiteBooleanSchemaTrue
     [TestMethod]
     public void TestObjectIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": \"bar\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"bar\" }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
@@ -97,7 +97,7 @@ public class SuiteBooleanSchemaTrue
                 "tests/draft7/boolean_schema.json",
                 "true",
                 "JsonSchemaTestSuite.Draft7.BooleanSchema",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -165,7 +165,7 @@ public class SuiteBooleanSchemaFalse
     [TestMethod]
     public void TestObjectIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": \"bar\"}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": \"bar\" }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -200,7 +200,7 @@ public class SuiteBooleanSchemaFalse
                 "tests/draft7/boolean_schema.json",
                 "false",
                 "JsonSchemaTestSuite.Draft7.BooleanSchema",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,

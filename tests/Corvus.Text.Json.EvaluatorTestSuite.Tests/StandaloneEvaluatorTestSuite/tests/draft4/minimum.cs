@@ -61,9 +61,9 @@ public class SuiteMinimumValidation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/minimum.json",
-                "{\"minimum\": 1.1}",
+                "{ \"minimum\": 1.1 }",
                 "StandaloneEvaluatorTestSuite.Draft4.Minimum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -126,9 +126,9 @@ public class SuiteMinimumValidationExplicitFalseExclusivity
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/minimum.json",
-                "{\"minimum\": 1.1, \"exclusiveMinimum\": false}",
+                "{ \"minimum\": 1.1, \"exclusiveMinimum\": false }",
                 "StandaloneEvaluatorTestSuite.Draft4.Minimum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -138,7 +138,7 @@ public class SuiteMinimumValidationExplicitFalseExclusivity
 
 [TestCategory("Draft4")]
 [TestClass]
-public class SuiteExclusiveMinimumValidation
+public class SuiteExclusiveMinimumValidationBooleanForm
 {
     private static Fixture? s_fixture;
 
@@ -177,9 +177,9 @@ public class SuiteExclusiveMinimumValidation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/minimum.json",
-                "{\n            \"minimum\": 1.1,\n            \"exclusiveMinimum\": true\n        }",
+                "{\n                \"minimum\": 1.1,\n                \"exclusiveMinimum\": true\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Minimum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -263,9 +263,9 @@ public class SuiteMinimumValidationWithSignedInteger
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/minimum.json",
-                "{\"minimum\": -2}",
+                "{ \"minimum\": -2 }",
                 "StandaloneEvaluatorTestSuite.Draft4.Minimum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

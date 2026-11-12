@@ -81,20 +81,22 @@ results into `IJsonSchemaResultsCollector` with evaluation path, schema location
 
 ## Conformance
 
-`tests/.../Suite/JsonSchemaTestSuiteTests.cs` runs every file under `tests/draft4`, `draft6`, `draft7`,
-`draft2019-09`, `draft2020-12` (required, `optional/` and `optional/format/` with format assertion on).
-No file is excluded and no failure is ignored, so it runs all 7,967 cases, `draft4/optional/zeroTerminatedFloats.json`
-and the leap-second cases among them. A `date-time` with a second of `60` is valid only at 23:59:60 UTC on a day that
-ended with a leap second, and a `time` with one only at 23:59:60 UTC. `AnnotationSuiteTests.cs` runs the annotation
-suite through a verbose collector and `JsonSchemaAnnotationProducer`.
+`tests/.../Suite/JsonSchemaTestSuiteTests.cs` runs the suite's one tree of every dialect's cases
+(`validation/tests` and `validation/tests/optional`) for draft 4, 6, 7, 2019-09 and 2020-12. Each case's
+`compatibility` selects the drafts it applies to, its `tags` say whether `format` is asserted (a `format-annotation`
+case does not apply up to draft 7, where the evaluator asserts `format` by default), and its `externalSchemas` are
+served to that case alone. No file is excluded, so it runs all 8,687 cases, `draft4/optional/zero-terminated-floats.json`
+and the leap-second cases among them. No failure is ignored. A `date-time` with a second of `60` is valid only at
+23:59:60 UTC on a day that ended with a leap second, and a `time` with one only at 23:59:60 UTC. `AnnotationSuiteTests.cs`
+runs the annotation suite through a verbose collector and `JsonSchemaAnnotationProducer`.
 
 The runners of the other evaluators differ:
 
-| Runner | Cases run | Files skipped | Failures ignored |
+| Runner | Cases run | Left out | Failures ignored |
 |---|---:|---|---|
-| C# | 7,967 | none | none |
-| TypeScript | 7,966 | `draft4/optional/zeroTerminatedFloats.json` (`JSON.parse` reads `1.0` as `1`) | none |
-| Rust | 7,966 | `draft4/optional/zeroTerminatedFloats.json` | none |
+| C# | 8,687 | nothing | none |
+| TypeScript | 8,633 | `draft4/optional/zero-terminated-floats.json` (`JSON.parse` reads `1.0` as `1`), and the high-precision cases of `optional/bignum.json` (a JavaScript number is a double) | none |
+| Rust | 8,638 | `draft4/optional/zero-terminated-floats.json`, and the high-precision cases of `optional/bignum.json` (serde_json values hold a number to the precision of an `f64`) | none |
 
 ## Flag-mode optimisations (after reading Blaze's compiler)
 

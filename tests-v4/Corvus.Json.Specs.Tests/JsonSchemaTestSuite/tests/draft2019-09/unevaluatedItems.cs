@@ -14,19 +14,21 @@ namespace JsonSchemaTestSuite.Draft201909.UnevaluatedItems;
 public class SuiteUnevaluatedItemsTrue
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -46,7 +48,7 @@ public class SuiteUnevaluatedItemsTrue
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -57,7 +59,7 @@ public class SuiteUnevaluatedItemsTrue
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/0/schema",
+                "#/tests/0/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "UnevaluatedItemsTrue",
                 validateFormat: false,
@@ -65,10 +67,9 @@ public class SuiteUnevaluatedItemsTrue
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -78,19 +79,21 @@ public class SuiteUnevaluatedItemsTrue
 public class SuiteUnevaluatedItemsFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -110,7 +113,7 @@ public class SuiteUnevaluatedItemsFalse
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -121,7 +124,7 @@ public class SuiteUnevaluatedItemsFalse
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/1/schema",
+                "#/tests/1/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "UnevaluatedItemsFalse",
                 validateFormat: false,
@@ -129,10 +132,9 @@ public class SuiteUnevaluatedItemsFalse
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -142,19 +144,21 @@ public class SuiteUnevaluatedItemsFalse
 public class SuiteUnevaluatedItemsAsSchema
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -182,7 +186,7 @@ public class SuiteUnevaluatedItemsAsSchema
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -193,7 +197,7 @@ public class SuiteUnevaluatedItemsAsSchema
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/2/schema",
+                "#/tests/2/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "UnevaluatedItemsAsSchema",
                 validateFormat: false,
@@ -201,10 +205,9 @@ public class SuiteUnevaluatedItemsAsSchema
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -214,19 +217,21 @@ public class SuiteUnevaluatedItemsAsSchema
 public class SuiteUnevaluatedItemsWithUniformItems
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -238,7 +243,7 @@ public class SuiteUnevaluatedItemsWithUniformItems
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -249,7 +254,7 @@ public class SuiteUnevaluatedItemsWithUniformItems
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/3/schema",
+                "#/tests/3/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "UnevaluatedItemsWithUniformItems",
                 validateFormat: false,
@@ -257,10 +262,9 @@ public class SuiteUnevaluatedItemsWithUniformItems
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -270,19 +274,21 @@ public class SuiteUnevaluatedItemsWithUniformItems
 public class SuiteUnevaluatedItemsWithTuple
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -302,7 +308,7 @@ public class SuiteUnevaluatedItemsWithTuple
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -313,7 +319,7 @@ public class SuiteUnevaluatedItemsWithTuple
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/4/schema",
+                "#/tests/5/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "UnevaluatedItemsWithTuple",
                 validateFormat: false,
@@ -321,10 +327,9 @@ public class SuiteUnevaluatedItemsWithTuple
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -334,19 +339,21 @@ public class SuiteUnevaluatedItemsWithTuple
 public class SuiteUnevaluatedItemsWithItemsAndAdditionalItems
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -358,7 +365,7 @@ public class SuiteUnevaluatedItemsWithItemsAndAdditionalItems
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -369,7 +376,7 @@ public class SuiteUnevaluatedItemsWithItemsAndAdditionalItems
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/5/schema",
+                "#/tests/7/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "UnevaluatedItemsWithItemsAndAdditionalItems",
                 validateFormat: false,
@@ -377,10 +384,9 @@ public class SuiteUnevaluatedItemsWithItemsAndAdditionalItems
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -390,19 +396,21 @@ public class SuiteUnevaluatedItemsWithItemsAndAdditionalItems
 public class SuiteUnevaluatedItemsWithIgnoredAdditionalItems
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -422,7 +430,7 @@ public class SuiteUnevaluatedItemsWithIgnoredAdditionalItems
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -433,7 +441,7 @@ public class SuiteUnevaluatedItemsWithIgnoredAdditionalItems
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/6/schema",
+                "#/tests/9/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "UnevaluatedItemsWithIgnoredAdditionalItems",
                 validateFormat: false,
@@ -441,74 +449,9 @@ public class SuiteUnevaluatedItemsWithIgnoredAdditionalItems
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft201909")]
-[TestClass]
-public class SuiteUnevaluatedItemsWithIgnoredApplicatorAdditionalItems
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestInvalidUnderUnevaluatedItems()
-    {
-        using var doc = JsonDocument.Parse("[\"foo\", 1]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestAllValidUnderUnevaluatedItems()
-    {
-        using var doc = JsonDocument.Parse("[\"foo\", \"bar\", \"baz\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "unevaluatedItems.json",
-                "#/7/schema",
-                "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
-                "UnevaluatedItemsWithIgnoredApplicatorAdditionalItems",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -518,19 +461,21 @@ public class SuiteUnevaluatedItemsWithIgnoredApplicatorAdditionalItems
 public class SuiteUnevaluatedItemsWithNestedTuple
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -550,7 +495,7 @@ public class SuiteUnevaluatedItemsWithNestedTuple
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -561,7 +506,7 @@ public class SuiteUnevaluatedItemsWithNestedTuple
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/8/schema",
+                "#/tests/11/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "UnevaluatedItemsWithNestedTuple",
                 validateFormat: false,
@@ -569,10 +514,74 @@ public class SuiteUnevaluatedItemsWithNestedTuple
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteUnevaluatedItemsWithIgnoredApplicatorAdditionalItems
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestInvalidUnderUnevaluatedItems()
+    {
+        using var doc = JsonDocument.Parse("[\"foo\", 1]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestAllValidUnderUnevaluatedItems()
+    {
+        using var doc = JsonDocument.Parse("[\"foo\", \"bar\", \"baz\"]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft201909Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "unevaluatedItems.json",
+                "#/tests/12/schema",
+                "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
+                "UnevaluatedItemsWithIgnoredApplicatorAdditionalItems",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false);
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
         }
     }
 }
@@ -582,19 +591,21 @@ public class SuiteUnevaluatedItemsWithNestedTuple
 public class SuiteUnevaluatedItemsWithNestedItems
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -622,7 +633,7 @@ public class SuiteUnevaluatedItemsWithNestedItems
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -633,7 +644,7 @@ public class SuiteUnevaluatedItemsWithNestedItems
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/9/schema",
+                "#/tests/13/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "UnevaluatedItemsWithNestedItems",
                 validateFormat: false,
@@ -641,10 +652,9 @@ public class SuiteUnevaluatedItemsWithNestedItems
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -654,19 +664,21 @@ public class SuiteUnevaluatedItemsWithNestedItems
 public class SuiteUnevaluatedItemsWithNestedItemsAndAdditionalItems
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -686,7 +698,7 @@ public class SuiteUnevaluatedItemsWithNestedItemsAndAdditionalItems
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -697,7 +709,7 @@ public class SuiteUnevaluatedItemsWithNestedItemsAndAdditionalItems
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/10/schema",
+                "#/tests/15/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "UnevaluatedItemsWithNestedItemsAndAdditionalItems",
                 validateFormat: false,
@@ -705,10 +717,9 @@ public class SuiteUnevaluatedItemsWithNestedItemsAndAdditionalItems
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -718,19 +729,21 @@ public class SuiteUnevaluatedItemsWithNestedItemsAndAdditionalItems
 public class SuiteUnevaluatedItemsWithNestedUnevaluatedItems
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -750,7 +763,7 @@ public class SuiteUnevaluatedItemsWithNestedUnevaluatedItems
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -761,7 +774,7 @@ public class SuiteUnevaluatedItemsWithNestedUnevaluatedItems
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/11/schema",
+                "#/tests/17/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "UnevaluatedItemsWithNestedUnevaluatedItems",
                 validateFormat: false,
@@ -769,10 +782,9 @@ public class SuiteUnevaluatedItemsWithNestedUnevaluatedItems
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -782,19 +794,21 @@ public class SuiteUnevaluatedItemsWithNestedUnevaluatedItems
 public class SuiteUnevaluatedItemsWithAnyOf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -830,7 +844,7 @@ public class SuiteUnevaluatedItemsWithAnyOf
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -841,7 +855,7 @@ public class SuiteUnevaluatedItemsWithAnyOf
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/12/schema",
+                "#/tests/19/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "UnevaluatedItemsWithAnyOf",
                 validateFormat: false,
@@ -849,10 +863,9 @@ public class SuiteUnevaluatedItemsWithAnyOf
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -862,19 +875,21 @@ public class SuiteUnevaluatedItemsWithAnyOf
 public class SuiteUnevaluatedItemsWithOneOf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -894,7 +909,7 @@ public class SuiteUnevaluatedItemsWithOneOf
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -905,7 +920,7 @@ public class SuiteUnevaluatedItemsWithOneOf
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/13/schema",
+                "#/tests/21/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "UnevaluatedItemsWithOneOf",
                 validateFormat: false,
@@ -913,10 +928,9 @@ public class SuiteUnevaluatedItemsWithOneOf
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -926,19 +940,21 @@ public class SuiteUnevaluatedItemsWithOneOf
 public class SuiteUnevaluatedItemsWithNot
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -950,7 +966,7 @@ public class SuiteUnevaluatedItemsWithNot
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -961,7 +977,7 @@ public class SuiteUnevaluatedItemsWithNot
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/14/schema",
+                "#/tests/23/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "UnevaluatedItemsWithNot",
                 validateFormat: false,
@@ -969,10 +985,9 @@ public class SuiteUnevaluatedItemsWithNot
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -982,19 +997,21 @@ public class SuiteUnevaluatedItemsWithNot
 public class SuiteUnevaluatedItemsWithIfThenElse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -1030,7 +1047,7 @@ public class SuiteUnevaluatedItemsWithIfThenElse
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1041,7 +1058,7 @@ public class SuiteUnevaluatedItemsWithIfThenElse
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/15/schema",
+                "#/tests/25/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "UnevaluatedItemsWithIfThenElse",
                 validateFormat: false,
@@ -1049,10 +1066,9 @@ public class SuiteUnevaluatedItemsWithIfThenElse
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -1062,19 +1078,21 @@ public class SuiteUnevaluatedItemsWithIfThenElse
 public class SuiteUnevaluatedItemsWithBooleanSchemas
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -1094,7 +1112,7 @@ public class SuiteUnevaluatedItemsWithBooleanSchemas
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1105,7 +1123,7 @@ public class SuiteUnevaluatedItemsWithBooleanSchemas
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/16/schema",
+                "#/tests/26/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "UnevaluatedItemsWithBooleanSchemas",
                 validateFormat: false,
@@ -1113,10 +1131,9 @@ public class SuiteUnevaluatedItemsWithBooleanSchemas
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -1126,19 +1143,21 @@ public class SuiteUnevaluatedItemsWithBooleanSchemas
 public class SuiteUnevaluatedItemsWithRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -1158,7 +1177,7 @@ public class SuiteUnevaluatedItemsWithRef
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1169,7 +1188,7 @@ public class SuiteUnevaluatedItemsWithRef
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/17/schema",
+                "#/tests/28/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "UnevaluatedItemsWithRef",
                 validateFormat: false,
@@ -1177,10 +1196,9 @@ public class SuiteUnevaluatedItemsWithRef
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -1190,19 +1208,21 @@ public class SuiteUnevaluatedItemsWithRef
 public class SuiteUnevaluatedItemsBeforeRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -1222,7 +1242,7 @@ public class SuiteUnevaluatedItemsBeforeRef
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1233,7 +1253,7 @@ public class SuiteUnevaluatedItemsBeforeRef
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/18/schema",
+                "#/tests/30/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "UnevaluatedItemsBeforeRef",
                 validateFormat: false,
@@ -1241,10 +1261,9 @@ public class SuiteUnevaluatedItemsBeforeRef
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -1254,19 +1273,21 @@ public class SuiteUnevaluatedItemsBeforeRef
 public class SuiteUnevaluatedItemsWithRecursiveRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -1286,7 +1307,7 @@ public class SuiteUnevaluatedItemsWithRecursiveRef
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1297,7 +1318,7 @@ public class SuiteUnevaluatedItemsWithRecursiveRef
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/19/schema",
+                "#/tests/33/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "UnevaluatedItemsWithRecursiveRef",
                 validateFormat: false,
@@ -1305,10 +1326,9 @@ public class SuiteUnevaluatedItemsWithRecursiveRef
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -1318,31 +1338,33 @@ public class SuiteUnevaluatedItemsWithRecursiveRef
 public class SuiteUnevaluatedItemsCanTSeeInsideCousins
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestAlwaysFails()
     {
-        using var doc = JsonDocument.Parse("[ 1 ]");
+        using var doc = JsonDocument.Parse("[1]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1353,7 +1375,7 @@ public class SuiteUnevaluatedItemsCanTSeeInsideCousins
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/20/schema",
+                "#/tests/35/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "UnevaluatedItemsCanTSeeInsideCousins",
                 validateFormat: false,
@@ -1361,10 +1383,9 @@ public class SuiteUnevaluatedItemsCanTSeeInsideCousins
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -1374,26 +1395,28 @@ public class SuiteUnevaluatedItemsCanTSeeInsideCousins
 public class SuiteItemIsEvaluatedInAnUncleSchemaToUnevaluatedItems
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestNoExtraItems()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"foo\": [\r\n                        \"test\"\r\n                    ]\r\n                }");
+        using var doc = JsonDocument.Parse("{ \"foo\": [\"test\"] }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -1401,12 +1424,12 @@ public class SuiteItemIsEvaluatedInAnUncleSchemaToUnevaluatedItems
     [TestMethod]
     public void TestUncleKeywordEvaluationIsNotSignificant()
     {
-        using var doc = JsonDocument.Parse("{\r\n                    \"foo\": [\r\n                        \"test\",\r\n                        \"test\"\r\n                    ]\r\n                }");
+        using var doc = JsonDocument.Parse("{ \"foo\": [\"test\", \"test\"] }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1417,7 +1440,7 @@ public class SuiteItemIsEvaluatedInAnUncleSchemaToUnevaluatedItems
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/21/schema",
+                "#/tests/37/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "ItemIsEvaluatedInAnUncleSchemaToUnevaluatedItems",
                 validateFormat: false,
@@ -1425,10 +1448,9 @@ public class SuiteItemIsEvaluatedInAnUncleSchemaToUnevaluatedItems
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -1438,19 +1460,21 @@ public class SuiteItemIsEvaluatedInAnUncleSchemaToUnevaluatedItems
 public class SuiteNonArrayInstancesAreValid
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -1502,7 +1526,7 @@ public class SuiteNonArrayInstancesAreValid
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1513,7 +1537,7 @@ public class SuiteNonArrayInstancesAreValid
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/22/schema",
+                "#/tests/42/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "NonArrayInstancesAreValid",
                 validateFormat: false,
@@ -1521,10 +1545,9 @@ public class SuiteNonArrayInstancesAreValid
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -1534,31 +1557,33 @@ public class SuiteNonArrayInstancesAreValid
 public class SuiteUnevaluatedItemsWithNullInstanceElements
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestAllowsNullElements()
     {
-        using var doc = JsonDocument.Parse("[ null ]");
+        using var doc = JsonDocument.Parse("[null]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1569,7 +1594,7 @@ public class SuiteUnevaluatedItemsWithNullInstanceElements
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/23/schema",
+                "#/tests/43/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "UnevaluatedItemsWithNullInstanceElements",
                 validateFormat: false,
@@ -1577,10 +1602,9 @@ public class SuiteUnevaluatedItemsWithNullInstanceElements
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -1590,26 +1614,28 @@ public class SuiteUnevaluatedItemsWithNullInstanceElements
 public class SuiteUnevaluatedItemsCanSeeAnnotationsFromIfWithoutThenAndElse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestValidInCaseIfIsEvaluated()
     {
-        using var doc = JsonDocument.Parse("[ \"a\" ]");
+        using var doc = JsonDocument.Parse("[\"a\"]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -1617,12 +1643,12 @@ public class SuiteUnevaluatedItemsCanSeeAnnotationsFromIfWithoutThenAndElse
     [TestMethod]
     public void TestInvalidInCaseIfIsEvaluated()
     {
-        using var doc = JsonDocument.Parse("[ \"b\" ]");
+        using var doc = JsonDocument.Parse("[\"b\"]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1633,7 +1659,7 @@ public class SuiteUnevaluatedItemsCanSeeAnnotationsFromIfWithoutThenAndElse
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/24/schema",
+                "#/tests/45/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "UnevaluatedItemsCanSeeAnnotationsFromIfWithoutThenAndElse",
                 validateFormat: false,
@@ -1641,10 +1667,9 @@ public class SuiteUnevaluatedItemsCanSeeAnnotationsFromIfWithoutThenAndElse
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -1654,31 +1679,33 @@ public class SuiteUnevaluatedItemsCanSeeAnnotationsFromIfWithoutThenAndElse
 public class SuiteEvaluatedItemsCollectionNeedsToConsiderInstanceLocation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestWithAnUnevaluatedItemThatExistsAtAnotherLocation()
     {
-        using var doc = JsonDocument.Parse("[\r\n                    [\"foo\", \"bar\"],\r\n                    \"bar\"\r\n                ]");
+        using var doc = JsonDocument.Parse("[[\"foo\", \"bar\"], \"bar\"]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1689,7 +1716,7 @@ public class SuiteEvaluatedItemsCollectionNeedsToConsiderInstanceLocation
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedItems.json",
-                "#/25/schema",
+                "#/tests/47/schema",
                 "JsonSchemaTestSuiteDraft201909UnevaluatedItems",
                 "EvaluatedItemsCollectionNeedsToConsiderInstanceLocation",
                 validateFormat: false,
@@ -1697,10 +1724,9 @@ public class SuiteEvaluatedItemsCollectionNeedsToConsiderInstanceLocation
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

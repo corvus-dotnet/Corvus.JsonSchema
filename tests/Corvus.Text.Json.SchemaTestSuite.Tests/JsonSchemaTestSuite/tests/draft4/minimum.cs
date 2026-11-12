@@ -60,9 +60,9 @@ public class SuiteMinimumValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/minimum.json",
-                "{\"minimum\": 1.1}",
+                "{ \"minimum\": 1.1 }",
                 "JsonSchemaTestSuite.Draft4.Minimum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -128,9 +128,9 @@ public class SuiteMinimumValidationExplicitFalseExclusivity
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/minimum.json",
-                "{\"minimum\": 1.1, \"exclusiveMinimum\": false}",
+                "{ \"minimum\": 1.1, \"exclusiveMinimum\": false }",
                 "JsonSchemaTestSuite.Draft4.Minimum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -143,7 +143,7 @@ public class SuiteMinimumValidationExplicitFalseExclusivity
 
 [TestCategory("Draft4")]
 [TestClass]
-public class SuiteExclusiveMinimumValidation
+public class SuiteExclusiveMinimumValidationBooleanForm
 {
     private static Fixture? s_fixture;
 
@@ -182,9 +182,9 @@ public class SuiteExclusiveMinimumValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/minimum.json",
-                "{\n            \"minimum\": 1.1,\n            \"exclusiveMinimum\": true\n        }",
+                "{\n                \"minimum\": 1.1,\n                \"exclusiveMinimum\": true\n            }",
                 "JsonSchemaTestSuite.Draft4.Minimum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -271,9 +271,9 @@ public class SuiteMinimumValidationWithSignedInteger
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/minimum.json",
-                "{\"minimum\": -2}",
+                "{ \"minimum\": -2 }",
                 "JsonSchemaTestSuite.Draft4.Minimum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,

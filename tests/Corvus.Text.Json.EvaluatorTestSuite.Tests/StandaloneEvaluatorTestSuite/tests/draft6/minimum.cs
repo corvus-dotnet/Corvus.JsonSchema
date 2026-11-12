@@ -61,9 +61,9 @@ public class SuiteMinimumValidation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/minimum.json",
-                "{\"minimum\": 1.1}",
+                "{ \"minimum\": 1.1 }",
                 "StandaloneEvaluatorTestSuite.Draft6.Minimum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -147,9 +147,74 @@ public class SuiteMinimumValidationWithSignedInteger
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/minimum.json",
-                "{\"minimum\": -2}",
+                "{ \"minimum\": -2 }",
                 "StandaloneEvaluatorTestSuite.Draft6.Minimum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "http://json-schema.org/draft-06/schema#",
+                validateFormat: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteExclusiveMinimumValidation
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAboveTheExclusiveMinimumIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("1.2");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestBoundaryPointIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("1.1");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestBelowTheExclusiveMinimumIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("0.6");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestIgnoresNonNumbers()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"x\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    public class Fixture
+    {
+        public CompiledEvaluator Evaluator { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
+                "tests/draft6/minimum.json",
+                "{ \"exclusiveMinimum\": 1.1 }",
+                "StandaloneEvaluatorTestSuite.Draft6.Minimum",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

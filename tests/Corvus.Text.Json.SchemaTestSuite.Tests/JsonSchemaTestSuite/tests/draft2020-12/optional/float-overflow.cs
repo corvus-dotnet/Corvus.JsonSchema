@@ -39,9 +39,9 @@ public class SuiteAllIntegersAreMultiplesOf05IfOverflowIsHandled
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/optional/float-overflow.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"integer\",\n            \"multipleOf\": 0.5\n        }",
+                "{\n                \"type\": \"number\", \n                \"multipleOf\": 0.5\n            }",
                 "JsonSchemaTestSuite.Draft202012.Optional.FloatOverflow",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,

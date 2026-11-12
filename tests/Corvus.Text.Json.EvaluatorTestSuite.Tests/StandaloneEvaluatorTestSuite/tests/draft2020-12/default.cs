@@ -28,7 +28,7 @@ public class SuiteInvalidTypeForDefault
     [TestMethod]
     public void TestValidWhenPropertyIsSpecified()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 13}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 13 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -47,9 +47,9 @@ public class SuiteInvalidTypeForDefault
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/default.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"foo\": {\n                    \"type\": \"integer\",\n                    \"default\": []\n                }\n            }\n        }",
+                "{\n                \"properties\": {\n                    \"foo\": {\n                        \"type\": \"integer\",\n                        \"default\": []\n                    }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Default",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -79,7 +79,7 @@ public class SuiteInvalidStringValueForDefault
     [TestMethod]
     public void TestValidWhenPropertyIsSpecified()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": \"good\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": \"good\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -98,9 +98,9 @@ public class SuiteInvalidStringValueForDefault
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/default.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"properties\": {\n                \"bar\": {\n                    \"type\": \"string\",\n                    \"minLength\": 4,\n                    \"default\": \"bad\"\n                }\n            }\n        }",
+                "{\n                \"properties\": {\n                    \"bar\": {\n                        \"type\": \"string\",\n                        \"minLength\": 4,\n                        \"default\": \"bad\"\n                    }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Default",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -156,9 +156,9 @@ public class SuiteTheDefaultKeywordDoesNotDoAnythingIfThePropertyIsMissing
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/default.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"object\",\n            \"properties\": {\n                \"alpha\": {\n                    \"type\": \"number\",\n                    \"maximum\": 3,\n                    \"default\": 5\n                }\n            }\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"alpha\": {\n                        \"type\": \"number\",\n                        \"maximum\": 3,\n                        \"default\": 5\n                    }\n                }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Default",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

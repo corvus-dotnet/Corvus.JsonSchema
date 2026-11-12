@@ -47,7 +47,7 @@ public class SuiteTitleIsAnAnnotation
                 "annotations/meta-data.json",
                 "{\n        \"title\": \"Foo\"\n      }",
                 "AnnotationTestSuite.Draft202012.MetaData",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -95,7 +95,7 @@ public class SuiteDescriptionIsAnAnnotation
                 "annotations/meta-data.json",
                 "{\n        \"description\": \"Foo\"\n      }",
                 "AnnotationTestSuite.Draft202012.MetaData",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -143,7 +143,7 @@ public class SuiteDefaultIsAnAnnotation
                 "annotations/meta-data.json",
                 "{\n        \"default\": \"Foo\"\n      }",
                 "AnnotationTestSuite.Draft202012.MetaData",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -191,7 +191,7 @@ public class SuiteDeprecatedIsAnAnnotation
                 "annotations/meta-data.json",
                 "{\n        \"deprecated\": true\n      }",
                 "AnnotationTestSuite.Draft202012.MetaData",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -239,7 +239,7 @@ public class SuiteReadOnlyIsAnAnnotation
                 "annotations/meta-data.json",
                 "{\n        \"readOnly\": true\n      }",
                 "AnnotationTestSuite.Draft202012.MetaData",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -287,7 +287,7 @@ public class SuiteWriteOnlyIsAnAnnotation
                 "annotations/meta-data.json",
                 "{\n        \"writeOnly\": true\n      }",
                 "AnnotationTestSuite.Draft202012.MetaData",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -335,7 +335,7 @@ public class SuiteExamplesIsAnAnnotation
                 "annotations/meta-data.json",
                 "{\n        \"examples\": [\"Foo\", \"Bar\"]\n      }",
                 "AnnotationTestSuite.Draft202012.MetaData",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/annotations/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

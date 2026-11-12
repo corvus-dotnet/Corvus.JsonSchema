@@ -28,14 +28,14 @@ public class SuitePropertyNamesValidation
     [TestMethod]
     public void TestAllPropertyNamesValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"f\": {},\n                    \"foo\": {}\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"f\": {}, \"foo\": {} }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestSomePropertyNamesInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"foo\": {},\n                    \"foobar\": {}\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": {}, \"foobar\": {} }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -89,9 +89,9 @@ public class SuitePropertyNamesValidation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/propertyNames.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"propertyNames\": {\"maxLength\": 3}\n        }",
+                "{\n                \"propertyNames\": { \"maxLength\": 3 }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.PropertyNames",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -121,14 +121,14 @@ public class SuitePropertyNamesValidationWithPattern
     [TestMethod]
     public void TestMatchingPropertyNamesValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"a\": {},\n                    \"aa\": {},\n                    \"aaa\": {}\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"a\": {}, \"aa\": {}, \"aaa\": {} }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestNonMatchingPropertyNameIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\n                    \"aaA\": {}\n                }");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"aaA\": {} }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -147,9 +147,9 @@ public class SuitePropertyNamesValidationWithPattern
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/propertyNames.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"propertyNames\": { \"pattern\": \"^a+$\" }\n        }",
+                "{\n                \"propertyNames\": { \"pattern\": \"^a+$\" }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.PropertyNames",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -179,7 +179,7 @@ public class SuitePropertyNamesWithBooleanSchemaTrue
     [TestMethod]
     public void TestObjectWithAnyPropertiesIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -198,9 +198,9 @@ public class SuitePropertyNamesWithBooleanSchemaTrue
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/propertyNames.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"propertyNames\": true\n        }",
+                "{ \"propertyNames\": true }",
                 "StandaloneEvaluatorTestSuite.Draft201909.PropertyNames",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -230,7 +230,7 @@ public class SuitePropertyNamesWithBooleanSchemaFalse
     [TestMethod]
     public void TestObjectWithAnyPropertiesIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -249,9 +249,9 @@ public class SuitePropertyNamesWithBooleanSchemaFalse
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/propertyNames.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"propertyNames\": false\n        }",
+                "{ \"propertyNames\": false }",
                 "StandaloneEvaluatorTestSuite.Draft201909.PropertyNames",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -281,14 +281,14 @@ public class SuitePropertyNamesWithConst
     [TestMethod]
     public void TestObjectWithPropertyFooIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestObjectWithAnyOtherPropertyIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": 1}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": 1 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -307,9 +307,9 @@ public class SuitePropertyNamesWithConst
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/propertyNames.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"propertyNames\": {\"const\": \"foo\"}\n        }",
+                "{\n                \"propertyNames\": { \"const\": \"foo\" }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.PropertyNames",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -339,21 +339,21 @@ public class SuitePropertyNamesWithEnum
     [TestMethod]
     public void TestObjectWithPropertyFooIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestObjectWithPropertyFooAndBarIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"bar\": 1}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1, \"bar\": 1 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestObjectWithAnyOtherPropertyIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"baz\": 1}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"baz\": 1 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -372,9 +372,9 @@ public class SuitePropertyNamesWithEnum
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2019-09/propertyNames.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n            \"propertyNames\": {\"enum\": [\"foo\", \"bar\"]}\n        }",
+                "{\n                \"propertyNames\": { \"enum\": [\"foo\", \"bar\"] }\n            }",
                 "StandaloneEvaluatorTestSuite.Draft201909.PropertyNames",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2019-09/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

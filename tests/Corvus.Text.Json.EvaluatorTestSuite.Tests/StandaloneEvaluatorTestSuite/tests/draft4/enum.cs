@@ -47,9 +47,9 @@ public class SuiteSimpleEnumValidation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/enum.json",
-                "{\"enum\": [1, 2, 3]}",
+                "{\n                \"enum\": [1, 2, 3]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -93,21 +93,21 @@ public class SuiteHeterogeneousEnumValidation
     [TestMethod]
     public void TestObjectsAreDeepCompared()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": false}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": false }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestValidObjectMatches()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 12}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 12 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestExtraPropertiesInObjectIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 12, \"boo\": 42}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 12, \"boo\": 42 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -119,9 +119,9 @@ public class SuiteHeterogeneousEnumValidation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/enum.json",
-                "{\"enum\": [6, \"foo\", [], true, {\"foo\": 12}]}",
+                "{\n                \"enum\": [6, \"foo\", [], true, { \"foo\": 12 }]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -177,9 +177,9 @@ public class SuiteHeterogeneousEnumWithNullValidation
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/enum.json",
-                "{ \"enum\": [6, null] }",
+                "{\n                \"enum\": [6, null]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -209,35 +209,35 @@ public class SuiteEnumsInProperties
     [TestMethod]
     public void TestBothPropertiesAreValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\":\"foo\", \"bar\":\"bar\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bar\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWrongFooValue()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\":\"foot\", \"bar\":\"bar\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foot\", \"bar\": \"bar\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWrongBarValue()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\":\"foo\", \"bar\":\"bart\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\", \"bar\": \"bart\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestMissingOptionalPropertyIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\":\"bar\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": \"bar\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestMissingRequiredPropertyIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\":\"foo\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"foo\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -256,9 +256,9 @@ public class SuiteEnumsInProperties
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/enum.json",
-                "{\n            \"type\":\"object\",\n            \"properties\": {\n                \"foo\": {\"enum\":[\"foo\"]},\n                \"bar\": {\"enum\":[\"bar\"]}\n            },\n            \"required\": [\"bar\"]\n        }",
+                "{\n                \"type\": \"object\",\n                \"properties\": {\n                    \"foo\": { \"enum\": [\"foo\"] },\n                    \"bar\": { \"enum\": [\"bar\"] }\n                },\n                \"required\": [\"bar\"]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -314,9 +314,9 @@ public class SuiteEnumWithEscapedCharacters
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/enum.json",
-                "{\n            \"enum\": [\"foo\\nbar\", \"foo\\rbar\"]\n        }",
+                "{\n                \"enum\": [\"foo\\nbar\", \"foo\\rbar\"]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -372,9 +372,9 @@ public class SuiteEnumWithFalseDoesNotMatch0
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/enum.json",
-                "{\"enum\": [false]}",
+                "{\n                \"enum\": [false]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -430,9 +430,9 @@ public class SuiteEnumWithFalseDoesNotMatch01
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/enum.json",
-                "{\"enum\": [[false]]}",
+                "{\n                \"enum\": [[false]]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -488,9 +488,9 @@ public class SuiteEnumWithTrueDoesNotMatch1
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/enum.json",
-                "{\"enum\": [true]}",
+                "{\n                \"enum\": [true]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -546,9 +546,9 @@ public class SuiteEnumWithTrueDoesNotMatch11
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/enum.json",
-                "{\"enum\": [[true]]}",
+                "{\n                \"enum\": [[true]]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -604,9 +604,9 @@ public class SuiteEnumWith0DoesNotMatchFalse
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/enum.json",
-                "{\"enum\": [0]}",
+                "{\n                \"enum\": [0]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -662,9 +662,9 @@ public class SuiteEnumWith0DoesNotMatchFalse1
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/enum.json",
-                "{\"enum\": [[0]]}",
+                "{\n                \"enum\": [[0]]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -720,9 +720,9 @@ public class SuiteEnumWith1DoesNotMatchTrue
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/enum.json",
-                "{\"enum\": [1]}",
+                "{\n                \"enum\": [1]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -778,9 +778,9 @@ public class SuiteEnumWith1DoesNotMatchTrue1
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/enum.json",
-                "{\"enum\": [[1]]}",
+                "{\n                \"enum\": [[1]]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -829,9 +829,9 @@ public class SuiteNulCharactersInStrings
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/enum.json",
-                "{ \"enum\": [ \"hello\\u0000there\" ] }",
+                "{\n                \"enum\": [\"hello\\u0000there\"]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -880,9 +880,9 @@ public class SuiteCharactersWithTheSameVisualRepresentationButDifferentCodepoint
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/enum.json",
-                "{\n            \"enum\": [\"μ\"],\n            \"$comment\": \"U+03BC\"\n        }",
+                "{\n                \"enum\": [\"μ\"]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -931,9 +931,9 @@ public class SuiteCharactersWithTheSameVisualRepresentationButDifferentNumberOfC
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft4/enum.json",
-                "{\n            \"enum\": [\"ä\"],\n            \"$comment\": \"U+00E4\"\n        }",
+                "{\n                \"enum\": [\"ä\"]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft4.Enum",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

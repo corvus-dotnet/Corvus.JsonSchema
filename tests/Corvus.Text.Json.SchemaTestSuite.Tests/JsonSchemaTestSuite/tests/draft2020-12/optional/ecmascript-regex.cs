@@ -46,9 +46,9 @@ public class SuiteEcma262RegexDoesNotMatchTrailingNewline
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^abc$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^abc$\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -100,9 +100,9 @@ public class SuiteEcma262RegexConvertsTToHorizontalTab
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\t$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\t$\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -154,9 +154,9 @@ public class SuiteEcma262RegexEscapesControlCodesWithCAndUpperLetter
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\cC$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\cC$\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -208,9 +208,9 @@ public class SuiteEcma262RegexEscapesControlCodesWithCAndLowerLetter
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\cc$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\cc$\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -269,9 +269,9 @@ public class SuiteEcma262DMatchesAsciiDigitsOnly
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\d$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\d$\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -330,9 +330,9 @@ public class SuiteEcma262DMatchesEverythingButAsciiDigits
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\D$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\D$\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -384,9 +384,9 @@ public class SuiteEcma262WMatchesAsciiLettersOnly
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\w$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\w$\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -438,9 +438,9 @@ public class SuiteEcma262WMatchesEverythingButAsciiLetters
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\W$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\W$\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -555,9 +555,9 @@ public class SuiteEcma262SMatchesWhitespace
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\s$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\s$\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -672,9 +672,9 @@ public class SuiteEcma262SMatchesEverythingButWhitespace
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"string\",\n            \"pattern\": \"^\\\\S$\"\n        }",
+                "{\n                \"type\": \"string\",\n                \"pattern\": \"^\\\\S$\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -740,9 +740,9 @@ public class SuitePatternsAlwaysUseUnicodeSemanticsWithPattern
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"pattern\": \"\\\\p{Letter}cole\"\n        }",
+                "{\n                \"pattern\": \"\\\\p{Letter}cole\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -808,9 +808,9 @@ public class SuiteWInPatternsMatchesAZaZ09NotUnicodeLetters
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"pattern\": \"\\\\wcole\"\n        }",
+                "{\n                \"pattern\": \"\\\\wcole\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -869,9 +869,9 @@ public class SuitePatternWithAsciiRanges
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"pattern\": \"[a-z]cole\"\n        }",
+                "{\n                \"pattern\": \"[a-z]cole\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -930,9 +930,9 @@ public class SuiteDInPatternMatches09NotUnicodeDigits
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"pattern\": \"^\\\\d+$\"\n        }",
+                "{\n                \"pattern\": \"^\\\\d+$\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -991,9 +991,9 @@ public class SuitePatternWithNonAsciiDigits
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"pattern\": \"^\\\\p{digit}+$\"\n        }",
+                "{\n                \"pattern\": \"^\\\\p{digit}+$\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1059,9 +1059,9 @@ public class SuitePatternsAlwaysUseUnicodeSemanticsWithPatternProperties
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"object\",\n            \"patternProperties\": {\n                \"\\\\p{Letter}cole\": true\n            },\n            \"additionalProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"patternProperties\": {\n                    \"\\\\p{Letter}cole\": {}\n                },\n                \"additionalProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1127,9 +1127,9 @@ public class SuiteWInPatternPropertiesMatchesAZaZ09NotUnicodeLetters
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"object\",\n            \"patternProperties\": {\n                \"\\\\wcole\": true\n            },\n            \"additionalProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"patternProperties\": {\n                    \"\\\\wcole\": {}\n                },\n                \"additionalProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1188,9 +1188,9 @@ public class SuitePatternPropertiesWithAsciiRanges
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"object\",\n            \"patternProperties\": {\n                \"[a-z]cole\": true\n            },\n            \"additionalProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"patternProperties\": {\n                    \"[a-z]cole\": {}\n                },\n                \"additionalProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1249,9 +1249,9 @@ public class SuiteDInPatternPropertiesMatches09NotUnicodeDigits
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"object\",\n            \"patternProperties\": {\n                \"^\\\\d+$\": true\n            },\n            \"additionalProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"patternProperties\": {\n                    \"^\\\\d+$\": {}\n                },\n                \"additionalProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -1310,9 +1310,9 @@ public class SuitePatternPropertiesWithNonAsciiDigits
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/optional/ecmascript-regex.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"object\",\n            \"patternProperties\": {\n                \"^\\\\p{digit}+$\": true\n            },\n            \"additionalProperties\": false\n        }",
+                "{\n                \"type\": \"object\",\n                \"patternProperties\": {\n                    \"^\\\\p{digit}+$\": {}\n                },\n                \"additionalProperties\": false\n            }",
                 "JsonSchemaTestSuite.Draft202012.Optional.EcmascriptRegex",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,

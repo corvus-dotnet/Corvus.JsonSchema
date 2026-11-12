@@ -20,9 +20,9 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 /**
- * Drives the harness over IHOP as Bowtie does (start, dialect, run with the suite's remotes as the registry, stop), in a
- * separate JVM: every required case of the JSON-Schema-Test-Suite, and the annotation suite's assertions, compared
- * with the expected results. No containers.
+ * Drives the harness over IHOP as Bowtie does (start, dialect, run with each case's externalSchemas as the registry,
+ * stop), in a separate JVM: every required case of the JSON-Schema-Test-Suite, and the annotation suite's assertions,
+ * compared with the expected results. No containers.
  */
 class IhopTest {
     static final String[][] DRAFTS = {
@@ -85,30 +85,51 @@ class IhopTest {
         }
     }
 
-    /** Bowtie's registry: every remote, keyed by its http://localhost:1234/ URI. */
-    static String registry(Path root) throws IOException {
-        Path remotes = root.resolve("remotes");
-        StringBuilder sb = new StringBuilder("{");
-        try (Stream<Path> s = Files.walk(remotes)) {
-            for (Path p : (Iterable<Path>) s.filter(f -> f.toString().endsWith(".json")).sorted()::iterator) {
-                String rel = remotes.relativize(p).toString().replace('\\', '/');
-                sb.append(sb.length() > 1 ? "," : "");
-                JsonDocument.appendQuoted(sb, "http://localhost:1234/" + rel);
-                sb.append(':').append(read(p).toString());
-            }
-        }
-        return sb.append('}').toString();
+    /** Bowtie's registry for a test case: its externalSchemas, keyed by their retrieval URIs. */
+    static String registry(JsonDocument d, int testCase) {
+        int schemas = d.property(testCase, "externalSchemas");
+        return schemas < 0 ? "{}" : d.toJson(schemas);
     }
 
-    static boolean compatible(String level, String compat) {
-        List<String> order = List.of("3", "4", "6", "7", "2019", "2020");
-        int l = order.indexOf(level);
-        if (compat.startsWith("<=")) {
-            int max = order.indexOf(compat.substring(2));
-            return max >= 0 && l <= max;
+    /**
+     * Whether a test case's {@code compatibility} (a comma-separated list of minimums, {@code <=} maximums and
+     * {@code =} releases, from the smallest release to the largest) admits the release, by the algorithm of the
+     * suite's validation/README.md.
+     */
+    static boolean compatible(JsonDocument d, int testCase, int release) {
+        int c = d.property(testCase, "compatibility");
+        if (c < 0) {
+            return true;
         }
-        int min = order.indexOf(compat);
-        return min >= 0 && l >= min;
+        boolean valid = true;
+        for (String constraint : d.string(c).split(",")) {
+            String op = "";
+            String version = constraint;
+            if (constraint.startsWith("<=")) {
+                op = "<=";
+                version = constraint.substring(2);
+            } else if (constraint.startsWith("=")) {
+                op = "=";
+                version = constraint.substring(1);
+            }
+            int number = Integer.parseInt(version.trim());
+            valid = op.equals("<=") ? release <= number : op.equals("=") ? release == number : release >= number;
+            if (release <= number) {
+                break;
+            }
+        }
+        return valid;
+    }
+
+    /** Whether a test case has a tag. */
+    static boolean hasTag(JsonDocument d, int testCase, String tag) {
+        int tags = d.property(testCase, "tags");
+        for (int i = 0; tags >= 0 && i < d.count(tags); i++) {
+            if (tag.equals(d.string(d.first(tags) + i))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static String quoted(String s) {
@@ -120,8 +141,8 @@ class IhopTest {
     @Test
     void requiredSuiteOverIhop() throws Exception {
         Path root = suiteRoot();
-        Assumptions.assumeTrue(Files.isDirectory(root.resolve("tests")), "JSON-Schema-Test-Suite not found");
-        String registry = registry(root);
+        Path tests = root.resolve("validation").resolve("tests");
+        Assumptions.assumeTrue(Files.isDirectory(tests), "JSON-Schema-Test-Suite not found");
         int seq = 0;
         int total = 0;
         List<String> failures = new ArrayList<>();
@@ -129,14 +150,20 @@ class IhopTest {
             for (String[] draft : DRAFTS) {
                 JsonDocument ok = h.send("{\"cmd\":\"dialect\",\"dialect\":" + quoted(draft[1]) + "}");
                 assertTrue(ok.bool(ok.property(ok.root(), "ok")));
-                for (Path file : jsonFiles(root.resolve("tests").resolve(draft[0]))) {
+                int release = Integer.parseInt(draft[2]);
+                for (Path file : jsonFiles(tests)) {
                     JsonDocument d = read(file);
-                    for (int g = 0; g < d.count(d.root()); g++) {
-                        int group = d.first(d.root()) + g;
-                        int tests = d.property(group, "tests");
+                    int cases = d.property(d.root(), "tests");
+                    for (int g = 0; g < d.count(cases); g++) {
+                        int group = d.first(cases) + g;
+                        // The harness treats format as an annotation in every dialect, as Bowtie expects.
+                        if (!compatible(d, group, release) || hasTag(d, group, "format-assertion")) {
+                            continue;
+                        }
+                        int caseTests = d.property(group, "tests");
                         StringBuilder t = new StringBuilder("[");
-                        for (int i = 0; i < d.count(tests); i++) {
-                            int test = d.first(tests) + i;
+                        for (int i = 0; i < d.count(caseTests); i++) {
+                            int test = d.first(caseTests) + i;
                             t.append(i == 0 ? "" : ",").append("{\"description\":")
                                     .append(d.toJson(d.property(test, "description"))).append(",\"instance\":")
                                     .append(d.toJson(d.property(test, "data"))).append('}');
@@ -145,14 +172,14 @@ class IhopTest {
                         seq++;
                         JsonDocument response = h.send("{\"cmd\":\"run\",\"seq\":" + seq + ",\"case\":{\"description\":"
                                 + d.toJson(d.property(group, "description")) + ",\"schema\":"
-                                + d.toJson(d.property(group, "schema")) + ",\"registry\":" + registry + ",\"tests\":"
-                                + t + "}}");
+                                + d.toJson(d.property(group, "schema")) + ",\"registry\":" + registry(d, group)
+                                + ",\"tests\":" + t + "}}");
                         int r = response.root();
                         assertEquals(seq, (int) response.doubleValue(response.property(r, "seq")));
                         int results = response.property(r, "results");
-                        for (int i = 0; i < d.count(tests); i++) {
+                        for (int i = 0; i < d.count(caseTests); i++) {
                             total++;
-                            boolean expected = d.bool(d.property(d.first(tests) + i, "valid"));
+                            boolean expected = d.bool(d.property(d.first(caseTests) + i, "valid"));
                             int result = results >= 0 ? response.first(results) + i : -1;
                             int valid = result >= 0 ? response.property(result, "valid") : -1;
                             if (valid < 0 || response.bool(valid) != expected) {
@@ -165,7 +192,7 @@ class IhopTest {
             }
         }
         assertTrue(failures.isEmpty(), failures.size() + " of " + total + " failed: " + failures);
-        assertTrue(total > 4000, "only " + total + " tests ran");
+        assertTrue(total > 5000, "only " + total + " tests ran");
     }
 
     /**
@@ -199,7 +226,6 @@ class IhopTest {
         Path root = suiteRoot();
         Path dir = root.resolve("annotations").resolve("tests");
         Assumptions.assumeTrue(Files.isDirectory(dir), "annotation tests not found");
-        String registry = registry(root);
         int seq = 0;
         int total = 0;
         List<String> failures = new ArrayList<>();
@@ -211,8 +237,7 @@ class IhopTest {
                     int suite = d.property(d.root(), "suite");
                     for (int g = 0; g < d.count(suite); g++) {
                         int group = d.first(suite) + g;
-                        int compat = d.property(group, "compatibility");
-                        if (compat >= 0 && !compatible(draft[2], d.string(compat))) {
+                        if (!compatible(d, group, Integer.parseInt(draft[2]))) {
                             continue;
                         }
                         int tests = d.property(group, "tests");
@@ -225,8 +250,8 @@ class IhopTest {
                         seq++;
                         JsonDocument response = h.send("{\"cmd\":\"run\",\"seq\":" + seq
                                 + ",\"output\":\"annotations\",\"case\":{\"description\":\"\",\"schema\":"
-                                + d.toJson(d.property(group, "schema")) + ",\"registry\":" + registry + ",\"tests\":"
-                                + t + "}}");
+                                + d.toJson(d.property(group, "schema")) + ",\"registry\":" + registry(d, group)
+                                + ",\"tests\":" + t + "}}");
                         int results = response.property(response.root(), "results");
                         for (int i = 0; i < d.count(tests); i++) {
                             int test = d.first(tests) + i;

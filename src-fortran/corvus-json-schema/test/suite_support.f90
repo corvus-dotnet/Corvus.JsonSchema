@@ -1,12 +1,12 @@
-!> What the test programs share: reading files and listing a directory, finding the JSON-Schema-Test-Suite, a
-!> resolver for its remotes, and a scanner that cuts JSON values out of a text as they are written (so that 1.0 stays
+!> What the test programs share: reading files and listing a directory, finding the JSON-Schema-Test-Suite, deciding
+!> which test cases apply to a release, a resolver for a test case's external schemas, and a scanner that cuts JSON values out of a text as they are written (so that 1.0 stays
 !> 1.0, which draft 4 does not count as an integer).
 module suite_support
   use, intrinsic :: iso_fortran_env, only: error_unit
   implicit none
   private
 
-  public :: span_t, read_file, list_json_files, suite_root, set_remotes, remote_resolver
+  public :: span_t, read_file, list_json_files, suite_root, set_case_schemas, case_resolver, compatible, has_tag
   public :: skip_ws, skip_value, elements, member, has_member, raw, string_content, slash
 
   !> A JSON value within a text: its first and last characters.
@@ -15,7 +15,9 @@ module suite_support
     integer :: last = -1
   end type span_t
 
-  character(:), allocatable, save :: remotes
+  !> The text of the suite file and the externalSchemas object of the test case being run, which case_resolver serves.
+  character(:), allocatable, save :: case_text
+  type(span_t), save :: case_schemas
 
 contains
 
@@ -87,36 +89,88 @@ contains
     else
       root = ".." // slash() // ".." // slash() // "JSON-Schema-Test-Suite"
     end if
-    call read_file(root // slash() // "tests" // slash() // "draft2020-12" // slash() // "type.json", probe)
+    call read_file(root // slash() // "validation" // slash() // "tests" // slash() // "type.json", probe)
     if (.not. allocated(probe)) deallocate (root)
   end subroutine suite_root
 
-  !> Sets the directory of the suite's remote documents, which remote_resolver serves.
-  subroutine set_remotes(directory)
-    character(*), intent(in) :: directory
-    remotes = directory
-  end subroutine set_remotes
+  !> Sets the test case whose externalSchemas case_resolver serves: the suite file's text, and the test case.
+  subroutine set_case_schemas(text, test_case)
+    character(*), intent(in) :: text
+    type(span_t), intent(in) :: test_case
+    case_text = text
+    case_schemas = member(text, test_case, "externalSchemas")
+  end subroutine set_case_schemas
 
-  !> Serves http://localhost:1234/<path> from the suite's remotes directory.
-  subroutine remote_resolver(uri, json, found)
+  !> Serves the externalSchemas of the test case set_case_schemas set, at their retrieval URIs.
+  subroutine case_resolver(uri, json, found)
     character(*), intent(in) :: uri
     character(:), allocatable, intent(out) :: json
     logical, intent(out) :: found
-    character(*), parameter :: prefix = "http://localhost:1234/"
-    character(len(uri)) :: path
-    integer :: i
+    type(span_t) :: value
     found = .false.
-    if (len(uri) <= len(prefix)) return
-    if (uri(1:len(prefix)) /= prefix) return
-    path = uri(len(prefix) + 1:)
-    if (slash() == "\") then
-      do i = 1, len(path)
-        if (path(i:i) == "/") path(i:i) = "\"
-      end do
-    end if
-    call read_file(remotes // slash() // trim(path), json)
-    found = allocated(json)
-  end subroutine remote_resolver
+    if (.not. allocated(case_text)) return
+    if (.not. has_member(case_schemas)) return
+    value = member(case_text, case_schemas, uri)
+    if (.not. has_member(value)) return
+    json = raw(case_text, value)
+    found = .true.
+  end subroutine case_resolver
+
+  !> Whether a test case's compatibility (a comma-separated list of minimums, <= maximums and = releases, from the
+  !> smallest release to the largest) admits the release, by the algorithm of the suite's validation/README.md. A test
+  !> case without one is compatible with every release.
+  logical function compatible(text, test_case, release)
+    character(*), intent(in) :: text
+    type(span_t), intent(in) :: test_case
+    integer, intent(in) :: release
+    type(span_t) :: value
+    character(:), allocatable :: rest, constraint
+    integer :: comma, number, status
+    compatible = .true.
+    value = member(text, test_case, "compatibility")
+    if (.not. has_member(value)) return
+    rest = string_content(text, value)
+    do while (len(rest) > 0)
+      comma = index(rest, ",")
+      if (comma == 0) then
+        constraint = rest
+        rest = ""
+      else
+        constraint = rest(1:comma - 1)
+        rest = rest(comma + 1:)
+      end if
+      constraint = adjustl(constraint)
+      if (len(constraint) >= 2 .and. constraint(1:min(2, len(constraint))) == "<=") then
+        read (constraint(3:), *, iostat=status) number
+        compatible = release <= number
+      else if (constraint(1:1) == "=") then
+        read (constraint(2:), *, iostat=status) number
+        compatible = release == number
+      else
+        read (constraint, *, iostat=status) number
+        compatible = release >= number
+      end if
+      if (status /= 0) error stop "a compatibility that is not a list of releases"
+      if (release <= number) exit
+    end do
+  end function compatible
+
+  !> Whether a test case has a tag.
+  logical function has_tag(text, test_case, tag)
+    character(*), intent(in) :: text
+    type(span_t), intent(in) :: test_case
+    character(*), intent(in) :: tag
+    type(span_t), allocatable :: items(:)
+    type(span_t) :: tags
+    integer :: i
+    has_tag = .false.
+    tags = member(text, test_case, "tags")
+    if (.not. has_member(tags)) return
+    call elements(text, tags, items)
+    do i = 1, size(items)
+      if (string_content(text, items(i)) == tag) has_tag = .true.
+    end do
+  end function has_tag
 
   ! ---- the scanner ----
 

@@ -60,9 +60,9 @@ public class SuiteMinItemsValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft7/minItems.json",
-                "{\"minItems\": 1}",
+                "{ \"minItems\": 1 }",
                 "JsonSchemaTestSuite.Draft7.MinItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -114,9 +114,9 @@ public class SuiteMinItemsValidationWithADecimal
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft7/minItems.json",
-                "{\"minItems\": 1.0}",
+                "{ \"minItems\": 1.0 }",
                 "JsonSchemaTestSuite.Draft7.MinItems",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,

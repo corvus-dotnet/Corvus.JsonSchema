@@ -3,13 +3,12 @@
 
 function suitefiles(tests::String)
     files = String[]
-    for draft in sort!(readdir(tests)), name in (joinpath("optional", "ecmascript-regex.json"),
-        joinpath("optional", "format", "regex.json"), "pattern.json", "patternProperties.json",
-        joinpath("optional", "non-bmp-regex.json"))
-        file = joinpath(tests, draft, name)
+    for name in (joinpath("optional", "ecmascript-regex.json"), joinpath("optional", "format-regex.json"),
+        "format-regex.json", "pattern.json", "patternProperties.json", joinpath("optional", "non-bmp-regex.json"))
+        file = joinpath(tests, name)
         isfile(file) && push!(files, file)
     end
-    return files
+    return sort!(files)
 end
 
 function hastype(name::String, data)
@@ -71,7 +70,9 @@ end
         patterns = Dict{String,E.Pattern}()
         cases = 0
         failures = String[]
-        for file in files, group in readjson(file), test in group["tests"]
+        for file in files, group in readjson(file)["tests"], test in group["tests"]
+            # The regex format is asserted here: a case that expects it to be an annotation does not apply.
+            "format-annotation" in get(group, "tags", String[]) && continue
             cases += 1
             got = suitevalid(patterns, group["schema"], test["data"])
             if got != test["valid"]
@@ -82,6 +83,6 @@ end
         println("[suite] ", cases, " cases in ", length(files), " files, ", length(patterns), " distinct patterns")
         isempty(failures) || println(join(failures, "\n"))
         @test isempty(failures)
-        @test cases > 500
+        @test cases > 140
     end
 end

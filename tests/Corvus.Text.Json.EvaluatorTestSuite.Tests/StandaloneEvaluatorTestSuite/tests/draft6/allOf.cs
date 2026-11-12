@@ -28,28 +28,28 @@ public class SuiteAllOf
     [TestMethod]
     public void TestAllOf()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"baz\", \"bar\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"baz\", \"bar\": 2 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestMismatchSecond()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"baz\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"baz\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestMismatchFirst()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": 2 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestWrongType()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"baz\", \"bar\": \"quux\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"baz\", \"bar\": \"quux\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -61,9 +61,9 @@ public class SuiteAllOf
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/allOf.json",
-                "{\n            \"allOf\": [\n                {\n                    \"properties\": {\n                        \"bar\": {\"type\": \"integer\"}\n                    },\n                    \"required\": [\"bar\"]\n                },\n                {\n                    \"properties\": {\n                        \"foo\": {\"type\": \"string\"}\n                    },\n                    \"required\": [\"foo\"]\n                }\n            ]\n        }",
+                "{\n                \"allOf\": [\n                    {\n                        \"properties\": {\n                            \"bar\": { \"type\": \"integer\" }\n                        },\n                        \"required\": [\"bar\"]\n                    },\n                    {\n                        \"properties\": {\n                            \"foo\": { \"type\": \"string\" }\n                        },\n                        \"required\": [\"foo\"]\n                    }\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft6.AllOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -93,35 +93,35 @@ public class SuiteAllOfWithBaseSchema
     [TestMethod]
     public void TestValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"quux\", \"bar\": 2, \"baz\": null}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"quux\", \"bar\": 2, \"baz\": null }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestMismatchBaseSchema()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"quux\", \"baz\": null}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"quux\", \"baz\": null }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestMismatchFirstAllOf()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": 2, \"baz\": null}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": 2, \"baz\": null }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestMismatchSecondAllOf()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"quux\", \"bar\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"quux\", \"bar\": 2 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestMismatchBoth()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": 2}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": 2 }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -133,9 +133,9 @@ public class SuiteAllOfWithBaseSchema
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/allOf.json",
-                "{\n            \"properties\": {\"bar\": {\"type\": \"integer\"}},\n            \"required\": [\"bar\"],\n            \"allOf\" : [\n                {\n                    \"properties\": {\n                        \"foo\": {\"type\": \"string\"}\n                    },\n                    \"required\": [\"foo\"]\n                },\n                {\n                    \"properties\": {\n                        \"baz\": {\"type\": \"null\"}\n                    },\n                    \"required\": [\"baz\"]\n                }\n            ]\n        }",
+                "{\n                \"properties\": {\n                    \"bar\": { \"type\": \"integer\" }\n                },\n                \"required\": [\"bar\"],\n                \"allOf\" : [\n                    {\n                        \"properties\": {\n                            \"foo\": { \"type\": \"string\" }\n                        },\n                        \"required\": [\"foo\"]\n                    },\n                    {\n                        \"properties\": {\n                            \"baz\": { \"type\": \"null\" }\n                        },\n                        \"required\": [\"baz\"]\n                    }\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft6.AllOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -184,9 +184,9 @@ public class SuiteAllOfSimpleTypes
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/allOf.json",
-                "{\n            \"allOf\": [\n                {\"maximum\": 30},\n                {\"minimum\": 20}\n            ]\n        }",
+                "{\n                \"allOf\": [\n                    { \"maximum\": 30 },\n                    { \"minimum\": 20 }\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft6.AllOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -228,9 +228,9 @@ public class SuiteAllOfWithBooleanSchemasAllTrue
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/allOf.json",
-                "{\"allOf\": [true, true]}",
+                "{\n                \"allOf\": [true, true]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft6.AllOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -272,9 +272,9 @@ public class SuiteAllOfWithBooleanSchemasSomeFalse
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/allOf.json",
-                "{\"allOf\": [true, false]}",
+                "{\n                \"allOf\": [true, false]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft6.AllOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -316,9 +316,9 @@ public class SuiteAllOfWithBooleanSchemasAllFalse
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/allOf.json",
-                "{\"allOf\": [false, false]}",
+                "{\n                \"allOf\": [false, false]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft6.AllOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -360,9 +360,9 @@ public class SuiteAllOfWithOneEmptySchema
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/allOf.json",
-                "{\n            \"allOf\": [\n                {}\n            ]\n        }",
+                "{\n                \"allOf\": [{}]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft6.AllOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -404,9 +404,9 @@ public class SuiteAllOfWithTwoEmptySchemas
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/allOf.json",
-                "{\n            \"allOf\": [\n                {},\n                {}\n            ]\n        }",
+                "{\n                \"allOf\": [\n                    {},\n                    {}\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft6.AllOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -455,9 +455,9 @@ public class SuiteAllOfWithTheFirstEmptySchema
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/allOf.json",
-                "{\n            \"allOf\": [\n                {},\n                { \"type\": \"number\" }\n            ]\n        }",
+                "{\n                \"allOf\": [\n                    {},\n                    { \"type\": \"number\" }\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft6.AllOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -506,9 +506,9 @@ public class SuiteAllOfWithTheLastEmptySchema
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/allOf.json",
-                "{\n            \"allOf\": [\n                { \"type\": \"number\" },\n                {}\n            ]\n        }",
+                "{\n                \"allOf\": [\n                    { \"type\": \"number\" },\n                    {}\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft6.AllOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -557,9 +557,9 @@ public class SuiteNestedAllOfToCheckValidationSemantics
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/allOf.json",
-                "{\n            \"allOf\": [\n                {\n                    \"allOf\": [\n                        {\n                            \"type\": \"null\"\n                        }\n                    ]\n                }\n            ]\n        }",
+                "{\n                \"allOf\": [\n                    {\n                        \"allOf\": [{ \"type\": \"null\" }]\n                    }\n                ]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft6.AllOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -650,9 +650,9 @@ public class SuiteAllOfCombinedWithAnyOfOneOf
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft6/allOf.json",
-                "{\n            \"allOf\": [ { \"multipleOf\": 2 } ],\n            \"anyOf\": [ { \"multipleOf\": 3 } ],\n            \"oneOf\": [ { \"multipleOf\": 5 } ]\n        }",
+                "{\n                \"allOf\": [{ \"multipleOf\": 2 }],\n                \"anyOf\": [{ \"multipleOf\": 3 }],\n                \"oneOf\": [{ \"multipleOf\": 5 }]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft6.AllOf",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

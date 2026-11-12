@@ -27,7 +27,7 @@ uses
 
 var
   Checks, Failures: Int32;
-  Remotes: TRemotes;
+  CaseSchemas: TCaseSchemas;
 
 procedure Check(Ok: Boolean; const What: UTF8String);
 begin
@@ -417,31 +417,6 @@ end;
 { --------------------------------------------------------------------------------------------------------------------
   The annotation suite }
 
-function CompatibilityIndex(const Level: UTF8String): Int32;
-const
-  Order: array[0..5] of UTF8String = ('3', '4', '6', '7', '2019', '2020');
-var
-  I: Int32;
-begin
-  for I := 0 to 5 do
-    if Order[I] = Level then
-      Exit(I);
-  Result := -1;
-end;
-
-function Compatible(const Level, Compatibility: UTF8String): Boolean;
-var
-  At, Limit, Least: Int32;
-begin
-  At := CompatibilityIndex(Level);
-  if (Length(Compatibility) > 2) and (Copy(Compatibility, 1, 2) = '<=') then begin
-    Limit := CompatibilityIndex(Copy(Compatibility, 3, Length(Compatibility) - 2));
-    Exit((Limit >= 0) and (At <= Limit));
-  end;
-  Least := CompatibilityIndex(Compatibility);
-  Result := (Least >= 0) and (At >= Least);
-end;
-
 { SameAnnotations compares the produced annotations of a keyword at a location with the expected ones: the same
   schema locations, each with an equal JSON value (numbers by value, objects unordered). Expected is an object of
   the suite's document, from a schema location fragment to a value. }
@@ -475,9 +450,9 @@ procedure TestAnnotationSuite;
 const
   DraftNames: array[0..4] of UTF8String = ('draft4', 'draft6', 'draft7', 'draft2019-09', 'draft2020-12');
   DraftDialects: array[0..4] of TJsonSchemaDialect = (Draft4, Draft6, Draft7, Draft201909, Draft202012);
-  DraftLevels: array[0..4] of UTF8String = ('4', '6', '7', '2019', '2020');
+  DraftReleases: array[0..4] of Int32 = (4, 6, 7, 2019, 2020);
 var
-  Root, Dir, Name, Compatibility, Description, Location, Keyword: UTF8String;
+  Root, Dir, Name, Description, Location, Keyword: UTF8String;
   Files: TUTF8StringArray;
   D, F, G, T, A, Total, Failed: Int32;
   Text: TBytes;
@@ -511,11 +486,7 @@ begin
         Continue;
       for G := 0 to DocCount(Doc, Suite) - 1 do begin
         Group := DocFirst(Doc, Suite) + G;
-        Compatibility := '';
-        N := Member(Doc, Group, 'compatibility');
-        if IsKind(Doc, N, KindString) then
-          Compatibility := DocStrCopy(Doc, N);
-        if (Compatibility <> '') and not Compatible(DraftLevels[D], Compatibility) then
+        if not SuiteCompatible(Doc, Group, DraftReleases[D]) then
           Continue;
         Description := '';
         N := Member(Doc, Group, 'description');
@@ -524,7 +495,8 @@ begin
         Schema := Member(Doc, Group, 'schema');
         Options := DefaultJsonSchemaOptions;
         WithDefaultDialect(Options, DraftDialects[D]);
-        WithDocumentResolver(Options, RemoteResolver, @Remotes);
+        CaseSchemas := CaseSchemasOf(Doc, Group);
+        WithDocumentResolver(Options, CaseSchemaResolver, @CaseSchemas);
         try
           Validator := CompileJsonSchema(ValueText(Doc, Schema), Options);
         except
@@ -667,12 +639,12 @@ begin
   end;
 end;
 
-procedure DumpFile(Dialect: TJsonSchemaDialect; const Path, Name: UTF8String; AssertFormat: Boolean);
+procedure DumpFile(Dialect: TJsonSchemaDialect; Release: Int32; const Path, Name: UTF8String);
 var
   Text: TBytes;
   Doc: TDocument;
   E: TParseError;
-  G, T, Group, Tests: Int32;
+  G, T, Group, Groups, Tests: Int32;
   Options: TJsonSchemaOptions;
   Validator: IJsonSchemaValidator;
 begin
@@ -680,13 +652,18 @@ begin
     WriteLn('FAILED: ', Path, ' could not be read as JSON');
     Halt(1);
   end;
-  for G := 0 to DocCount(Doc, Doc.Root) - 1 do begin
-    Group := DocFirst(Doc, Doc.Root) + G;
+  Groups := Member(Doc, Doc.Root, 'tests');
+  for G := 0 to DocCount(Doc, Groups) - 1 do begin
+    Group := DocFirst(Doc, Groups) + G;
+    if not SuiteCompatible(Doc, Group, Release)
+      or (HasTag(Doc, Group, 'format-annotation') and (Release <= 7)) then
+      Continue;
     WriteLn(Dump, 'S ', Q(Name), ' ', G);
     Options := DefaultJsonSchemaOptions;
     WithDefaultDialect(Options, Dialect);
-    WithDocumentResolver(Options, RemoteResolver, @Remotes);
-    if AssertFormat then
+    CaseSchemas := CaseSchemasOf(Doc, Group);
+    WithDocumentResolver(Options, CaseSchemaResolver, @CaseSchemas);
+    if HasTag(Doc, Group, 'format-assertion') then
       WithAssertFormat(Options, True);
     try
       Validator := CompileJsonSchema(ValueText(Doc, Member(Doc, Group, 'schema')), Options);
@@ -706,12 +683,13 @@ procedure RunDump(const FileName: UTF8String);
 const
   DraftNames: array[0..4] of UTF8String = ('draft4', 'draft6', 'draft7', 'draft2019-09', 'draft2020-12');
   DraftDialects: array[0..4] of TJsonSchemaDialect = (Draft4, Draft6, Draft7, Draft201909, Draft202012);
+  DraftReleases: array[0..4] of Int32 = (4, 6, 7, 2019, 2020);
 var
-  Tests, Dir, Name: UTF8String;
-  Files: TUTF8StringArray;
+  Tests, Name: UTF8String;
+  Files, OptionalFiles: TUTF8StringArray;
   D, I: Int32;
 begin
-  Tests := SuiteRoot + '/tests';
+  Tests := SuiteRoot + '/validation/tests';
   if not DirectoryExists(Tests) then begin
     WriteLn('JSON-Schema-Test-Suite not found at ', SuiteRoot);
     Halt(1);
@@ -720,21 +698,16 @@ begin
   Rewrite(Dump);
   DumpCases := 0;
   DumpRows := 0;
+  Files := JsonFiles(Tests);
+  OptionalFiles := JsonFiles(Tests + '/optional');
   for D := 0 to 4 do begin
-    Dir := Tests + '/' + DraftNames[D];
-    Files := JsonFiles(Dir);
     for I := 0 to Length(Files) - 1 do
-      DumpFile(DraftDialects[D], Dir + '/' + Files[I], DraftNames[D] + '/' + Files[I], False);
-    Files := JsonFiles(Dir + '/optional');
-    for I := 0 to Length(Files) - 1 do begin
-      Name := DraftNames[D] + '/optional/' + Files[I];
-      if Name <> 'draft4/optional/zeroTerminatedFloats.json' then
-        DumpFile(DraftDialects[D], Dir + '/optional/' + Files[I], Name, False);
+      DumpFile(DraftDialects[D], DraftReleases[D], Tests + '/' + Files[I], DraftNames[D] + '/' + Files[I]);
+    for I := 0 to Length(OptionalFiles) - 1 do begin
+      Name := DraftNames[D] + '/optional/' + OptionalFiles[I];
+      if Name <> 'draft4/optional/zero-terminated-floats.json' then
+        DumpFile(DraftDialects[D], DraftReleases[D], Tests + '/optional/' + OptionalFiles[I], Name);
     end;
-    Files := JsonFiles(Dir + '/optional/format');
-    for I := 0 to Length(Files) - 1 do
-      DumpFile(DraftDialects[D], Dir + '/optional/format/' + Files[I], DraftNames[D] + '/optional/format/' + Files[I],
-        True);
   end;
   Close(Dump);
   WriteLn(DumpCases, ' cases and ', DumpRows, ' result rows written to ', FileName);
@@ -743,8 +716,6 @@ end;
 begin
   Checks := 0;
   Failures := 0;
-  Remotes := Default(TRemotes);
-  Remotes.Root := SuiteRoot + '/remotes';
   if (ParamCount = 2) and (ParamStr(1) = '--dump') then begin
     RunDump(UTF8String(ParamStr(2)));
     JsonSchemaReleaseThreadScratch;

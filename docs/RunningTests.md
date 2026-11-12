@@ -425,13 +425,18 @@ cd ..\..\..\..\..\
 | Key | Purpose |
 |-----|---------|
 | `outputPath` | Relative path to the generated test output directory |
+| `evaluatorOutputPath`, `annotationOutputPath` | Relative paths to the generated evaluator and annotation test directories |
 | `jsonSchemaTestSuite.baseDirectory` | Relative path to the `JSON-Schema-Test-Suite/` submodule |
+| `jsonSchemaTestSuite.testsDirectory` | The suite's tests within it (`validation/tests`): every dialect's cases in one tree, the optional ones in `optional/` |
+| `jsonSchemaTestSuite.excludedDirectories[]` | Directories of the tests not generated (`proposals`) |
 | `jsonSchemaTestSuite.collections[]` | One entry per draft (draft4, draft6, draft7, draft2019-09, draft2020-12) |
-| `collections[].name` | Draft name — becomes the MSTest `[TestCategory("JsonSchemaTestSuite", "...")]` value |
-| `collections[].defaultVocabulary` | The `$schema` URI used for validation |
-| `collections[].directory` | Subdirectory within the test suite (e.g. `tests/draft2020-12`) |
-| `collections[].options[]` | Per-path overrides, e.g. `"validateFormat": true` for `optional/format` |
+| `collections[].name` | Draft name, which becomes the MSTest `[TestCategory("JsonSchemaTestSuite", "...")]` value |
+| `collections[].release` | The release number the suite's `compatibility` property uses for the draft (4, 6, 7, 2019, 2020) |
+| `collections[].defaultVocabulary` | The `$schema` URI used for validation (the suite's schemas name no dialect) |
+| `collections[].formatAssertedByDefault` | The draft asserts `format` by default, so its `format-annotation` test cases are not generated |
 | `collections[].exclusions[]` | File-level or individual test-level exclusions with a `reason` string |
+
+Each test case of the suite says which releases it applies to (`compatibility`), whether it expects `format` to be asserted (`tags`: `format-assertion` or `format-annotation`), and the schemas it references (`externalSchemas`), which are served to that test case alone.
 
 Each generated test class uses `TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(...)` at runtime to dynamically compile a V5 type from the schema, then validates test instances against it.
 

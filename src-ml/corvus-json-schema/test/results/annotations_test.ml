@@ -15,23 +15,6 @@ module Values = Corvus_json_schema__Values
 exception Fatal of string
 
 let fatal fmt = Printf.ksprintf (fun what -> raise (Fatal what)) fmt
-let compatibility_order = [ "3"; "4"; "6"; "7"; "2019"; "2020" ]
-
-(* The position of a level in the order, or -1. *)
-let index_of level =
-  let rec find i = function [] -> -1 | head :: tail -> if String.equal head level then i else find (i + 1) tail in
-  find 0 compatibility_order
-
-let compatible level compatibility =
-  let at = index_of level in
-  if String.length compatibility > 2 && String.equal (String.sub compatibility 0 2) "<=" then begin
-    let limit = index_of (String.sub compatibility 2 (String.length compatibility - 2)) in
-    limit >= 0 && at <= limit
-  end
-  else begin
-    let least = index_of compatibility in
-    least >= 0 && at >= least
-  end
 
 (* The text of a string member of an object, or the empty string when there is none, as Go decodes a missing one. *)
 let string_member d n name =
@@ -56,11 +39,11 @@ let show_values values = String.concat ", " (List.map (fun (location, value) -> 
 
 let drafts =
   [
-    ("draft4", Draft4, "4");
-    ("draft6", Draft6, "6");
-    ("draft7", Draft7, "7");
-    ("draft2019-09", Draft2019_09, "2019");
-    ("draft2020-12", Draft2020_12, "2020");
+    ("draft4", Draft4, 4);
+    ("draft6", Draft6, 6);
+    ("draft7", Draft7, 7);
+    ("draft2019-09", Draft2019_09, 2019);
+    ("draft2020-12", Draft2020_12, 2020);
   ]
 
 let test_annotation_suite () =
@@ -68,12 +51,11 @@ let test_annotation_suite () =
   let dir = Filename.concat (Filename.concat root "annotations") "tests" in
   if not (Sys.file_exists dir && Sys.is_directory dir) then
     fatal "annotation tests not found at %s (set JSON_SCHEMA_TEST_SUITE, or check out the submodule)" dir;
-  let resolver = Suite.remote_resolver root in
   let files = Suite.json_files dir in
   let file_runs = ref 0 and groups = ref 0 and skipped = ref 0 and cases = ref 0 in
   let total = ref 0 and failed = ref 0 in
   List.iter
-    (fun (draft, dialect, level) ->
+    (fun (draft, dialect, release) ->
       List.iter
         (fun file ->
           let d =
@@ -88,12 +70,24 @@ let test_annotation_suite () =
           let name = draft ^ "/" ^ Filename.basename file in
           List.iter
             (fun group ->
-              let compatibility = string_member d group "compatibility" in
+              let compatibility = Suite.member d group "compatibility" in
+              let compatibility = if compatibility < 0 then None else Some (Suite.string d compatibility) in
               let description = string_member d group "description" in
-              if compatibility <> "" && not (compatible level compatibility) then incr skipped
+              if not (Suite.compatible compatibility release) then incr skipped
               else begin
                 incr groups;
-                let options = options ~default_dialect:dialect ~resolver () in
+                let external_schemas =
+                  List.map
+                    (fun (uri, value) ->
+                      match Document.parse_string (Suite.text d value) with
+                      | Ok doc -> (uri, doc)
+                      | Error e -> fatal "%s: %s" uri (Document.error_to_string e))
+                    (Suite.properties d (Suite.member d group "externalSchemas"))
+                in
+                let resolver =
+                  if external_schemas = [] then None else Some (fun uri -> List.assoc_opt uri external_schemas)
+                in
+                let options = options ~default_dialect:dialect ?resolver () in
                 match Validator.compile_string ~options (Suite.text d (Suite.member d group "schema")) with
                 | Error e ->
                     incr failed;

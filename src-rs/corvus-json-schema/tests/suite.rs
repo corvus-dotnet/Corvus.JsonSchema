@@ -1,28 +1,76 @@
 //! Runs the JSON-Schema-Test-Suite (the repository's submodule) against the evaluator, mirroring the C# SuiteRunner
-//! and the TypeScript `test/suite.mjs`: required and optional tests with format as an annotation, optional/format
-//! with format asserted. Every case runs fail-fast and through a results collector at each level.
+//! and the TypeScript `test/suite.mjs`. Every case runs fail-fast and through a results collector at each level.
+//!
+//! The suite keeps every dialect in one tree (`validation/tests`). Each test case says which releases it applies to
+//! (`compatibility`), whether it expects `format` to be asserted (`tags`), and carries any other schemas it references
+//! (`externalSchemas`), which are scoped to that test case.
 //!
 //! Set `JSON_SCHEMA_TEST_SUITE` to use a different checkout, `SUITE_DRAFT` / `SUITE_FILTER` to narrow the run.
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use corvus_json_schema::{
     CompileOptions, Dialect, JsonDocument, JsonSchemaResultsCollector, ResultsLevel, Validator, compile_with,
 };
 use serde_json::Value;
 
-const DRAFTS: [(&str, Dialect); 5] = [
-    ("draft4", Dialect::Draft4),
-    ("draft6", Dialect::Draft6),
-    ("draft7", Dialect::Draft7),
-    ("draft2019-09", Dialect::Draft201909),
-    ("draft2020-12", Dialect::Draft202012),
+// The drafts, with the release number the suite's `compatibility` uses for each.
+const DRAFTS: [(&str, Dialect, u32); 5] = [
+    ("draft4", Dialect::Draft4, 4),
+    ("draft6", Dialect::Draft6, 6),
+    ("draft7", Dialect::Draft7, 7),
+    ("draft2019-09", Dialect::Draft201909, 2019),
+    ("draft2020-12", Dialect::Draft202012, 2020),
 ];
 
 // Exclusions, matching the C# runner: zero-terminated floats (serde_json cannot tell 1.0 from 1 either).
-const EXCLUDED_FILES: [&str; 1] = ["draft4/optional/zeroTerminatedFloats.json"];
+const EXCLUDED_FILES: [&str; 1] = ["draft4/optional/zero-terminated-floats.json"];
+
+// The crate reads JSON through serde_json without its arbitrary_precision feature, so a number has at most the
+// precision of an f64 by the time the evaluator sees it. These high-precision cases of optional/bignum.json need the
+// digits of the text, and are left out by name.
+const EXCLUDED_CASES: [(&str, &str); 8] = [
+    ("bignum.json", "below the exclusive maximum is valid"),
+    ("bignum.json", "above the exclusive minimum is valid"),
+    ("bignum.json", "just below the minimum is invalid"),
+    ("bignum.json", "a slightly smaller decimal is invalid"),
+    ("bignum.json", "a slightly larger decimal is invalid"),
+    ("bignum.json", "distinct high-precision decimals are unique"),
+    ("bignum.json", "arrays containing distinct decimals are unique"),
+    ("bignum.json", "objects containing distinct decimals are unique"),
+];
+
+/// Whether a test case's `compatibility` (a comma-separated list of minimums, `<=` maximums and `=` releases, from
+/// the smallest release to the largest) admits the release, by the algorithm of the suite's validation/README.md.
+fn compatible(compatibility: Option<&str>, release: u32) -> bool {
+    let Some(compatibility) = compatibility else { return true };
+    let mut valid = true;
+    for constraint in compatibility.split(',') {
+        let (op, version) = if let Some(v) = constraint.strip_prefix("<=") {
+            ("<=", v)
+        } else if let Some(v) = constraint.strip_prefix('=') {
+            ("=", v)
+        } else {
+            ("", constraint)
+        };
+        let version: u32 = version.trim().parse().unwrap();
+        valid = match op {
+            "<=" => release <= version,
+            "=" => release == version,
+            _ => release >= version,
+        };
+        if release <= version {
+            break;
+        }
+    }
+    valid
+}
+
+fn has_tag(case: &Value, tag: &str) -> bool {
+    case["tags"].as_array().is_some_and(|tags| tags.iter().any(|t| t == tag))
+}
 
 fn suite_root() -> PathBuf {
     std::env::var_os("JSON_SCHEMA_TEST_SUITE")
@@ -44,8 +92,14 @@ fn files(dir: &Path) -> Vec<PathBuf> {
     out
 }
 
+/// A resolver serving a test case's `externalSchemas` at their retrieval URIs, and nothing else.
+fn resolver_for(case: &Value) -> Option<corvus_json_schema::DocumentResolver> {
+    let schemas: HashMap<String, Value> =
+        case["externalSchemas"].as_object()?.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
+    Some(Arc::new(move |uri: &str| schemas.get(uri).cloned()))
+}
+
 struct Runner {
-    options_base: CompileOptions,
     filter: Option<String>,
     total: usize,
     failures: Vec<String>,
@@ -100,27 +154,42 @@ fn run_case(v: &Validator, data: &Value) -> Result<bool, String> {
 }
 
 impl Runner {
-    fn run_file(&mut self, dialect: Dialect, file: &Path, label: &str, assert_format: bool) {
+    fn run_file(&mut self, dialect: Dialect, release: u32, file: &Path, label: &str) {
+        let file_name = file.file_name().unwrap().to_string_lossy().to_string();
         let groups = read_json(file);
         let mut file_total = 0;
         let mut file_failed = 0;
-        for group in groups.as_array().unwrap() {
+        for group in groups["tests"].as_array().unwrap() {
             let description = group["description"].as_str().unwrap();
+            if !compatible(group["compatibility"].as_str(), release) {
+                continue;
+            }
+            // Drafts 4 to 7 assert format by default here (the specification allows it), so a "format-annotation"
+            // case describes behaviour the evaluator does not provide there.
+            if has_tag(group, "format-annotation") && release <= 7 {
+                continue;
+            }
             if let Some(f) = &self.filter
                 && !description.contains(f.as_str())
                 && !label.contains(f.as_str())
             {
                 continue;
             }
-            let mut options = self.options_base.clone();
-            options.default_dialect = dialect;
-            options.assert_format = if assert_format { Some(true) } else { None };
+            let options = CompileOptions {
+                default_dialect: dialect,
+                assert_format: if has_tag(group, "format-assertion") { Some(true) } else { None },
+                resolve_document: resolver_for(group),
+                ..CompileOptions::default()
+            };
             let compiled =
                 std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| compile_with(&group["schema"], &options)));
             for test in group["tests"].as_array().unwrap() {
-                file_total += 1;
                 let expected = test["valid"].as_bool().unwrap();
                 let test_description = test["description"].as_str().unwrap();
+                if EXCLUDED_CASES.contains(&(file_name.as_str(), test_description)) {
+                    continue;
+                }
+                file_total += 1;
                 let actual: Result<bool, String> = match &compiled {
                     Err(_) => Err("panic during compilation".into()),
                     Ok(Err(e)) => Err(format!("compile error: {e}")),
@@ -147,52 +216,30 @@ impl Runner {
 #[test]
 fn json_schema_test_suite() {
     let root = suite_root();
-    let tests = root.join("tests");
+    let tests = root.join("validation").join("tests");
     if !tests.exists() {
         eprintln!("JSON-Schema-Test-Suite not found at {}; skipping", root.display());
         return;
     }
-    let remotes = root.join("remotes");
-    let cache: Arc<Mutex<HashMap<PathBuf, Value>>> = Arc::default();
-    let resolver = move |uri: &str| -> Option<Value> {
-        let rest = uri.strip_prefix("http://localhost:1234/")?;
-        let file = remotes.join(rest);
-        if !file.exists() {
-            return None;
-        }
-        let mut cache = cache.lock().unwrap();
-        Some(cache.entry(file.clone()).or_insert_with(|| read_json(&file)).clone())
-    };
-    let options_base = CompileOptions { resolve_document: Some(Arc::new(resolver)), ..CompileOptions::default() };
 
     let draft_filter = std::env::var("SUITE_DRAFT").ok();
-    let mut runner = Runner {
-        options_base,
-        filter: std::env::var("SUITE_FILTER").ok(),
-        total: 0,
-        failures: Vec::new(),
-        summary: Vec::new(),
-    };
+    let mut runner =
+        Runner { filter: std::env::var("SUITE_FILTER").ok(), total: 0, failures: Vec::new(), summary: Vec::new() };
     // Keep panics in the evaluator from spamming the output: they are reported as failures.
     std::panic::set_hook(Box::new(|_| {}));
-    for (draft, dialect) in DRAFTS {
+    for (draft, dialect, release) in DRAFTS {
         if draft_filter.as_deref().is_some_and(|d| d != draft) {
             continue;
         }
-        let dir = tests.join(draft);
-        for f in files(&dir) {
+        for f in files(&tests) {
             let label = format!("{draft}/{}", f.file_name().unwrap().to_string_lossy());
-            runner.run_file(dialect, &f, &label, false);
+            runner.run_file(dialect, release, &f, &label);
         }
-        for f in files(&dir.join("optional")) {
+        for f in files(&tests.join("optional")) {
             let label = format!("{draft}/optional/{}", f.file_name().unwrap().to_string_lossy());
             if !EXCLUDED_FILES.contains(&label.as_str()) {
-                runner.run_file(dialect, &f, &label, false);
+                runner.run_file(dialect, release, &f, &label);
             }
-        }
-        for f in files(&dir.join("optional").join("format")) {
-            let label = format!("{draft}/optional/format/{}", f.file_name().unwrap().to_string_lossy());
-            runner.run_file(dialect, &f, &label, true);
         }
     }
     let _ = std::panic::take_hook();
@@ -202,13 +249,7 @@ fn json_schema_test_suite() {
     }
     let mut by_area: Vec<(String, usize, usize)> = Vec::new();
     for (label, t, f) in &runner.summary {
-        let depth = if label.contains("/optional/format/") {
-            3
-        } else if label.contains("/optional/") {
-            2
-        } else {
-            1
-        };
+        let depth = if label.contains("/optional/") { 2 } else { 1 };
         let area = label.split('/').take(depth).collect::<Vec<_>>().join("/");
         match by_area.iter_mut().find(|(a, _, _)| *a == area) {
             Some(entry) => {

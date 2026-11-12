@@ -5,9 +5,10 @@ A JSON Schema evaluator for Python (draft 4, 6, 7, 2019-09 and 2020-12) backed b
 standalone evaluator. It has the same API as the pure-Python
 [corvus-json-schema](../corvus-json-schema/README.md) package, so either can be imported in place of the other.
 
-- **Conformant**: passes the JSON-Schema-Test-Suite (required, optional and `optional/format`, every draft) except
-  `draft4/optional/zeroTerminatedFloats.json`, which the C# and Rust evaluators exclude (they read `1.0` as an
-  integer), and all of the suite's annotation tests.
+- **Conformant**: passes the JSON-Schema-Test-Suite (required and optional, every draft) except
+  `draft4/optional/zero-terminated-floats.json`, which the C# and Rust evaluators exclude (they read `1.0` as an
+  integer), and the high-precision cases of `optional/bignum.json`, whose digits the crate's serde_json values do not
+  hold, and passes all of the suite's annotation tests.
 - **Fast**: instances are read in place through CPython's C API (dicts, lists and strings are not copied), so
   validating a Python object costs the evaluation alone. Over the jsonschema-benchmark corpora it takes 0.35 of the
   pure package's time and 0.72 of jsonschema-rs's (geometric means); see the pure package's

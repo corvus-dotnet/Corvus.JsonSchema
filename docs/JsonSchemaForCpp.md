@@ -4,8 +4,9 @@ The corvus-json-schema C library ships a header-only C++17 wrapper, `corvus_json
 evaluator for C++, draft 4, 6, 7, 2019-09 and 2020-12. It wraps the [C library](JsonSchemaForC.md) in RAII classes and
 exceptions, and gives the same results and annotations as every other Corvus implementation.
 
-- **Conformant.** Passes the whole JSON-Schema-Test-Suite (required, optional and `optional/format`, every draft) except
-  `draft4/optional/zeroTerminatedFloats.json`.
+- **Conformant.** Passes the whole JSON-Schema-Test-Suite (required and optional, every draft) except
+  `draft4/optional/zero-terminated-floats.json` and the high-precision cases of `optional/bignum.json`, whose digits
+  the library's serde_json values do not hold.
 - **Fast.** Over the [jsonschema-benchmark](https://github.com/sourcemeta-research/jsonschema-benchmark) corpora,
   parsing and validating takes 0.24 of the time of [Blaze](https://github.com/sourcemeta/blaze), and it is faster on
   all 37 corpora.

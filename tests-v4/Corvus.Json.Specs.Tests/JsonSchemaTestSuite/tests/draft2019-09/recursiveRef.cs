@@ -14,26 +14,28 @@ namespace JsonSchemaTestSuite.Draft201909.RecursiveRef;
 public class SuiteRecursiveRefWithoutRecursiveAnchorWorksLikeRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestMatch()
     {
-        using var doc = JsonDocument.Parse("{\"foo\": false}");
+        using var doc = JsonDocument.Parse("{ \"foo\": false }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -62,7 +64,7 @@ public class SuiteRecursiveRefWithoutRecursiveAnchorWorksLikeRef
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -73,7 +75,7 @@ public class SuiteRecursiveRefWithoutRecursiveAnchorWorksLikeRef
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "recursiveRef.json",
-                "#/0/schema",
+                "#/tests/0/schema",
                 "JsonSchemaTestSuiteDraft201909RecursiveRef",
                 "RecursiveRefWithoutRecursiveAnchorWorksLikeRef",
                 validateFormat: false,
@@ -81,10 +83,9 @@ public class SuiteRecursiveRefWithoutRecursiveAnchorWorksLikeRef
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -94,19 +95,21 @@ public class SuiteRecursiveRefWithoutRecursiveAnchorWorksLikeRef
 public class SuiteRecursiveRefWithoutUsingNesting
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -150,7 +153,7 @@ public class SuiteRecursiveRefWithoutUsingNesting
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -161,7 +164,7 @@ public class SuiteRecursiveRefWithoutUsingNesting
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "recursiveRef.json",
-                "#/1/schema",
+                "#/tests/1/schema",
                 "JsonSchemaTestSuiteDraft201909RecursiveRef",
                 "RecursiveRefWithoutUsingNesting",
                 validateFormat: false,
@@ -169,10 +172,9 @@ public class SuiteRecursiveRefWithoutUsingNesting
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -182,19 +184,21 @@ public class SuiteRecursiveRefWithoutUsingNesting
 public class SuiteRecursiveRefWithNesting
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -238,7 +242,7 @@ public class SuiteRecursiveRefWithNesting
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -249,7 +253,7 @@ public class SuiteRecursiveRefWithNesting
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "recursiveRef.json",
-                "#/2/schema",
+                "#/tests/2/schema",
                 "JsonSchemaTestSuiteDraft201909RecursiveRef",
                 "RecursiveRefWithNesting",
                 validateFormat: false,
@@ -257,10 +261,9 @@ public class SuiteRecursiveRefWithNesting
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -270,19 +273,21 @@ public class SuiteRecursiveRefWithNesting
 public class SuiteRecursiveRefWithRecursiveAnchorFalseWorksLikeRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -326,7 +331,7 @@ public class SuiteRecursiveRefWithRecursiveAnchorFalseWorksLikeRef
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -337,7 +342,7 @@ public class SuiteRecursiveRefWithRecursiveAnchorFalseWorksLikeRef
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "recursiveRef.json",
-                "#/3/schema",
+                "#/tests/3/schema",
                 "JsonSchemaTestSuiteDraft201909RecursiveRef",
                 "RecursiveRefWithRecursiveAnchorFalseWorksLikeRef",
                 validateFormat: false,
@@ -345,10 +350,9 @@ public class SuiteRecursiveRefWithRecursiveAnchorFalseWorksLikeRef
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -358,19 +362,21 @@ public class SuiteRecursiveRefWithRecursiveAnchorFalseWorksLikeRef
 public class SuiteRecursiveRefWithNoRecursiveAnchorWorksLikeRef
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -414,7 +420,7 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorWorksLikeRef
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -425,7 +431,7 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorWorksLikeRef
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "recursiveRef.json",
-                "#/4/schema",
+                "#/tests/4/schema",
                 "JsonSchemaTestSuiteDraft201909RecursiveRef",
                 "RecursiveRefWithNoRecursiveAnchorWorksLikeRef",
                 validateFormat: false,
@@ -433,10 +439,9 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorWorksLikeRef
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -446,19 +451,21 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorWorksLikeRef
 public class SuiteRecursiveRefWithNoRecursiveAnchorInTheInitialTargetSchemaResource
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -486,7 +493,7 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorInTheInitialTargetSchemaResou
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -497,7 +504,7 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorInTheInitialTargetSchemaResou
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "recursiveRef.json",
-                "#/5/schema",
+                "#/tests/5/schema",
                 "JsonSchemaTestSuiteDraft201909RecursiveRef",
                 "RecursiveRefWithNoRecursiveAnchorInTheInitialTargetSchemaResource",
                 validateFormat: false,
@@ -505,10 +512,9 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorInTheInitialTargetSchemaResou
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -518,19 +524,21 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorInTheInitialTargetSchemaResou
 public class SuiteRecursiveRefWithNoRecursiveAnchorInTheOuterSchemaResource
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -558,7 +566,7 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorInTheOuterSchemaResource
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -569,7 +577,7 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorInTheOuterSchemaResource
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "recursiveRef.json",
-                "#/6/schema",
+                "#/tests/6/schema",
                 "JsonSchemaTestSuiteDraft201909RecursiveRef",
                 "RecursiveRefWithNoRecursiveAnchorInTheOuterSchemaResource",
                 validateFormat: false,
@@ -577,10 +585,9 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorInTheOuterSchemaResource
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -590,19 +597,21 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorInTheOuterSchemaResource
 public class SuiteMultipleDynamicPathsToTheRecursiveRefKeyword
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -622,7 +631,7 @@ public class SuiteMultipleDynamicPathsToTheRecursiveRefKeyword
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -633,7 +642,7 @@ public class SuiteMultipleDynamicPathsToTheRecursiveRefKeyword
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "recursiveRef.json",
-                "#/7/schema",
+                "#/tests/7/schema",
                 "JsonSchemaTestSuiteDraft201909RecursiveRef",
                 "MultipleDynamicPathsToTheRecursiveRefKeyword",
                 validateFormat: false,
@@ -641,10 +650,9 @@ public class SuiteMultipleDynamicPathsToTheRecursiveRefKeyword
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -654,19 +662,21 @@ public class SuiteMultipleDynamicPathsToTheRecursiveRefKeyword
 public class SuiteDynamicRecursiveRefDestinationNotPredictableAtSchemaCompileTime
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -686,7 +696,7 @@ public class SuiteDynamicRecursiveRefDestinationNotPredictableAtSchemaCompileTim
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -697,7 +707,7 @@ public class SuiteDynamicRecursiveRefDestinationNotPredictableAtSchemaCompileTim
             _driver = DriverFactory.CreateDraft201909Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "recursiveRef.json",
-                "#/8/schema",
+                "#/tests/8/schema",
                 "JsonSchemaTestSuiteDraft201909RecursiveRef",
                 "DynamicRecursiveRefDestinationNotPredictableAtSchemaCompileTime",
                 validateFormat: false,
@@ -705,10 +715,74 @@ public class SuiteDynamicRecursiveRefDestinationNotPredictableAtSchemaCompileTim
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteRefWithRecursiveAnchor
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestExtraItemsAllowedForInnerArrays()
+    {
+        using var doc = JsonDocument.Parse("[\"foo\", [\"bar\", [], 8]]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestExtraItemsDisallowedForRoot()
+    {
+        using var doc = JsonDocument.Parse("[\"foo\", [\"bar\", [], 8], 8]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft201909Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "recursiveRef.json",
+                "#/tests/9/schema",
+                "JsonSchemaTestSuiteDraft201909RecursiveRef",
+                "RefWithRecursiveAnchor",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false);
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
         }
     }
 }

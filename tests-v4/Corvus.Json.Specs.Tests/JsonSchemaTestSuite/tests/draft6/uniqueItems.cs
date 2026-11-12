@@ -14,19 +14,21 @@ namespace JsonSchemaTestSuite.Draft6.UniqueItems;
 public class SuiteUniqueItemsValidation
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -97,7 +99,7 @@ public class SuiteUniqueItemsValidation
     [TestMethod]
     public void TestUniqueArrayOfObjectsIsValid()
     {
-        using var doc = JsonDocument.Parse("[{\"foo\": \"bar\"}, {\"foo\": \"baz\"}]");
+        using var doc = JsonDocument.Parse("[{ \"foo\": \"bar\" }, { \"foo\": \"baz\" }]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -105,7 +107,7 @@ public class SuiteUniqueItemsValidation
     [TestMethod]
     public void TestNonUniqueArrayOfObjectsIsInvalid()
     {
-        using var doc = JsonDocument.Parse("[{\"foo\": \"bar\"}, {\"foo\": \"bar\"}]");
+        using var doc = JsonDocument.Parse("[{ \"foo\": \"bar\" }, { \"foo\": \"bar\" }]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -113,7 +115,7 @@ public class SuiteUniqueItemsValidation
     [TestMethod]
     public void TestPropertyOrderOfArrayOfObjectsIsIgnored()
     {
-        using var doc = JsonDocument.Parse("[{\"foo\": \"bar\", \"bar\": \"foo\"}, {\"bar\": \"foo\", \"foo\": \"bar\"}]");
+        using var doc = JsonDocument.Parse("[{ \"foo\": \"bar\", \"bar\": \"foo\" }, { \"bar\": \"foo\", \"foo\": \"bar\" }]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -121,7 +123,7 @@ public class SuiteUniqueItemsValidation
     [TestMethod]
     public void TestUniqueArrayOfNestedObjectsIsValid()
     {
-        using var doc = JsonDocument.Parse("[\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\r\n                    {\"foo\": {\"bar\" : {\"baz\" : false}}}\r\n                ]");
+        using var doc = JsonDocument.Parse("[\n                        { \"foo\": { \"bar\" : { \"baz\" : true } } },\n                        { \"foo\": { \"bar\" : { \"baz\" : false } } }\n                    ]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -129,7 +131,7 @@ public class SuiteUniqueItemsValidation
     [TestMethod]
     public void TestNonUniqueArrayOfNestedObjectsIsInvalid()
     {
-        using var doc = JsonDocument.Parse("[\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}}\r\n                ]");
+        using var doc = JsonDocument.Parse("[\n                        { \"foo\": { \"bar\" : { \"baz\" : true } } },\n                        { \"foo\": { \"bar\" : { \"baz\" : true } } }\n                    ]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -161,29 +163,13 @@ public class SuiteUniqueItemsValidation
     [TestMethod]
     public void Test_1AndTrueAreUnique()
     {
-        using var doc = JsonDocument.Parse("[1, true]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void Test_0AndFalseAreUnique()
-    {
-        using var doc = JsonDocument.Parse("[0, false]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void Test_1AndTrueAreUnique1()
-    {
         using var doc = JsonDocument.Parse("[[1], [true]]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
     [TestMethod]
-    public void Test_0AndFalseAreUnique1()
+    public void Test_0AndFalseAreUnique()
     {
         using var doc = JsonDocument.Parse("[[0], [false]]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
@@ -225,7 +211,7 @@ public class SuiteUniqueItemsValidation
     [TestMethod]
     public void TestDifferentObjectsAreUnique()
     {
-        using var doc = JsonDocument.Parse("[{\"a\": 1, \"b\": 2}, {\"a\": 2, \"b\": 1}]");
+        using var doc = JsonDocument.Parse("[{ \"a\": 1, \"b\": 2 }, { \"a\": 2, \"b\": 1 }]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -233,7 +219,7 @@ public class SuiteUniqueItemsValidation
     [TestMethod]
     public void TestObjectsAreNonUniqueDespiteKeyOrder()
     {
-        using var doc = JsonDocument.Parse("[{\"a\": 1, \"b\": 2}, {\"b\": 2, \"a\": 1}]");
+        using var doc = JsonDocument.Parse("[{ \"a\": 1, \"b\": 2 }, { \"b\": 2, \"a\": 1 }]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -241,7 +227,7 @@ public class SuiteUniqueItemsValidation
     [TestMethod]
     public void TestAFalseAndA0AreUnique()
     {
-        using var doc = JsonDocument.Parse("[{\"a\": false}, {\"a\": 0}]");
+        using var doc = JsonDocument.Parse("[{ \"a\": false }, { \"a\": 0 }]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -249,12 +235,12 @@ public class SuiteUniqueItemsValidation
     [TestMethod]
     public void TestATrueAndA1AreUnique()
     {
-        using var doc = JsonDocument.Parse("[{\"a\": true}, {\"a\": 1}]");
+        using var doc = JsonDocument.Parse("[{ \"a\": true }, { \"a\": 1 }]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -265,7 +251,7 @@ public class SuiteUniqueItemsValidation
             _driver = DriverFactory.CreateDraft6Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "uniqueItems.json",
-                "#/0/schema",
+                "#/tests/0/schema",
                 "JsonSchemaTestSuiteDraft6UniqueItems",
                 "UniqueItemsValidation",
                 validateFormat: false,
@@ -273,10 +259,162 @@ public class SuiteUniqueItemsValidation
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
+        }
+    }
+}
+
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteUniqueItemsFalseValidation
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        if (s_fixture is not null)
+        {
+            s_fixture.Dispose();
+            s_fixture = null;
+        }
+    }
+
+    [TestMethod]
+    public void TestUniqueArrayOfIntegersIsValid()
+    {
+        using var doc = JsonDocument.Parse("[1, 2]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestNonUniqueArrayOfIntegersIsValid()
+    {
+        using var doc = JsonDocument.Parse("[1, 1]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestNumbersAreUniqueIfMathematicallyUnequal()
+    {
+        using var doc = JsonDocument.Parse("[1.0, 1.00, 1]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestFalseIsNotEqualToZero()
+    {
+        using var doc = JsonDocument.Parse("[0, false]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestTrueIsNotEqualToOne()
+    {
+        using var doc = JsonDocument.Parse("[1, true]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestUniqueArrayOfObjectsIsValid()
+    {
+        using var doc = JsonDocument.Parse("[{ \"foo\": \"bar\" }, { \"foo\": \"baz\" }]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestNonUniqueArrayOfObjectsIsValid()
+    {
+        using var doc = JsonDocument.Parse("[{ \"foo\": \"bar\" }, { \"foo\": \"bar\" }]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestUniqueArrayOfNestedObjectsIsValid()
+    {
+        using var doc = JsonDocument.Parse("[\n                        { \"foo\": { \"bar\" : { \"baz\" : true } } },\n                        { \"foo\": { \"bar\" : { \"baz\" : false } } }\n                    ]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestNonUniqueArrayOfNestedObjectsIsValid()
+    {
+        using var doc = JsonDocument.Parse("[\n                        { \"foo\": { \"bar\" : { \"baz\" : true } } },\n                        { \"foo\": { \"bar\" : { \"baz\" : true } } }\n                    ]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestUniqueArrayOfArraysIsValid()
+    {
+        using var doc = JsonDocument.Parse("[[\"foo\"], [\"bar\"]]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestNonUniqueArrayOfArraysIsValid()
+    {
+        using var doc = JsonDocument.Parse("[[\"foo\"], [\"foo\"]]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestUniqueHeterogeneousTypesAreValid()
+    {
+        using var doc = JsonDocument.Parse("[{}, [1], true, null, 1]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    [TestMethod]
+    public void TestNonUniqueHeterogeneousTypesAreValid()
+    {
+        using var doc = JsonDocument.Parse("[{}, [1], true, null, {}, 1]");
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
+    }
+
+    public class Fixture : IDisposable
+    {
+        private JsonSchemaBuilderDriver? _driver;
+
+        public global::System.Type GeneratedType { get; private set; } = null!;
+
+        public async Task InitializeAsync()
+        {
+            _driver = DriverFactory.CreateDraft6Driver();
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
+                "uniqueItems.json",
+                "#/tests/1/schema",
+                "JsonSchemaTestSuiteDraft6UniqueItems",
+                "UniqueItemsFalseValidation",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false);
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
         }
     }
 }
@@ -286,19 +424,21 @@ public class SuiteUniqueItemsValidation
 public class SuiteUniqueItemsWithAnArrayOfItems
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -366,7 +506,7 @@ public class SuiteUniqueItemsWithAnArrayOfItems
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -377,7 +517,7 @@ public class SuiteUniqueItemsWithAnArrayOfItems
             _driver = DriverFactory.CreateDraft6Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "uniqueItems.json",
-                "#/1/schema",
+                "#/tests/3/schema",
                 "JsonSchemaTestSuiteDraft6UniqueItems",
                 "UniqueItemsWithAnArrayOfItems",
                 validateFormat: false,
@@ -385,10 +525,9 @@ public class SuiteUniqueItemsWithAnArrayOfItems
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -398,19 +537,21 @@ public class SuiteUniqueItemsWithAnArrayOfItems
 public class SuiteUniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -454,7 +595,7 @@ public class SuiteUniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -465,7 +606,7 @@ public class SuiteUniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse
             _driver = DriverFactory.CreateDraft6Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "uniqueItems.json",
-                "#/2/schema",
+                "#/tests/5/schema",
                 "JsonSchemaTestSuiteDraft6UniqueItems",
                 "UniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse",
                 validateFormat: false,
@@ -473,178 +614,9 @@ public class SuiteUniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
-        }
-    }
-}
-
-[TestCategory("Draft6")]
-[TestClass]
-public class SuiteUniqueItemsFalseValidation
-{
-    private static Fixture? s_fixture;
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
-    {
-        s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static async Task ClassCleanup()
-    {
-        if (s_fixture is not null)
-        {
-            await s_fixture!.DisposeAsync();
-        }
-    }
-
-    [TestMethod]
-    public void TestUniqueArrayOfIntegersIsValid()
-    {
-        using var doc = JsonDocument.Parse("[1, 2]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestNonUniqueArrayOfIntegersIsValid()
-    {
-        using var doc = JsonDocument.Parse("[1, 1]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestNumbersAreUniqueIfMathematicallyUnequal()
-    {
-        using var doc = JsonDocument.Parse("[1.0, 1.00, 1]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestFalseIsNotEqualToZero()
-    {
-        using var doc = JsonDocument.Parse("[0, false]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestTrueIsNotEqualToOne()
-    {
-        using var doc = JsonDocument.Parse("[1, true]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestUniqueArrayOfObjectsIsValid()
-    {
-        using var doc = JsonDocument.Parse("[{\"foo\": \"bar\"}, {\"foo\": \"baz\"}]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestNonUniqueArrayOfObjectsIsValid()
-    {
-        using var doc = JsonDocument.Parse("[{\"foo\": \"bar\"}, {\"foo\": \"bar\"}]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestUniqueArrayOfNestedObjectsIsValid()
-    {
-        using var doc = JsonDocument.Parse("[\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\r\n                    {\"foo\": {\"bar\" : {\"baz\" : false}}}\r\n                ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestNonUniqueArrayOfNestedObjectsIsValid()
-    {
-        using var doc = JsonDocument.Parse("[\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}}\r\n                ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestUniqueArrayOfArraysIsValid()
-    {
-        using var doc = JsonDocument.Parse("[[\"foo\"], [\"bar\"]]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestNonUniqueArrayOfArraysIsValid()
-    {
-        using var doc = JsonDocument.Parse("[[\"foo\"], [\"foo\"]]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void Test_1AndTrueAreUnique()
-    {
-        using var doc = JsonDocument.Parse("[1, true]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void Test_0AndFalseAreUnique()
-    {
-        using var doc = JsonDocument.Parse("[0, false]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestUniqueHeterogeneousTypesAreValid()
-    {
-        using var doc = JsonDocument.Parse("[{}, [1], true, null, 1]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    [TestMethod]
-    public void TestNonUniqueHeterogeneousTypesAreValid()
-    {
-        using var doc = JsonDocument.Parse("[{}, [1], true, null, {}, 1]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
-        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
-    }
-
-    public class Fixture
-    {
-        private JsonSchemaBuilderDriver? _driver;
-
-        public global::System.Type GeneratedType { get; private set; } = null!;
-
-        public async Task InitializeAsync()
-        {
-            _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
-                "uniqueItems.json",
-                "#/3/schema",
-                "JsonSchemaTestSuiteDraft6UniqueItems",
-                "UniqueItemsFalseValidation",
-                validateFormat: false,
-                optionalAsNullable: false,
-                useImplicitOperatorString: false);
-        }
-
-        public Task DisposeAsync()
-        {
-            _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -654,19 +626,21 @@ public class SuiteUniqueItemsFalseValidation
 public class SuiteUniqueItemsFalseWithAnArrayOfItems
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -734,7 +708,7 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItems
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -745,7 +719,7 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItems
             _driver = DriverFactory.CreateDraft6Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "uniqueItems.json",
-                "#/4/schema",
+                "#/tests/7/schema",
                 "JsonSchemaTestSuiteDraft6UniqueItems",
                 "UniqueItemsFalseWithAnArrayOfItems",
                 validateFormat: false,
@@ -753,10 +727,9 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItems
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -766,19 +739,21 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItems
 public class SuiteUniqueItemsFalseWithAnArrayOfItemsAndAdditionalItemsFalse
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
@@ -822,7 +797,7 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItemsAndAdditionalItemsFalse
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -833,7 +808,7 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItemsAndAdditionalItemsFalse
             _driver = DriverFactory.CreateDraft6Driver();
             GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "uniqueItems.json",
-                "#/5/schema",
+                "#/tests/9/schema",
                 "JsonSchemaTestSuiteDraft6UniqueItems",
                 "UniqueItemsFalseWithAnArrayOfItemsAndAdditionalItemsFalse",
                 validateFormat: false,
@@ -841,10 +816,9 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItemsAndAdditionalItemsFalse
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

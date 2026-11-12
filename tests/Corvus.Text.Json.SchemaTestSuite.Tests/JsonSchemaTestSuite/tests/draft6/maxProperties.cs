@@ -27,21 +27,21 @@ public class SuiteMaxPropertiesValidation
     [TestMethod]
     public void TestShorterIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestExactLengthIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1, \"bar\": 2}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1, \"bar\": 2 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestTooLongIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1, \"bar\": 2, \"baz\": 3}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1, \"bar\": 2, \"baz\": 3 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -74,9 +74,9 @@ public class SuiteMaxPropertiesValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft6/maxProperties.json",
-                "{\"maxProperties\": 2}",
+                "{ \"maxProperties\": 2 }",
                 "JsonSchemaTestSuite.Draft6.MaxProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -109,14 +109,14 @@ public class SuiteMaxPropertiesValidationWithADecimal
     [TestMethod]
     public void TestShorterIsValid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1 }");
         Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
     [TestMethod]
     public void TestTooLongIsInvalid()
     {
-        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1, \"bar\": 2, \"baz\": 3}");
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"foo\": 1, \"bar\": 2, \"baz\": 3 }");
         Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
@@ -128,9 +128,9 @@ public class SuiteMaxPropertiesValidationWithADecimal
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft6/maxProperties.json",
-                "{\"maxProperties\": 2.0}",
+                "{ \"maxProperties\": 2.0 }",
                 "JsonSchemaTestSuite.Draft6.MaxProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -184,7 +184,7 @@ public class SuiteMaxProperties0MeansTheObjectIsEmpty
                 "tests/draft6/maxProperties.json",
                 "{ \"maxProperties\": 0 }",
                 "JsonSchemaTestSuite.Draft6.MaxProperties",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,

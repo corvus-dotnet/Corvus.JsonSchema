@@ -14,26 +14,28 @@ namespace AdditionalSchemaTests.AdditionalDraft202012.CollisionWithBuiltInName;
 public class SuiteAPropertyThatMatchesABuiltInName
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestDataMatchFoo()
     {
-        using var doc = JsonDocument.Parse("{\r\n          \"match\": \"foo\"\r\n        }");
+        using var doc = JsonDocument.Parse("{\n          \"match\": \"foo\"\n        }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -41,12 +43,12 @@ public class SuiteAPropertyThatMatchesABuiltInName
     [TestMethod]
     public void TestDataMatchF()
     {
-        using var doc = JsonDocument.Parse("{\r\n          \"match\": \"f\"\r\n        }");
+        using var doc = JsonDocument.Parse("{\n          \"match\": \"f\"\n        }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -65,10 +67,9 @@ public class SuiteAPropertyThatMatchesABuiltInName
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }
@@ -78,26 +79,28 @@ public class SuiteAPropertyThatMatchesABuiltInName
 public class SuiteRepro625CollidesWithSystem
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestDataSystemFooSomeOtherPropBar()
     {
-        using var doc = JsonDocument.Parse("{\r\n          \"system\": \"foo\",\r\n          \"someOtherProp\": \"bar\"\r\n        }");
+        using var doc = JsonDocument.Parse("{\n          \"system\": \"foo\",\n          \"someOtherProp\": \"bar\"\n        }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -105,12 +108,12 @@ public class SuiteRepro625CollidesWithSystem
     [TestMethod]
     public void TestDataSomeOtherPropBar()
     {
-        using var doc = JsonDocument.Parse("{\r\n          \"someOtherProp\": \"bar\"\r\n        }");
+        using var doc = JsonDocument.Parse("{\n          \"someOtherProp\": \"bar\"\n        }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -129,10 +132,9 @@ public class SuiteRepro625CollidesWithSystem
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

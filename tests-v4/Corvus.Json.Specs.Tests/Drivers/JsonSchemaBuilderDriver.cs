@@ -460,6 +460,11 @@ public class JsonSchemaBuilderDriver : IDisposable
     /// <param name="optionalAsNullable">If true, optional properties are generated as nullable.</param>
     /// <param name="useImplicitOperatorString">If true, conversion operators to string are implicit rather than explicit.</param>
     /// <param name="rebaseAsRoot">If true, the schema at <paramref name="schemaPath"/> is rebased as the root of its document.</param>
+    /// <param name="externalSchemasPath">
+    /// The path in the file to the test case's <c>externalSchemas</c> object (retrieval URI to schema), or <see langword="null"/>.
+    /// Each schema is registered at its retrieval URI on this driver only, because the same URI can
+    /// carry a different schema in another test case.
+    /// </param>
     /// <returns>The fully qualified type name of the entity we have generated.</returns>
     public async ValueTask<Type> GenerateTypeForJsonSchemaTestSuite(
         string filename,
@@ -469,10 +474,21 @@ public class JsonSchemaBuilderDriver : IDisposable
         bool validateFormat,
         bool optionalAsNullable,
         bool useImplicitOperatorString,
-        bool rebaseAsRoot = true)
+        bool rebaseAsRoot = true,
+        string? externalSchemasPath = null)
     {
         string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
         string path = Path.Combine(baseDirectory, filename) + schemaPath;
+
+        if (externalSchemasPath is not null)
+        {
+            using JsonDocument testFile = JsonDocument.Parse(File.ReadAllText(Path.Combine(baseDirectory, filename)));
+            JsonElement externalSchemas = JsonPointerUtilities.ResolvePointer(testFile, externalSchemasPath.AsSpan());
+            foreach (JsonProperty externalSchema in externalSchemas.EnumerateObject())
+            {
+                this.builder.AddDocument(externalSchema.Name, JsonDocument.Parse(externalSchema.Value.GetRawText()));
+            }
+        }
 
         TypeDeclaration rootType = await this.builder.AddTypeDeclarationsAsync(new(path), this.defaultVocabulary, rebaseAsRoot);
 

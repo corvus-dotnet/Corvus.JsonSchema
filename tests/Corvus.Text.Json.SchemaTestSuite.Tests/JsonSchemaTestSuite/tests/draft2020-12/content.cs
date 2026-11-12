@@ -53,9 +53,9 @@ public class SuiteValidationOfStringEncodedContentBasedOnMediaType
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/content.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"contentMediaType\": \"application/json\"\n        }",
+                "{ \"contentMediaType\": \"application/json\" }",
                 "JsonSchemaTestSuite.Draft202012.Content",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -114,9 +114,9 @@ public class SuiteValidationOfBinaryStringEncoding
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/content.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"contentEncoding\": \"base64\"\n        }",
+                "{ \"contentEncoding\": \"base64\" }",
                 "JsonSchemaTestSuite.Draft202012.Content",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -182,9 +182,9 @@ public class SuiteValidationOfBinaryEncodedMediaTypeDocuments
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/content.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"contentMediaType\": \"application/json\",\n            \"contentEncoding\": \"base64\"\n        }",
+                "{\n                \"contentMediaType\": \"application/json\",\n                \"contentEncoding\": \"base64\"\n            }",
                 "JsonSchemaTestSuite.Draft202012.Content",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,
@@ -278,9 +278,9 @@ public class SuiteValidationOfBinaryEncodedMediaTypeDocumentsWithSchema
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft2020-12/content.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"contentMediaType\": \"application/json\",\n            \"contentEncoding\": \"base64\",\n            \"contentSchema\": { \"type\": \"object\", \"required\": [\"foo\"], \"properties\": { \"foo\": { \"type\": \"string\" } } }\n        }",
+                "{\n                \"contentMediaType\": \"application/json\",\n                \"contentEncoding\": \"base64\",\n                \"contentSchema\": {\n                    \"type\": \"object\",\n                    \"required\": [\"foo\"],\n                    \"properties\": {\n                        \"foo\": { \"type\": \"string\" }\n                    }\n                }\n            }",
                 "JsonSchemaTestSuite.Draft202012.Content",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 optionalAsNullable: false,

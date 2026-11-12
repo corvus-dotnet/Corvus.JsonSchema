@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Extensions.Configuration;
+using TestUtilities.JsonSchemaTestSuite;
 
 namespace Corvus.JsonSchema.TestSuite.CodeGenerator;
 
@@ -164,7 +165,8 @@ internal static class TestCaseGenerator
                         .AppendLine($"                {SymbolDisplay.FormatLiteral(pascalSuiteName, true)},")
                         .AppendLine($"                validateFormat: {(testSuite.ValidateFormat ? "true" : "false")},")
                         .AppendLine("                optionalAsNullable: false,")
-                        .AppendLine("                useImplicitOperatorString: false);")
+                        .AppendLine(testSuite.ExternalSchemasPath is null ? "                useImplicitOperatorString: false);" : "                useImplicitOperatorString: false,")
+                        .AppendLineIf(testSuite.ExternalSchemasPath is not null, () => $"                externalSchemasPath: {SymbolDisplay.FormatLiteral(testSuite.ExternalSchemasPath!, true)});")
                         .AppendLine("        }")
                         .AppendLine()
                         .AppendLine("        public void Dispose()")
@@ -222,12 +224,24 @@ internal static class TestCaseGenerator
             string currentDirectory = Path.Combine(effectiveBaseDirectory, collection.Directory);
             List<TestFile> testFiles = [];
 
-            foreach (string file in Directory.EnumerateFiles(currentDirectory, "*.json", SearchOption.AllDirectories))
+            foreach (string file in Directory.EnumerateFiles(currentDirectory, "*.json", SearchOption.AllDirectories).OrderBy(f => f, StringComparer.Ordinal))
             {
                 List<TestSuite> testSuites = [];
 
-                string relativePath = Path.GetRelativePath(currentDirectory, file);
-                string baseRelativePath = Path.GetRelativePath(effectiveBaseDirectory, file);
+                string relativePath = Path.GetRelativePath(currentDirectory, file).Replace('\\', '/');
+                string baseRelativePath = Path.GetRelativePath(effectiveBaseDirectory, file).Replace('\\', '/');
+
+                if (collection.ExcludedDirectories?.Any(d => relativePath.StartsWith(d.TrimEnd('/') + "/", StringComparison.Ordinal)) == true)
+                {
+                    continue;
+                }
+
+                if (collection.Release is int)
+                {
+                    // The unified suite holds every dialect in one tree, so keep the generated tree
+                    // as tests/<dialect>/<file>, as it was when the suite had one directory per dialect.
+                    baseRelativePath = $"tests/{collection.Name}/{relativePath}";
+                }
 
                 PathOptions? pathOptions = collection.Options?.FirstOrDefault(fe => IsInPath(relativePath, fe.Path));
                 FileExclusions? fileExclusions = collection.Exclusions?.FirstOrDefault(fe => EqualsPath(fe.File, relativePath));
@@ -240,18 +254,54 @@ internal static class TestCaseGenerator
 
                 string json = File.ReadAllText(file);
                 using JsonDocument doc = JsonDocument.Parse(json);
-                if (doc.RootElement.ValueKind != JsonValueKind.Array)
+
+                // The unified layout is an object whose "tests" array holds the test cases, each
+                // with a "compatibility" range; the legacy layout is a bare array of test cases.
+                bool unified = collection.Release is int;
+
+                if (!unified && doc.RootElement.ValueKind != JsonValueKind.Array)
                 {
                     // Not a test file: a schema that other tests load by path (e.g. issue957-swagger.json).
                     continue;
                 }
 
+                JsonElement testCases = unified ? doc.RootElement.GetProperty("tests") : doc.RootElement;
+                string testCasesPointer = unified ? "#/tests" : "#";
+
                 int suiteIndex = 0;
-                foreach (JsonElement testSuiteElement in doc.RootElement.EnumerateArray())
+                foreach (JsonElement testSuiteElement in testCases.EnumerateArray())
                 {
+                    if (collection.Release is int release)
+                    {
+                        string? compatibility = testSuiteElement.TryGetProperty("compatibility", out JsonElement compatibilityElement)
+                            ? compatibilityElement.GetString()
+                            : null;
+
+                        if (!SuiteCompatibility.IsCompatible(compatibility, release))
+                        {
+                            suiteIndex++;
+                            continue;
+                        }
+
+                        bool isFormatAnnotation = testSuiteElement.TryGetProperty("tags", out JsonElement caseTags) &&
+                            caseTags.EnumerateArray().Any(t => t.ValueEquals("format-annotation"));
+
+                        // Where the dialect asserts format by default (draft4 to draft7 in this
+                        // implementation, which the specification allows), a "format-annotation" case
+                        // describes behaviour the implementation does not provide, so it does not apply.
+                        if (isFormatAnnotation && collection.FormatAssertedByDefault)
+                        {
+                            suiteIndex++;
+                            continue;
+                        }
+                    }
+
                     List<TestSpecification> testList = [];
                     string suiteName = testSuiteElement.GetProperty("description").GetString()!;
-                    string schemaPath = $"#/{suiteIndex}/schema";
+                    string schemaPath = $"{testCasesPointer}/{suiteIndex}/schema";
+                    string? externalSchemasPath = testSuiteElement.TryGetProperty("externalSchemas", out _)
+                        ? $"{testCasesPointer}/{suiteIndex}/externalSchemas"
+                        : null;
 
                     SuiteExclusions? suiteExclusions = null;
                     if (fileExclusions is FileExclusions fe)
@@ -296,7 +346,15 @@ internal static class TestCaseGenerator
                             validateFormat = true;
                         }
 
-                        testSuites.Add(new TestSuite(suiteName, schemaPath, testList, validateFormat));
+                        // In the unified layout, a "format-assertion" tag means the case expects
+                        // format to be asserted; "format-annotation" (or no tag) means the default.
+                        if (testSuiteElement.TryGetProperty("tags", out JsonElement tags) &&
+                            tags.EnumerateArray().Any(t => t.ValueEquals("format-assertion")))
+                        {
+                            validateFormat = true;
+                        }
+
+                        testSuites.Add(new TestSuite(suiteName, schemaPath, testList, validateFormat, externalSchemasPath));
                     }
 
                     suiteIndex++;
@@ -415,7 +473,7 @@ internal static class TestCaseGenerator
 
 public record TestGroup(string Name, string DriverSettingsKey, List<TestFile> Files, string? OutputDirectory = null, string? NamespacePrefix = null);
 public record TestFile(string BaseDirectory, string RelativePath, string NamespaceRelativePath, List<TestSuite> TestSuites, string? TfmCondition = null);
-public record TestSuite(string SuiteName, string SchemaPath, List<TestSpecification> TestSpecifications, bool ValidateFormat);
+public record TestSuite(string SuiteName, string SchemaPath, List<TestSpecification> TestSpecifications, bool ValidateFormat, string? ExternalSchemasPath = null);
 public record TestSpecification(string TestDescription, string Instance, bool Expectation);
 
 public class TestConfiguration
@@ -432,6 +490,9 @@ public class TestCollection
     public string? BaseDirectory { get; set; }
     public string? OutputDirectory { get; set; }
     public string? NamespacePrefix { get; set; }
+    public int? Release { get; set; }
+    public bool FormatAssertedByDefault { get; set; }
+    public List<string>? ExcludedDirectories { get; set; }
     public bool UseVirtualFile { get; set; }
     public List<PathOptions>? Options { get; set; }
     public List<FileExclusions>? Exclusions { get; set; }
@@ -461,4 +522,20 @@ public class TestExclusion
 {
     public string Name { get; set; }
     public string? Reason { get; set; }
+}
+
+/// <summary>
+/// Helpers for conditionally emitting generated source lines.
+/// </summary>
+internal static class StringBuilderExtensions
+{
+    /// <summary>
+    /// Appends a line only when the condition holds.
+    /// </summary>
+    /// <param name="builder">The builder.</param>
+    /// <param name="condition">Whether to append the line.</param>
+    /// <param name="line">Produces the line to append.</param>
+    /// <returns>The builder.</returns>
+    public static StringBuilder AppendLineIf(this StringBuilder builder, bool condition, Func<string> line)
+        => condition ? builder.AppendLine(line()) : builder;
 }

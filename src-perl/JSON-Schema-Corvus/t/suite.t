@@ -1,8 +1,9 @@
 # The JSON-Schema-Test-Suite (JSON_SCHEMA_TEST_SUITE, or the repository's submodule): every case of draft 4, 6, 7,
-# 2019-09 and 2020-12, required, optional and optional/format, as JSON text, as a parsed document, at the verbose
-# level through a collector, and as Perl data (decoded by JSON::PP), which must all give the expected verdict. Remote
-# references are served from the suite's remotes. As the other runners, draft4/optional/zeroTerminatedFloats.json is
-# left out (1.0 and 1 cannot be told apart there), and leap-second format cases are skipped. The Perl data is
+# 2019-09 and 2020-12 (one tree, validation/tests, required and optional, each case's compatibility saying which drafts
+# it applies to and its tags whether format is asserted), as JSON text, as a parsed document, at the verbose level
+# through a collector, and as Perl data (decoded by JSON::PP), which must all give the expected verdict. Each case's
+# externalSchemas are served to that case alone. As the other runners, draft4/optional/zero-terminated-floats.json is
+# left out (1.0 and 1 cannot be told apart there), and leap-second cases that assert format are skipped. The Perl data is
 # decoded with allow_bignum, so that big and precise numbers are Math::BigInt and Math::BigFloat, which are encoded
 # exactly.
 use strict;
@@ -12,28 +13,42 @@ use lib "$FindBin::Bin/lib";
 use File::Spec;
 use JSON::PP ();
 use Test::More;
-use SuiteSupport qw(suite_root read_cases remote_resolver);
+use SuiteSupport qw(suite_root read_cases compatible case_resolver);
 use JSON::Schema::Corvus;
 
 my $root = suite_root() or plan skip_all => 'the JSON-Schema-Test-Suite is not there (set JSON_SCHEMA_TEST_SUITE)';
 
-my %drafts = ('draft4' => 'draft4', 'draft6' => 'draft6', 'draft7' => 'draft7', 'draft2019-09' => 'draft2019-09',
-  'draft2020-12' => 'draft2020-12');
-my $excluded = 'draft4/optional/zeroTerminatedFloats.json';
-my $resolver = remote_resolver(File::Spec->catdir($root, 'remotes'));
+my %releases = ('draft4' => 4, 'draft6' => 6, 'draft7' => 7, 'draft2019-09' => 2019, 'draft2020-12' => 2020);
+my $excluded = 'draft4/optional/zero-terminated-floats.json';
+# Test cases left out by name (file and test description): the high-precision cases of optional/bignum.json. The
+# evaluator reads JSON into Perl values, and a number with a fraction or an exponent is a double, so it has at most
+# the precision of a double by the time the evaluator sees it (integers beyond 64 bits are Math::BigInt, exact). The
+# Perl data of the last case comes from JSON::PP, which reads 2^64 as a double even with allow_bignum (the JSON text
+# paths answer it, as t/api.t checks).
+my %excluded_cases = map { ("bignum.json|$_" => 1) } (
+  'just above the maximum is invalid',
+  'below the exclusive maximum is valid',
+  'above the exclusive minimum is valid',
+  'a slightly smaller decimal is invalid',
+  'a slightly larger decimal is invalid',
+  'distinct high-precision decimals are unique',
+  'arrays containing distinct decimals are unique',
+  'objects containing distinct decimals are unique',
+);
 my $decoder = JSON::PP->new->allow_nonref->allow_bignum->utf8;
 my $collector = JSON::Schema::Corvus::ResultsCollector->new('verbose');
 my ($total, $failed, $skipped, $files) = (0, 0, 0, 0);
 
-for my $draft (sort keys %drafts) {
-  for my $sub ('', 'optional', 'optional/format') {
-    my $directory = File::Spec->catdir($root, 'tests', $draft, split m{/}, $sub);
+my $tests = File::Spec->catdir($root, qw(validation tests));
+for my $draft (sort keys %releases) {
+  for my $sub ('', 'optional') {
+    my $directory = File::Spec->catdir($tests, split m{/}, $sub);
     opendir my $dh, $directory or next;
     for my $name (sort grep { /\.json\z/ } readdir $dh) {
       my $label = join '/', grep { length } $draft, $sub, $name;
       next if $label eq $excluded;
       $files++;
-      run_file(File::Spec->catfile($directory, $name), $label, $drafts{$draft}, $sub eq 'optional/format');
+      run_file(File::Spec->catfile($directory, $name), $label, $draft, $releases{$draft});
     }
   }
 }
@@ -45,11 +60,17 @@ sub fail_case {
 }
 
 sub run_file {
-  my ($path, $label, $dialect, $assert_format) = @_;
+  my ($path, $label, $dialect, $release) = @_;
   for my $group (@{ read_cases($path) }) {
+    next unless compatible($group->{compatibility}, $release);
+    my %tags = map { $_ => 1 } @{ $group->{tags} };
+    # The evaluator asserts format by default up to draft7, so a format-annotation case does not apply there.
+    next if $tags{'format-annotation'} && $release <= 7;
+    my $assert_format = $tags{'format-assertion'};
+    my $resolver = case_resolver($group->{external_schemas});
     my $validator = eval {
       JSON::Schema::Corvus->compile($group->{schema}, default_dialect => $dialect,
-        resolve_document => $resolver, ($assert_format ? (assert_format => 1) : ()));
+        ($resolver ? (resolve_document => $resolver) : ()), ($assert_format ? (assert_format => 1) : ()));
     };
     unless ($validator) {
       $total += @{ $group->{tests} };
@@ -57,6 +78,7 @@ sub run_file {
       next;
     }
     for my $test (@{ $group->{tests} }) {
+      next if $excluded_cases{ ($path =~ m{([^/\\]+)\z})[0] . "|$test->{description}" };
       my $what = "$label [$group->{description}] $test->{description}";
       if ($assert_format && $what =~ /leap second/i) {
         $skipped++;
@@ -86,7 +108,7 @@ sub run_file {
 
 diag sprintf 'JSON-Schema-Test-Suite: %d/%d passed (%d files, %d leap-second cases skipped), as JSON text, as a '
   . 'document, through a collector and as Perl data', $total - $failed, $total, $files, $skipped;
-ok $total >= 7000, "at least 7,000 cases ran ($total)";
+ok $total >= 8000, "at least 8,000 cases ran ($total)";
 is $failed, 0, 'every case gives the expected verdict';
 
 done_testing;

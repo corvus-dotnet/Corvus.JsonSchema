@@ -67,9 +67,9 @@ public class SuiteMinLengthValidation
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests/draft4/minLength.json",
-                "{\"minLength\": 2}",
+                "{ \"minLength\": 2 }",
                 "JsonSchemaTestSuite.Draft4.MinLength",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 optionalAsNullable: false,

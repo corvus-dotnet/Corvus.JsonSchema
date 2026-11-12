@@ -28,41 +28,49 @@ cjs: Any = importlib.import_module(
 suite_root = Path(os.environ.get("JSON_SCHEMA_TEST_SUITE", here.parents[2] / "JSON-Schema-Test-Suite"))
 directory = suite_root / "annotations" / "tests"
 DRAFTS = {
-    "draft4": (cjs.Dialect.DRAFT4, "4"),
-    "draft6": (cjs.Dialect.DRAFT6, "6"),
-    "draft7": (cjs.Dialect.DRAFT7, "7"),
-    "draft2019-09": (cjs.Dialect.DRAFT201909, "2019"),
-    "draft2020-12": (cjs.Dialect.DRAFT202012, "2020"),
+    "draft4": (cjs.Dialect.DRAFT4, 4),
+    "draft6": (cjs.Dialect.DRAFT6, 6),
+    "draft7": (cjs.Dialect.DRAFT7, 7),
+    "draft2019-09": (cjs.Dialect.DRAFT201909, 2019),
+    "draft2020-12": (cjs.Dialect.DRAFT202012, 2020),
 }
-ORDER = ["3", "4", "6", "7", "2019", "2020"]
 
 
-def compatible(draft: str, compat: str) -> bool:
-    level = ORDER.index(draft)
-    if compat.startswith("<="):
-        bound = compat[2:]
-        return bound in ORDER and level <= ORDER.index(bound)
-    return compat in ORDER and level >= ORDER.index(compat)
+def compatible(compatibility: str | None, release: int) -> bool:
+    """Whether a test case's compatibility (a comma-separated list of minimums, <= maximums and = releases, from the
+    smallest release to the largest) admits the release, by the algorithm of the suite's validation/README.md."""
+    if compatibility is None:
+        return True
+    valid = True
+    for constraint in compatibility.split(","):
+        op, version = ("", constraint)
+        if constraint.startswith("<="):
+            op, version = "<=", constraint[2:]
+        elif constraint.startswith("="):
+            op, version = "=", constraint[1:]
+        number = int(version.strip())
+        valid = release <= number if op == "<=" else release == number if op == "=" else release >= number
+        if release <= number:
+            break
+    return valid
 
 
-def resolve_remote(uri: str) -> Any:
-    prefix = "http://localhost:1234/"
-    if not uri.startswith(prefix):
-        return None
-    file = suite_root / "remotes" / uri[len(prefix) :]
-    return json.loads(file.read_text(encoding="utf-8")) if file.is_file() else None
+def resolver_for(group: dict[str, Any]) -> Any:
+    """A resolver serving a test case's externalSchemas at their retrieval URIs."""
+    schemas = group.get("externalSchemas")
+    return None if schemas is None else schemas.get
 
 
 def main() -> int:
     total = 0
     failed = 0
-    for draft, (dialect, compat_level) in DRAFTS.items():
+    for draft, (dialect, release) in DRAFTS.items():
         for file in sorted(directory.glob("*.json")):
             suite = json.loads(file.read_text(encoding="utf-8"))
             for group in suite["suite"]:
-                if "compatibility" in group and not compatible(compat_level, group["compatibility"]):
+                if not compatible(group.get("compatibility"), release):
                     continue
-                validator = cjs.compile(group["schema"], default_dialect=dialect, resolve_document=resolve_remote)
+                validator = cjs.compile(group["schema"], default_dialect=dialect, resolve_document=resolver_for(group))
                 for test in group["tests"]:
                     collector = cjs.JsonSchemaResultsCollector.create(cjs.ResultsLevel.VERBOSE)
                     validator.evaluate(test["instance"], collector)

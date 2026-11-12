@@ -14,31 +14,33 @@ namespace AdditionalSchemaTests.AdditionalDraft7.Repro478;
 public class SuiteGenerationErrorWithRegularExpressions
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestDataVersion02LanguageEnWordsAesEc()
     {
-        using var doc = JsonDocument.Parse("{\r\n          \"version\": \"0.2\",\r\n          \"language\": \"en\",\r\n          \"words\": [\r\n            \"aes\",\r\n            \"ecies\",\r\n            \"eciespy\",\r\n            \"fastapi\",\r\n            \"secp256k1\",\r\n            \"Spacefile\",\r\n            \"uvicorn\"\r\n          ],\r\n          \"flagWords\": [\r\n            \"hte\"\r\n          ],\r\n          \"ignorePaths\": [\r\n            \".git\",\r\n            \".github\",\r\n            \".gitignore\",\r\n            \".cspell.jsonc\",\r\n            \".pre-commit-config.yaml\",\r\n            \"LICENSE\",\r\n            \"poetry.lock\"\r\n          ]\r\n        }");
+        using var doc = JsonDocument.Parse("{\n          \"version\": \"0.2\",\n          \"language\": \"en\",\n          \"words\": [\n            \"aes\",\n            \"ecies\",\n            \"eciespy\",\n            \"fastapi\",\n            \"secp256k1\",\n            \"Spacefile\",\n            \"uvicorn\"\n          ],\n          \"flagWords\": [\n            \"hte\"\n          ],\n          \"ignorePaths\": [\n            \".git\",\n            \".github\",\n            \".gitignore\",\n            \".cspell.jsonc\",\n            \".pre-commit-config.yaml\",\n            \"LICENSE\",\n            \"poetry.lock\"\n          ]\n        }");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -57,10 +59,9 @@ public class SuiteGenerationErrorWithRegularExpressions
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

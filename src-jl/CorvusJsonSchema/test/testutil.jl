@@ -73,25 +73,38 @@ expect_valid(v::Validator, instance::String, want::Bool) =
 # The plan of the root node of a validator's program.
 root_body(v::Validator) = C.plan(v.program, v.program.root).body
 
-# Resolves the suite's remotes (http://localhost:1234/...) from its remotes directory.
-function remote_resolver(root::String)
-    remotes = joinpath(root, "remotes")
-    cache = Dict{String,Union{Nothing,Document}}()
-    guard = ReentrantLock()
-    return function (uri::String)
-        prefix = "http://localhost:1234/"
-        startswith(uri, prefix) || return nothing
-        rest = uri[ncodeunits(prefix)+1:end]
-        return lock(guard) do
-            get!(cache, rest) do
-                path = joinpath(remotes, split(rest, '/')...)
-                isfile(path) || return nothing
-                try
-                    parse_document(read(path))
-                catch
-                    nothing
-                end
-            end
+# Reports whether a test case's compatibility (a comma-separated list of minimums, <= maximums and = releases, from the
+# smallest release to the largest) admits the release, by the algorithm of the suite's validation/README.md. A test
+# case without one is compatible with every release.
+function suite_compatible(d::Document, test_case::Int, release::Int)
+    node = member(d, test_case, "compatibility")
+    node < 0 && return true
+    valid = true
+    for constraint in split(text_of(d, node), ',')
+        op, version = if startswith(constraint, "<=")
+            "<=", constraint[3:end]
+        elseif startswith(constraint, "=")
+            "=", constraint[2:end]
+        else
+            "", constraint
         end
+        number = parse(Int, strip(version))
+        valid = op == "<=" ? release <= number : op == "=" ? release == number : release >= number
+        release <= number && break
     end
+    return valid
+end
+
+# Reports whether a test case has a tag.
+function has_tag(d::Document, test_case::Int, tag::String)
+    tags = member(d, test_case, "tags")
+    return tags >= 0 && any(t -> text_of(d, t) == tag, items_of(d, tags))
+end
+
+# A resolver serving a test case's externalSchemas at their retrieval URIs, or nothing if it has none.
+function case_resolver(d::Document, test_case::Int)
+    node = member(d, test_case, "externalSchemas")
+    node < 0 && return nothing
+    schemas = Dict{String,Document}(name => parse_document(json_of(d, value)) for (name, value) in members_of(d, node))
+    return (uri::String) -> get(schemas, uri, nothing)
 end

@@ -172,8 +172,8 @@ jobs:
       - name: Test
         run: |
           python -m pytest -q src-py/corvus-json-schema-rs/tests
-          python src-py/corvus-json-schema/tests/suite.py --impl corvus_json_schema_rs --exclude draft4/optional/zeroTerminatedFloats.json
-          python src-py/corvus-json-schema/tests/suite.py --impl corvus_json_schema_rs --collect verbose --exclude draft4/optional/zeroTerminatedFloats.json
+          python src-py/corvus-json-schema/tests/suite.py --impl corvus_json_schema_rs --exclude draft4/optional/zero-terminated-floats.json
+          python src-py/corvus-json-schema/tests/suite.py --impl corvus_json_schema_rs --collect verbose --exclude draft4/optional/zero-terminated-floats.json
           python src-py/corvus-json-schema/tests/annotations.py --impl corvus_json_schema_rs
           CORVUS_IMPL=corvus_json_schema_rs python -m pytest -q src-py/corvus-json-schema/tests/test_results.py
 

@@ -69,7 +69,9 @@ internal static class EvaluatorTestCaseGenerator
                     .AppendLine()
                     .AppendLine($"namespace {namespaceValue};");
 
-                string remotesDirectory = Path.Combine(testFile.BaseDirectory, "remotes");
+                // The schema is registered as a virtual document under the suite's tests directory; any
+                // other documents it references come from the test case's own externalSchemas.
+                string remotesDirectory = Path.Combine(testFile.BaseDirectory, "validation", "tests");
 
                 foreach (TestSuite testSuite in testFile.TestSuites)
                 {
@@ -126,7 +128,8 @@ internal static class EvaluatorTestCaseGenerator
                         .AppendLine($"                {SymbolDisplay.FormatLiteral(EmbeddedLiteral.ForwardSlash(remotesDirectory), true)},")
                         .AppendLine($"                {SymbolDisplay.FormatLiteral(testGroup.DefaultVocabulary, true)},")
                         .AppendLine($"                validateFormat: {(testSuite.ValidateFormat ? "true" : "false")},")
-                        .AppendLine("                Assembly.GetExecutingAssembly());")
+                        .AppendLine(testSuite.ExternalSchemas is null ? "                Assembly.GetExecutingAssembly());" : "                Assembly.GetExecutingAssembly(),")
+                        .AppendLineIf(testSuite.ExternalSchemas is not null, () => $"                externalSchemas: {SymbolDisplay.FormatLiteral(EmbeddedLiteral.Json(testSuite.ExternalSchemas!), true)});")
                         .AppendLine("        }")
                         .AppendLine("    }")
                         .AppendLine("}");

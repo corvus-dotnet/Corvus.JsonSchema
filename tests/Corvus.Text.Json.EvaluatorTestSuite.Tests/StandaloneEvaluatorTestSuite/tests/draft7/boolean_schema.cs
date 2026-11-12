@@ -63,7 +63,7 @@ public class SuiteBooleanSchemaTrue
     [TestMethod]
     public void TestObjectIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"bar\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"bar\" }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -98,7 +98,7 @@ public class SuiteBooleanSchemaTrue
                 "tests/draft7/boolean_schema.json",
                 "true",
                 "StandaloneEvaluatorTestSuite.Draft7.BooleanSchema",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -163,7 +163,7 @@ public class SuiteBooleanSchemaFalse
     [TestMethod]
     public void TestObjectIsInvalid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"bar\"}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"bar\" }");
         Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -198,7 +198,7 @@ public class SuiteBooleanSchemaFalse
                 "tests/draft7/boolean_schema.json",
                 "false",
                 "StandaloneEvaluatorTestSuite.Draft7.BooleanSchema",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "http://json-schema.org/draft-07/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

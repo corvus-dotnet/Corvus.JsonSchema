@@ -14,26 +14,28 @@ namespace AdditionalSchemaTests.AdditionalDraft202012.AllOfInlineTupleWithUneval
 public class SuiteAnInlineTupleWithUnevaluatedPropertiesComposedAsWithAllOf
 {
     private static Fixture? s_fixture;
+
     [ClassInitialize]
-    public static async Task ClassInit(TestContext context)
+    public static async Task ClassInit(TestContext _)
     {
         s_fixture = new Fixture();
-        await s_fixture!.InitializeAsync();
+        await s_fixture.InitializeAsync();
     }
 
     [ClassCleanup]
-    public static async Task ClassCleanup()
+    public static void ClassCleanupMethod()
     {
         if (s_fixture is not null)
         {
-            await s_fixture!.DisposeAsync();
+            s_fixture.Dispose();
+            s_fixture = null;
         }
     }
 
     [TestMethod]
     public void TestDataFoo32()
     {
-        using var doc = JsonDocument.Parse("[\r\n          \"foo\",\r\n          32\r\n        ]");
+        using var doc = JsonDocument.Parse("[\n          \"foo\",\n          32\n        ]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -41,7 +43,7 @@ public class SuiteAnInlineTupleWithUnevaluatedPropertiesComposedAsWithAllOf
     [TestMethod]
     public void TestDataFoo32True()
     {
-        using var doc = JsonDocument.Parse("[\r\n          \"foo\",\r\n          32,\r\n          true\r\n        ]");
+        using var doc = JsonDocument.Parse("[\n          \"foo\",\n          32,\n          true\n        ]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
@@ -49,12 +51,12 @@ public class SuiteAnInlineTupleWithUnevaluatedPropertiesComposedAsWithAllOf
     [TestMethod]
     public void TestDataFoo3233()
     {
-        using var doc = JsonDocument.Parse("[\r\n          \"foo\",\r\n          32,\r\n          33\r\n        ]");
+        using var doc = JsonDocument.Parse("[\n          \"foo\",\n          32,\n          33\n        ]");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture
+    public class Fixture : IDisposable
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -73,10 +75,9 @@ public class SuiteAnInlineTupleWithUnevaluatedPropertiesComposedAsWithAllOf
                 useImplicitOperatorString: false);
         }
 
-        public Task DisposeAsync()
+        public void Dispose()
         {
             _driver?.Dispose();
-            return Task.CompletedTask;
         }
     }
 }

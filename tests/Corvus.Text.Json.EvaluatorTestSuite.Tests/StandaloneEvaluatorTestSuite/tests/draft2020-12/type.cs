@@ -33,13 +33,6 @@ public class SuiteIntegerTypeMatchesIntegers
     }
 
     [TestMethod]
-    public void TestAFloatWithZeroFractionalPartIsAnInteger()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("1.0");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
     public void TestAFloatIsNotAnInteger()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("1.1");
@@ -96,9 +89,53 @@ public class SuiteIntegerTypeMatchesIntegers
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/type.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"integer\"\n        }",
+                "{\n                \"type\": \"integer\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "https://json-schema.org/draft/2020-12/schema",
+                validateFormat: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteIntegerTypeMatchesIntegers6
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAFloatWithZeroFractionalPartIsAnInteger()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("1.0");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    public class Fixture
+    {
+        public CompiledEvaluator Evaluator { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
+                "tests/draft2020-12/type.json",
+                "{\n                \"type\": \"integer\"\n            }",
+                "StandaloneEvaluatorTestSuite.Draft202012.Type",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -133,7 +170,7 @@ public class SuiteNumberTypeMatchesNumbers
     }
 
     [TestMethod]
-    public void TestAFloatWithZeroFractionalPartIsANumberAndAnInteger()
+    public void TestAFloatWithZeroFractionalPartIsANumber()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("1.0");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
@@ -196,9 +233,9 @@ public class SuiteNumberTypeMatchesNumbers
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/type.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"number\"\n        }",
+                "{\n                \"type\": \"number\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -296,9 +333,9 @@ public class SuiteStringTypeMatchesStrings
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/type.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"string\"\n        }",
+                "{\n                \"type\": \"string\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -382,9 +419,9 @@ public class SuiteObjectTypeMatchesObjects
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/type.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"object\"\n        }",
+                "{\n                \"type\": \"object\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -468,9 +505,9 @@ public class SuiteArrayTypeMatchesArrays
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/type.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"array\"\n        }",
+                "{\n                \"type\": \"array\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -575,9 +612,9 @@ public class SuiteBooleanTypeMatchesBooleans
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/type.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"boolean\"\n        }",
+                "{\n                \"type\": \"boolean\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -682,9 +719,60 @@ public class SuiteNullTypeMatchesOnlyTheNullObject
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/type.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": \"null\"\n        }",
+                "{\n                \"type\": \"null\"\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
+                "https://json-schema.org/draft/2020-12/schema",
+                validateFormat: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteTypeAsArrayWithOneItem
+{
+    private static Fixture? s_fixture;
+
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestStringIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"foo\"");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestNumberIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("123");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    public class Fixture
+    {
+        public CompiledEvaluator Evaluator { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
+                "tests/draft2020-12/type.json",
+                "{\n                \"type\": [\"string\"]\n            }",
+                "StandaloneEvaluatorTestSuite.Draft202012.Type",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -768,60 +856,9 @@ public class SuiteMultipleTypesCanBeSpecifiedInAnArray
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/type.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": [\"integer\", \"string\"]\n        }",
+                "{\n                \"type\": [\"integer\", \"string\"]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
-                "https://json-schema.org/draft/2020-12/schema",
-                validateFormat: false,
-                Assembly.GetExecutingAssembly());
-        }
-    }
-}
-
-[TestCategory("Draft202012")]
-[TestClass]
-public class SuiteTypeAsArrayWithOneItem
-{
-    private static Fixture? s_fixture;
-
-    [ClassInitialize]
-    public static async Task ClassInit(TestContext _)
-    {
-        s_fixture = new Fixture();
-        await s_fixture.InitializeAsync();
-    }
-
-    [ClassCleanup]
-    public static void ClassCleanupMethod()
-    {
-        s_fixture = null;
-    }
-
-    [TestMethod]
-    public void TestStringIsValid()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"foo\"");
-        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [TestMethod]
-    public void TestNumberIsInvalid()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("123");
-        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    public class Fixture
-    {
-        public CompiledEvaluator Evaluator { get; private set; }
-
-        public async Task InitializeAsync()
-        {
-            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
-                "tests/draft2020-12/type.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": [\"string\"]\n        }",
-                "StandaloneEvaluatorTestSuite.Draft202012.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -851,14 +888,14 @@ public class SuiteTypeArrayOrObject
     [TestMethod]
     public void TestArrayIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1,2,3]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2, 3]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestObjectIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 123}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 123 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -891,9 +928,9 @@ public class SuiteTypeArrayOrObject
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/type.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": [\"array\", \"object\"]\n        }",
+                "{\n                \"type\": [\"array\", \"object\"]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -923,14 +960,14 @@ public class SuiteTypeArrayObjectOrNull
     [TestMethod]
     public void TestArrayIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1,2,3]");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2, 3]");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
     [TestMethod]
     public void TestObjectIsValid()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 123}");
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 123 }");
         Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
@@ -963,9 +1000,9 @@ public class SuiteTypeArrayObjectOrNull
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests/draft2020-12/type.json",
-                "{\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n            \"type\": [\"array\", \"object\", \"null\"]\n        }",
+                "{\n                \"type\": [\"array\", \"object\", \"null\"]\n            }",
                 "StandaloneEvaluatorTestSuite.Draft202012.Type",
-                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "../../../../../JSON-Schema-Test-Suite/validation/tests",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
