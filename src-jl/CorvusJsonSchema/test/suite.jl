@@ -52,8 +52,6 @@ mutable struct SuiteRunner
     filter::String
     total::Int
     failures::Vector{String}
-    # Failing leap second cases that assert format, which are not counted as failures.
-    skipped::Vector{String}
     areas::Vector{String}
     passed::Dict{String,Int}
     counted::Dict{String,Int}
@@ -96,12 +94,6 @@ function run_suite_file!(r::SuiteRunner, dialect::Dialect, release::Int, file::S
                 r.passed[area] += 1
                 continue
             end
-            # Leap seconds are skipped where format is asserted until this engine has the leap-second rule.
-            if assert_format && occursin("leap second", lowercase(test_description))
-                r.passed[area] += 1
-                push!(r.skipped, "$label [$description] $test_description")
-                continue
-            end
             push!(r.failures, "$label [$description] $test_description: expected $expected, got $actual")
         end
     end
@@ -114,7 +106,7 @@ end
     if !isdir(tests)
         error("JSON-Schema-Test-Suite not found at $root (set JSON_SCHEMA_TEST_SUITE, or check out the submodule)")
     end
-    runner = SuiteRunner(get(ENV, "SUITE_FILTER", ""), 0, String[], String[], String[], Dict{String,Int}(),
+    runner = SuiteRunner(get(ENV, "SUITE_FILTER", ""), 0, String[], String[], Dict{String,Int}(),
         Dict{String,Int}())
     draft_filter = get(ENV, "SUITE_DRAFT", "")
     for (name, dialect, release) in SUITE_DRAFTS
@@ -128,9 +120,6 @@ end
         end
     end
     foreach(println, runner.failures)
-    for line in runner.skipped
-        println("skipped: ", line)
-    end
     for area in runner.areas
         println(rpad(area, 34), " ", lpad(runner.passed[area], 5), "/", runner.counted[area])
     end
