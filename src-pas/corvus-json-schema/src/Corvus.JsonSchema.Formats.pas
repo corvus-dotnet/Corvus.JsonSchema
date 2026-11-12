@@ -476,11 +476,21 @@ begin
   else Result := D <= MonthDays[M];
 end;
 
-function TimeOK(const S: TBytes; From, Stop: Int32): Boolean;
+const
+  // What FullTime gives for a text that is not a time, and for a time whose second is not 60.
+  NotATime = Low(Int32);
+  NotALeapSecond = High(Int32);
+  MinutesPerDay = 24 * 60;
+  LastMinuteOfDay = 23 * 60 + 59;
+
+// FullTime reads an RFC 3339 full-time. It gives NotATime for a text that is not one, NotALeapSecond for one whose
+// second is not 60, and for a leap second the minute it falls on in UTC, counted from the midnight that starts the day
+// as written (negative on the day before, a day or more on the day after).
+function FullTime(const S: TBytes; From, Stop: Int32): Int32;
 var
-  H, Mi, Sec, I, Start, OH, OM, Sign, Utc: Int32;
+  H, Mi, Sec, I, Start, OH, OM, Sign: Int32;
 begin
-  Result := False;
+  Result := NotATime;
   if (Stop - From < 9) or (S[From + 2] <> Ord(':')) or (S[From + 5] <> Ord(':')) then Exit;
   H := DigitsValue(S, From, From + 2);
   Mi := DigitsValue(S, From + 3, From + 5);
@@ -508,20 +518,78 @@ begin
     if (OH < 0) or (OM < 0) or (OH > 23) or (OM > 59) then Exit;
   end else Exit;
   if (H > 23) or (Mi > 59) or (Sec > 60) then Exit;
-  if Sec = 60 then begin
-    // A leap second is only valid at 23:59:60 UTC.
-    Utc := (H * 60 + Mi + Sign * (OH * 60 + OM)) mod 1440;
-    if Utc < 0 then Inc(Utc, 1440);
-    Result := Utc = 23 * 60 + 59;
-    Exit;
-  end;
-  Result := True;
+  if Sec = 60 then Result := H * 60 + Mi + Sign * (OH * 60 + OM)
+  else Result := NotALeapSecond;
 end;
 
-function DateTimeOK(const S: TBytes; From, Stop: Int32): Boolean;
+// FloorMod is the remainder of a division rounded down, which is never negative for a positive divisor.
+function FloorMod(A, N: Int32): Int32;
 begin
-  Result := (Stop - From > 11) and ((S[From + 10] = Ord('T')) or (S[From + 10] = Ord('t'))) and
-    DateOK(S, From, From + 10) and TimeOK(S, From + 11, Stop);
+  Result := A mod N;
+  if Result < 0 then Inc(Result, N);
+end;
+
+// A leap second is a valid time whenever it is 23:59 in UTC: a time has no date.
+function TimeOK(const S: TBytes; From, Stop: Int32): Boolean;
+var
+  Utc: Int32;
+begin
+  Utc := FullTime(S, From, Stop);
+  Result := (Utc = NotALeapSecond) or ((Utc <> NotATime) and (FloorMod(Utc, MinutesPerDay) = LastMinuteOfDay));
+end;
+
+// DaysFromCivil is the days from 1970-01-01 to a date of the proleptic Gregorian calendar (Howard Hinnant's
+// algorithm).
+function DaysFromCivil(Year, Month, Day: Int32): Int32;
+var
+  Y, Era, YearOfEra, DayOfYear, DayOfEra, M: Int32;
+begin
+  Y := Year;
+  if Month <= 2 then Dec(Y);
+  if Y >= 0 then Era := Y div 400 else Era := (Y - 399) div 400;
+  YearOfEra := Y - Era * 400;
+  if Month <= 2 then M := Month + 9 else M := Month - 3;
+  DayOfYear := (153 * M + 2) div 5 + Day - 1;
+  DayOfEra := YearOfEra * 365 + YearOfEra div 4 - YearOfEra div 100 + DayOfYear;
+  Result := Era * 146097 + DayOfEra - 719468;
+end;
+
+const
+  // The days that ended with a leap second (IERS), as year, month and day.
+  LeapSecondDates: array[0..26, 0..2] of Int32 = (
+    (1972, 6, 30), (1972, 12, 31), (1973, 12, 31), (1974, 12, 31), (1975, 12, 31), (1976, 12, 31),
+    (1977, 12, 31), (1978, 12, 31), (1979, 12, 31), (1981, 6, 30), (1982, 6, 30), (1983, 6, 30),
+    (1985, 6, 30), (1987, 12, 31), (1989, 12, 31), (1990, 12, 31), (1992, 6, 30), (1993, 6, 30),
+    (1994, 6, 30), (1995, 12, 31), (1997, 6, 30), (1998, 12, 31), (2005, 12, 31), (2008, 12, 31),
+    (2012, 6, 30), (2015, 6, 30), (2016, 12, 31));
+
+// A date, T and a time. A leap second is valid only at 23:59:60 UTC on a day that ended with one, which may be the
+// day before or after the date as written.
+function DateTimeOK(const S: TBytes; From, Stop: Int32): Boolean;
+var
+  Utc, Shift, Day, Y, M, D, I: Int32;
+begin
+  Result := False;
+  if (Stop - From <= 11) or ((S[From + 10] <> Ord('T')) and (S[From + 10] <> Ord('t'))) or
+    not DateOK(S, From, From + 10) then Exit;
+  Utc := FullTime(S, From + 11, Stop);
+  if Utc = NotALeapSecond then begin
+    Result := True;
+    Exit;
+  end;
+  if (Utc = NotATime) or (FloorMod(Utc, MinutesPerDay) <> LastMinuteOfDay) then Exit;
+  if Utc < 0 then Shift := -1
+  else if Utc >= MinutesPerDay then Shift := 1
+  else Shift := 0;
+  Y := DigitsValue(S, From, From + 4);
+  M := DigitsValue(S, From + 5, From + 7);
+  D := DigitsValue(S, From + 8, From + 10);
+  Day := DaysFromCivil(Y, M, D) + Shift;
+  for I := 0 to High(LeapSecondDates) do
+    if DaysFromCivil(LeapSecondDates[I, 0], LeapSecondDates[I, 1], LeapSecondDates[I, 2]) = Day then begin
+      Result := True;
+      Exit;
+    end;
 end;
 
 const

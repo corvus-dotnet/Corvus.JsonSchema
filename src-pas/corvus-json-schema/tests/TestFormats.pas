@@ -7,8 +7,7 @@ program TestFormats;
 // validation/tests/optional/format-*.json), run as suite_test.go of the Go module runs them: for draft 4, 6, 7,
 // 2019-09 and 2020-12, each with the formats and the host name rules of its dialect, every case its compatibility
 // admits but those that expect format to be an annotation. A value that is not a string is valid for every format, and so is every value for
-// a format the dialect does not know. A case that fails and whose description contains "leap second" is counted as
-// skipped and not as a failure, exactly as in the Go runner. No case is skipped before it has run.
+// a format the dialect does not know. Every case that runs must pass.
 //
 // The second part is the cases of the Go tests that exercise formats.go directly: TestUnicodeFormatsUseUnicode17 and
 // BenchmarkUnicodeFormats of unicode_test.go, and the format and content cases of api_test.go.
@@ -306,31 +305,13 @@ begin
   for I := 0 to High(CodePoints) do AppendRune(Result, CodePoints[I]);
 end;
 
-// ContainsLower reports whether the text, with its letters A to Z in lower case, contains the other text.
-function ContainsLower(const S, Sub: UTF8String): Boolean;
-var
-  Lower: UTF8String;
-  I, J: Int32;
-begin
-  Lower := AsciiLower(S);
-  for I := 1 to Length(Lower) - Length(Sub) + 1 do begin
-    J := 1;
-    while (J <= Length(Sub)) and (Lower[I + J - 1] = Sub[J]) do Inc(J);
-    if J > Length(Sub) then begin
-      Result := True;
-      Exit;
-    end;
-  end;
-  Result := False;
-end;
-
 // ---------------------------------------------------------------------------------------------------------------------
 // Counts
 
 type
   TTally = record
     Name: UTF8String;
-    Run, Passed, Skipped, Failed: Int32;
+    Run, Passed, Failed: Int32;
   end;
 
 var
@@ -339,7 +320,6 @@ var
   SuiteTotal: Int32 = 0;
   SuiteRun: Int32 = 0;
   SuitePassed: Int32 = 0;
-  SuiteSkipped: Int32 = 0;
   SuiteFailed: Int32 = 0;
   SuiteNotFormat: Int32 = 0;
   SuiteFiles: Int32 = 0;
@@ -364,7 +344,6 @@ begin
   Tallies[Result].Name := Name;
   Tallies[Result].Run := 0;
   Tallies[Result].Passed := 0;
-  Tallies[Result].Skipped := 0;
   Tallies[Result].Failed := 0;
 end;
 
@@ -555,11 +534,6 @@ begin
       if Actual = Expected then begin
         Inc(SuitePassed);
         Inc(Tallies[T].Passed);
-      end else if ContainsLower(TestName, 'leap second') then begin
-        // Leap seconds are skipped where format is asserted, as in the Go and C# runners.
-        Inc(SuiteSkipped);
-        Inc(Tallies[T].Skipped);
-        WriteLn('skipped: ', FileLabel, ' [', GroupName, '] ', TestName);
       end else begin
         Inc(SuiteFailed);
         Inc(Tallies[T].Failed);
@@ -673,6 +647,41 @@ begin
     Move(S[1], Result[At], Length(S));
     Inc(At, Length(S));
   end;
+end;
+
+// TestLeapSeconds checks that a leap second is a valid date-time only at 23:59:60 UTC on a day that ended with one, in
+// whatever offset it is written, and a valid time whenever it is 23:59 in UTC: the cases of the Go module's test.
+procedure TestLeapSeconds;
+
+  procedure Expect(Kind: TFormatKind; const Text: UTF8String; Want: Boolean);
+  begin
+    Check(FormatKindName(Kind) + ' ' + Text, CheckKind(Kind, Text, False), Want);
+  end;
+
+begin
+  Expect(FormatKindDateTime, '1998-12-31T23:59:60Z', True);
+  Expect(FormatKindDateTime, '1998-12-31T15:59:60.123-08:00', True);
+  Expect(FormatKindDateTime, '1972-06-30T23:59:60Z', True);
+  Expect(FormatKindDateTime, '2016-12-31T23:59:60z', True);
+  Expect(FormatKindDateTime, '2017-01-01T00:59:60+01:00', True);
+  Expect(FormatKindDateTime, '1998-12-31T00:29:60-23:30', True);
+  Expect(FormatKindDateTime, '1999-01-01T00:29:60+00:30', True);
+  Expect(FormatKindDateTime, '1998-12-30T23:59:60-24:00', False);
+  Expect(FormatKindDateTime, '1998-12-31T23:59:60+00:00', True);
+  Expect(FormatKindDateTime, '1999-12-31T23:59:60Z', False);
+  Expect(FormatKindDateTime, '2017-12-31T23:59:60Z', False);
+  Expect(FormatKindDateTime, '1998-12-31T23:58:60Z', False);
+  Expect(FormatKindDateTime, '1998-12-31T22:59:60Z', False);
+  Expect(FormatKindDateTime, '1998-12-31T23:59:61Z', False);
+  Expect(FormatKindDateTime, '2016-12-31T22:59:60-01:00', True);
+  Expect(FormatKindDateTime, '2016-12-31T00:00:60Z', False);
+  Expect(FormatKindDateTime, '1998-12-31T23:59:60+23:59', False);
+  Expect(FormatKindDateTime, '1999-01-01T23:58:60+23:59', True);
+  Expect(FormatKindDateTime, '1998-12-31T00:00:60-23:59', True);
+  Expect(FormatKindTime, '23:59:60Z', True);
+  Expect(FormatKindTime, '15:59:60-08:00', True);
+  Expect(FormatKindTime, '00:29:60-23:30', True);
+  Expect(FormatKindTime, '23:58:60Z', False);
 end;
 
 // TestUnifiedSuiteFormats checks the cases of the unified JSON-Schema-Test-Suite that the format checks got wrong (the
@@ -1037,6 +1046,7 @@ begin
   TestNumbers;
   TestUnicodeFormatsUseUnicode17;
   TestUnifiedSuiteFormats;
+  TestLeapSeconds;
   TestUnicodeFormatStrings;
   TestALongStringIsNotAnInternationalizedHostName;
   TestTheLongestHostNames;
@@ -1044,13 +1054,13 @@ begin
   if Length(NumbersPath) <> 0 then RunNumbers(NumbersPath);
 
   WriteLn;
-  WriteLn('JSON-Schema-Test-Suite format cases, by format (run, passed, skipped, failed):');
+  WriteLn('JSON-Schema-Test-Suite format cases, by format (run, passed, failed):');
   for I := 0 to High(Tallies) do begin
     WriteLn('  ', Tallies[I].Name, ': ', Tallies[I].Run, ' run, ', Tallies[I].Passed, ' passed, ',
-      Tallies[I].Skipped, ' skipped, ', Tallies[I].Failed, ' failed');
+      Tallies[I].Failed, ' failed');
   end;
   WriteLn('JSON-Schema-Test-Suite: ', SuiteFiles, ' files, ', SuiteTotal, ' cases, ', SuiteRun, ' run, ',
-    SuitePassed, ' passed, ', SuiteSkipped, ' skipped (leap second), ', SuiteFailed, ' failed, ', SuiteNotFormat,
+    SuitePassed, ' passed, ', SuiteFailed, ' failed, ', SuiteNotFormat,
     ' not format cases');
   WriteLn('Other checks: ', Checks, ' run, ', Checks - Failures, ' passed, ', Failures, ' failed');
   if (Length(VectorsPath) <> 0) or (Length(NumbersPath) <> 0) then begin
