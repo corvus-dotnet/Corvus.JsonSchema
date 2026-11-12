@@ -157,10 +157,10 @@ val is_date : Bytes.t -> int -> int -> bool
 (** An RFC 3339 full-date. *)
 
 val is_time : Bytes.t -> int -> int -> bool
-(** An RFC 3339 full-time. A leap second is valid only at 23:59:60 UTC. *)
+(** An RFC 3339 full-time. A leap second is valid whenever it is 23:59 in UTC. *)
 
 val is_date_time : Bytes.t -> int -> int -> bool
-(** An RFC 3339 date-time. *)
+(** An RFC 3339 date-time. A leap second is valid only at 23:59:60 UTC on a day that ended with one. *)
 
 val is_duration : Bytes.t -> int -> int -> bool
 (** An ISO 8601 duration: P then weeks, or date parts in order then an optional time, or a time. *)

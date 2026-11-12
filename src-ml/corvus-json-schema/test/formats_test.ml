@@ -4,8 +4,7 @@
    validation/tests/optional/format-*.json), run as suite_test.go of the Go module runs them: for draft 4, 6, 7, 2019-09
    and 2020-12, each with the formats and the host name rules of its dialect, every case its compatibility admits but
    those that expect format to be an annotation. A value that is not a string is valid for every format, and so is every value for
-   a format the dialect does not know. A case that fails and whose description contains "leap second" is counted as
-   skipped and not as a failure, exactly as in the Go runner. No case is skipped before it has run.
+   a format the dialect does not know. Every case that runs must pass.
 
    The second part is the cases of the Go tests that exercise formats.go directly: TestUnicodeFormatsUseUnicode17 and
    BenchmarkUnicodeFormats of unicode_test.go, and the format and content cases of api_test.go.
@@ -204,20 +203,10 @@ let u code_points =
   List.iter (add_rune out) code_points;
   Buffer.contents out
 
-(* contains_lower reports whether the text, with its letters A to Z in lower case, contains the other text. *)
-let contains_lower s sub =
-  let lower = String.lowercase_ascii s in
-  let n = String.length sub in
-  let found = ref false in
-  for i = 0 to String.length lower - n do
-    if String.sub lower i n = sub then found := true
-  done;
-  !found
-
 (* ------------------------------------------------------------------------------------------------------------------ *)
 (* Counts *)
 
-type tally = { mutable run : int; mutable passed : int; mutable skipped : int; mutable failed : int }
+type tally = { mutable run : int; mutable passed : int; mutable failed : int }
 
 (* The cases of the suite by format, in the order the formats were first seen. *)
 let tallies : (string * tally) list ref = ref []
@@ -226,7 +215,7 @@ let tally_of name =
   match List.assoc_opt name !tallies with
   | Some tally -> tally
   | None ->
-      let tally = { run = 0; passed = 0; skipped = 0; failed = 0 } in
+      let tally = { run = 0; passed = 0; failed = 0 } in
       tallies := !tallies @ [ (name, tally) ];
       tally
 
@@ -234,7 +223,6 @@ let tally_of name =
 let suite_total = ref 0
 let suite_run = ref 0
 let suite_passed = ref 0
-let suite_skipped = ref 0
 let suite_failed = ref 0
 let suite_not_format = ref 0
 let suite_files = ref 0
@@ -327,12 +315,6 @@ let run_suite_file path file_label dialect release =
                         incr suite_passed;
                         tally.passed <- tally.passed + 1;
                         Check.check "" true
-                      end
-                      else if contains_lower test_name "leap second" then begin
-                        (* Leap seconds are skipped where format is asserted, as in the Go and C# runners. *)
-                        incr suite_skipped;
-                        tally.skipped <- tally.skipped + 1;
-                        Printf.printf "skipped: %s [%s] %s\n" file_label group_name test_name
                       end
                       else begin
                         incr suite_failed;
@@ -449,6 +431,37 @@ let test_content () =
   decode "QU-D" false "";
   decode "QU_D" false "";
   decode "Q=JD" false ""
+
+(* A leap second is a valid date-time only at 23:59:60 UTC on a day that ended with one, in whatever offset it is
+   written, and a valid time whenever it is 23:59 in UTC. The cases of the Go module's test. *)
+let test_leap_seconds () =
+  let run f text = f (Bytes.of_string text) 0 (String.length text) in
+  List.iter
+    (fun (text, want) -> check ("date-time " ^ text) (run Formats.is_date_time text) want)
+    [
+      ("1998-12-31T23:59:60Z", true);
+      ("1998-12-31T15:59:60.123-08:00", true);
+      ("1972-06-30T23:59:60Z", true);
+      ("2016-12-31T23:59:60z", true);
+      ("2017-01-01T00:59:60+01:00", true);
+      ("1998-12-31T00:29:60-23:30", true);
+      ("1999-01-01T00:29:60+00:30", true);
+      ("1998-12-30T23:59:60-24:00", false);
+      ("1998-12-31T23:59:60+00:00", true);
+      ("1999-12-31T23:59:60Z", false);
+      ("2017-12-31T23:59:60Z", false);
+      ("1998-12-31T23:58:60Z", false);
+      ("1998-12-31T22:59:60Z", false);
+      ("1998-12-31T23:59:61Z", false);
+      ("2016-12-31T22:59:60-01:00", true);
+      ("2016-12-31T00:00:60Z", false);
+      ("1998-12-31T23:59:60+23:59", false);
+      ("1999-01-01T23:58:60+23:59", true);
+      ("1998-12-31T00:00:60-23:59", true);
+    ];
+  List.iter
+    (fun (text, want) -> check ("time " ^ text) (run Formats.is_time text) want)
+    [ ("23:59:60Z", true); ("15:59:60-08:00", true); ("00:29:60-23:30", true); ("23:58:60Z", false) ]
 
 (* The cases of the unified JSON-Schema-Test-Suite that the checks got wrong (the descriptions are the suite's), and
    the UTS #46 mapping that idn-hostname and idn-email apply. *)
@@ -831,6 +844,7 @@ let () =
   test_punycode ();
   Check.section "unified";
   test_unified_suite_formats ();
+  test_leap_seconds ();
   Check.section "allocations";
   test_allocations ();
   if !vectors_path <> "" then begin
@@ -839,16 +853,12 @@ let () =
   end;
   Check.section "";
   print_newline ();
-  print_endline "JSON-Schema-Test-Suite format cases, by format (run, passed, skipped, failed):";
+  print_endline "JSON-Schema-Test-Suite format cases, by format (run, passed, failed):";
   List.iter
-    (fun (name, tally) ->
-      Printf.printf "  %s: %d run, %d passed, %d skipped, %d failed\n" name tally.run tally.passed tally.skipped
-        tally.failed)
+    (fun (name, tally) -> Printf.printf "  %s: %d run, %d passed, %d failed\n" name tally.run tally.passed tally.failed)
     !tallies;
-  Printf.printf
-    "JSON-Schema-Test-Suite: %d files, %d cases, %d run, %d passed, %d skipped (leap second), %d failed, %d not format \
-     cases\n"
-    !suite_files !suite_total !suite_run !suite_passed !suite_skipped !suite_failed !suite_not_format;
+  Printf.printf "JSON-Schema-Test-Suite: %d files, %d cases, %d run, %d passed, %d failed, %d not format cases\n"
+    !suite_files !suite_total !suite_run !suite_passed !suite_failed !suite_not_format;
   if !vectors_path <> "" then
     Printf.printf "Answers of the Go source: %d run, %d passed, %d failed\n" !vectors_run
       (!vectors_run - !vectors_failed) !vectors_failed;

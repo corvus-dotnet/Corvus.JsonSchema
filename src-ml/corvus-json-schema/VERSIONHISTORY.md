@@ -2,6 +2,10 @@
 
 The version history of `corvus-json-schema` for OCaml (`src-ml/corvus-json-schema`), the OCaml port of the Corvus.Text.Json V5 runtime evaluator. It is versioned independently of the Corvus NuGet packages, whose history is in the Corvus.JsonSchema repository's [VERSIONHISTORY.md](https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/VERSIONHISTORY.md).
 
+## V0.1.3
+
+V0.1.3 fixes leap seconds in the `date-time` format. `date-time` accepts a leap second (23:59:60 UTC) only on the 27 days that the IERS has ended with one, from 1972-06-30 to 2016-12-31, in whatever offset the value is written (`1998-12-31T15:59:60-08:00` is valid, `1999-12-31T23:59:60Z` is not). It accepted 23:59:60 UTC on any day. `time` is unchanged: it has no date, so it accepts a leap second whenever the time is 23:59 in UTC. The .NET engine does the same from V5.8.6, the Rust crate from 0.2.2, the Go module from 0.1.5, the Java library from 0.1.5 and the Julia package from 0.1.4. The JSON-Schema-Test-Suite's leap-second cases, which the suite run skipped, now run and pass. There are no API changes.
+
 ## V0.1.2
 
 V0.1.2 fixes the `format` checks that the JSON-Schema-Test-Suite's unified layout found wrong, and compares numbers exactly. There are no API changes beyond `Formats.uts46_map`. Versions 0.1.0 and 0.1.1 are affected.
