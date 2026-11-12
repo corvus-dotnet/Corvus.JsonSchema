@@ -199,11 +199,16 @@ function is_date(s::Bytes)
     return d <= MONTH_DAYS[m+1]
 end
 
-function is_time(s::Bytes)
+const MINUTES_PER_DAY = 24 * 60
+const LAST_MINUTE_OF_DAY = 23 * 60 + 59
+
+# Reads an RFC 3339 full-time: the second, and the minute it falls on in UTC counted from the midnight that starts the
+# day as written (negative on the day before, a day or more on the day after), and whether it is a time.
+function full_time(s::Bytes)
     n = s.len
-    (n < 9 || at(s, 2) != UInt8(':') || at(s, 5) != UInt8(':')) && return false
+    (n < 9 || at(s, 2) != UInt8(':') || at(s, 5) != UInt8(':')) && return (0, 0, false)
     h, mi, sec = digits_value(s, 0, 2), digits_value(s, 3, 5), digits_value(s, 6, 8)
-    (h < 0 || mi < 0 || sec < 0) && return false
+    (h < 0 || mi < 0 || sec < 0) && return (0, 0, false)
     i = 8
     if at(s, i) == UInt8('.')
         i += 1
@@ -211,33 +216,61 @@ function is_time(s::Bytes)
         while i < n && is_ascii_digit(at(s, i))
             i += 1
         end
-        i == start && return false
+        i == start && return (0, 0, false)
     end
-    i >= n && return false
+    i >= n && return (0, 0, false)
     oh, om, sign = 0, 0, 0
     c = at(s, i)
     if c == UInt8('z') || c == UInt8('Z')
-        i + 1 != n && return false
+        i + 1 != n && return (0, 0, false)
     elseif c == UInt8('+') || c == UInt8('-')
-        (n - i != 6 || at(s, i + 3) != UInt8(':')) && return false
+        (n - i != 6 || at(s, i + 3) != UInt8(':')) && return (0, 0, false)
         sign = c == UInt8('-') ? 1 : -1
         oh, om = digits_value(s, i + 1, i + 3), digits_value(s, i + 4, i + 6)
-        (oh < 0 || om < 0 || oh > 23 || om > 59) && return false
+        (oh < 0 || om < 0 || oh > 23 || om > 59) && return (0, 0, false)
     else
-        return false
+        return (0, 0, false)
     end
-    (h > 23 || mi > 59 || sec > 60) && return false
-    if sec == 60
-        # A leap second is only valid at 23:59:60 UTC.
-        utc = mod(h * 60 + mi + sign * (oh * 60 + om), 1440)
-        return utc == 23 * 60 + 59
-    end
-    return true
+    (h > 23 || mi > 59 || sec > 60) && return (0, 0, false)
+    return (sec, h * 60 + mi + sign * (oh * 60 + om), true)
 end
 
+# A leap second is a valid time whenever it is 23:59 in UTC: a time has no date.
+function is_time(s::Bytes)
+    sec, utc, ok = full_time(s)
+    return ok && (sec < 60 || mod(utc, MINUTES_PER_DAY) == LAST_MINUTE_OF_DAY)
+end
+
+# The days from 1970-01-01 to a date of the proleptic Gregorian calendar (Howard Hinnant's algorithm).
+function days_from_civil(year::Int, month::Int, day::Int)
+    y = month <= 2 ? year - 1 : year
+    era = fld(y, 400)
+    year_of_era = y - era * 400
+    day_of_year = div(153 * (month <= 2 ? month + 9 : month - 3) + 2, 5) + day - 1
+    day_of_era = year_of_era * 365 + div(year_of_era, 4) - div(year_of_era, 100) + day_of_year
+    return era * 146097 + day_of_era - 719468
+end
+
+# The days that ended with a leap second (IERS), as days from 1970-01-01, in order.
+const LEAP_SECOND_DAYS = Tuple(days_from_civil(d...) for d in (
+    (1972, 6, 30), (1972, 12, 31), (1973, 12, 31), (1974, 12, 31), (1975, 12, 31), (1976, 12, 31),
+    (1977, 12, 31), (1978, 12, 31), (1979, 12, 31), (1981, 6, 30), (1982, 6, 30), (1983, 6, 30),
+    (1985, 6, 30), (1987, 12, 31), (1989, 12, 31), (1990, 12, 31), (1992, 6, 30), (1993, 6, 30),
+    (1994, 6, 30), (1995, 12, 31), (1997, 6, 30), (1998, 12, 31), (2005, 12, 31), (2008, 12, 31),
+    (2012, 6, 30), (2015, 6, 30), (2016, 12, 31),
+))
+
+# A date, T and a time. A leap second is valid only at 23:59:60 UTC on a day that ended with one, which may be the
+# day before or after the date as written.
 function is_date_time(s::Bytes)
-    return s.len > 11 && (at(s, 10) == UInt8('T') || at(s, 10) == UInt8('t')) && is_date(sub(s, 0, 10)) &&
-           is_time(sub(s, 11))
+    (s.len > 11 && (at(s, 10) == UInt8('T') || at(s, 10) == UInt8('t')) && is_date(sub(s, 0, 10))) || return false
+    sec, utc, ok = full_time(sub(s, 11))
+    ok || return false
+    sec < 60 && return true
+    mod(utc, MINUTES_PER_DAY) == LAST_MINUTE_OF_DAY || return false
+    shift = utc < 0 ? -1 : utc >= MINUTES_PER_DAY ? 1 : 0
+    day = days_from_civil(digits_value(s, 0, 4), digits_value(s, 5, 7), digits_value(s, 8, 10)) + shift
+    return day in LEAP_SECOND_DAYS
 end
 
 # Reads digits and one of the designators from position `from` of the designators, in order, at i. It returns the
