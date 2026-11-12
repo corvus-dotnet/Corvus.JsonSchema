@@ -1,5 +1,7 @@
 package io.github.corvusdotnet.jsonschema;
 
+import java.util.Arrays;
+
 /**
  * Format assertions, applied only when {@code format} is asserted (the format-assertion vocabulary or
  * {@link CompileOptions.Builder#assertFormat(Boolean)}). A port of the Rust and TypeScript ports' format checks, which
@@ -153,7 +155,7 @@ final class Formats {
                 case TIME:
                     return time(s, 0, n);
                 case DATE_TIME:
-                    return n > 11 && (s.charAt(10) == 'T' || s.charAt(10) == 't') && date(s, 0, 10) && time(s, 11, n);
+                    return dateTime(s, n);
                 case DURATION:
                     return duration(s);
                 case UUID:
@@ -310,14 +312,77 @@ final class Formats {
     }
 
     static boolean time(CharSequence s, int from, int to) {
-        if (to - from < 9 || s.charAt(from + 2) != ':' || s.charAt(from + 5) != ':') {
+        int utc = fullTime(s, from, to);
+        return utc == NOT_A_LEAP_SECOND || (utc != NOT_A_TIME && Math.floorMod(utc, MINUTES_PER_DAY) == LAST_MINUTE);
+    }
+
+    /**
+     * A date, {@code T} and a time. A leap second is valid only at 23:59:60 UTC on a day that ended with one, which
+     * may be the day before or after the date as written.
+     */
+    static boolean dateTime(CharSequence s, int n) {
+        if (n <= 11 || (s.charAt(10) != 'T' && s.charAt(10) != 't') || !date(s, 0, 10)) {
             return false;
+        }
+        int utc = fullTime(s, 11, n);
+        if (utc == NOT_A_LEAP_SECOND) {
+            return true;
+        }
+        if (utc == NOT_A_TIME || Math.floorMod(utc, MINUTES_PER_DAY) != LAST_MINUTE) {
+            return false;
+        }
+        int shift = utc < 0 ? -1 : utc >= MINUTES_PER_DAY ? 1 : 0;
+        int day = daysFromCivil(digits(s, 0, 4), digits(s, 5, 7), digits(s, 8, 10)) + shift;
+        return Arrays.binarySearch(LEAP_SECOND_DAYS, day) >= 0;
+    }
+
+    /** What {@link #fullTime} gives for a text that is not a time. */
+    private static final int NOT_A_TIME = Integer.MIN_VALUE;
+
+    /** What {@link #fullTime} gives for a time whose second is not 60. */
+    private static final int NOT_A_LEAP_SECOND = Integer.MAX_VALUE;
+
+    private static final int MINUTES_PER_DAY = 24 * 60;
+
+    private static final int LAST_MINUTE = 23 * 60 + 59;
+
+    /** The days that ended with a leap second (IERS), as days from 1970-01-01, in order. */
+    private static final int[] LEAP_SECOND_DAYS = {
+        daysFromCivil(1972, 6, 30), daysFromCivil(1972, 12, 31), daysFromCivil(1973, 12, 31),
+        daysFromCivil(1974, 12, 31), daysFromCivil(1975, 12, 31), daysFromCivil(1976, 12, 31),
+        daysFromCivil(1977, 12, 31), daysFromCivil(1978, 12, 31), daysFromCivil(1979, 12, 31),
+        daysFromCivil(1981, 6, 30), daysFromCivil(1982, 6, 30), daysFromCivil(1983, 6, 30),
+        daysFromCivil(1985, 6, 30), daysFromCivil(1987, 12, 31), daysFromCivil(1989, 12, 31),
+        daysFromCivil(1990, 12, 31), daysFromCivil(1992, 6, 30), daysFromCivil(1993, 6, 30),
+        daysFromCivil(1994, 6, 30), daysFromCivil(1995, 12, 31), daysFromCivil(1997, 6, 30),
+        daysFromCivil(1998, 12, 31), daysFromCivil(2005, 12, 31), daysFromCivil(2008, 12, 31),
+        daysFromCivil(2012, 6, 30), daysFromCivil(2015, 6, 30), daysFromCivil(2016, 12, 31),
+    };
+
+    /** The days from 1970-01-01 to a date of the proleptic Gregorian calendar (Howard Hinnant's algorithm). */
+    private static int daysFromCivil(int year, int month, int day) {
+        int y = month <= 2 ? year - 1 : year;
+        int era = Math.floorDiv(y, 400);
+        int yearOfEra = y - era * 400;
+        int dayOfYear = (153 * (month <= 2 ? month + 9 : month - 3) + 2) / 5 + day - 1;
+        int dayOfEra = yearOfEra * 365 + yearOfEra / 4 - yearOfEra / 100 + dayOfYear;
+        return era * 146097 + dayOfEra - 719468;
+    }
+
+    /**
+     * Reads an RFC 3339 full-time. It gives {@link #NOT_A_TIME} for a text that is not one, {@link #NOT_A_LEAP_SECOND}
+     * for one whose second is not 60, and for a leap second the minute it falls on in UTC, counted from the midnight
+     * that starts the day as written (so it is negative on the day before, and a day or more on the day after).
+     */
+    private static int fullTime(CharSequence s, int from, int to) {
+        if (to - from < 9 || s.charAt(from + 2) != ':' || s.charAt(from + 5) != ':') {
+            return NOT_A_TIME;
         }
         int h = digits(s, from, from + 2);
         int mi = digits(s, from + 3, from + 5);
         int sec = digits(s, from + 6, from + 8);
         if (h < 0 || mi < 0 || sec < 0) {
-            return false;
+            return NOT_A_TIME;
         }
         int i = from + 8;
         if (s.charAt(i) == '.') {
@@ -327,11 +392,11 @@ final class Formats {
                 i++;
             }
             if (i == start) {
-                return false;
+                return NOT_A_TIME;
             }
         }
         if (i >= to) {
-            return false;
+            return NOT_A_TIME;
         }
         int oh = 0;
         int om = 0;
@@ -339,31 +404,27 @@ final class Formats {
         char c = s.charAt(i);
         if (c == 'z' || c == 'Z') {
             if (i + 1 != to) {
-                return false;
+                return NOT_A_TIME;
             }
         } else if (c == '+' || c == '-') {
             if (to - i != 6 || s.charAt(i + 3) != ':') {
-                return false;
+                return NOT_A_TIME;
             }
             sign = c == '-' ? 1 : -1;
             int x = digits(s, i + 1, i + 3);
             int y = digits(s, i + 4, i + 6);
             if (x < 0 || y < 0 || x > 23 || y > 59) {
-                return false;
+                return NOT_A_TIME;
             }
             oh = x;
             om = y;
         } else {
-            return false;
+            return NOT_A_TIME;
         }
         if (h > 23 || mi > 59 || sec > 60) {
-            return false;
+            return NOT_A_TIME;
         }
-        if (sec == 60) {
-            int utc = (h * 60 + mi) + sign * (oh * 60 + om);
-            return Math.floorMod(utc, 1440) == 23 * 60 + 59;
-        }
-        return true;
+        return sec == 60 ? (h * 60 + mi) + sign * (oh * 60 + om) : NOT_A_LEAP_SECOND;
     }
 
     static boolean uuid(CharSequence s) {

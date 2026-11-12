@@ -63,7 +63,8 @@ class FormatLimitsTest {
      * In 0.1.4, 112 of the answers changed where the unified JSON-Schema-Test-Suite found the checks wrong: a quoted
      * email local part takes only printable ASCII, an idn-email local part any character outside ASCII, an
      * idn-hostname is mapped by UTS #46 first, and a uri-template literal may hold an apostrophe but not a stray
-     * percent sign.
+     * percent sign. In 0.1.5, 12 more changed: a leap second is a valid date-time only at 23:59:60 UTC on a day that
+     * ended with one.
      */
     @Test
     void theFormatsAnswerAsTheyDid() throws IOException {

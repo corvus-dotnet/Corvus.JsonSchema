@@ -21,12 +21,12 @@ with no dependencies.
 <dependency>
   <groupId>io.github.corvus-dotnet</groupId>
   <artifactId>corvus-json-schema</artifactId>
-  <version>0.1.4</version>
+  <version>0.1.5</version>
 </dependency>
 ```
 
 ```kotlin
-implementation("io.github.corvus-dotnet:corvus-json-schema:0.1.4")
+implementation("io.github.corvus-dotnet:corvus-json-schema:0.1.5")
 ```
 
 ## Usage
