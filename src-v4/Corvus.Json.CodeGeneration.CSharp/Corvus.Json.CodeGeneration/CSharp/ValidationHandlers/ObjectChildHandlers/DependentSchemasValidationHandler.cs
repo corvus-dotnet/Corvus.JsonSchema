@@ -26,13 +26,13 @@ public class DependentSchemasValidationHandler : IChildObjectPropertyValidationH
     }
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// The dependent schemas are applied before the properties are enumerated, as the in-place applicators are. A
+    /// dependent schema can evaluate any property of the object, and the enumeration checks each property against
+    /// <c>unevaluatedProperties</c> as it reaches it, so a dependent schema applied when the enumeration reached its
+    /// property would come too late for the properties before it.
+    /// </remarks>
     public CodeGenerator AppendValidateMethodSetup(CodeGenerator generator, TypeDeclaration typeDeclaration)
-    {
-        return generator;
-    }
-
-    /// <inheritdoc/>
-    public CodeGenerator AppendObjectPropertyValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
         if (generator.IsCancellationRequested)
         {
@@ -63,9 +63,9 @@ public class DependentSchemasValidationHandler : IChildObjectPropertyValidationH
                     generator
                         .AppendSeparatorLine()
                         .AppendLineIndent(
-                            "if (property.NameEquals(",
+                            "if (value.HasJsonElementBacking ? value.HasProperty(",
                             quotedPropertyName,
-                            "u8, ",
+                            "u8) : value.HasProperty(",
                             quotedPropertyName,
                             "))")
                         .AppendLineIndent("{")
@@ -111,6 +111,12 @@ public class DependentSchemasValidationHandler : IChildObjectPropertyValidationH
             }
         }
 
+        return generator;
+    }
+
+    /// <inheritdoc/>
+    public CodeGenerator AppendObjectPropertyValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
         return generator;
     }
 
