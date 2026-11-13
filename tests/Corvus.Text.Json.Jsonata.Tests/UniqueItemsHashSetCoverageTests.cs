@@ -20,6 +20,32 @@ namespace Corvus.Text.Json.Jsonata.Tests;
 public class UniqueItemsHashSetCoverageTests
 {
     [TestMethod]
+    [DataRow(240)]
+    [DataRow(250)]
+    [DataRow(256)]
+    public void Distinct_ArrayWhoseTableOutgrowsTheStackBuckets(int count)
+    {
+        // For 240 to 256 items the stack buffer has room for the items (256 buckets) but not for the prime-sized
+        // table (293 buckets), which the hash set must then rent (issue #1068).
+        var sb = new StringBuilder();
+        sb.Append('[');
+        for (int i = 0; i < count; i++)
+        {
+            if (i > 0)
+            {
+                sb.Append(',');
+            }
+
+            sb.Append(i % (count - 10));
+        }
+
+        sb.Append(']');
+
+        string? result = JsonataEvaluator.Default.EvaluateToString("$count($distinct($))", sb.ToString());
+        Assert.AreEqual((count - 10).ToString(), result);
+    }
+
+    [TestMethod]
     public void Distinct_LargeArray_TriggersArrayPoolRent()
     {
         // Create an array with >256 elements to trigger ArrayPool rent in
