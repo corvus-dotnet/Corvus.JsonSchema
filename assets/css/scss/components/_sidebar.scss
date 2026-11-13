@@ -1,0 +1,485 @@
+// ==========================================================================
+// Sidebar — Documentation navigation
+// ==========================================================================
+
+@use '../abstracts/mixins' as *;
+
+// ---- Sidebar search box + dropdown ----
+.sidebar-search {
+  position: relative;
+  flex-shrink: 0; // never collapse when sidebar shrinks
+  padding: var(--space-sm) var(--space-sm) var(--space-sm) 0;
+
+  &__icon {
+    position: absolute;
+    top: 50%;
+    left: var(--space-sm);
+    width: 0.9em;
+    height: 0.9em;
+    transform: translateY(-50%);
+    color: var(--color-gray-dark);
+    pointer-events: none;
+  }
+
+  &__input {
+    width: 100%;
+    padding: var(--space-xs) var(--space-sm) var(--space-xs) calc(var(--space-sm) + 1.2em);
+    background: var(--color-bg-raised);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-white);
+    font-size: var(--font-size-sm);
+    outline: none;
+    transition: border-color var(--transition-fast);
+
+    &::placeholder {
+      color: var(--color-gray-dark);
+    }
+
+    &:focus {
+      border-color: var(--color-brand);
+    }
+  }
+
+  &__dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 200;
+    // Allow dropdown to be wider than the search box when space is available
+    width: max(100%, 24rem);
+    max-width: calc(100vw - 2rem); // never overflow viewport on mobile
+    max-height: 60vh;
+    overflow-y: auto;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border-active);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.4);
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+
+    &:not(.is-visible) {
+      display: none;
+    }
+  }
+
+  &__empty {
+    padding: var(--space-sm);
+    color: var(--color-gray-dark);
+    font-size: var(--font-size-sm);
+    text-align: center;
+  }
+
+  &__list {
+    list-style: none;
+    margin: 0;
+    padding: var(--space-xs) 0;
+  }
+
+  &__item {
+    &.is-highlighted > .sidebar-search__link {
+      background: var(--color-bg-raised);
+      color: var(--color-white);
+    }
+  }
+
+  &__link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-med);
+    text-decoration: none;
+    transition: background var(--transition-fast), color var(--transition-fast);
+
+    &:hover {
+      background: var(--color-bg-raised);
+      color: var(--color-white);
+    }
+  }
+
+  &__name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__badge {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.3em;
+    height: 1.3em;
+    border-radius: 2px;
+    font-size: 0.65rem;
+    font-weight: var(--font-weight-bold);
+    line-height: 1;
+    color: var(--color-white);
+    background: var(--color-gray-dark);
+
+    &--class     { background: #2b7489; }
+    &--struct    { background: #6f42c1; }
+    &--interface { background: #b08800; }
+    &--enum      { background: #e36209; }
+    &--delegate  { background: #d73a49; }
+  }
+}
+
+// ---- Mobile toggle button (flush bottom-left) ----
+.sidebar-toggle {
+  display: flex;
+  align-items: center;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  z-index: 101;
+  padding: 0.6rem 1.2rem;
+  border: 1px solid var(--color-border);
+  border-left: none;
+  border-bottom: none;
+  border-radius: 0 var(--radius-sm) 0 0;
+  background: var(--color-brand);
+  color: var(--color-bg);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  box-shadow: 0 -2px 8px rgb(0 0 0 / 0.3);
+  transition: background var(--transition-fast);
+
+  &:hover {
+    background: var(--color-brand-light, #8bc34a);
+  }
+
+  &::before {
+    content: 'Browse \203A';
+  }
+
+  &[aria-expanded='true']::before {
+    content: 'Close \2039';
+  }
+
+  @include breakpoint-md {
+    display: none;
+  }
+}
+
+// ---- Backdrop overlay ----
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  background: rgb(0 0 0 / 0.5);
+
+  &.is-visible {
+    display: block;
+  }
+
+  @include breakpoint-md {
+    display: none !important;
+  }
+}
+
+.sidebar {
+  // Mobile: off-screen drawer
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  bottom: 2.5rem; // stop above the Browse/Close button
+  z-index: 100;
+  width: var(--sidebar-width);
+  overflow: hidden;
+  padding: 0;
+  background: var(--color-bg);
+  border-right: 1px solid var(--color-border);
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+  display: flex;
+  flex-direction: column;
+
+  &.is-open {
+    transform: translateX(0);
+  }
+
+  // Scrollable inner content — fills remaining space below search
+  &__inner {
+    flex: 1 1 auto;
+    min-height: 0; // allow flex child to shrink below content size
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: var(--space-sm) 0 0 var(--space-md);
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
+
+  // Desktop: sticky sidebar
+  @include breakpoint-md {
+    position: sticky;
+    top: calc(var(--header-height) + var(--space-md));
+    bottom: auto;
+    align-self: start;
+    width: var(--sidebar-width);
+    height: auto;
+    // JS sets --sidebar-available-height when the footer is visible;
+    // otherwise fall back to full viewport minus header.
+    max-height: var(--sidebar-available-height, calc(100vh - var(--header-height) - var(--space-lg)));
+    // Allow horizontal overflow so the search dropdown can extend
+    // beyond the sidebar width; vertical is clipped by flex layout.
+    overflow: visible;
+    background: transparent;
+    border-right: none;
+    transform: none;
+    transition: transform 0.25s ease;
+    z-index: 10;
+
+    .sidebar__inner {
+      padding: 0;
+      // Constrain the tree's vertical overflow here instead of on .sidebar
+      max-height: inherit;
+    }
+  }
+
+  // ---- Section group ----
+  &__section {
+    margin-bottom: var(--space-md);
+  }
+
+  // ---- Section heading (collapsible toggle) ----
+  &__heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: var(--space-xs) var(--space-sm);
+    background: none;
+    border: none;
+    color: var(--color-white);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    text-transform: none;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-fast);
+
+    &:hover {
+      background: var(--color-bg-raised);
+    }
+
+    // Chevron indicator
+    &::after {
+      content: '';
+      display: block;
+      width: 0.45em;
+      height: 0.45em;
+      border-right: 2px solid var(--color-gray-dark);
+      border-bottom: 2px solid var(--color-gray-dark);
+      transform: rotate(45deg);
+      transition: transform var(--transition-fast);
+    }
+
+    &.is-collapsed::after {
+      transform: rotate(-45deg);
+    }
+  }
+
+  // ---- Navigation list ----
+  &__list {
+    list-style: none;
+    margin: 0;
+    padding: var(--space-xs) 0 0;
+  }
+
+  // ---- Nested list (sub-items) ----
+  &__sublist {
+    list-style: none;
+    padding-left: var(--space-md);
+    margin: 0;
+  }
+
+  // ---- List item ----
+  &__item {
+    margin: 0;
+  }
+
+  // ---- Navigation link ----
+  &__link {
+    display: block;
+    padding: var(--space-xs) var(--space-sm);
+    padding-left: var(--space-md);
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-med);
+    border-left: 2px solid transparent;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    transition:
+      color var(--transition-fast),
+      background var(--transition-fast),
+      border-color var(--transition-fast);
+
+    &:hover {
+      color: var(--color-white);
+      background: var(--color-bg-raised);
+    }
+
+    // Active state — brand green indicator
+    &.is-active,
+    &[aria-current='page'] {
+      color: var(--color-brand);
+      border-left-color: var(--color-brand);
+      background: rgb(111 177 40 / 0.06);
+      font-weight: var(--font-weight-medium);
+    }
+
+    &:focus-visible {
+      @include focus-ring;
+    }
+  }
+
+  // ---- Collapsed section body ----
+  &__body {
+    overflow: hidden;
+    transition: max-height var(--transition-base);
+
+    &.is-collapsed {
+      max-height: 0 !important;
+    }
+  }
+
+  // ---- On-page TOC sub-list (generated by JS) ----
+  &__link--toc {
+    font-size: var(--font-size-xs);
+    padding-top: 0.2em;
+    padding-bottom: 0.2em;
+    padding-left: calc(var(--space-md) + var(--space-sm));
+    color: var(--color-gray-dark);
+    border-left-color: transparent;
+    white-space: normal;
+    word-break: break-word;
+
+    &:hover {
+      color: var(--color-white);
+    }
+
+    // Scroll-spy current heading
+    &.is-current {
+      color: var(--color-brand);
+      border-left-color: var(--color-brand);
+      background: rgb(111 177 40 / 0.04);
+    }
+  }
+
+  // ---- Type link (may expand to show members) ----
+  &__link--type {
+    font-size: var(--font-size-sm);
+    padding-left: var(--space-md);
+
+    // "Current" parent type on member pages: highlighted but not brand-green
+    &.is-current {
+      color: var(--color-white);
+      font-weight: var(--font-weight-medium);
+      border-left-color: var(--color-border);
+      background: var(--color-bg-raised);
+    }
+  }
+
+  // ---- Member sub-tree (under the active type) ----
+  &__members {
+    list-style: none;
+    margin: var(--space-xs) 0 0;
+    padding: 0 0 0 var(--space-sm);
+  }
+
+  // ---- Member category header (collapsible toggle — Properties, Methods, etc.) ----
+  &__cat-section {
+    list-style: none;
+  }
+
+  &__cat-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: var(--space-xs) var(--space-sm);
+    padding-left: calc(var(--space-md) + var(--space-sm));
+    background: none;
+    border: none;
+    color: var(--color-gray-med);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-fast);
+
+    &:hover {
+      background: var(--color-bg-raised);
+      color: var(--color-white);
+    }
+
+    // Chevron indicator (same as namespace heading)
+    &::after {
+      content: '';
+      display: block;
+      width: 0.4em;
+      height: 0.4em;
+      border-right: 2px solid var(--color-gray-dark);
+      border-bottom: 2px solid var(--color-gray-dark);
+      transform: rotate(45deg);
+      transition: transform var(--transition-fast);
+      flex-shrink: 0;
+      margin-left: var(--space-xs);
+    }
+
+    &.is-collapsed::after {
+      transform: rotate(-45deg);
+    }
+  }
+
+  &__cat-body {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    transition: max-height var(--transition-base);
+
+    &.is-collapsed {
+      max-height: 0 !important;
+    }
+  }
+
+  // ---- Individual member link ----
+  &__member {
+    list-style: none;
+  }
+
+  &__link--member {
+    display: block;
+    padding: 0.15em var(--space-sm);
+    padding-left: calc(var(--space-md) + var(--space-lg));
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-med);
+    border-left: 2px solid transparent;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    white-space: normal;
+    word-break: break-word;
+    transition:
+      color var(--transition-fast),
+      background var(--transition-fast),
+      border-color var(--transition-fast);
+
+    &:hover {
+      color: var(--color-white);
+      background: var(--color-bg-raised);
+    }
+
+    &.is-active {
+      color: var(--color-brand);
+      border-left-color: var(--color-brand);
+      background: rgb(111 177 40 / 0.06);
+      font-weight: var(--font-weight-medium);
+    }
+  }
+}
