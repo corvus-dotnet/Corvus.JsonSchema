@@ -234,7 +234,9 @@ public ref struct UniqueItemsHashSet
         _size = HashHelpers.GetPrime(itemCount);
         int entriesSize = _size * JsonItemIndexHashSet.Entry.Size;
 
-        if (itemCount > buckets.Length)
+        // The table has a prime number of buckets at least the item count, so it can outgrow a buffer that has room
+        // for every item (240 to 256 items need 293 buckets).
+        if (_size > buckets.Length)
         {
             // Make sure we have space for the buckets
             _bucketsBacking = ArrayPool<int>.Shared.Rent(_size);

@@ -308,6 +308,7 @@
     <Compile Include="RefTupleTests.cs" />
     <Compile Include="DependentSchemasEvaluateEarlierPropertiesTests.cs" />
     <Compile Include="ReservedPropertyNameTests.cs" />
+    <Compile Include="UniqueItemsHashSetSizeTests.cs" />
     <Compile Include="StringMaxLengthEnumTests.cs" />
     <Compile Include="OneOfDiscriminatorValidationTests.cs" />
     <Compile Include="AnyOfDiscriminatorValidationTests.cs" />
