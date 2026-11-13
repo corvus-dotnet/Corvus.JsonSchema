@@ -1,5 +1,13 @@
 # Version History
 
+## V5.8.11
+
+V5.8.11 fixes an `ArgumentOutOfRangeException` from `UniqueItemsHashSet` for 240 to 256 items.
+
+### Bug fixes
+
+- **`UniqueItemsHashSet` takes 240 to 256 items in a stack buffer.** Its table has a prime number of buckets at least the item count, and it decided whether the caller's bucket buffer was big enough by comparing the item count, not that prime. For 240 to 256 items the prime is 293, so a buffer of `StackAllocBucketSize` (256) buckets passed the check and was then sliced past its end. JSONata's `$distinct`, in the evaluator and in generated code, threw for an array of 240 to 256 items. So did a generated type's `uniqueItems` validation up to V5.5 (reported in [#1068](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1068)): since V5.6.0 generated types use the runtime evaluator's own set, which was not affected. The set now rents its buckets whenever the table is larger than the buffer.
+
 ## V5.8.10
 
 V5.8.10 publishes V5.8.9, and builds with the released .NET 11 SDK. V5.8.9 was tagged, but its release build failed before it built any packages, so it was never published to NuGet.org and is skipped there. V5.8.10 ships everything in V5.8.9, which is listed below.
