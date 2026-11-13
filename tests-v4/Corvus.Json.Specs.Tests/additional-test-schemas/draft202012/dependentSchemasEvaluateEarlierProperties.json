@@ -1,0 +1,54 @@
+[
+  {
+    "description": "unevaluatedProperties sees the properties a dependent schema evaluates, wherever the dependent property is",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "DependentSchemasEvaluateEarlierProperties",
+      "properties": {
+        "foo": true
+      },
+      "dependentSchemas": {
+        "foo": {
+          "properties": {
+            "bar": true
+          }
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "tests": [
+      {
+        "description": "the dependent property before the property its schema evaluates",
+        "data": {
+          "foo": 1,
+          "bar": 2
+        },
+        "valid": true
+      },
+      {
+        "description": "the dependent property after the property its schema evaluates",
+        "data": {
+          "bar": 2,
+          "foo": 1
+        },
+        "valid": true
+      },
+      {
+        "description": "a property neither evaluates, before the dependent property",
+        "data": {
+          "baz": 3,
+          "bar": 2,
+          "foo": 1
+        },
+        "valid": false
+      },
+      {
+        "description": "without the dependent property, its schema does not apply",
+        "data": {
+          "bar": 2
+        },
+        "valid": false
+      }
+    ]
+  }
+]

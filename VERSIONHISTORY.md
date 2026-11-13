@@ -1,5 +1,13 @@
 # Version History
 
+## V5.8.9
+
+V5.8.9 fixes how V4 validates `unevaluatedProperties` beside `dependentSchemas`.
+
+### Bug fixes
+
+- **V4: `unevaluatedProperties` sees every property a dependent schema evaluates.** V4 applied a dependent schema when it reached the dependent property in the object, and checked each property against `unevaluatedProperties` as it reached it, so a property that came first and that only the dependent schema evaluates was reported as unevaluated. With `{"properties": {"foo": true}, "dependentSchemas": {"foo": {"properties": {"bar": true}}}, "unevaluatedProperties": false}`, `{"foo": 1, "bar": 2}` was valid and `{"bar": 2, "foo": 1}` was not. OpenAPI 3.1's parameter definition has this shape, so a parameter that put `example` or `explode` before `schema` failed it. V4 now applies dependent schemas before it reaches any property, as it does the in-place applicators. The V4 OpenAPI 3.1 models (`Corvus.Json.JsonSchema.OpenApi31`) have the same fix. V5 was not affected. See [#1077](https://github.com/corvus-dotnet/Corvus.JsonSchema/pull/1077).
+
 ## V5.8.8
 
 V5.8.8 fixes wrong answers from `pattern` in an application published with native AOT.

@@ -306,6 +306,7 @@
     <Compile Include="NativeEnumTests.cs" />
     <Compile Include="NativeFlagsEnumTests.cs" />
     <Compile Include="RefTupleTests.cs" />
+    <Compile Include="DependentSchemasEvaluateEarlierPropertiesTests.cs" />
     <Compile Include="ReservedPropertyNameTests.cs" />
     <Compile Include="StringMaxLengthEnumTests.cs" />
     <Compile Include="OneOfDiscriminatorValidationTests.cs" />
