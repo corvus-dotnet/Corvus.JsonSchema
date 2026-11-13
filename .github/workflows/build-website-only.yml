@@ -26,7 +26,7 @@ jobs:
       with:
         displayName: Build Documentation Site
         # As build.yml: global.json pins the .NET 11 SDK, and the solution also targets the earlier ones.
-        netSdkVersion: '11.0.100-rc.1.26425.128'
+        netSdkVersion: '11.0.100'
         additionalNetSdkVersion: |
           8.0.x
           9.0.x

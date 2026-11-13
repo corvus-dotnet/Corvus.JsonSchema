@@ -23,7 +23,8 @@ Run these before **every** commit:
 2. **Run affected tests** —
    `dotnet test --solution Corvus.Text.Json.slnx --filter "TestCategory!=failing&TestCategory!=outerloop&TestCategory!=integration"`.
    Use `FullyQualifiedName~` for filters; Microsoft Testing Platform does not accept
-   `--nologo` or `-v q`.
+   `--nologo` or `-v q`. On Linux and macOS add `-f net10.0`: the .NET 11 SDK runs the
+   `net481` tests only on Windows.
 3. **Code-sample catalog** — if any file under `.github/`, `docs/`, or a skill/instruction
    file changed, run `pwsh docs/update-code-sample-catalog.ps1 -UpdateFile <path>` for each
    changed file, then `pwsh docs/update-code-sample-catalog.ps1 -Check` (must exit 0). CI

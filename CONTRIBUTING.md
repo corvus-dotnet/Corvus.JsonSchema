@@ -27,6 +27,8 @@ The `--recurse-submodules` flag is required to fetch the `JSON-Schema-Test-Suite
 dotnet test --solution Corvus.Text.Json.slnx --filter "TestCategory!=failing&TestCategory!=outerloop"
 ```
 
+On Linux and macOS, add `-f net10.0`: the test projects also target `net481`, and the .NET 11 SDK runs .NET Framework tests only on Windows (it stops with NETSDK1243 elsewhere).
+
 Always exclude the `failing` and `outerloop` categories:
 - **`failing`** — known failures tracked for future fixes
 - **`outerloop`** — memory stress tests that are too resource-intensive for normal CI

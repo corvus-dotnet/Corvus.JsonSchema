@@ -87,10 +87,10 @@ StringAssert.Contains(json, "Alice");
 ```
 
 ```powershell
-# Run all tests (standard — all 21 test projects, both TFMs)
+# Run all tests (standard — all 21 test projects, both TFMs; Windows only, since the .NET 11 SDK runs net481 tests only there)
 dotnet test --solution Corvus.Text.Json.slnx --filter "TestCategory!=failing&TestCategory!=outerloop"
 
-# Run all tests on a specific TFM
+# Run all tests on a specific TFM (on Linux and macOS, always pass -f net10.0)
 dotnet test --solution Corvus.Text.Json.slnx -f net10.0 --filter "TestCategory!=failing&TestCategory!=outerloop"
 
 # Run a single test class
