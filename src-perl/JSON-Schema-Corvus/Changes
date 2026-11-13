@@ -1,5 +1,13 @@
 Revision history for JSON-Schema-Corvus
 
+v0.1.2  2026-11-12
+  - A leap second is a valid date-time only on a day that ended with one. date-time accepted 23:59:60 UTC on any
+    day; it now accepts a leap second only on the 27 days the IERS ended with one, from 1972-06-30 to 2016-12-31, in
+    whatever offset it is written (1998-12-31T15:59:60-08:00 is valid, 1999-12-31T23:59:60Z is not). time is
+    unchanged: it has no date, so it accepts a leap second whenever the time is 23:59 in UTC. JSON::Schema::Corvus::XS
+    does the same from v0.1.1. The JSON-Schema-Test-Suite's leap-second cases, which the suite test skipped, now run
+    and pass.
+
 v0.1.1  2026-11-03
   - The format checks follow the grammars the unified JSON-Schema-Test-Suite tests. idn-hostname (and the domain of
     idn-email) applies the UTS #46 mapping (Unicode 17.0.0) before it checks a name, so ignored code points such as

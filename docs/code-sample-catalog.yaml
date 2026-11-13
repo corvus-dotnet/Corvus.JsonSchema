@@ -1509,35 +1509,35 @@ main-docs:
   - path: "docs/RunningTests.md"
     blocks:
       - {index: 0, language: powershell, lines: [7, 10]}
-      - {index: 1, language: powershell, lines: [26, 28]}
-      - {index: 2, language: powershell, lines: [32, 42]}
-      - {index: 3, language: powershell, lines: [91, 93]}
-      - {index: 4, language: powershell, lines: [101, 103]}
-      - {index: 5, language: powershell, lines: [107, 109]}
-      - {index: 6, language: powershell, lines: [117, 127]}
-      - {index: 7, language: powershell, lines: [131, 133]}
-      - {index: 8, language: powershell, lines: [137, 139]}
-      - {index: 9, language: powershell, lines: [143, 145]}
-      - {index: 10, language: powershell, lines: [155, 162]}
-      - {index: 11, language: powershell, lines: [170, 173]}
-      - {index: 12, language: powershell, lines: [177, 183]}
-      - {index: 13, language: powershell, lines: [187, 189]}
-      - {index: 14, language: powershell, lines: [201, 203]}
-      - {index: 15, language: powershell, lines: [207, 209]}
-      - {index: 16, language: powershell, lines: [215, 217]}
-      - {index: 17, language: powershell, lines: [229, 231]}
-      - {index: 18, language: powershell, lines: [235, 237]}
-      - {index: 19, language: powershell, lines: [243, 245]}
-      - {index: 20, language: powershell, lines: [251, 257]}
-      - {index: 21, language: powershell, lines: [263, 265]}
-      - {index: 22, language: powershell, lines: [302, 305]}
-      - {index: 23, language: powershell, lines: [313, 345]}
-      - {index: 24, language: powershell, lines: [353, 359]}
-      - {index: 25, language: powershell, lines: [363, 366]}
-      - {index: 26, language: powershell, lines: [376, 378]}
-      - {index: 27, language: powershell, lines: [388, 390]}
-      - {index: 28, language: powershell, lines: [394, 397]}
-      - {index: 29, language: powershell, lines: [415, 421]}
+      - {index: 1, language: powershell, lines: [28, 30]}
+      - {index: 2, language: powershell, lines: [34, 44]}
+      - {index: 3, language: powershell, lines: [93, 95]}
+      - {index: 4, language: powershell, lines: [103, 105]}
+      - {index: 5, language: powershell, lines: [109, 111]}
+      - {index: 6, language: powershell, lines: [119, 129]}
+      - {index: 7, language: powershell, lines: [133, 135]}
+      - {index: 8, language: powershell, lines: [139, 141]}
+      - {index: 9, language: powershell, lines: [145, 147]}
+      - {index: 10, language: powershell, lines: [157, 164]}
+      - {index: 11, language: powershell, lines: [172, 175]}
+      - {index: 12, language: powershell, lines: [179, 185]}
+      - {index: 13, language: powershell, lines: [189, 191]}
+      - {index: 14, language: powershell, lines: [203, 205]}
+      - {index: 15, language: powershell, lines: [209, 211]}
+      - {index: 16, language: powershell, lines: [217, 219]}
+      - {index: 17, language: powershell, lines: [231, 233]}
+      - {index: 18, language: powershell, lines: [237, 239]}
+      - {index: 19, language: powershell, lines: [245, 247]}
+      - {index: 20, language: powershell, lines: [253, 259]}
+      - {index: 21, language: powershell, lines: [265, 267]}
+      - {index: 22, language: powershell, lines: [304, 307]}
+      - {index: 23, language: powershell, lines: [315, 347]}
+      - {index: 24, language: powershell, lines: [355, 361]}
+      - {index: 25, language: powershell, lines: [365, 368]}
+      - {index: 26, language: powershell, lines: [378, 380]}
+      - {index: 27, language: powershell, lines: [390, 392]}
+      - {index: 28, language: powershell, lines: [396, 399]}
+      - {index: 29, language: powershell, lines: [417, 423]}
   - path: "docs/RuntimeEvaluator.md"
     blocks:
       - {index: 0, language: csharp, lines: [281, 299], category: compilable, verified: false}
@@ -1832,22 +1832,22 @@ copilot-instructions:
   - path: ".github/copilot-instructions.md"
     blocks:
       - {index: 0, language: bash, lines: [53, 65]}
-      - {index: 1, language: powershell, lines: [108, 111]}
-      - {index: 2, language: powershell, lines: [119, 122]}
-      - {index: 3, language: csharp, lines: [179, 189], category: compilable, verified: false}
-      - {index: 4, language: csharp, lines: [206, 225], category: compilable, verified: false}
-      - {index: 5, language: powershell, lines: [269, 271]}
-      - {index: 6, language: powershell, lines: [283, 287]}
-      - {index: 7, language: powershell, lines: [325, 330]}
-      - {index: 8, language: powershell, lines: [357, 363]}
-      - {index: 9, language: csharp, lines: [373, 383], category: compilable, verified: false}
-      - {index: 10, language: powershell, lines: [452, 461]}
-      - {index: 11, language: bash, lines: [489, 491]}
-      - {index: 12, language: bash, lines: [507, 513]}
-      - {index: 13, language: bash, lines: [519, 522]}
-      - {index: 14, language: powershell, lines: [532, 547]}
-      - {index: 15, language: powershell, lines: [555, 557]}
-      - {index: 16, language: bash, lines: [590, 592]}
+      - {index: 1, language: powershell, lines: [110, 113]}
+      - {index: 2, language: powershell, lines: [121, 124]}
+      - {index: 3, language: csharp, lines: [181, 191], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [208, 227], category: compilable, verified: false}
+      - {index: 5, language: powershell, lines: [271, 273]}
+      - {index: 6, language: powershell, lines: [285, 289]}
+      - {index: 7, language: powershell, lines: [327, 332]}
+      - {index: 8, language: powershell, lines: [359, 365]}
+      - {index: 9, language: csharp, lines: [375, 385], category: compilable, verified: false}
+      - {index: 10, language: powershell, lines: [454, 463]}
+      - {index: 11, language: bash, lines: [491, 493]}
+      - {index: 12, language: bash, lines: [509, 515]}
+      - {index: 13, language: bash, lines: [521, 524]}
+      - {index: 14, language: powershell, lines: [534, 549]}
+      - {index: 15, language: powershell, lines: [557, 559]}
+      - {index: 16, language: bash, lines: [592, 594]}
 
 skills:
   - path: ".github/skills/corvus-analyzers/SKILL.md"

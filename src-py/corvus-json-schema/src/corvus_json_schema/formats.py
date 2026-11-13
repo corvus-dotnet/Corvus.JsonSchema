@@ -68,10 +68,17 @@ def date(s: str) -> bool:
     return 1 <= mo <= 12 and 1 <= d <= (29 if mo == 2 and _is_leap_year(y) else _DAYS[mo])
 
 
-def time(s: str) -> bool:
+_MINUTES_PER_DAY = 24 * 60
+_LAST_MINUTE_OF_DAY = 23 * 60 + 59
+
+
+def _full_time(s: str) -> tuple[int, int] | None:
+    """Reads an RFC 3339 full-time: None for a text that is not one, and otherwise the second and the minute it falls
+    on in UTC, counted from the midnight that starts the day as written (negative on the day before, a day or more on
+    the day after)."""
     m = _TIME_RE.match(s)
     if m is None:
-        return False
+        return None
     h, mi, sec = int(m.group(1)), int(m.group(2)), int(m.group(3))
     oh = 0
     om = 0
@@ -79,24 +86,85 @@ def time(s: str) -> bool:
         oh = int(m.group(7))
         om = int(m.group(8))
         if oh > 23 or om > 59:
-            return False
+            return None
     if h > 23 or mi > 59 or sec > 60:
-        return False
-    if sec == 60:
-        # A leap second is only valid at 23:59:60 UTC.
-        sign = 1 if m.group(6) == "-" else -1
-        utc_minutes = (h * 60 + mi + sign * (oh * 60 + om)) % 1440
-        return utc_minutes == 23 * 60 + 59
-    return True
+        return None
+    sign = 1 if m.group(6) == "-" else -1
+    return sec, h * 60 + mi + sign * (oh * 60 + om)
+
+
+def time(s: str) -> bool:
+    """A leap second is a valid time whenever it is 23:59 in UTC: a time has no date."""
+    t = _full_time(s)
+    return t is not None and (t[0] < 60 or t[1] % _MINUTES_PER_DAY == _LAST_MINUTE_OF_DAY)
+
+
+def _days_from_civil(year: int, month: int, day: int) -> int:
+    """The days from 1970-01-01 to a date of the proleptic Gregorian calendar (Howard Hinnant's algorithm)."""
+    y = year - 1 if month <= 2 else year
+    era = y // 400
+    year_of_era = y - era * 400
+    day_of_year = (153 * (month + 9 if month <= 2 else month - 3) + 2) // 5 + day - 1
+    day_of_era = year_of_era * 365 + year_of_era // 4 - year_of_era // 100 + day_of_year
+    return era * 146097 + day_of_era - 719468
+
+
+# The days that ended with a leap second (IERS), as days from 1970-01-01.
+_LEAP_SECOND_DAYS = frozenset(
+    _days_from_civil(*d)
+    for d in (
+        (1972, 6, 30),
+        (1972, 12, 31),
+        (1973, 12, 31),
+        (1974, 12, 31),
+        (1975, 12, 31),
+        (1976, 12, 31),
+        (1977, 12, 31),
+        (1978, 12, 31),
+        (1979, 12, 31),
+        (1981, 6, 30),
+        (1982, 6, 30),
+        (1983, 6, 30),
+        (1985, 6, 30),
+        (1987, 12, 31),
+        (1989, 12, 31),
+        (1990, 12, 31),
+        (1992, 6, 30),
+        (1993, 6, 30),
+        (1994, 6, 30),
+        (1995, 12, 31),
+        (1997, 6, 30),
+        (1998, 12, 31),
+        (2005, 12, 31),
+        (2008, 12, 31),
+        (2012, 6, 30),
+        (2015, 6, 30),
+        (2016, 12, 31),
+    )
+)
 
 
 def date_time(s: str) -> bool:
+    """A date, T and a time. A leap second is valid only at 23:59:60 UTC on a day that ended with one, which may be
+    the day before or after the date as written."""
     t = -1
     for i, c in enumerate(s):
         if c in "tT":
             t = i
             break
-    return t == 10 and date(s[:10]) and time(s[11:])
+    if t != 10 or not date(s[:10]):
+        return False
+    parts = _full_time(s[11:])
+    if parts is None:
+        return False
+    sec, utc = parts
+    if sec < 60:
+        return True
+    if utc % _MINUTES_PER_DAY != _LAST_MINUTE_OF_DAY:
+        return False
+    shift = -1 if utc < 0 else 1 if utc >= _MINUTES_PER_DAY else 0
+    day = _days_from_civil(int(s[0:4]), int(s[5:7]), int(s[8:10])) + shift
+    return day in _LEAP_SECOND_DAYS
 
 
 # RFC 3339 appendix A: dur-year = 1*DIGIT "Y" [dur-month], dur-month = 1*DIGIT "M" [dur-day], and so on.

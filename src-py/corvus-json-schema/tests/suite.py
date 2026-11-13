@@ -192,9 +192,6 @@ def main() -> int:
                     except Exception as e:
                         error = e
                 if error is not None or actual != test["valid"]:
-                    # Leap seconds are skipped where format is asserted until this engine has the leap-second rule.
-                    if assert_format and "leap second" in test["description"].lower():
-                        continue
                     file_failed += 1
                     got = f"{type(error).__name__}: {error}" if error is not None else actual
                     failures.append(

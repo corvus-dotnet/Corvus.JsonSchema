@@ -87,9 +87,6 @@ let run_suite_case scratch v data =
 
 let total = ref 0
 let failures = ref []
-
-(* Failing leap second cases that assert format, which are not counted as failures. *)
-let skipped = ref []
 let areas = ref []
 let passed : (string, int) Hashtbl.t = Hashtbl.create 16
 let counted : (string, int) Hashtbl.t = Hashtbl.create 16
@@ -126,13 +123,6 @@ let run_file scratch filter dialect release file label area =
               | Ok v -> run_suite_case scratch v test.data
             in
             if outcome = Ok test.valid then bump passed area
-            else if
-              (* Leap seconds are skipped where format is asserted until this engine has the leap-second rule. *)
-              assert_format && contains (String.lowercase_ascii test.case_description) "leap second"
-            then begin
-              bump passed area;
-              skipped := (label ^ " [" ^ group.description ^ "] " ^ test.case_description) :: !skipped
-            end
             else begin
               let got = match outcome with Ok actual -> string_of_bool actual | Error message -> message in
               failures :=
@@ -174,7 +164,6 @@ let () =
       end)
     suite_drafts;
   List.iter print_endline (List.rev !failures);
-  List.iter (fun line -> print_endline ("skipped: " ^ line)) (List.rev !skipped);
   List.iter
     (fun area ->
       Printf.printf "%-34s %5d/%d\n" area

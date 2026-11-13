@@ -29,7 +29,7 @@ var
   CaseSchemas: TCaseSchemas;
   Areas: array of TArea;
   Filter: UTF8String;
-  Total, Failed, Skipped: Int32;
+  Total, Failed: Int32;
 
 function AreaOf(const AreaName: UTF8String): Int32;
 var
@@ -245,13 +245,6 @@ begin
         Inc(Areas[Area].Passed);
         Continue;
       end;
-      { Leap seconds are skipped where format is asserted until this engine has the leap-second rule. }
-      if AssertFormat and (Pos('leap second', LowerAscii(TestDescription)) > 0) then begin
-        Inc(Areas[Area].Passed);
-        Inc(Skipped);
-        WriteLn('skipped: ', Name, ' [', GroupDescription, '] ', TestDescription);
-        Continue;
-      end;
       Got := BoolText(Actual);
       if not Ran then
         Got := Error;
@@ -284,7 +277,6 @@ begin
   Areas := nil;
   Total := 0;
   Failed := 0;
-  Skipped := 0;
   Files := JsonFiles(Tests);
   OptionalFiles := JsonFiles(Tests + '/optional');
   for D := 0 to 4 do begin
@@ -304,7 +296,6 @@ begin
   JsonSchemaReleaseThreadScratch;
   for I := 0 to Length(Areas) - 1 do
     WriteLn(Areas[I].Name, '': 35 - Length(Areas[I].Name), Areas[I].Passed: 5, '/', Areas[I].Counted);
-  WriteLn(Skipped, ' failing leap second cases that assert format were skipped');
   WriteLn('JSON-Schema-Test-Suite: ', Total - Failed, '/', Total, ' passed');
   if Total = 0 then begin
     WriteLn('no JSON-Schema-Test-Suite cases ran');

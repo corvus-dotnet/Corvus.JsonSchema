@@ -181,33 +181,33 @@ public readonly partial struct OpenApiDocument
                     return validationContext;
                 }
 
+                if (value.HasJsonElementBacking ? value.HasProperty("identifier"u8) : value.HasProperty("identifier"))
+                {
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/dependentSchemas/identifier"), "identifier");
+                    }
+
+                    ValidationContext dependentSchemasResult0 = value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.License.IdentifierEntity>().Validate(result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && !dependentSchemasResult0.IsValid)
+                    {
+                        return ValidationContext.InvalidContext;
+                    }
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+
+                    result = result.MergeChildContext(dependentSchemasResult0, true);
+                }
+
                 bool hasSeenName = false;
 
                 int propertyCount = 0;
                 foreach (JsonObjectProperty property in value.EnumerateObject())
                 {
                     string? propertyNameAsString = null;
-
-                    if (property.NameEquals("identifier"u8, "identifier"))
-                    {
-                        if (level > ValidationLevel.Basic)
-                        {
-                            result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/dependentSchemas/identifier"), "identifier");
-                        }
-
-                        ValidationContext dependentSchemasResult0 = value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.License.IdentifierEntity>().Validate(result.CreateChildContext(), level);
-                        if (level == ValidationLevel.Flag && !dependentSchemasResult0.IsValid)
-                        {
-                            return ValidationContext.InvalidContext;
-                        }
-
-                        if (level > ValidationLevel.Basic)
-                        {
-                            result = result.PopLocation();
-                        }
-
-                        result = result.MergeChildContext(dependentSchemasResult0, true);
-                    }
 
                     if (property.NameEquals(JsonPropertyNames.IdentifierUtf8, JsonPropertyNames.Identifier))
                     {

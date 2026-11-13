@@ -1,5 +1,21 @@
 # Version History
 
+## V5.8.10
+
+V5.8.10 publishes V5.8.9, and builds with the released .NET 11 SDK. V5.8.9 was tagged, but its release build failed before it built any packages, so it was never published to NuGet.org and is skipped there. V5.8.10 ships everything in V5.8.9, which is listed below.
+
+### Other changes
+
+- **The build uses the .NET 11 SDK (11.0.100) in place of its release candidate.** V5.8.9's release build restored the trimming analyzers of .NET 10.0.15, which the released SDK uses, where the generated-code analyzer configuration recorded those of 10.0.12, which the release candidate uses. The build refuses a configuration that does not match the analyzers in use, so it failed. `global.json` and the workflows now name 11.0.100, and the configuration records the analyzers it brings. The released SDK runs .NET Framework tests only on Windows, so the documented test commands now say to pass `-f net10.0` on Linux and macOS. CI was already running each framework on its own runners. See [#1078](https://github.com/corvus-dotnet/Corvus.JsonSchema/pull/1078).
+
+## V5.8.9
+
+V5.8.9 fixes how V4 validates `unevaluatedProperties` beside `dependentSchemas`.
+
+### Bug fixes
+
+- **V4: `unevaluatedProperties` sees every property a dependent schema evaluates.** V4 applied a dependent schema when it reached the dependent property in the object, and checked each property against `unevaluatedProperties` as it reached it, so a property that came first and that only the dependent schema evaluates was reported as unevaluated. With `{"properties": {"foo": true}, "dependentSchemas": {"foo": {"properties": {"bar": true}}}, "unevaluatedProperties": false}`, `{"foo": 1, "bar": 2}` was valid and `{"bar": 2, "foo": 1}` was not. OpenAPI 3.1's parameter definition has this shape, so a parameter that put `example` or `explode` before `schema` failed it. V4 now applies dependent schemas before it reaches any property, as it does the in-place applicators. The V4 OpenAPI 3.1 models (`Corvus.Json.JsonSchema.OpenApi31`) have the same fix. V5 was not affected. See [#1077](https://github.com/corvus-dotnet/Corvus.JsonSchema/pull/1077).
+
 ## V5.8.8
 
 V5.8.8 fixes wrong answers from `pattern` in an application published with native AOT.
