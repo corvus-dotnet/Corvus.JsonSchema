@@ -9,6 +9,8 @@ This guide covers the test projects in the solution and how to run them.
 dotnet test --solution Corvus.Text.Json.slnx --filter "TestCategory!=failing&TestCategory!=outerloop&TestCategory!=integration"
 ```
 
+On Linux and macOS, add `-f net10.0`: the test projects also target `net481`, and the .NET 11 SDK runs .NET Framework tests only on Windows (it stops with NETSDK1243 elsewhere).
+
 Always exclude the `failing`, `outerloop`, and `integration` categories when running the full suite. The `outerloop` tests are long-running stress and thread-safety tests. The `integration` tests require Docker/Podman to run real broker containers.
 
 ### Integration Tests (Docker/Podman Required)

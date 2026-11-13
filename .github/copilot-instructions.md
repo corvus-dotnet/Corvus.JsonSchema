@@ -64,6 +64,8 @@ dotnet test --solution Corvus.Text.Json.slnx --filter "FullyQualifiedName~Parsed
 dotnet test --solution Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParseValidUtf8BOM&TestCategory!=failing&TestCategory!=outerloop&TestCategory!=integration"
 ```
 
+On Linux and macOS, add `-f net10.0`: the test projects also target `net481`, and the .NET 11 SDK runs .NET Framework tests only on Windows (it stops with NETSDK1243 elsewhere).
+
 Always exclude `failing`, `outerloop`, and `integration` categories when running tests. Never run all tests without these filters. The `integration` category marks tests that require Docker (Testcontainers) for real broker containers (Kafka, NATS, MQTT, AMQP) — they run only in CI on ubuntu runners with Docker available.
 
 Always use `FullyQualifiedName~` (substring match) for test filters — not `ClassName=`. The `ClassName` filter does not work reliably in this repo.
