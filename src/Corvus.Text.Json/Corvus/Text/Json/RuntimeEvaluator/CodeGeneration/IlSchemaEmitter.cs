@@ -36,12 +36,6 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     // The largest set of strings a value is tested against by words in place; a larger one is a hashed lookup.
     private const int MaxWordsSet = 32;
 
-    // The size of a method's IL beyond which a set of strings is no longer tested by words in place, but by a hashed
-    // lookup: the in-place test is about 100 bytes of IL a string, and a large object with many enums grows past what
-    // the JIT optimises well (clang-format's root object reaches 31,000 bytes with every set in place, and runs 40%
-    // slower than with the lookup).
-    private const int MaxMethodSizeForWordsSets = 16_000;
-
     // The largest method (bytes of IL) the JIT is asked to inline, and the largest a caller may be with its callees
     // inlined. Asking for every small method to be inlined gained more on some corpora (importmap 0.83) and lost
     // badly on others (cspell 1.27, fabric-mod 1.18): the JIT optimises a method that has grown too large poorly.
@@ -101,6 +95,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     private static readonly MethodInfo GenStringSet = Helper(nameof(Evaluator.GenStringSet));
     private static readonly MethodInfo GenStringConst = Helper(nameof(Evaluator.GenStringConst));
 
+    private readonly ModuleBuilder module;
     private readonly TypeBuilder type;
     private readonly Dictionary<int, MethodBuilder> methods = [];
     private readonly List<(FieldBuilder Field, object Value)> constants = [];
@@ -174,12 +169,15 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     public IlSchemaEmitter()
     {
         var assembly = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("Corvus.Text.Json.Schema." + Guid.NewGuid().ToString("N")), AssemblyBuilderAccess.RunAndCollect);
-        ModuleBuilder module = assembly.DefineDynamicModule("Schema");
-        AllowAccessTo(assembly, module, typeof(Evaluator).Assembly.GetName().Name!);
-        this.type = module.DefineType("Schema", TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.Abstract);
+        this.module = assembly.DefineDynamicModule("Schema");
+        AllowAccessTo(assembly, this.module, typeof(Evaluator).Assembly.GetName().Name!);
+        this.type = this.module.DefineType("Schema", TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.Abstract);
     }
 
     private ILGenerator Il => this.il!;
+
+    /// <inheritdoc/>
+    public int MethodSize => this.Il.ILOffset;
 
     /// <inheritdoc/>
     public void BeginMethod(int nodeId)
@@ -1349,7 +1347,7 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
     public void FailUnlessStringSet(Utf8NameMap<object> allowed)
     {
         byte[][] keys = allowed.Keys;
-        if (keys.Length == 0 || keys.Length > MaxWordsSet || this.Il.ILOffset > MaxMethodSizeForWordsSets || Array.Exists(keys, k => k.Length > MaxWordsName))
+        if (keys.Length == 0 || keys.Length > MaxWordsSet || this.Il.ILOffset > SchemaLowering.MaxInPlaceMethodSize || Array.Exists(keys, k => k.Length > MaxWordsName))
         {
             this.ValueTest(GenStringSet, this.Constant(allowed), byAddress: false);
             this.valueKnownScalar = true;
@@ -1520,74 +1518,78 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
         this.Mark(done);
     }
 
-    /// <summary>Creates the type, sets its constants, compiles its methods and returns them by node.</summary>
+    /// <summary>Creates the type, sets its constants, compiles its methods when asked to and returns them by node.</summary>
+    /// <param name="prepare">Whether to compile every method now (otherwise the JIT compiles each at its first call).</param>
+    /// <param name="created">The created type, whose methods <see cref="EmitEntry"/> calls.</param>
+    /// <param name="module">The module the type is in, where <see cref="EmitEntry"/> defines the entries.</param>
     /// <returns>Each node's method.</returns>
-    public Dictionary<int, NodeValidator> Build(int entryNode, out nint entryAddress)
+    public Dictionary<int, NodeValidator> Build(bool prepare, out Type created, out ModuleBuilder module)
     {
         this.ChooseInlinedMethods();
-
-        // The schema's entry method: the evaluation's state is a local of it, set up there, and the entry node's
-        // method is called on it (and inlined, when nothing else calls it: one frame from the public entry to the
-        // validation, where a shared entry made a frame of its own and called the node's method by its address).
-        const string EntryName = "Entry";
-        bool hasEntry = this.methods.TryGetValue(entryNode, out MethodBuilder? root);
-        if (hasEntry)
-        {
-            if (!this.calls.Exists(call => call.Callee == entryNode))
-            {
-                root!.SetImplementationFlags(MethodImplAttributes.IL | MethodImplAttributes.AggressiveInlining);
-            }
-
-            MethodBuilder entry = this.type.DefineMethod(EntryName, MethodAttributes.Public | MethodAttributes.Static, typeof(bool), [typeof(CompiledEntry), typeof(JsonDocument), typeof(IJsonDocument), typeof(int)]);
-            ILGenerator il = entry.GetILGenerator();
-            LocalBuilder state = il.DeclareLocal(typeof(EvaluationState));
-            Label readable = il.DefineLabel();
-            il.Emit(OpCodes.Ldloca, state);
-            il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Ldarg_1);
-            il.Emit(OpCodes.Call, GenEnter);
-            il.Emit(OpCodes.Brtrue, readable);
-            il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Ldarg_2);
-            il.Emit(OpCodes.Ldarg_3);
-            il.Emit(OpCodes.Call, GenEvaluateGeneral);
-            il.Emit(OpCodes.Ret);
-            il.MarkLabel(readable);
-            il.Emit(OpCodes.Ldloca, state);
-            il.Emit(OpCodes.Ldarg_2);
-            il.Emit(OpCodes.Ldarg_3);
-            il.Emit(OpCodes.Call, root!);
-            il.Emit(OpCodes.Ret);
-        }
-
-        Type created = this.type.CreateType();
-        entryAddress = 0;
-        if (hasEntry)
-        {
-            RuntimeMethodHandle handle = created.GetMethod(EntryName)!.MethodHandle;
-            RuntimeHelpers.PrepareMethod(handle);
-            entryAddress = handle.GetFunctionPointer();
-        }
-
+        created = this.type.CreateType();
+        module = this.module;
         foreach ((FieldBuilder field, object constant) in this.constants)
         {
             created.GetField(field.Name)!.SetValue(null, constant);
         }
 
-        // Compiled here, on the thread that builds the schema's code (tiering's background task), not at each
-        // method's first call on a thread that is evaluating.
-        foreach (MethodBuilder method in this.methods.Values)
-        {
-            RuntimeHelpers.PrepareMethod(created.GetMethod(method.Name)!.MethodHandle);
-        }
-
+        // When asked to (Eager), compiled here, on the thread that builds the schema's code, so that no evaluation
+        // waits for the JIT. Otherwise each method is compiled at its first call: a large schema's instances reach a
+        // fraction of its methods (ui5-manifest calls 90 of 885), so compiling them all first only delays the code.
+        // Each method is compiled once: no method is made to be inlined beyond the budget of ChooseInlinedMethods, so
+        // the JIT compiles none of the large ones again inside a caller (an entry node's method inlined into the entry
+        // was compiled twice, and the JIT's time grows faster than a method's size).
         var built = new Dictionary<int, NodeValidator>(this.methods.Count);
         foreach (KeyValuePair<int, MethodBuilder> method in this.methods)
         {
-            built[method.Key] = created.GetMethod(method.Value.Name)!.CreateDelegate<NodeValidator>();
+            MethodInfo compiled = created.GetMethod(method.Value.Name)!;
+            if (prepare)
+            {
+                RuntimeHelpers.PrepareMethod(compiled.MethodHandle);
+            }
+
+            built[method.Key] = compiled.CreateDelegate<NodeValidator>();
         }
 
         return built;
+    }
+
+    /// <summary>
+    /// Defines an entry for one entry node of a built type, in a type of its own (the built type is complete), and
+    /// compiles it: the evaluation's state is a local of the entry, set up there, and the entry node's method is
+    /// called on it (and inlined, when the method is small enough to be inlined anywhere).
+    /// </summary>
+    /// <param name="module">The built type's module.</param>
+    /// <param name="created">The built type.</param>
+    /// <param name="entryNode">The entry node, which has a method in the built type.</param>
+    /// <returns>The address of the entry (see <see cref="CompiledEntry.EntryAddress"/>).</returns>
+    public static nint EmitEntry(ModuleBuilder module, Type created, int entryNode)
+    {
+        const string EntryName = "Entry";
+        TypeBuilder type = module.DefineType("Entry" + entryNode, TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.Abstract);
+        MethodBuilder entry = type.DefineMethod(EntryName, MethodAttributes.Public | MethodAttributes.Static, typeof(bool), [typeof(CompiledEntry), typeof(JsonDocument), typeof(IJsonDocument), typeof(int)]);
+        ILGenerator il = entry.GetILGenerator();
+        LocalBuilder state = il.DeclareLocal(typeof(EvaluationState));
+        Label readable = il.DefineLabel();
+        il.Emit(OpCodes.Ldloca, state);
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Call, GenEnter);
+        il.Emit(OpCodes.Brtrue, readable);
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_2);
+        il.Emit(OpCodes.Ldarg_3);
+        il.Emit(OpCodes.Call, GenEvaluateGeneral);
+        il.Emit(OpCodes.Ret);
+        il.MarkLabel(readable);
+        il.Emit(OpCodes.Ldloca, state);
+        il.Emit(OpCodes.Ldarg_2);
+        il.Emit(OpCodes.Ldarg_3);
+        il.Emit(OpCodes.Call, created.GetMethod("N" + entryNode)!);
+        il.Emit(OpCodes.Ret);
+        RuntimeMethodHandle handle = type.CreateType().GetMethod(EntryName)!.MethodHandle;
+        RuntimeHelpers.PrepareMethod(handle);
+        return handle.GetFunctionPointer();
     }
 
     // The method's value: a container of the kind goes on (unless its type or count rejects it); anything else is
@@ -2182,9 +2184,48 @@ internal sealed class IlSchemaEmitter : ISchemaEmitter
             }
         }
 
+        // A method that no generated method calls is called by the entries alone (an entry point's node): within the
+        // budget of a method with its callees inlined, it is inlined into them, one frame from the public entry to the
+        // validation. A larger one is called: the JIT would compile it again in each entry, and its time grows faster
+        // than a method's size (clang-format's 22,520-byte entry node, inlined, was more than half its compile time).
+        var called = new HashSet<int>();
+        foreach ((int _, int callee) in this.calls)
+        {
+            called.Add(callee);
+        }
+
+        var final = new Dictionary<int, int>();
+        foreach (int nodeId in this.methods.Keys)
+        {
+            if (!called.Contains(nodeId) && FinalSize(nodeId) <= MaxSizeWithInlinedMethods)
+            {
+                inlined.Add(nodeId);
+            }
+        }
+
         foreach (int nodeId in inlined)
         {
             this.methods[nodeId].SetImplementationFlags(MethodImplAttributes.IL | MethodImplAttributes.AggressiveInlining);
+        }
+
+        int FinalSize(int nodeId)
+        {
+            if (!final.TryGetValue(nodeId, out int size))
+            {
+                size = this.sizes.GetValueOrDefault(nodeId);
+                final[nodeId] = size;
+                foreach (int callee in callees.GetValueOrDefault(nodeId) ?? [])
+                {
+                    if (inlined.Contains(callee))
+                    {
+                        size += FinalSize(callee);
+                    }
+                }
+
+                final[nodeId] = size;
+            }
+
+            return size;
         }
 
         bool Reaches(int from, int target, HashSet<int> visited)

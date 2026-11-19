@@ -1,5 +1,19 @@
 # Version History
 
+## V5.8.12
+
+V5.8.12 compiles schemas to code by default once an evaluator is in use, and makes that code cheaper to produce.
+
+### New features
+
+- **Runtime code generation is on by default, after a warm-up.** `JsonSchemaEvaluatorOptions.CodeGeneration`, and the Validator's `codeGeneration` option, now default to `AfterWarmUp` in place of `Disabled`. An evaluator that has made 1,000 evaluations that collect no results generates its schema's code on a background thread, and later evaluations use it: generated code is about 2.8 times as fast as the interpreter over the 37 Sourcemeta benchmark corpora (geometric mean). Generated types validate through the evaluator, so they get it too. Results are unchanged; evaluations that collect results still use the interpreter; and under native AOT, or anywhere the runtime cannot compile code, the schema is interpreted as before. Set `Disabled` to keep the interpreter. In json-model.org's benchmark protocol, the default moves from 2.58 times Blaze's time to 1.25 times. See [#1080](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1080).
+- **The evaluators of one program share its generated code.** Each evaluator generated code for the whole program, so a generated program with many types in use generated it once per type. The program now generates it once, and each further entry point adds a small entry method of its own. See [#1080](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1080).
+- **`AfterWarmUp` compiles each generated method at its first call, and `Eager` compiles them all when the evaluator is made.** A large schema's instances reach a fraction of its methods (ui5-manifest's call 90 of its 885), so `AfterWarmUp` no longer compiles the rest: the code for all 37 corpora is ready in 1.4 s rather than 5.4 s, and its first calls pay for their methods. `Eager` used to compile inside the evaluator's first evaluation; it now compiles every method when the evaluator is made, so that no evaluation waits for it. A benchmark that times an evaluator's creation separately from its evaluations now sees `Eager`'s cost in the former. See [#1080](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1080).
+
+### Other changes
+
+- **Large generated methods compile faster.** The JIT compiles a method once for each caller it is inlined into, and its time grows faster than a method's size. An entry node's method was inlined into the entry whatever its size, and compiled twice (clang-format's 22,520 bytes of IL took more than half its compile time); it is now inlined only within the inlining budget. A method tests its children in place only up to 8,000 bytes of IL, and calls them beyond that. clang-format's code compiles in 202 ms rather than 537 ms, and no corpus evaluates more slowly. See [#1080](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1080).
+
 ## V5.8.11
 
 V5.8.11 fixes an `ArgumentOutOfRangeException` from `UniqueItemsHashSet` for 240 to 256 items.

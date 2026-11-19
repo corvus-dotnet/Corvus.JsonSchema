@@ -347,7 +347,8 @@ An evaluator can compile its schema to IL at run time, in place of interpreting 
 results as the interpreter and is used by evaluations that collect no results (`Evaluate` without a results
 collector). An evaluation that collects results always uses the interpreter.
 
-It is off by default. `JsonSchemaEvaluatorOptions.CodeGeneration` turns it on for an evaluator.
+It is on by default, after a warm-up: an evaluator that has made 1,000 evaluations generates its schema's code in the
+background. `JsonSchemaEvaluatorOptions.CodeGeneration` chooses another mode for an evaluator.
 
 ```csharp
 using Corvus.Text.Json;
@@ -365,9 +366,13 @@ bool valid = evaluator.Evaluate(document.RootElement);
 
 | Value | Behaviour |
 |---|---|
-| `Disabled` | The default. The interpreter evaluates every instance. |
-| `AfterWarmUp` | The schema is compiled on a background thread once the evaluator has made 1,000 evaluations that collect no results. Later evaluations use the code when it is ready. No evaluation waits for it. |
-| `Eager` | The schema is compiled on the calling thread before the evaluator's first evaluation that collects no results, which waits for it. |
+| `Disabled` | The interpreter evaluates every instance. |
+| `AfterWarmUp` | The default. The schema's code is generated on a background thread once the evaluator has made 1,000 evaluations that collect no results, and later evaluations use it when it is ready. Each method is compiled by the JIT at its first call, which pays for it. |
+| `Eager` | The schema's code is generated, and every method compiled, on the calling thread when the evaluator is made, so that no evaluation waits for it. |
+
+The evaluators of one program (the entry points of one schema document set, such as the types of a generated
+program) share its generated code: it is generated once, by the first of them to need it, and each of the others adds
+only a small entry of its own.
 
 ### When it applies
 
@@ -383,18 +388,21 @@ bool valid = evaluator.Evaluate(document.RootElement);
 
 Measured on the 37 Sourcemeta corpora (see [the measurements](RuntimeEvaluatorMeasurements.md) for the method):
 
-- **Warm evaluation.** Generated code takes about half the interpreter's time (0.51, geometric mean).
-- **Compiling.** Generating a schema's code takes about 20 ms at the median and up to 0.7 s for the largest schema
-  (ui5-manifest, 885 methods), nearly all of it the JIT compiling the methods. `Eager` pays that before the first
-  evaluation. `AfterWarmUp` pays it on another thread.
+- **Warm evaluation.** Generated code takes about a third of the interpreter's time (0.36, geometric mean).
+- **Compiling.** Nearly all of it is the JIT compiling the generated methods, and its time grows faster than a
+  method's size, so a method stops testing its children in place beyond 8,000 bytes of IL and calls them instead.
+  `Eager` compiles every method when the evaluator is made: tens of milliseconds for most schemas, up to 1.4 s for the largest
+  schema (ui5-manifest, 885 methods). `AfterWarmUp` generates the code on another thread (all 37 corpora together in
+  1.4 s rather than 5.4 s) and leaves each method to its first call: ui5-manifest's instances call 90 of its 885
+  methods.
 - **Starting the compilation.** With `AfterWarmUp`, the evaluation that starts it (the 1,000th) pays for handing the
   work to the thread pool: 1.4 to 2.1 ms in a process that has just started and has not yet used the pool, and 0.3
   to 0.4 ms once the pool is running. The evaluations that follow are not slowed while the code is compiled. An
   evaluator that makes fewer than 1,000 evaluations pays nothing.
 
-Choose `AfterWarmUp` for an evaluator that may be used a few times or many. Choose `Eager` for a long-lived
-evaluator whose first evaluations should already run at full speed. Leave it `Disabled` for an evaluator used a few
-times, where compiling would cost more than it saves.
+Keep `AfterWarmUp` for an evaluator that may be used a few times or many. Choose `Eager` for a long-lived
+evaluator whose first evaluations should already run at full speed. Choose `Disabled` where no code should be
+generated at all.
 
 The techniques the generator uses, and what was measured and not kept, are recorded beside it in
 `src/Corvus.Text.Json/Corvus/Text/Json/RuntimeEvaluator/CodeGeneration/OPTIMIZATIONS.md`.

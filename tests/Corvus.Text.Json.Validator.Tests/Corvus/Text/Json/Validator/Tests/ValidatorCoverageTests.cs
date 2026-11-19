@@ -311,16 +311,16 @@ public class ValidatorCoverageTests
     }
 
     [TestMethod]
-    public void CodeGeneration_DefaultsToDisabled_AndIsCarriedByTheOptions()
+    public void CodeGeneration_DefaultsToAfterWarmUp_AndIsCarriedByTheOptions()
     {
-        Assert.AreEqual(JsonSchemaCodeGeneration.Disabled, JsonSchema.Options.Default.CodeGeneration);
-        Assert.AreEqual(JsonSchemaCodeGeneration.Disabled, new JsonSchema.Options(alwaysAssertFormat: false).CodeGeneration);
-        Assert.AreEqual(
-            JsonSchemaCodeGeneration.Disabled,
-            new JsonSchema.Options(null, true, JsonSchemaDialect.Draft202012, true, null).CodeGeneration);
+        Assert.AreEqual(JsonSchemaCodeGeneration.AfterWarmUp, JsonSchema.Options.Default.CodeGeneration);
+        Assert.AreEqual(JsonSchemaCodeGeneration.AfterWarmUp, new JsonSchema.Options(alwaysAssertFormat: false).CodeGeneration);
         Assert.AreEqual(
             JsonSchemaCodeGeneration.AfterWarmUp,
-            new JsonSchema.Options(codeGeneration: JsonSchemaCodeGeneration.AfterWarmUp).CodeGeneration);
+            new JsonSchema.Options(null, true, JsonSchemaDialect.Draft202012, true, null).CodeGeneration);
+        Assert.AreEqual(
+            JsonSchemaCodeGeneration.Disabled,
+            new JsonSchema.Options(codeGeneration: JsonSchemaCodeGeneration.Disabled).CodeGeneration);
     }
 
     [TestMethod]
@@ -404,7 +404,8 @@ public class ValidatorCoverageTests
 
         var interpretedOptions = new JsonSchema.Options(
             allowFileSystemAndHttpResolution: false,
-            additionalDocumentResolver: Prepopulated(schemaUri, stringSchema));
+            additionalDocumentResolver: Prepopulated(schemaUri, stringSchema),
+            codeGeneration: JsonSchemaCodeGeneration.Disabled);
         var interpreted = JsonSchema.FromUri(schemaUri, interpretedOptions, refreshCache: true);
         Assert.IsTrue(interpreted.Validate("\"hello\""));
 

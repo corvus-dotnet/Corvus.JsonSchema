@@ -20,6 +20,12 @@ namespace Corvus.Text.Json.RuntimeEvaluator.CodeGeneration;
 /// </remarks>
 internal interface ISchemaEmitter
 {
+    /// <summary>
+    /// Gets the size of the current method so far, in the emitter's units (bytes of IL): the lowering tests a child in
+    /// place only while the method is under a budget, and calls the child's method beyond it.
+    /// </summary>
+    int MethodSize { get; }
+
     /// <summary>Starts the method for a node.</summary>
     /// <param name="nodeId">The node.</param>
     void BeginMethod(int nodeId);

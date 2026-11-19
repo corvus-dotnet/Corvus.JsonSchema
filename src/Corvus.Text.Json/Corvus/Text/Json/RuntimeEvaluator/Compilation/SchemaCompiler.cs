@@ -22,6 +22,12 @@ internal sealed class CompiledSchema : IDisposable
     private int references;
     private readonly Dictionary<string, int> entryPoints = new(StringComparer.Ordinal);
     private readonly ParsedJsonDocument<JsonElement>? constantsDocument;
+#if NET && !STJ
+
+    // The program's generated code, for its current node array, and the lock under which it is generated.
+    private readonly object generatedGate = new();
+    private CodeGeneration.GeneratedProgram? generatedCode;
+#endif
 
     public CompiledSchema(SchemaNode[] nodes, int rootNode, SchemaLoader loader, bool usesDynamicScope, JsonSchemaEvaluatorOptions options, SchemaCompiler compiler)
     {
@@ -69,6 +75,50 @@ internal sealed class CompiledSchema : IDisposable
     public int ResourceCount { get; private set; }
 
     public JsonSchemaEvaluatorOptions Options { get; }
+#if NET && !STJ
+
+    /// <summary>Gets the number of times the program's code has been generated (for tests).</summary>
+    public int GeneratedCodeCompilations { get; private set; }
+
+    /// <summary>Gets a value indicating whether the program's current code has every method compiled (for tests).</summary>
+    public bool GeneratedCodePrepared => this.generatedCode?.Prepared ?? false;
+
+    /// <summary>
+    /// Gets the program's generated code for a node array, generating it on first request: every evaluator of the
+    /// program (one for each entry point) shares it. Callers wait while it is generated, rather than each generate it.
+    /// </summary>
+    /// <param name="nodes">The node array (the program's, when the evaluator read it).</param>
+    /// <param name="prepare">Whether every method must be compiled before this returns (Eager), rather than at its first call.</param>
+    /// <returns>The code.</returns>
+    [System.Diagnostics.CodeAnalysis.RequiresDynamicCode(CodeGeneration.SchemaLowering.RequiresDynamicCodeMessage)]
+    public CodeGeneration.GeneratedProgram GetGeneratedCode(SchemaNode[] nodes, bool prepare)
+    {
+        lock (this.generatedGate)
+        {
+            if (this.generatedCode is CodeGeneration.GeneratedProgram known && ReferenceEquals(known.SourceNodes, nodes))
+            {
+                if (prepare)
+                {
+                    known.PrepareAll();
+                }
+
+                return known;
+            }
+
+            CodeGeneration.GeneratedProgram code = CodeGeneration.SchemaLowering.CompileProgram(nodes, prepare);
+            this.GeneratedCodeCompilations++;
+
+            // Kept for the program's current node array; code for an array an entry point has since replaced is
+            // the asking evaluator's alone, until it rebuilds its entry data over the current array.
+            if (ReferenceEquals(nodes, this.Nodes))
+            {
+                this.generatedCode = code;
+            }
+
+            return code;
+        }
+    }
+#endif
 
     /// <summary>Adds a reference for an evaluator sharing this program.</summary>
     public void AddReference()

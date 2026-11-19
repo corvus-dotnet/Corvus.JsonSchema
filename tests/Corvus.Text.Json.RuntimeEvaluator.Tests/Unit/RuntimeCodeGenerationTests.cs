@@ -663,7 +663,9 @@ public class RuntimeCodeGenerationTests
             Assert.Inconclusive("Dynamic code is not supported here.");
         }
 
-        // The whole-suite override (see TestAssemblySetup) would decide for every evaluator: off for this test.
+        // The whole-suite override (see TestAssemblySetup) would decide for every evaluator: off for this test. Each
+        // evaluator is asked whether it has compiled, not the process-wide count: an earlier test's evaluator may
+        // still be compiling in the background.
         JsonSchemaCodeGeneration? suite = JsonSchemaEvaluator.CodeGenerationOverride;
         JsonSchemaEvaluator.CodeGenerationOverride = null;
         try
@@ -671,9 +673,8 @@ public class RuntimeCodeGenerationTests
             using ParsedJsonDocument<JsonElement> valid = ParsedJsonDocument<JsonElement>.Parse("""{"id": 2}""");
             using ParsedJsonDocument<JsonElement> invalid = ParsedJsonDocument<JsonElement>.Parse("""{"id": 0}""");
 
-            // Disabled (the default): never compiled, however many evaluations.
-            int before = SchemaLowering.CompiledCount;
-            using (JsonSchemaEvaluator disabled = JsonSchemaEvaluator.Compile(Schema))
+            // Disabled: never compiled, however many evaluations.
+            using (JsonSchemaEvaluator disabled = JsonSchemaEvaluator.Compile(Schema, new JsonSchemaEvaluatorOptions { CodeGeneration = JsonSchemaCodeGeneration.Disabled }))
             {
                 for (int i = 0; i < 3000; i++)
                 {
@@ -681,36 +682,35 @@ public class RuntimeCodeGenerationTests
                 }
 
                 Assert.IsFalse(disabled.Evaluate(invalid.RootElement));
+                Assert.IsFalse(disabled.HasGeneratedCode);
             }
 
-            Assert.AreEqual(before, SchemaLowering.CompiledCount);
-
-            // Eager: compiled by the first evaluation.
+            // Eager: compiled when the evaluator is made, so that no evaluation waits for it.
             using (JsonSchemaEvaluator eager = JsonSchemaEvaluator.Compile(Schema, new JsonSchemaEvaluatorOptions { CodeGeneration = JsonSchemaCodeGeneration.Eager }))
             {
+                Assert.IsTrue(eager.HasGeneratedCode);
                 Assert.IsTrue(eager.Evaluate(valid.RootElement));
-                Assert.AreEqual(before + 1, SchemaLowering.CompiledCount);
                 Assert.IsFalse(eager.Evaluate(invalid.RootElement));
             }
 
-            // After warm-up: not before 1,000 evaluations, and then in the background.
-            before = SchemaLowering.CompiledCount;
-            using (JsonSchemaEvaluator warm = JsonSchemaEvaluator.Compile(Schema, new JsonSchemaEvaluatorOptions { CodeGeneration = JsonSchemaCodeGeneration.AfterWarmUp }))
+            // After warm-up (the default): not before 1,000 evaluations, and then in the background.
+            foreach (JsonSchemaEvaluatorOptions? options in new[] { null, new JsonSchemaEvaluatorOptions(), new JsonSchemaEvaluatorOptions { CodeGeneration = JsonSchemaCodeGeneration.AfterWarmUp } })
             {
+                using JsonSchemaEvaluator warm = JsonSchemaEvaluator.Compile(Schema, options);
                 for (int i = 0; i < 999; i++)
                 {
                     Assert.IsTrue(warm.Evaluate(valid.RootElement));
                 }
 
-                Assert.AreEqual(before, SchemaLowering.CompiledCount);
+                Assert.IsFalse(warm.HasGeneratedCode);
                 Assert.IsTrue(warm.Evaluate(valid.RootElement));
                 var waited = System.Diagnostics.Stopwatch.StartNew();
-                while (SchemaLowering.CompiledCount == before && waited.Elapsed < TimeSpan.FromSeconds(30))
+                while (!warm.HasGeneratedCode && waited.Elapsed < TimeSpan.FromSeconds(30))
                 {
                     Thread.Sleep(5);
                 }
 
-                Assert.AreEqual(before + 1, SchemaLowering.CompiledCount);
+                Assert.IsTrue(warm.HasGeneratedCode);
 
                 // The results are the interpreter's, before the code is published and after.
                 for (int i = 0; i < 2000; i++)
@@ -724,6 +724,253 @@ public class RuntimeCodeGenerationTests
         {
             JsonSchemaEvaluator.CodeGenerationOverride = suite;
         }
+    }
+
+    [TestMethod]
+    public void TheDefaultIsToCompileAfterWarmUp()
+    {
+        Assert.AreEqual(JsonSchemaCodeGeneration.AfterWarmUp, new JsonSchemaEvaluatorOptions().CodeGeneration);
+        Assert.AreEqual(JsonSchemaCodeGeneration.AfterWarmUp, JsonSchemaEvaluatorOptions.Default.CodeGeneration);
+    }
+
+    [TestMethod]
+    public void EntryPointsOfOneProgramShareItsGeneratedCode()
+    {
+        if (!SchemaLowering.IsSupported)
+        {
+            Assert.Inconclusive("Dynamic code is not supported here.");
+        }
+
+        // A program image with three entry points (as a generated program has one per type): the evaluator of each
+        // compiles, and the program's code is generated once for them all; each evaluator has only an entry of its own.
+        const string Shared = """
+            {
+              "type": "object",
+              "properties": {"person": {"$ref": "#/$defs/person"}, "tags": {"$ref": "#/$defs/tags"}},
+              "additionalProperties": false,
+              "$defs": {
+                "person": {"type": "object", "required": ["name"], "properties": {"name": {"type": "string"}, "age": {"type": "integer", "minimum": 0}}, "additionalProperties": false},
+                "tags": {"type": "array", "items": {"type": "string", "minLength": 1}}
+              }
+            }
+            """;
+        JsonSchemaCodeGeneration? suite = JsonSchemaEvaluator.CodeGenerationOverride;
+        JsonSchemaEvaluator.CodeGenerationOverride = null;
+        try
+        {
+            byte[] image;
+            using (JsonSchemaEvaluator compiled = JsonSchemaEvaluator.Compile(Shared, new JsonSchemaEvaluatorOptions { CodeGeneration = JsonSchemaCodeGeneration.Disabled }))
+            {
+                compiled.RegisterEntryPoints(["#/$defs/person", "#/$defs/tags"]);
+                image = compiled.ToProgramImage();
+            }
+
+            using JsonSchemaEvaluator root = JsonSchemaEvaluator.FromProgramImage(image, new JsonSchemaEvaluatorOptions { CodeGeneration = JsonSchemaCodeGeneration.Eager });
+            using JsonSchemaEvaluator person = root.ForEntryPoint("#/$defs/person");
+            using JsonSchemaEvaluator tags = root.ForEntryPoint("#/$defs/tags");
+            Assert.IsTrue(root.HasGeneratedCode);
+            Assert.IsTrue(person.HasGeneratedCode);
+            Assert.IsTrue(tags.HasGeneratedCode);
+            Assert.AreEqual(1, root.Program.GeneratedCodeCompilations);
+
+            (JsonSchemaEvaluator Evaluator, string Instance, bool Expected)[] cases =
+            [
+                (root, """{"person": {"name": "a", "age": 3}, "tags": ["x"]}""", true),
+                (root, """{"person": {"age": 3}}""", false),
+                (root, """{"tags": [""]}""", false),
+                (person, """{"name": "a"}""", true),
+                (person, """{"name": "a", "age": -1}""", false),
+                (person, """[]""", false),
+                (tags, """["a", "b"]""", true),
+                (tags, """["a", ""]""", false),
+                (tags, """{}""", false),
+            ];
+            foreach ((JsonSchemaEvaluator evaluator, string instance, bool expected) in cases)
+            {
+                using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(instance);
+                Assert.AreEqual(expected, evaluator.Evaluate(document.RootElement), instance);
+            }
+
+            Assert.AreEqual(1, root.Program.GeneratedCodeCompilations);
+        }
+        finally
+        {
+            JsonSchemaEvaluator.CodeGenerationOverride = suite;
+        }
+    }
+
+    [TestMethod]
+    public void EagerPreparesEveryMethodAndAfterWarmUpLeavesThemToTheirFirstCall()
+    {
+        if (!SchemaLowering.IsSupported)
+        {
+            Assert.Inconclusive("Dynamic code is not supported here.");
+        }
+
+        // After warm-up, the code is built in the background and each method is compiled by the JIT at its first call:
+        // a large schema's instances reach a fraction of its methods (ui5-manifest calls 90 of 885), so compiling them
+        // all first only delays the code. Eager compiles every method when the evaluator is made, so that no evaluation
+        // waits.
+        JsonSchemaCodeGeneration? suite = JsonSchemaEvaluator.CodeGenerationOverride;
+        JsonSchemaEvaluator.CodeGenerationOverride = null;
+        try
+        {
+            byte[] image;
+            using (JsonSchemaEvaluator compiled = JsonSchemaEvaluator.Compile(Schema, new JsonSchemaEvaluatorOptions { CodeGeneration = JsonSchemaCodeGeneration.Disabled }))
+            {
+                image = compiled.ToProgramImage();
+            }
+
+            using (JsonSchemaEvaluator eager = JsonSchemaEvaluator.FromProgramImage(image, new JsonSchemaEvaluatorOptions { CodeGeneration = JsonSchemaCodeGeneration.Eager }))
+            {
+                Assert.IsTrue(eager.HasGeneratedCode);
+                Assert.IsTrue(eager.Program.GeneratedCodePrepared);
+            }
+
+            using JsonSchemaEvaluator warm = JsonSchemaEvaluator.FromProgramImage(image, new JsonSchemaEvaluatorOptions { CodeGeneration = JsonSchemaCodeGeneration.AfterWarmUp });
+            using ParsedJsonDocument<JsonElement> valid = ParsedJsonDocument<JsonElement>.Parse("""{"id": 2}""");
+            for (int i = 0; i < 1000; i++)
+            {
+                Assert.IsTrue(warm.Evaluate(valid.RootElement));
+            }
+
+            var waited = System.Diagnostics.Stopwatch.StartNew();
+            while (!warm.HasGeneratedCode && waited.Elapsed < TimeSpan.FromSeconds(30))
+            {
+                Thread.Sleep(5);
+            }
+
+            Assert.IsTrue(warm.HasGeneratedCode);
+            Assert.IsFalse(warm.Program.GeneratedCodePrepared);
+            Assert.IsTrue(warm.Evaluate(valid.RootElement));
+        }
+        finally
+        {
+            JsonSchemaEvaluator.CodeGenerationOverride = suite;
+        }
+    }
+
+    [TestMethod]
+    public void ALargeEntryMethodIsCalledNotInlinedIntoTheEntry()
+    {
+        if (!SchemaLowering.IsSupported)
+        {
+            Assert.Inconclusive("Dynamic code is not supported here.");
+        }
+
+        // The JIT compiles a method that it inlines once for each caller: a large entry node's method inlined into the
+        // schema's entry was compiled twice (clang-format's 22,520 bytes of IL were more than half the compile time).
+        var properties = new System.Text.StringBuilder();
+        for (int i = 0; i < 150; i++)
+        {
+            properties.Append(i == 0 ? string.Empty : ", ").Append("\"p").Append(i).Append("\": {\"enum\": [\"a").Append(i).Append("\", \"b\", \"c\"]}");
+        }
+
+        string schema = "{\"type\": \"object\", \"properties\": {" + properties + "}, \"additionalProperties\": false}";
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(schema);
+        SchemaNode[] nodes = evaluator.Program.Nodes;
+        SchemaNode entry = nodes[nodes[evaluator.RootNode].FlagEntry];
+        NodeValidator? compiled = SchemaLowering.Compile(nodes, entry, out _, out _);
+        Assert.IsNotNull(compiled);
+        Assert.IsTrue(compiled.Method.GetMethodBody()!.GetILAsByteArray()!.Length > 1500);
+        Assert.AreEqual((System.Reflection.MethodImplAttributes)0, compiled.Method.MethodImplementationFlags & System.Reflection.MethodImplAttributes.AggressiveInlining);
+    }
+
+    [TestMethod]
+    public void AWideObjectTestsItsLeavesInPlaceUpToTheBudgetAndCallsTheRest()
+    {
+        if (!SchemaLowering.IsSupported)
+        {
+            Assert.Inconclusive("Dynamic code is not supported here.");
+        }
+
+        // 200 properties (under the 256 an object may have to be specialised), each an integer leaf with bounds of
+        // its own: tested in place, they made one method of tens of thousands of bytes of IL, which the JIT takes long
+        // to compile. Beyond the budget each is a call of the leaf's own method, and the results are the interpreter's.
+        const int Count = 200;
+        var properties = new System.Text.StringBuilder();
+        for (int i = 0; i < Count; i++)
+        {
+            properties.Append(i == 0 ? string.Empty : ", ").Append("\"p").Append(i).Append("\": {\"type\": \"integer\", \"minimum\": ").Append(i).Append(", \"maximum\": ").Append(i + 10).Append('}');
+        }
+
+        string schema = "{\"type\": \"object\", \"properties\": {" + properties + "}, \"additionalProperties\": false}";
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(schema);
+        SchemaNode[] nodes = evaluator.Program.Nodes;
+        SchemaNode entry = nodes[nodes[evaluator.RootNode].FlagEntry];
+        NodeValidator? compiled = SchemaLowering.Compile(nodes, entry, out _, out int specialised);
+        Assert.IsNotNull(compiled);
+        int size = compiled.Method.GetMethodBody()!.GetILAsByteArray()!.Length;
+        Assert.IsTrue(specialised > 1, $"{specialised} methods: the leaves beyond the budget have methods of their own.");
+        Assert.IsTrue(size < 2 * SchemaLowering.MaxInPlaceMethodSize, $"{size} bytes of IL in the object's method.");
+
+        // The whole-suite override (see TestAssemblySetup) would decide for these two evaluators: off while they are made.
+        JsonSchemaCodeGeneration? suite = JsonSchemaEvaluator.CodeGenerationOverride;
+        JsonSchemaEvaluator.CodeGenerationOverride = null;
+        JsonSchemaEvaluator interpreted;
+        JsonSchemaEvaluator generated;
+        try
+        {
+            interpreted = JsonSchemaEvaluator.Compile(schema, new JsonSchemaEvaluatorOptions { CodeGeneration = JsonSchemaCodeGeneration.Disabled });
+            generated = JsonSchemaEvaluator.Compile(schema, new JsonSchemaEvaluatorOptions { CodeGeneration = JsonSchemaCodeGeneration.Eager });
+        }
+        finally
+        {
+            JsonSchemaEvaluator.CodeGenerationOverride = suite;
+        }
+
+        using JsonSchemaEvaluator disposeInterpreted = interpreted;
+        using JsonSchemaEvaluator disposeGenerated = generated;
+        Assert.IsTrue(generated.HasGeneratedCode);
+        Assert.IsFalse(interpreted.HasGeneratedCode);
+        var random = new Random(20261119);
+        int valid = 0;
+        for (int n = 0; n < 2000; n++)
+        {
+            var instance = new System.Text.StringBuilder("{");
+            int fields = random.Next(0, 6);
+            for (int f = 0; f < fields; f++)
+            {
+                int i = random.Next(0, Count);
+                instance.Append(f == 0 ? string.Empty : ", ").Append("\"p").Append(i).Append("\": ").Append(i + random.Next(-2, 13));
+            }
+
+            instance.Append('}');
+            using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(instance.ToString());
+            bool expected = interpreted.Evaluate(document.RootElement);
+            Assert.AreEqual(expected, generated.Evaluate(document.RootElement), instance.ToString());
+            valid += expected ? 1 : 0;
+        }
+
+        Assert.IsTrue(valid > 0 && valid < 2000, $"{valid} of 2000 are valid.");
+    }
+
+    [TestMethod]
+    public void ASmallEntryMethodThatNothingElseCallsIsInlinedIntoTheEntry()
+    {
+        if (!SchemaLowering.IsSupported)
+        {
+            Assert.Inconclusive("Dynamic code is not supported here.");
+        }
+
+        // A method within the inlining budget that no generated method calls is inlined into the entries that call
+        // it (one frame from the public entry to the validation): only they call it, so it is compiled again in them
+        // alone, and it is small.
+        var properties = new System.Text.StringBuilder();
+        for (int i = 0; i < 6; i++)
+        {
+            properties.Append(i == 0 ? string.Empty : ", ").Append("\"p").Append(i).Append("\": {\"enum\": [\"a").Append(i).Append("\", \"b\", \"c\"]}");
+        }
+
+        string schema = "{\"type\": \"object\", \"properties\": {" + properties + "}, \"additionalProperties\": false}";
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(schema);
+        SchemaNode[] nodes = evaluator.Program.Nodes;
+        SchemaNode entry = nodes[nodes[evaluator.RootNode].FlagEntry];
+        NodeValidator? compiled = SchemaLowering.Compile(nodes, entry, out _, out _);
+        Assert.IsNotNull(compiled);
+        int size = compiled.Method.GetMethodBody()!.GetILAsByteArray()!.Length;
+        Assert.IsTrue(size > 300 && size <= 1500, $"{size} bytes of IL: the case is a method too large for the general inlining budget and within the entry's.");
+        Assert.AreEqual(System.Reflection.MethodImplAttributes.AggressiveInlining, compiled.Method.MethodImplementationFlags & System.Reflection.MethodImplAttributes.AggressiveInlining);
     }
 
     // Memory that gives no array (a memory manager does not, unless it says otherwise), so that the document cannot
