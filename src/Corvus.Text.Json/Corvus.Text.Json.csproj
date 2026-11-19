@@ -60,6 +60,7 @@
     <InternalsVisibleTo Include="Corvus.Text.Json.RuntimeEvaluator.Benchmarks" />
   </ItemGroup>
   <ItemGroup Label="Runtime JSON Schema evaluator">
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\CodeGeneration\GeneratedProgram.cs" />
     <Compile Include="Corvus\Text\Json\RuntimeEvaluator\CodeGeneration\ISchemaEmitter.cs" />
     <Compile Include="Corvus\Text\Json\RuntimeEvaluator\CodeGeneration\IlSchemaEmitter.cs" />
     <Compile Include="Corvus\Text\Json\RuntimeEvaluator\CodeGeneration\NodeValidator.cs" />

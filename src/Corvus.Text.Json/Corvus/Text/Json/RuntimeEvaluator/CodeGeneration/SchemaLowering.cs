@@ -31,6 +31,13 @@ internal static class SchemaLowering
     // method would be too large for the JIT to optimise.
     private const int MaxDispatchNames = 256;
 
+    // The size of a method (bytes of IL) beyond which a child is no longer tested in place, but called (a leaf's
+    // method), and a set of strings is no longer tested by words in place, but by a hashed lookup. The JIT's time
+    // grows faster than a method's size: clang-format's root object, 22,520 bytes with its leaves and sets in place
+    // up to 16,000 bytes, took 160 ms of a 290 ms compile. At 8,000 bytes it compiles in 200 ms, with no evaluation
+    // slower on the 37 Sourcemeta corpora (a tighter budget made some slower: 2,000 bytes cost dependabot 42%).
+    internal const int MaxInPlaceMethodSize = 8_000;
+
     // The longest chain of forwards followed to a child's target.
     private const int MaxForwards = 16;
 
@@ -74,17 +81,36 @@ internal static class SchemaLowering
     [RequiresDynamicCode(RequiresDynamicCodeMessage)]
     public static NodeValidator? Compile(SchemaNode[] nodes, SchemaNode entry, out SchemaNode[] generatedNodes, out int specialised, out nint entryAddress)
     {
-        entryAddress = 0;
+        GeneratedProgram program = CompileProgram(nodes, prepare: true);
+        generatedNodes = program.Nodes;
+        specialised = program.Specialised;
+        NodeValidator? compiled = program.Methods.GetValueOrDefault(entry.Id);
+        entryAddress = compiled is null ? 0 : program.GetEntryAddress(entry.Id);
+        return compiled;
+    }
+
+    /// <summary>
+    /// Compiles a program's flag-mode code for every entry point: a method for every node the lowering specialises,
+    /// and a copy of the node array in which those nodes carry their methods (<see cref="NodePlan.Generated"/>), so
+    /// that the interpreter calls generated code for them wherever it evaluates the nodes around them. An evaluator
+    /// whose entry node has a method gets an entry of its own from <see cref="GeneratedProgram.GetEntryAddress"/>.
+    /// </summary>
+    /// <param name="nodes">The program's nodes.</param>
+    /// <param name="prepare">Whether to compile every method now (Eager), rather than at each method's first call.</param>
+    /// <returns>The program's code.</returns>
+    [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+    public static GeneratedProgram CompileProgram(SchemaNode[] nodes, bool prepare)
+    {
         Interlocked.Increment(ref compiledCount);
-        generatedNodes = (SchemaNode[])nodes.Clone();
+        SchemaNode[] generatedNodes = (SchemaNode[])nodes.Clone();
         var emitter = new IlSchemaEmitter();
-        specialised = Lower(emitter, nodes);
+        int specialised = Lower(emitter, nodes);
         if (specialised == 0)
         {
-            return null;
+            return new GeneratedProgram(nodes, generatedNodes, 0, [], null, null, prepared: true);
         }
 
-        Dictionary<int, NodeValidator> methods = emitter.Build(entry.Id, out entryAddress);
+        Dictionary<int, NodeValidator> methods = emitter.Build(prepare, out Type created, out System.Reflection.Emit.ModuleBuilder module);
         foreach (KeyValuePair<int, NodeValidator> method in methods)
         {
             if (nodes[method.Key].Plan == NodePlan.Leaf)
@@ -109,7 +135,7 @@ internal static class SchemaLowering
             }
         }
 
-        return methods.GetValueOrDefault(entry.Id);
+        return new GeneratedProgram(nodes, generatedNodes, specialised, methods, module, created, prepare);
     }
 
     private static int Lower(ISchemaEmitter emitter, SchemaNode[] nodes)
@@ -1709,7 +1735,7 @@ internal static class SchemaLowering
         }
 
         SchemaNode leaf = nodes[leafId];
-        if (leaf.Plan == NodePlan.Leaf && (leaf.Enum is null || (leaf.EnumAllStrings && leaf.EnumStrings is { Count: <= MaxEnumInPlace })))
+        if (leaf.Plan == NodePlan.Leaf && (leaf.Enum is null || (leaf.EnumAllStrings && leaf.EnumStrings is { Count: <= MaxEnumInPlace })) && emitter.MethodSize <= MaxInPlaceMethodSize)
         {
             LowerLeaf(emitter, leaf);
             return;

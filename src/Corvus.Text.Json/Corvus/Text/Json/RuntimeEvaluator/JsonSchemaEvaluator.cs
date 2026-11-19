@@ -57,6 +57,12 @@ public sealed class JsonSchemaEvaluator : IDisposable
         JsonSchemaCodeGeneration codeGeneration = CodeGenerationOverride ?? program.Options.CodeGeneration;
         this.compilesAfterWarmUp = codeGeneration == JsonSchemaCodeGeneration.AfterWarmUp && SchemaLowering.IsSupported;
         this.compilesEagerly = codeGeneration == JsonSchemaCodeGeneration.Eager && SchemaLowering.IsSupported;
+        if (this.compilesEagerly)
+        {
+            // JsonSchemaCodeGeneration.Eager: compiled here, when the evaluator is made, so that no evaluation waits
+            // for it (an entry point added to the program later compiles again, at the next evaluation).
+            _ = this.FlagMode();
+        }
 #endif
     }
 
@@ -80,6 +86,11 @@ public sealed class JsonSchemaEvaluator : IDisposable
 
     /// <summary>Gets the root node index (for diagnostics and tests).</summary>
     internal int RootNode => this.rootNode;
+#if NET && !STJ
+
+    /// <summary>Gets a value indicating whether the evaluator has compiled its schema to code (for tests).</summary>
+    internal bool HasGeneratedCode => this.flagModeEntry is { Tiered: true } entry && ReferenceEquals(entry.SourceNodes, this.program.Nodes);
+#endif
 
     /// <summary>
     /// Compiles a schema from UTF-8 JSON.
@@ -484,9 +495,13 @@ public sealed class JsonSchemaEvaluator : IDisposable
         }
 
         // The entry data over the generated node array: its entry's method when the entry is specialised, and
-        // otherwise the interpreter from the entry, which reaches the generated methods beneath it.
-        NodeValidator? compiled = SchemaLowering.Compile(fast.SourceNodes, fast.Entry!, out SchemaNode[] generatedNodes, out _, out nint entryAddress);
-        var withCode = new FlagModeEntry(fast.SourceNodes, generatedNodes, generatedNodes[fast.Entry!.Id], fast.EntryResource, fast.MaxDepth, compiled is null ? null : new CompiledEntry(compiled, entryAddress, this.program, fast.SourceNodes, generatedNodes, fast.EntryResource, fast.MaxDepth, this.rootNode), tiered: true);
+        // otherwise the interpreter from the entry, which reaches the generated methods beneath it. The program's code
+        // is shared by all its evaluators; each has only an entry of its own.
+        // Every method compiled now unless the evaluator compiles after warm-up, where each waits for its first call.
+        GeneratedProgram code = this.program.GetGeneratedCode(fast.SourceNodes, prepare: !this.compilesAfterWarmUp);
+        SchemaNode[] generatedNodes = code.Nodes;
+        NodeValidator? compiled = code.Methods.GetValueOrDefault(fast.Entry!.Id);
+        var withCode = new FlagModeEntry(fast.SourceNodes, generatedNodes, generatedNodes[fast.Entry!.Id], fast.EntryResource, fast.MaxDepth, compiled is null ? null : new CompiledEntry(compiled, code.GetEntryAddress(fast.Entry!.Id), this.program, fast.SourceNodes, generatedNodes, fast.EntryResource, fast.MaxDepth, this.rootNode), tiered: true);
         FlagModeEntry? current = Interlocked.CompareExchange(ref this.flagModeEntry, withCode, fast);
         if (ReferenceEquals(current, fast))
         {
@@ -521,7 +536,8 @@ public sealed class JsonSchemaEvaluator : IDisposable
 #if NET && !STJ
         if (this.compilesEagerly && entry.Entry is not null)
         {
-            // JsonSchemaCodeGeneration.Eager: compiled here, before the first evaluation.
+            // JsonSchemaCodeGeneration.Eager: compiled when the evaluator is made (see the constructor), and again
+            // here when an entry point added to the program has replaced its node array.
             return this.CompileFlagMode(entry);
         }
 #endif

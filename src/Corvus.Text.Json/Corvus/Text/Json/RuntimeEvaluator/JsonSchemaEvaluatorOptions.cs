@@ -234,12 +234,13 @@ public sealed class JsonSchemaEvaluatorOptions
 
     /// <summary>
     /// Gets or sets whether, and when, the evaluator compiles the schema to code at run time. The default is
-    /// <see cref="JsonSchemaCodeGeneration.Disabled"/>: the interpreter evaluates every instance.
+    /// <see cref="JsonSchemaCodeGeneration.AfterWarmUp"/>: an evaluator that has made 1,000 evaluations compiles its
+    /// schema in the background, and the evaluations after that run the code.
     /// </summary>
     /// <remarks>
     /// Generated code gives the same results as the interpreter. It is used by evaluations that collect no results,
     /// and only where the runtime can compile code at run time (not under native AOT): see
     /// <see cref="JsonSchemaCodeGeneration"/>.
     /// </remarks>
-    public JsonSchemaCodeGeneration CodeGeneration { get; set; }
+    public JsonSchemaCodeGeneration CodeGeneration { get; set; } = JsonSchemaCodeGeneration.AfterWarmUp;
 }

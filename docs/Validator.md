@@ -176,7 +176,7 @@ JsonSchema schema = JsonSchema.FromFile("person.json", options: options);
 | `defaultDialect` | `JsonSchemaDialect.Draft202012` | The JSON Schema dialect to use when the schema does not include a `$schema` keyword. `JsonSchemaDialect.OpenApi30` and `JsonSchemaDialect.OpenApi20` are the OpenAPI Schema Object dialects: Draft 4, plus every format the validator knows (`date`, `uuid` and so on) and `nullable` (and `x-nullable` in 2.0). |
 | `additionalSchemaFiles` | `null` | Pre-load external schema files for `$ref` resolution. Each entry maps a canonical URI to a local file path; the file is also registered under its `$id` and its full path. |
 | `additionalDocumentResolver` | `null` | A `JsonSchemaDocumentResolver` delegate that supplies referenced documents from memory, consulted before the file system and HTTP. |
-| `codeGeneration` | `JsonSchemaCodeGeneration.Disabled` | Whether, and when, the schema is compiled to IL at run time. See [Runtime Code Generation](#runtime-code-generation). |
+| `codeGeneration` | `JsonSchemaCodeGeneration.AfterWarmUp` | Whether, and when, the schema is compiled to IL at run time. See [Runtime Code Generation](#runtime-code-generation). |
 | `regexMatchTimeout` | `null` (1 second) | How long one regular expression match may run before it throws `RegexMatchTimeoutException`. See [Regular Expression Match Timeout](#regular-expression-match-timeout). |
 
 ## Pre-loading Referenced Schemas
@@ -202,14 +202,14 @@ This avoids network calls for referenced schemas and ensures deterministic build
 
 ## Runtime Code Generation
 
-By default a schema is interpreted. The Validator can also compile it to IL at run time, which about halves the time of a warm validation that collects no results. Turn it on with the `codeGeneration` option:
+By default a schema is compiled to IL at run time once it has made 1,000 validations that collect no results, which makes a warm validation about three times as fast. Choose another mode with the `codeGeneration` option:
 
 ```csharp
 using Corvus.Text.Json.RuntimeEvaluator;
 using Corvus.Text.Json.Validator;
 
 var options = new JsonSchema.Options(
-    codeGeneration: JsonSchemaCodeGeneration.AfterWarmUp);
+    codeGeneration: JsonSchemaCodeGeneration.Eager);
 
 JsonSchema schema = JsonSchema.FromFile("person.json", options: options);
 bool valid = schema.Validate("""{"name": "Alice"}""");
@@ -217,14 +217,14 @@ bool valid = schema.Validate("""{"name": "Alice"}""");
 
 | Value | Behaviour |
 |-------|-----------|
-| `Disabled` | The default. Every validation is interpreted. |
-| `AfterWarmUp` | The schema is compiled on a background thread once it has made 1,000 validations that collect no results. No validation waits for it. |
-| `Eager` | The schema is compiled on the calling thread before its first validation that collects no results, which waits for it. |
+| `Disabled` | Every validation is interpreted. |
+| `AfterWarmUp` | The default. The schema's code is generated on a background thread once it has made 1,000 validations that collect no results. Each method is compiled by the JIT at its first call. |
+| `Eager` | The schema's code is generated, and every method compiled, on the calling thread when the schema is loaded, so that no validation waits for it. |
 
 Things to know:
 
 - Generated code gives the same results as the interpreter. A validation with a results collector is always interpreted.
-- Compiling takes about 20 ms for a typical schema and up to 0.7 s for a very large one. `AfterWarmUp` suits a cached schema that may be used a few times or many. `Eager` suits a long-lived schema whose first validations should already run at full speed.
+- `Eager` takes tens of milliseconds for most schemas and up to 1.4 s for a very large one. `AfterWarmUp` does the work on another thread and compiles only the methods validations reach. `Eager` suits a long-lived schema whose first validations should already run at full speed.
 - Code is generated only on .NET 9 and later, where the runtime can compile code at run time. On .NET Framework and under native AOT the option is accepted and the schema is interpreted, with no error.
 
 The [runtime evaluator guide](./RuntimeEvaluator.md#runtime-code-generation) has the measurements and the cases that are not compiled.

@@ -260,7 +260,7 @@ public readonly struct JsonSchema
     {
         // An evaluator is created with its code generation setting and its regular expression match timeout, so
         // each setting has its own cached evaluator.
-        string key = options.CodeGeneration == JsonSchemaCodeGeneration.Disabled
+        string key = options.CodeGeneration == JsonSchemaCodeGeneration.AfterWarmUp
             ? $"{uri}__{options.AlwaysAssertFormat}"
             : $"{uri}__{options.AlwaysAssertFormat}__{options.CodeGeneration}";
         return options.RegexMatchTimeout == JsonSchemaEvaluatorOptions.DefaultRegexMatchTimeout
@@ -372,7 +372,7 @@ public readonly struct JsonSchema
         /// <param name="alwaysAssertFormat">If <see langword="true"/>, <c>format</c> will always be asserted, even for dialects that usually annotate.</param>
         /// <param name="additionalDocumentResolver">An additional document resolver for in-memory schema resolution.</param>
         /// <param name="codeGeneration">Whether, and when, the schema is compiled to IL at run time for validations
-        /// that collect no results (defaults to <see cref="JsonSchemaCodeGeneration.Disabled"/>). Code is generated
+        /// that collect no results (defaults to <see cref="JsonSchemaCodeGeneration.AfterWarmUp"/>). Code is generated
         /// only by the .NET builds of the library, where the runtime can compile code at run time. Elsewhere (.NET
         /// Framework, native AOT) the setting is accepted and the schema is interpreted.</param>
         /// <param name="regexMatchTimeout">How long one regular expression match of a <c>pattern</c> or
@@ -387,7 +387,7 @@ public readonly struct JsonSchema
             JsonSchemaDialect defaultDialect = JsonSchemaDialect.Draft202012,
             bool alwaysAssertFormat = true,
             JsonSchemaDocumentResolver? additionalDocumentResolver = null,
-            JsonSchemaCodeGeneration codeGeneration = JsonSchemaCodeGeneration.Disabled,
+            JsonSchemaCodeGeneration codeGeneration = JsonSchemaCodeGeneration.AfterWarmUp,
             TimeSpan? regexMatchTimeout = null)
         {
             TimeSpan timeout = regexMatchTimeout ?? JsonSchemaEvaluatorOptions.DefaultRegexMatchTimeout;
@@ -451,7 +451,7 @@ public readonly struct JsonSchema
             JsonSchemaDialect defaultDialect,
             bool alwaysAssertFormat,
             JsonSchemaDocumentResolver? additionalDocumentResolver)
-            : this(additionalSchemaFiles, allowFileSystemAndHttpResolution, defaultDialect, alwaysAssertFormat, additionalDocumentResolver, JsonSchemaCodeGeneration.Disabled, null)
+            : this(additionalSchemaFiles, allowFileSystemAndHttpResolution, defaultDialect, alwaysAssertFormat, additionalDocumentResolver, JsonSchemaCodeGeneration.AfterWarmUp, null)
         {
         }
 
