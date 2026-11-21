@@ -57,6 +57,120 @@ class ApiTest {
         assertTrue(v.isValid("{\"id\": 5}"));
     }
 
+    /** A buffer of a framing prefix, the text, and the bytes of what follows it. */
+    private static byte[] framed(String prefix, String text, String suffix) {
+        return (prefix + text + suffix).getBytes(StandardCharsets.UTF_8);
+    }
+
+    private static int length(String text) {
+        return text.getBytes(StandardCharsets.UTF_8).length;
+    }
+
+    @Test
+    void aRangeOfAnArrayValidatesAsTheSameBytesAlone() {
+        Validator v = Validator.compile(SCHEMA);
+        String[] texts = {
+            "{\"id\": 3}", "{\"id\": 3, \"name\": \"caf\u00e9 \ud83d\ude00\"}", " {\"id\": 3,\n\"name\": \"a\\nb\"} ",
+            "{\"id\": 0}", "{}", "[]", "{\"id\": 1, \"name\": \"\"}", "{\"id\": 1, \"id\": 0}",
+        };
+        // What surrounds the range would change the answer, or fail to parse, if any of it were read.
+        String[][] frames = {{"", ""}, {"\u0001\u0002len=", "{\"id\": 0}"}, {"{\"id\": 0}", "}]\"x"}, {"[\"", "\", 12"}};
+        for (String t : texts) {
+            boolean expected = v.isValid(t.getBytes(StandardCharsets.UTF_8));
+            for (String[] f : frames) {
+                byte[] buffer = framed(f[0], t, f[1]);
+                assertEquals(expected, v.isValid(buffer, length(f[0]), length(t)), f[0] + "|" + t + "|" + f[1]);
+            }
+        }
+        // Several records in one buffer, each validated where it is.
+        String[] records = {"{\"id\": 1}", "{\"id\": 0}", "{\"id\": 22, \"name\": \"x\"}", "7"};
+        boolean[] answers = {true, false, true, false};
+        byte[] buffer = String.join("", records).getBytes(StandardCharsets.UTF_8);
+        for (int pass = 0; pass < 2; pass++) {
+            int at = 0;
+            for (int r = 0; r < records.length; r++) {
+                assertEquals(answers[r], v.isValid(buffer, at, records[r].length()), records[r]);
+                at += records[r].length();
+            }
+        }
+    }
+
+    @Test
+    void aRangeEndsWhereItSaysItDoes() {
+        // A number, a literal and a string that the bytes after the range would continue.
+        Validator max = Validator.compile("{\"maximum\": 12}");
+        assertTrue(max.isValid(framed("9", "12", "345"), 1, 2));
+        assertFalse(max.isValid(framed("9", "123", "45"), 1, 3));
+        assertTrue(max.isValid(framed("", "1.5", "e9"), 0, 3));
+        assertTrue(max.isValid(framed("-", "1", ".5"), 1, 1));
+        // The number's text decides (more digits than a double holds): it must stop at the end of the range.
+        Validator exact = Validator.compile("{\"const\": 0.123456789123456789}");
+        assertTrue(exact.isValid(framed("1", "0.123456789123456789", "9"), 1, 20));
+        assertFalse(exact.isValid(framed("1", "0.1234567891234567899", ""), 1, 21));
+        Validator multiple = Validator.compile("{\"multipleOf\": 0.01}");
+        assertTrue(multiple.isValid(framed("", "12.34", "5"), 0, 5));
+        assertTrue(Validator.compile("{\"const\": \"ab\"}").isValid(framed("\"", "\"ab\"", "c\""), 1, 4));
+        Validator any = Validator.compile("true");
+        assertTrue(any.isValid(framed("", "true", "x"), 0, 4));
+        assertThrows(JsonParseException.class, () -> any.isValid(framed("", "tru", "e"), 0, 3));
+        assertThrows(JsonParseException.class, () -> any.isValid(framed("", "\"ab", "\""), 0, 3));
+        assertThrows(JsonParseException.class, () -> any.isValid(framed("", "[1", "]"), 0, 2));
+        assertThrows(JsonParseException.class, () -> any.isValid(framed("", "1.", "5"), 0, 2));
+        assertThrows(JsonParseException.class, () -> any.isValid(framed("", "1e", "5"), 0, 2));
+        assertThrows(JsonParseException.class, () -> any.isValid(framed("", "-", "5"), 0, 1));
+        assertThrows(JsonParseException.class, () -> any.isValid(framed("", "\"\\u00", "41\""), 0, 5));
+        assertThrows(JsonParseException.class, () -> any.isValid(framed("", "\"\\", "n\""), 0, 2));
+        // An empty range, and one of white space, hold no value.
+        assertEquals(0, assertThrows(JsonParseException.class, () -> any.isValid(framed("1", "", "2"), 1, 0)).offset());
+        assertThrows(JsonParseException.class, () -> any.isValid(framed("1", "  ", "2"), 1, 2));
+    }
+
+    @Test
+    void aRangeIsAsStrictAsAnArray() {
+        Validator any = Validator.compile("true");
+        // Content after the value, inside the range, is an error at its offset from the start of the range.
+        JsonParseException trailing = assertThrows(
+                JsonParseException.class, () -> any.isValid(framed("####", "{\"id\": 1} {\"id\": 2}", ""), 4, 19));
+        assertEquals(10, trailing.offset());
+        assertEquals(7, assertThrows(JsonParseException.class, () -> any.isValid(framed("ab", "{\"id\": }", "1}"), 2, 8))
+                .offset());
+        assertEquals(7, assertThrows(JsonParseException.class, () -> any.isValid("{\"id\": }".getBytes(StandardCharsets.UTF_8)))
+                .offset());
+        // Bytes that are not UTF-8 are refused, in a string that has an escape and in one that has none.
+        byte[][] illFormed = {
+            {'"', (byte) 0xff, '"'}, {'"', (byte) 0xc3, '"'}, {'"', (byte) 0xed, (byte) 0xa0, (byte) 0x80, '"'},
+            {'"', (byte) 0xc0, (byte) 0xaf, '"'}, {'"', '\\', 'n', (byte) 0xe2, (byte) 0x82, '"'},
+        };
+        for (byte[] text : illFormed) {
+            byte[] buffer = new byte[text.length + 5];
+            System.arraycopy(text, 0, buffer, 2, text.length);
+            assertThrows(JsonParseException.class, () -> any.isValid(text));
+            assertThrows(JsonParseException.class, () -> any.isValid(buffer, 2, text.length));
+        }
+        // A character cut by the end of the range: its last byte is outside.
+        byte[] cut = framed("", "\"\u00e9\"", "");
+        assertThrows(JsonParseException.class, () -> any.isValid(new byte[] {cut[0], cut[1], '"', cut[2]}, 0, 3));
+        // The validator is usable after each error.
+        assertTrue(any.isValid(framed("x", "1", "x"), 1, 1));
+    }
+
+    @Test
+    void aRangeOutsideTheArrayThrows() {
+        Validator v = Validator.compile("true");
+        byte[] buffer = framed("", "[1]", "");
+        assertTrue(v.isValid(buffer, 0, 3));
+        assertThrows(IndexOutOfBoundsException.class, () -> v.isValid(buffer, -1, 2));
+        assertThrows(IndexOutOfBoundsException.class, () -> v.isValid(buffer, 0, 4));
+        assertThrows(IndexOutOfBoundsException.class, () -> v.isValid(buffer, 2, 2));
+        assertThrows(IndexOutOfBoundsException.class, () -> v.isValid(buffer, 4, 0));
+        assertThrows(IndexOutOfBoundsException.class, () -> v.isValid(buffer, 1, -1));
+        assertThrows(IndexOutOfBoundsException.class, () -> v.isValid(buffer, Integer.MAX_VALUE, 2));
+        assertThrows(NullPointerException.class, () -> v.isValid(null, 0, 0));
+        // A range that ends at the end of the array, and an empty one there.
+        assertTrue(v.isValid(buffer, 1, 1));
+        assertThrows(JsonParseException.class, () -> v.isValid(buffer, 3, 0));
+    }
+
     @Test
     void aFormatCallbackMayValidateWithTheSameValidator() {
         AtomicReference<Validator> self = new AtomicReference<>();

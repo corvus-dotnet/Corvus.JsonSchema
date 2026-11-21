@@ -1,5 +1,7 @@
 package io.github.corvusdotnet.jsonschema;
 
+import java.util.Objects;
+
 /**
  * A compiled JSON Schema (draft 4, 6, 7, 2019-09 or 2020-12). Compile once with {@link #compile(String)} (or one of
  * its overloads), then validate any number of instances. A validator is immutable and safe to share between threads.
@@ -171,7 +173,35 @@ public final class Validator {
     public boolean isValid(byte[] utf8) {
         Evaluator e = acquire();
         try {
-            return run(e, e.parseReused(utf8, utf8.length));
+            return run(e, e.parseReused(utf8, 0, utf8.length));
+        } finally {
+            e.busy = false;
+        }
+    }
+
+    /**
+     * Whether a range of an array is UTF-8 JSON text that is a valid instance: one document in a larger buffer, such
+     * as a record after its framing with more records behind it, validated where it is without a copy. The range must
+     * be the whole of one JSON value, with nothing but white space around it, as the array is for
+     * {@link #isValid(byte[])}: nothing outside the range is read, and anything else inside it is an error. The text
+     * is parsed into buffers the validator reuses on this thread, so a validation allocates nothing in the steady
+     * state, whatever the length of the range.
+     *
+     * <p>The validator keeps a reference to the array (not a copy) until this thread next validates text with it.
+     *
+     * @param utf8 the array that holds the instance
+     * @param offset the index of the first byte of the instance
+     * @param length the number of bytes of the instance
+     * @return whether it is valid
+     * @throws IndexOutOfBoundsException if the range is not within the array
+     * @throws JsonParseException if the range is not JSON; its {@link JsonParseException#offset() offset} is counted
+     *     from {@code offset}
+     */
+    public boolean isValid(byte[] utf8, int offset, int length) {
+        Objects.checkFromIndexSize(offset, length, utf8.length);
+        Evaluator e = acquire();
+        try {
+            return run(e, e.parseReused(utf8, offset, offset + length));
         } finally {
             e.busy = false;
         }

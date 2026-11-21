@@ -573,13 +573,13 @@ final class Evaluator {
     private JsonDocument reusable;
     private byte[] utf8 = new byte[256];
 
-    /** Parses UTF-8 text into this evaluator's reused document. */
-    JsonDocument parseReused(byte[] text, int length) {
+    /** Parses the UTF-8 text in {@code text[start, end)} into this evaluator's reused document. */
+    JsonDocument parseReused(byte[] text, int start, int end) {
         if (textParser == null) {
             textParser = new JsonDocument.Parser();
             reusable = JsonDocument.reusable();
         }
-        textParser.parseInto(reusable, text, length);
+        textParser.parseInto(reusable, text, start, end);
         return reusable;
     }
 
@@ -613,7 +613,7 @@ final class Evaluator {
                 b[o++] = (byte) (0x80 | (c & 0x3f));
             }
         }
-        return parseReused(b, o);
+        return parseReused(b, 0, o);
     }
 
     private JsonDocument.Parser contentParser;

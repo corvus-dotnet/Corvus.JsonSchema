@@ -2,6 +2,10 @@
 
 The version history of `io.github.corvus-dotnet:corvus-json-schema`, the Java port of the Corvus.Text.Json V5 runtime evaluator. It is versioned independently of the Corvus NuGet packages, whose history is in the repository's [VERSIONHISTORY.md](../../VERSIONHISTORY.md).
 
+## V0.1.6
+
+V0.1.6 validates a document that is a range of a larger array. `Validator.isValid(byte[] utf8, int offset, int length)` validates the `length` bytes that start at `offset` where they are, so a server that reads records from one buffer (a framing prefix, a document, then more records) no longer copies each document into an array of its own to validate it. That copy was as long as the document, and nothing else on the path allocated. The range is parsed into the buffers the validator reuses on the thread, as the array given to `isValid(byte[])` is, so a validation allocates nothing in the steady state whatever the length of the range. The range must be the whole of one JSON value: nothing outside it is read, a number, a literal or a string ends where the range does whatever byte follows, and the checks are those of `isValid(byte[])`. Content after the value and bytes that are not UTF-8 throw `JsonParseException`, whose `offset()` is counted from the start of the range. A range that is not within the array throws `IndexOutOfBoundsException`. The validator keeps a reference to the array, not a copy, until the thread next validates text with it. ([#1082](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/1082))
+
 ## V0.1.5
 
 V0.1.5 fixes leap seconds in the `date-time` format. `date-time` accepts a leap second (23:59:60 UTC) only on the 27 days that the IERS has ended with one, from 1972-06-30 to 2016-12-31, in whatever offset the value is written (`1998-12-31T15:59:60-08:00` is valid, `1999-12-31T23:59:60Z` is not). It accepted 23:59:60 UTC on any day. `time` is unchanged: it has no date, so it accepts a leap second whenever the time is 23:59 in UTC. The .NET engine does the same from V5.8.6, the Rust crate from 0.2.2 and the Go module from 0.1.5. The JSON-Schema-Test-Suite's leap-second cases, which the suite run skipped, now run and pass.

@@ -321,6 +321,8 @@ public final class JsonDocument {
         private byte[] b;
         private int end;
         private int i;
+        /** Where the text starts in {@link #b}: an error's offset is counted from here. */
+        private int base;
         /** Checking syntax only (a reused parser): no document is built and failures throw one shared exception. */
         private boolean validating;
         /** Finished children of closed containers, each container's consecutive (two longs per node). */
@@ -350,7 +352,7 @@ public final class JsonDocument {
         private static final JsonParseException INVALID = new JsonParseException("invalid JSON");
 
         private JsonParseException error(String message) {
-            return validating ? INVALID : new JsonParseException(message, i);
+            return validating ? INVALID : new JsonParseException(message, i - base);
         }
 
         /** Whether {@code b[start, end)} is one valid JSON value; allocates nothing once the buffers have grown. */
@@ -506,12 +508,13 @@ public final class JsonDocument {
         }
 
         /**
-         * Parses {@code b[0, end)} into {@code document}, reusing its arrays and this parser's (no allocation once they
-         * have grown). The document is valid until the next parse into it.
+         * Parses {@code b[start, end)} into {@code document}, reusing its arrays and this parser's (no allocation once
+         * they have grown). Nothing outside the range is read. The document is valid until the next parse into it.
          */
-        void parseInto(JsonDocument document, byte[] b, int end) {
+        void parseInto(JsonDocument document, byte[] b, int start, int end) {
             this.b = b;
-            this.i = 0;
+            this.i = start;
+            this.base = start;
             this.end = end;
             this.validating = false;
             nodeCount = 0;
@@ -531,6 +534,7 @@ public final class JsonDocument {
         JsonDocument parseNew(byte[] b) {
             this.b = b;
             this.i = 0;
+            this.base = 0;
             this.end = b.length;
             this.validating = false;
             nodeCount = 0;
