@@ -1,0 +1,22 @@
+ContentType: application/vnd.endjin.ssg.page+yaml
+Title: API Reference
+Navigation:
+  Title: API
+  Description: "API reference for all Corvus.Text.Json packages — V5 and V4 engines."
+  Parent: /
+  Url: /api/index.html
+  Rank: 4
+  Header:
+    Visible: True
+    Link: True
+  Footer:
+    Visible: True
+    Link: True
+MetaData:
+  Title: "API Reference — Corvus.Text.Json"
+  Description: "API reference documentation for Corvus.Text.Json V5 and V4 engine packages."
+  Keywords: [API, reference, namespaces, types, NuGet, Corvus.Json]
+OpenGraph:
+  Title: "API Reference — Corvus.Text.Json"
+  Description: "API reference for Corvus.Text.Json V5 and V4 engines."
+  Image:

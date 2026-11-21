@@ -1,0 +1,86 @@
+// ==========================================================================
+// Variables — Design tokens as CSS custom properties (dark theme only)
+// ==========================================================================
+
+:root {
+  // -------------------------------------------------------------------
+  // Colors
+  // -------------------------------------------------------------------
+  --color-bg:            #1C1D21;
+  --color-bg-raised:     rgb(41 42 47 / 0.3);
+  --color-bg-code:       #282c34;
+  --color-bg-inline-code: rgb(41 42 47 / 0.55);
+
+  --color-brand:         hsl(87, 71%, 44%);
+  --color-brand-hover:   hsl(87, 71%, 55%);
+  --color-brand-muted:   hsl(87, 50%, 30%);
+
+  --color-white:         #fff;
+  --color-gray-light:    #FCFCFC;
+  --color-gray-med:      #BFBFBF;
+  --color-gray-dark:     #A1A1A1;
+
+  --color-border:        rgb(161 161 161 / 0.1);
+  --color-border-active: rgb(161 161 161 / 0.25);
+
+  // Syntax highlighting — Tomorrow Night–inspired
+  --syntax-comment:      #5c6370;
+  --syntax-keyword:      #c678dd;
+  --syntax-string:       #98c379;
+  --syntax-number:       #d19a66;
+  --syntax-function:     #61afef;
+  --syntax-type:         #e5c07b;
+  --syntax-operator:     #56b6c2;
+  --syntax-tag:          #e06c75;
+  --syntax-attr:         #d19a66;
+  --syntax-plain:        #abb2bf;
+
+  // -------------------------------------------------------------------
+  // Typography
+  // -------------------------------------------------------------------
+  --font-family:         'Inter', sans-serif;
+
+  --line-height-base:    1;
+  --line-height-heading: 1.1;
+  --line-height-tight:   1.2;
+  --line-height-regular: 1.5;
+
+  --font-size-xs:        0.75rem;
+  --font-size-sm:        0.875rem;
+  --font-size-rg:        1rem;
+  --font-size-lg:        1.25rem;
+  --font-size-xl:        1.5rem;
+  --font-size-xxl:       2rem;
+  --font-size-hero:      clamp(2rem, 5vw, 3.5rem);
+
+  --font-weight-regular: 400;
+  --font-weight-medium:  500;
+
+  // -------------------------------------------------------------------
+  // Spacing
+  // -------------------------------------------------------------------
+  --space-xs:            0.25rem;
+  --space-sm:            0.5rem;
+  --space-md:            1rem;
+  --space-lg:            2rem;
+  --space-xl:            4rem;
+  --space-xxl:           6rem;
+  --space-fluid:         clamp(0.25rem, 5vw, 6rem);
+
+  // -------------------------------------------------------------------
+  // Layout
+  // -------------------------------------------------------------------
+  --max-width:           80rem;
+  --sidebar-width:       20rem;
+  --header-height:       4rem;
+
+  // -------------------------------------------------------------------
+  // Effects
+  // -------------------------------------------------------------------
+  --blur:                blur(12px);
+  --radius-sm:           0.25rem;
+  --radius-md:           0.5rem;
+  --radius-lg:           1rem;
+  --transition-fast:     150ms ease;
+  --transition-base:     250ms ease;
+}

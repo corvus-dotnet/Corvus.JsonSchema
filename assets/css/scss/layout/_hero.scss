@@ -1,0 +1,105 @@
+// ==========================================================================
+// Hero — Full-width hero sections
+// ==========================================================================
+
+@use '../abstracts/mixins' as *;
+
+.hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 50vh;
+  padding: var(--space-xxl) var(--space-md);
+  overflow: hidden;
+
+  // ---- Background feather / decoration ----
+  &__bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+
+    img, svg {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      max-width: 60rem;
+      width: 100%;
+      opacity: 0.04;
+    }
+  }
+
+  // ---- Content wrapper ----
+  &__content {
+    position: relative;
+    z-index: 1;
+    max-width: 48rem;
+  }
+
+  // ---- Title ----
+  &__title {
+    font-size: var(--font-size-hero);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-heading);
+    color: var(--color-white);
+    margin: 0 0 var(--space-md);
+
+    // Brand-highlighted word
+    .brand {
+      color: var(--color-brand);
+    }
+  }
+
+  // ---- Subtitle ----
+  &__subtitle {
+    font-size: var(--font-size-lg);
+    color: var(--color-gray-med);
+    line-height: var(--line-height-regular);
+    margin: 0 0 var(--space-lg);
+    max-width: 38rem;
+    margin-inline: auto;
+
+    @include breakpoint-md {
+      font-size: var(--font-size-xl);
+    }
+  }
+
+  // ---- CTA button group ----
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-sm);
+  }
+
+  // ---- Version / metadata badge ----
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-dark);
+    background: var(--color-bg-raised);
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    margin-bottom: var(--space-md);
+  }
+
+  // ---- Compact variant (sub-page hero) ----
+  &--compact {
+    min-height: auto;
+    padding: var(--space-xl) var(--space-md);
+    text-align: left;
+    align-items: flex-start;
+
+    .hero__content {
+      max-width: 100%;
+    }
+  }
+}

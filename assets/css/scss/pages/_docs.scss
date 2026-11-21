@@ -1,0 +1,216 @@
+// ==========================================================================
+// Docs — Documentation page content styling
+// ==========================================================================
+
+@use '../abstracts/mixins' as *;
+
+.doc {
+  // ---- Content prose area ----
+  &__content {
+    > *:first-child {
+      margin-top: 0;
+    }
+
+    // Heading anchors
+    h1, h2, h3, h4, h5, h6 {
+      position: relative;
+      scroll-margin-top: calc(var(--header-height) + var(--space-md));
+
+      .doc__anchor {
+        position: absolute;
+        left: -1.5em;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0;
+        color: var(--color-brand);
+        font-size: 0.8em;
+        text-decoration: none;
+        transition: opacity var(--transition-fast);
+        padding: var(--space-xs);
+
+        &:hover {
+          opacity: 1;
+        }
+      }
+
+      &:hover .doc__anchor {
+        opacity: 0.6;
+      }
+    }
+
+    // Paragraphs
+    p {
+      line-height: var(--line-height-regular);
+    }
+
+    // Images
+    img {
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-border);
+    }
+
+    // Horizontal rule
+    hr {
+      margin: var(--space-xl) 0;
+    }
+  }
+
+  // ---- Tables ----
+  &__content table,
+  .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: var(--space-lg);
+    font-size: var(--font-size-sm);
+
+    th {
+      text-align: left;
+      font-weight: var(--font-weight-medium);
+      color: var(--color-white);
+      padding: var(--space-sm) var(--space-md);
+      border-bottom: 2px solid var(--color-border);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: var(--space-sm) var(--space-md);
+      border-bottom: 1px solid var(--color-border);
+      color: var(--color-gray-med);
+      vertical-align: top;
+    }
+
+    tr:hover td {
+      background: rgb(41 42 47 / 0.15);
+    }
+
+    // Scrollable wrapper for wide tables
+    &-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin-bottom: var(--space-lg);
+    }
+  }
+
+  // ---- Admonitions / callouts ----
+  &__callout {
+    @include glass-surface;
+    padding: var(--space-md) var(--space-lg);
+    margin-bottom: var(--space-md);
+    border-left: 3px solid var(--color-brand);
+
+    &--warning {
+      border-left-color: var(--syntax-number);
+    }
+
+    &--danger {
+      border-left-color: var(--syntax-tag);
+    }
+
+    &--info {
+      border-left-color: var(--syntax-function);
+    }
+
+    &-title {
+      font-weight: var(--font-weight-medium);
+      color: var(--color-white);
+      margin-bottom: var(--space-xs);
+      font-size: var(--font-size-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    p:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  // ---- Table of contents (in-page) ----
+  &__toc {
+    position: sticky;
+    top: calc(var(--header-height) + var(--space-md));
+    align-self: start;
+    padding: var(--space-md);
+    font-size: var(--font-size-sm);
+
+    &-title {
+      font-weight: var(--font-weight-medium);
+      color: var(--color-gray-dark);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: var(--space-sm);
+    }
+
+    &-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    &-link {
+      display: block;
+      padding: var(--space-xs) 0;
+      color: var(--color-gray-dark);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      padding-left: var(--space-sm);
+      transition: color var(--transition-fast), border-color var(--transition-fast);
+
+      &:hover {
+        color: var(--color-gray-med);
+      }
+
+      &.is-active {
+        color: var(--color-brand);
+        border-left-color: var(--color-brand);
+      }
+    }
+
+    // Indent levels
+    &-link--h3 { padding-left: var(--space-md); }
+    &-link--h4 { padding-left: var(--space-lg); }
+  }
+
+  // ---- Prev / Next navigation ----
+  &__nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+    margin-top: var(--space-xl);
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--color-border);
+  }
+
+  &__nav-link {
+    @include glass-surface;
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-md);
+    text-decoration: none;
+    transition: background var(--transition-fast), border-color var(--transition-fast);
+
+    &:hover {
+      background: rgb(41 42 47 / 0.5);
+      border-color: var(--color-border-active);
+    }
+
+    &--prev {
+      text-align: left;
+    }
+
+    &--next {
+      text-align: right;
+      grid-column: 2;
+    }
+
+    &-label {
+      font-size: var(--font-size-sm);
+      color: var(--color-gray-dark);
+      margin-bottom: var(--space-xs);
+    }
+
+    &-title {
+      font-weight: var(--font-weight-medium);
+      color: var(--color-white);
+    }
+  }
+}

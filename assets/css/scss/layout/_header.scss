@@ -1,0 +1,137 @@
+// ==========================================================================
+// Header — Fixed site navigation bar
+// ==========================================================================
+
+@use '../abstracts/mixins' as *;
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: var(--header-height);
+  background: rgb(28 29 33 / 0.85);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border-bottom: 1px solid var(--color-border);
+
+  &__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: var(--max-width);
+    height: 100%;
+    margin: 0 auto;
+    padding: 0 var(--space-md);
+  }
+
+  // ---- Logo / brand ----
+  &__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    text-decoration: none;
+    color: var(--color-white);
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-lg);
+
+    img, svg {
+      height: 1.75rem;
+      width: auto;
+    }
+  }
+
+  // ---- Navigation links (right side) ----
+  &__nav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+
+  &__link {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-gray-med);
+    text-decoration: none;
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-sm);
+    transition: color var(--transition-fast), background var(--transition-fast);
+
+    &:hover {
+      color: var(--color-white);
+    }
+
+    &.is-active,
+    &[aria-current='page'] {
+      color: var(--color-brand);
+    }
+
+    &:focus-visible {
+      @include focus-ring;
+    }
+  }
+
+  // ---- Mobile menu toggle ----
+  &__menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-gray-med);
+    cursor: pointer;
+
+    @include breakpoint-md {
+      display: none;
+    }
+
+    &:hover {
+      color: var(--color-white);
+      border-color: var(--color-border-active);
+    }
+
+    svg {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+  }
+
+  // ---- Desktop nav hidden on mobile ----
+  &__nav-desktop {
+    display: none;
+
+    @include breakpoint-md {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+    }
+  }
+
+  // ---- Mobile nav overlay ----
+  &__nav-mobile {
+    display: none;
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: var(--space-lg);
+    background: rgb(28 29 33 / 0.95);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    flex-direction: column;
+    gap: var(--space-sm);
+    z-index: 45;
+
+    &.is-open {
+      display: flex;
+    }
+
+    @include breakpoint-md {
+      display: none !important;
+    }
+  }
+}
