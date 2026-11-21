@@ -23,14 +23,14 @@ Maven:
 <dependency>
   <groupId>io.github.corvus-dotnet</groupId>
   <artifactId>corvus-json-schema</artifactId>
-  <version>0.1.4</version>
+  <version>0.1.6</version>
 </dependency>
 ```
 
 Gradle (Kotlin DSL):
 
 ```kotlin
-implementation("io.github.corvus-dotnet:corvus-json-schema:0.1.4")
+implementation("io.github.corvus-dotnet:corvus-json-schema:0.1.6")
 ```
 
 ## Validate
@@ -68,6 +68,18 @@ escapes.
 JsonDocument document = JsonDocument.parse(bytes);
 boolean valid = validator.isValid(document);
 ```
+
+A document that is part of a larger buffer, such as a record after its framing with more records behind it, is
+validated where it is, without a copy (from 0.1.6):
+
+```java
+boolean valid = validator.isValid(buffer, offset, length);
+```
+
+The range must be the whole of one JSON value. Nothing outside it is read, and it is checked as strictly as a whole
+array is: content after the value, and bytes that are not UTF-8, throw a `JsonParseException`, whose `offset()` is
+counted from the start of the range. Nothing is allocated in the steady state, whatever the length of the range. The
+validator keeps a reference to the buffer, not a copy, until the thread next validates text with it.
 
 `isValid` reports a schema that recursed in place beyond the maximum depth as invalid; `validate` throws a
 `SchemaEvaluationDepthException` instead. Text that is not JSON throws a `JsonParseException`.

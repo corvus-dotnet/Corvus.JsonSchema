@@ -171,6 +171,9 @@ class AllocationTest {
         return text.append('}').toString();
     }
 
+    /** The length of the prefix before an instance that is validated as a range of a buffer. */
+    private static final int FRAME = 7;
+
     private static long allocated() {
         return THREADS.getCurrentThreadAllocatedBytes();
     }
@@ -179,7 +182,8 @@ class AllocationTest {
      * Says where a failing case allocates: the same passes again in blocks of 100 (an allocation that is not there on
      * the second measurement, or is in one block only, happened once), then each instance by each entry.
      */
-    private static String breakdown(Validator v, Case c, JsonDocument[] docs, byte[][] utf8, long overhead) {
+    private static String breakdown(
+            Validator v, Case c, JsonDocument[] docs, byte[][] utf8, byte[][] framed, long overhead) {
         StringBuilder text = new StringBuilder();
         int sink = 0;
         long[] blocks = new long[20];
@@ -190,23 +194,27 @@ class AllocationTest {
                     sink += v.isValid(docs[i]) ? 1 : 0;
                     sink += v.isValid(c.instances[i]) ? 1 : 0;
                     sink += v.isValid(utf8[i]) ? 1 : 0;
+                    sink += v.isValid(framed[i], FRAME, utf8[i].length) ? 1 : 0;
                 }
             }
             blocks[b] = allocated() - before - overhead;
         }
         text.append(" [again, by 100 passes: ").append(java.util.Arrays.toString(blocks)).append(']');
         for (int i = 0; i < docs.length; i++) {
-            long[] by = new long[3];
-            for (int entry = 0; entry < 3; entry++) {
+            long[] by = new long[4];
+            for (int entry = 0; entry < 4; entry++) {
                 long before = allocated();
                 for (int r = 0; r < 2_000; r++) {
-                    sink += (entry == 0 ? v.isValid(docs[i]) : entry == 1 ? v.isValid(c.instances[i]) : v.isValid(utf8[i]))
+                    sink += (entry == 0 ? v.isValid(docs[i])
+                            : entry == 1 ? v.isValid(c.instances[i])
+                            : entry == 2 ? v.isValid(utf8[i])
+                            : v.isValid(framed[i], FRAME, utf8[i].length))
                             ? 1 : 0;
                 }
                 by[entry] = allocated() - before - overhead;
             }
-            if (by[0] != 0 || by[1] != 0 || by[2] != 0) {
-                text.append(" [instance ").append(i).append(", 2000 calls, document/text/bytes: ")
+            if (by[0] != 0 || by[1] != 0 || by[2] != 0 || by[3] != 0) {
+                text.append(" [instance ").append(i).append(", 2000 calls, document/text/bytes/range: ")
                         .append(java.util.Arrays.toString(by)).append(']');
             }
         }
@@ -226,12 +234,21 @@ class AllocationTest {
             for (int i = 0; i < utf8.length; i++) {
                 utf8[i] = c.instances[i].getBytes(java.nio.charset.StandardCharsets.UTF_8);
             }
+            // Each instance as a range of a larger buffer: a framing prefix before it and another record after it.
+            byte[][] framed = new byte[utf8.length][];
+            for (int i = 0; i < framed.length; i++) {
+                framed[i] = new byte[FRAME + 2 * utf8[i].length];
+                java.util.Arrays.fill(framed[i], 0, FRAME, (byte) '#');
+                System.arraycopy(utf8[i], 0, framed[i], FRAME, utf8[i].length);
+                System.arraycopy(utf8[i], 0, framed[i], FRAME + utf8[i].length, utf8[i].length);
+            }
             int sink = 0;
             for (int r = 0; r < 20_000; r++) {
                 for (int i = 0; i < docs.length; i++) {
                     sink += v.isValid(docs[i]) ? 1 : 0;
                     sink += v.isValid(c.instances[i]) ? 1 : 0;
                     sink += v.isValid(utf8[i]) ? 1 : 0;
+                    sink += v.isValid(framed[i], FRAME, utf8[i].length) ? 1 : 0;
                 }
             }
             // What the counter itself allocates, measured alone and subtracted.
@@ -248,13 +265,14 @@ class AllocationTest {
                         sink += v.isValid(docs[i]) ? 1 : 0;
                         sink += v.isValid(c.instances[i]) ? 1 : 0;
                         sink += v.isValid(utf8[i]) ? 1 : 0;
+                        sink += v.isValid(framed[i], FRAME, utf8[i].length) ? 1 : 0;
                     }
                 }
                 bytes = allocated() - before - overhead;
             }
             if (bytes > 256) {
                 failures.add(c.name + (v.isCompiled() ? " (compiled)" : " (interpreted)") + ": " + bytes + " bytes in "
-                        + rounds + " passes of " + docs.length + " instances" + breakdown(v, c, docs, utf8, overhead));
+                        + rounds + " passes of " + docs.length + " instances" + breakdown(v, c, docs, utf8, framed, overhead));
             }
             assertTrue(sink >= 0);
         }
